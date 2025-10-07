@@ -4,3 +4,14 @@ metadata:
   name: rollouts-app
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: rollouts-app
+  namespace: rollouts-app
+spec:
+  promotionPolicies:
+  - stageSelector:
+      name: dev
+    autoPromotionEnabled: true

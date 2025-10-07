@@ -5,8 +5,7 @@ GITHUB_REPOSITORY="argodemo-rollouts-app"
 PROJECT_NAME="rollouts-app"
 
 
-kargo create project $PROJECT_NAME
-kargo apply -f project.yaml. #safe to re-run vs command above
+kargo apply -f project.yaml
 
 kargo create credentials github-creds \
 --project $PROJECT_NAME --git \
