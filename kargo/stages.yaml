@@ -42,7 +42,7 @@ spec:
             tag: ${{ imageFrom(vars.imageRepo).Tag }}
       - uses: kustomize-build
         config:
-          # path: ./src/deploy/env/dev
+          path: ./src/deploy/env/dev
           outPath: ./out/manifests.yaml
       - uses: git-commit
         as: commit
@@ -169,6 +169,7 @@ spec:
           path: ./out
           message: ${{ outputs['update-image'].commitMessage }}
       - uses: git-push
+        as: push
         config:
           path: ./out
           generateTargetBranch: true
@@ -178,4 +179,4 @@ spec:
           repoURL: ${{ vars.gitRepo }}
           createTargetBranch: true
           sourceBranch: ${{ outputs.push.branch }}
-          targetBranch: stage/${{ ctx.stage }}
+          targetBranch: env/${{ ctx.stage }}
