@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rollouts-app-dev
+  namespace: akuity
+  annotations:
+    kargo.akuity.io/authorized-stage: rollouts-app:dev
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/eddiewebb/argodemo-rollouts-app
+    path: .
+    targetRevision: env/dev
+  destination:
+    server: http://cluster-eddie-local:8001
+    namespace: demo-dev
+  syncPolicy:
+    automated:
+      prune: true
+      enabled: true
+
+
+# NOTE: Applying this fails claiming missing CRDs for argo proj.

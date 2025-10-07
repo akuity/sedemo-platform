@@ -7,3 +7,4 @@ This repo respresents the typical objects under control of a central infrastruct
 ### TODOS
 
 - Push analysisTemplate for use in verifications
+- Implement round-robin coloring.

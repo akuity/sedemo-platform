@@ -8,5 +8,5 @@ spec:
   - image:
       repoURL: ghcr.io/eddiewebb/rollouts
       discoveryLimit: 5
-  #- git:
-  #    repoURL: https://github.com/eddiewebb/argodemo-rollouts-app
+  - git:
+      repoURL: https://github.com/eddiewebb/argodemo-rollouts-app
