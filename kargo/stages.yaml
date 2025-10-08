@@ -44,6 +44,10 @@ spec:
         config:
           path: ./src/deploy/env/dev
           outPath: ./out/manifests.yaml
+      - uses: copy
+        config:
+          inPath: ./src/.circleci
+          outPath: ./out/.circleci
       - uses: git-commit
         as: commit
         config:

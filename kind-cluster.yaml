@@ -1,0 +1,15 @@
+
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: akuity-connected-cluster
+nodes:
+- role: control-plane
+  # expose 3 ports in 30000 range for use by nodeport services.
+  # podman port forwarding was too flaky so using kind's built-in port mapping
+  extraPortMappings:
+  - containerPort: 30000
+    hostPort: 30000
+  - containerPort: 30001
+    hostPort: 30001
+  - containerPort: 30002
+    hostPort: 30002
