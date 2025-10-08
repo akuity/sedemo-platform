@@ -13,7 +13,7 @@ spec:
     path: .
     targetRevision: env/staging
   destination:
-    name: eddie-local
+    server: http://cluster-eddie-local:8001
     namespace: demo-staging
   syncPolicy:
     automated:
