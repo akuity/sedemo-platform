@@ -7,7 +7,9 @@ This repo respresents the typical objects under control of a central infrastruct
 ### TODOS
 
 - [x] Delcarative Management (seeting in argo cluster settings)
+- [ ] Use Application set for app environments.
 - [ ] Kargo declarative
+    Apparently this will need to be a CI pipeline to call kargo apply directly.
 - [ ] Push analysisTemplate for use in verifications
 - [x] Implement round-robin coloring.
 - [x] Implement webhooks for faster response by kargo 
