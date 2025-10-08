@@ -6,6 +6,7 @@ This repo respresents the typical objects under control of a central infrastruct
 
 ### TODOS
 
+- [ ] Delcarative Management (seeting in argo cluster settings)
 - [ ] Push analysisTemplate for use in verifications
 - [x] Implement round-robin coloring.
 - [ ] Implement webhooks for faster response by kargo and argo

@@ -1,20 +1,20 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: rollouts-app-dev
-  namespace: akuity
+  name: rollouts-app-staging
+  namespace: argocd
   annotations:
-    kargo.akuity.io/authorized-stage: rollouts-app:dev
+    kargo.akuity.io/authorized-stage: rollouts-app:staging
 spec:
   project: default
   source:
     repoURL: https://github.com/eddiewebb/argodemo-rollouts-app
     # path is root since our Kargo job commits a clean and fully rendered manifest o environment branch
     path: .
-    targetRevision: env/dev
+    targetRevision: env/staging
   destination:
-    server: http://cluster-eddie-local:8001
-    namespace: demo-dev
+    name: eddie-local
+    namespace: demo-staging
   syncPolicy:
     automated:
       prune: true
