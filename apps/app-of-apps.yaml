@@ -13,3 +13,7 @@ spec:
     repoURL:  https://github.com/eddiewebb/argodemo-platform
     path: apps/rollouts-app
     targetRevision: HEAD
+  syncPolicy:
+    automated:
+      selfHeal: true
+      enabled: true
