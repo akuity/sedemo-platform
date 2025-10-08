@@ -15,7 +15,6 @@ spec:
   destination:
     server: http://cluster-eddie-local:8001
     namespace: demo-staging
-    crear
   syncPolicy:
     automated:
       prune: true
