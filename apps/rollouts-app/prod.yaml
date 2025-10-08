@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: rollouts-app-prod
-  namespace: akuity
+  namespace: argocd
   annotations:
     kargo.akuity.io/authorized-stage: rollouts-app:prod
 spec:
