@@ -11,5 +11,5 @@ spec:
   project: default
   source:   
     repoURL:  https://github.com/eddiewebb/argodemo-platform
-    path: apps
+    path: apps/rollouts-app
     targetRevision: HEAD
