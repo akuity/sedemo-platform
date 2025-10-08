@@ -6,7 +6,7 @@ metadata:
   name: guestbook-prod
   namespace: argocd
   annotations:
-    kargo.akuity.io/authorized-stage: guestbook-helm:dev
+    kargo.akuity.io/authorized-stage: guestbook-helm:prod
 spec:
   project: default
   source:
