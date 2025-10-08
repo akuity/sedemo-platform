@@ -38,7 +38,7 @@ spec:
     targetRevision: env/prod
   destination:
     server: http://cluster-eddie-local:8001
-    namespace: demo-prod
+    namespace: demo-prod-amer-west
   syncPolicy:
     automated:
       prune: true
@@ -49,7 +49,7 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: rollouts-app-prod
+  name: rollouts-app-prod-emea
   namespace: argocd
   annotations:
     kargo.akuity.io/authorized-stage: rollouts-app:prod
@@ -62,7 +62,7 @@ spec:
     targetRevision: env/prod
   destination:
     server: http://cluster-eddie-local:8001
-    namespace: demo-prod
+    namespace: demo-prod-emea
   syncPolicy:
     automated:
       prune: true
