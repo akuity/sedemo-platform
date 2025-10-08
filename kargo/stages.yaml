@@ -119,6 +119,12 @@ spec:
         config:
           path: ./out
           targetBranch: env/staging
+      - uses: argocd-update
+        continueOnError: true
+        config:
+          apps:
+          - name: rollouts-app-staging
+            namespace: argocd
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -183,3 +189,9 @@ spec:
           createTargetBranch: true
           sourceBranch: ${{ outputs.push.branch }}
           targetBranch: env/${{ ctx.stage }}
+      - uses: argocd-update
+        continueOnError: true
+        config:
+          apps:
+          - name: rollouts-app-prod
+            namespace: argocd
