@@ -57,13 +57,12 @@ spec:
         config:
           path: ./out
           targetBranch: env/dev
-      # - uses: argocd-update
-      #   config:
-      #     apps:
-      #     - name: rollouts-app-dev
-      #       sources:
-      #       - repoURL: ${{ vars.gitRepo }}
-      #         desiredRevision: ${{ outputs.commit.commit }}
+      - uses: argocd-update
+        continueOnError: true
+        config:
+          apps:
+          - name: rollouts-app-dev
+            namespace: argocd
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
