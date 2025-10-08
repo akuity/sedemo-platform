@@ -13,7 +13,7 @@ spec:
     path: .
     targetRevision: env/dev
   destination:
-    server: http://cluster-eddie-local:8001
+    name: eddie-local
     namespace: demo-dev
   syncPolicy:
     automated:
