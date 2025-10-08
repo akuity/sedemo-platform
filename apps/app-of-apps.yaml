@@ -1,5 +1,5 @@
-# THis file must be bootstrapped into Argo CD manually or prgrammatically.
-# Subsequently it will pull the specific applications from the git repo to be managed by Argo CD
+# THis file is referenced by the apps-seed-argo.yaml to bootstrap Argo CD
+# It will pull the specific applications from the git repo to be managed by Argo CD
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
