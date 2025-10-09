@@ -129,22 +129,6 @@ spec:
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: control-tower
-  namespace: rollouts-app
-  annotations:
-    kargo.akuity.io/color: violet
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: rollouts-app
-    sources:
-      stages:
-      - staging
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
   name: prod
   namespace: rollouts-app
   annotations:
@@ -156,7 +140,7 @@ spec:
       name: rollouts-app
     sources:
       stages:
-      - control-tower
+      - staging
   promotionTemplate:
     spec:
       vars:
@@ -205,11 +189,66 @@ spec:
           createTargetBranch: true
           sourceBranch: ${{ outputs.push.branch }}
           targetBranch: env/${{ ctx.stage }}
+      - uses: git-wait-for-pr
+        as: open-pr
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          prNumber: ${{ outputs['open-pr'].prNumber }}
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod-amer-east
+  namespace: rollouts-app
+  annotations:
+    kargo.akuity.io/color: violet
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: rollouts-app
+    sources:
+      stages:
+      - prod
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/eddiewebb/argodemo-rollouts-app
+      - name: imageRepo
+        value: ghcr.io/eddiewebb/rollouts
+      steps:
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: env/prod
+            path: ./src
+          - branch: env/prod-amer-east
+            create: true
+            path: ./out
+      - uses: git-clear
+        config:
+          path: ./out
+      - uses: copy
+        config:
+          inPath: ./src
+          outPath: ./out
+      - uses: git-commit
+        as: commit
+        config:
+          path: ./out
+          message: ${{ outputs['update-image'].commitMessage }}
+      - uses: git-push
+        as: push
+        config:
+          path: ./out
+          generateTargetBranch: true
       - uses: argocd-update
         continueOnError: true
         config:
           apps:
-          - name: rollouts-app-prod
+          - name: rollouts-app-prod-amer-east
             namespace: argocd
 ---
 apiVersion: kargo.akuity.io/v1alpha1
@@ -226,7 +265,7 @@ spec:
       name: rollouts-app
     sources:
       stages:
-      - control-tower
+      - prod
   promotionTemplate:
     spec:
       vars:
@@ -239,7 +278,7 @@ spec:
         config:
           repoURL: ${{ vars.gitRepo }}
           checkout:
-          - branch: main
+          - branch: env/prod
             path: ./src
           - branch: env/prod-emea
             create: true
@@ -247,17 +286,10 @@ spec:
       - uses: git-clear
         config:
           path: ./out
-      - uses: kustomize-set-image
-        as: update-image
+      - uses: copy
         config:
-          path: ./src/deploy/env/prod
-          images:
-          - image: ${{ vars.imageRepo }}
-            tag: ${{ imageFrom(vars.imageRepo).Tag }}
-      - uses: kustomize-build
-        config:
-          path: ./src/deploy/env/prod
-          outPath: ./out/manifests.yaml
+          inPath: ./src
+          outPath: ./out
       - uses: git-commit
         as: commit
         config:
@@ -268,18 +300,11 @@ spec:
         config:
           path: ./out
           generateTargetBranch: true
-      - uses: git-open-pr
-        as: open-pr
-        config:
-          repoURL: ${{ vars.gitRepo }}
-          createTargetBranch: true
-          sourceBranch: ${{ outputs.push.branch }}
-          targetBranch: env/${{ ctx.stage }}
       - uses: argocd-update
         continueOnError: true
         config:
           apps:
-          - name: rollouts-app-prod
+          - name: rollouts-app-prod-emea
             namespace: argocd
 ---
 apiVersion: kargo.akuity.io/v1alpha1
@@ -296,7 +321,7 @@ spec:
       name: rollouts-app
     sources:
       stages:
-      - control-tower
+      - prod
   promotionTemplate:
     spec:
       vars:
@@ -317,17 +342,10 @@ spec:
       - uses: git-clear
         config:
           path: ./out
-      - uses: kustomize-set-image
-        as: update-image
+      - uses: copy
         config:
-          path: ./src/deploy/env/prod
-          images:
-          - image: ${{ vars.imageRepo }}
-            tag: ${{ imageFrom(vars.imageRepo).Tag }}
-      - uses: kustomize-build
-        config:
-          path: ./src/deploy/env/prod
-          outPath: ./out/manifests.yaml
+          inPath: ./src
+          outPath: ./out
       - uses: git-commit
         as: commit
         config:
@@ -338,16 +356,9 @@ spec:
         config:
           path: ./out
           generateTargetBranch: true
-      - uses: git-open-pr
-        as: open-pr
-        config:
-          repoURL: ${{ vars.gitRepo }}
-          createTargetBranch: true
-          sourceBranch: ${{ outputs.push.branch }}
-          targetBranch: env/${{ ctx.stage }}
       - uses: argocd-update
         continueOnError: true
         config:
           apps:
-          - name: rollouts-app-prod
+          - name: rollouts-app-prod-amer-west
             namespace: argocd

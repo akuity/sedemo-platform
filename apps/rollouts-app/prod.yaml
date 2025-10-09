@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: rollouts-app-prod
+  name: rollouts-app-prod-amer-east
   namespace: argocd
   annotations:
     kargo.akuity.io/authorized-stage: rollouts-app:prod
@@ -11,7 +11,7 @@ spec:
     repoURL: https://github.com/eddiewebb/argodemo-rollouts-app
     # path is root since our Kargo job commits a clean and fully rendered manifest o environment branch
     path: .
-    targetRevision: env/prod
+    targetRevision: env/prod-amer-east
   destination:
     server: http://cluster-eddie-local:8001
     namespace: demo-prod
