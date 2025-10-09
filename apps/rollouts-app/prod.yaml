@@ -52,7 +52,7 @@ metadata:
   name: rollouts-app-prod-emea
   namespace: argocd
   annotations:
-    kargo.akuity.io/authorized-stage: rollouts-app:prod
+    kargo.akuity.io/authorized-stage: rollouts-app:prod-emea
 spec:
   project: default
   source:
