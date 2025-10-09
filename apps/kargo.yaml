@@ -1,0 +1,15 @@
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kargo-rollouts-definition
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/eddiewebb/argodemo-platform
+    path: kargo
+  destination:
+    name: in-cluster
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
