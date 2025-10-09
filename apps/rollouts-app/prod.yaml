@@ -14,7 +14,7 @@ spec:
     targetRevision: env/prod-amer-east
   destination:
     server: http://cluster-eddie-local:8001
-    namespace: demo-prod
+    namespace: demo-prod-amer-east
   syncPolicy:
     automated:
       prune: true
