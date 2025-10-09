@@ -190,7 +190,7 @@ spec:
           sourceBranch: ${{ outputs.push.branch }}
           targetBranch: env/${{ ctx.stage }}
       - uses: git-wait-for-pr
-        as: open-pr
+        as: wait-for-pr
         config:
           repoURL: ${{ vars.gitRepo }}
           prNumber: ${{ outputs['open-pr'].prNumber }}
