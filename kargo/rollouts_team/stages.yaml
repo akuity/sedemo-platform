@@ -176,7 +176,7 @@ spec:
         as: commit
         config:
           path: ./out
-          message: ${{ outputs['update-image'].commitMessage }}
+          message: "${{ outputs['update-image'].commitMessage }}[skip ci]"
       - uses: git-push
         as: push
         config:
