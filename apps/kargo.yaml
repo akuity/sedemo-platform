@@ -5,7 +5,7 @@ metadata:
   name: kargo-rollouts-definition
   namespace: argocd
 spec:
-  project: default
+  project: rollouts-app
   source:
     repoURL: https://github.com/eddiewebb/argodemo-platform
     path: kargo
