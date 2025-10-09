@@ -19,18 +19,18 @@ spec:
         value: https://github.com/eddiewebb/argodemo-rollouts-app
       - name: imageRepo
         value: ghcr.io/eddiewebb/rollouts
-      - name: path-src
+      - name: path_src
         value: ./src
-      - name: path-out
+      - name: path_out
         value: ./out
       steps:
       - uses: prepare-workdir   
       - uses: helm-template
         config:
-          path: ${{ vars.path-src }}/deploy/chart
+          path: ${{ vars.path_src }}/deploy/chart
           valuesFiles:
-          - ${{ vars.path-src }}/deploy/chart/values.yaml
-          outPath: ${{ vars.path-out }}/manifests.yaml
+          - ${{ vars.path_src }}/deploy/chart/values.yaml
+          outPath: ${{ vars.path_out }}/manifests.yaml
           setValues:
             image.tag: ${{ imageFrom(vars.imageRepo).Tag }}
             kargo.stage: ${{ ctx.stage }}
@@ -66,18 +66,18 @@ spec:
         value: https://github.com/eddiewebb/argodemo-rollouts-app
       - name: imageRepo
         value: ghcr.io/eddiewebb/rollouts
-      - name: path-src
+      - name: path_src
         value: ./src
-      - name: path-out
+      - name: path_out
         value: ./out
       steps:
       - uses: prepare-workdir   
       - uses: helm-template
         config:
-          path: ${{ vars.path-src }}/deploy/chart
+          path: ${{ vars.path_src }}/deploy/chart
           valuesFiles:
-          - ${{ vars.path-src }}/deploy/chart/values.yaml
-          outPath: ${{ vars.path-out }}/manifests.yaml
+          - ${{ vars.path_src }}/deploy/chart/values.yaml
+          outPath: ${{ vars.path_out }}/manifests.yaml
           setValues:
             image.tag: ${{ imageFrom(vars.imageRepo).Tag }}
             kargo.stage: ${{ ctx.stage }}
@@ -119,9 +119,9 @@ spec:
         value: https://github.com/eddiewebb/argodemo-rollouts-app
       - name: imageRepo
         value: ghcr.io/eddiewebb/rollouts
-      - name: path-src
+      - name: path_src
         value: ./src
-      - name: path-out
+      - name: path_out
         value: ./out
       steps:
       - uses: prepare-workdir   
@@ -130,10 +130,10 @@ spec:
         - name: region
           value: amer-east
         config:
-          path: ${{ vars.path-src }}/deploy/chart
+          path: ${{ vars.path_src }}/deploy/chart
           valuesFiles:
-          - ${{ vars.path-src }}/deploy/chart/values.yaml
-          outPath: ${{ vars.path-out }}/manifests-${{ vars.region }}.yaml
+          - ${{ vars.path_src }}/deploy/chart/values.yaml
+          outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
           setValues:
             image.tag: ${{ imageFrom(vars.imageRepo).Tag }}
             kargo.stage: ${{ ctx.stage }}
@@ -144,10 +144,10 @@ spec:
         - name: region
           value: amer-west
         config:
-          path: ${{ vars.path-src }}/deploy/chart
+          path: ${{ vars.path_src }}/deploy/chart
           valuesFiles:
-          - ${{ vars.path-src }}/deploy/chart/values.yaml
-          outPath: ${{ vars.path-out }}/manifests-${{ vars.region }}.yaml
+          - ${{ vars.path_src }}/deploy/chart/values.yaml
+          outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
           setValues:
             image.tag: ${{ imageFrom(vars.imageRepo).Tag }}
             kargo.stage: ${{ ctx.stage }}
@@ -158,10 +158,10 @@ spec:
         - name: region
           value: emea
         config:
-          path: ${{ vars.path-src }}/deploy/chart
+          path: ${{ vars.path_src }}/deploy/chart
           valuesFiles:
-          - ${{ vars.path-src }}/deploy/chart/values.yaml
-          outPath: ${{ vars.path-out }}/manifests-${{ vars.region }}.yaml
+          - ${{ vars.path_src }}/deploy/chart/values.yaml
+          outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
           setValues:
             image.tag: ${{ imageFrom(vars.imageRepo).Tag }}
             kargo.stage: ${{ ctx.stage }}

@@ -11,9 +11,9 @@ spec:
     value: main
   - name: targetBranch
     value: env/${{ ctx.stage }}
-  - name: path-src
+  - name: path_src
     value: ./src
-  - name: path-out
+  - name: path_out
     value: ./out
   # Sequence of promotion steps
   steps:
@@ -22,13 +22,13 @@ spec:
         repoURL: ${{ vars.gitRepo }}
         checkout:
         - branch: ${{ vars.sourceBranch }}
-          path: ${{ vars.path-src }}
+          path: ${{ vars.path_src }}
         - branch: ${{ vars.targetBranch }}
           create: true
-          path: ${{ vars.path-out }}
+          path: ${{ vars.path_out }}
     - uses: git-clear
       config:
-        path: ${{ vars.path-out }}
+        path: ${{ vars.path_out }}
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
@@ -43,9 +43,9 @@ spec:
     value: main
   - name: targetBranch
     value: env/${{ ctx.stage }}
-  - name: path-src
+  - name: path_src
     value: ./src
-  - name: path-out
+  - name: path_out
     value: ./out
   - name: asPR
     value: "false"
@@ -54,17 +54,17 @@ spec:
     - uses: git-commit
       as: commit
       config:
-        path: ${{ vars.path-out }}
+        path: ${{ vars.path_out }}
         message: "${{ outputs['update-image'].commitMessage }}[skip ci]"
     - uses: git-push
       if: ${{ vars.asPR != "true" }}
       config:
-        path: ${{ vars.path-out }}
+        path: ${{ vars.path_out }}
         targetBranch: ${{ vars.targetBranch }}
     - uses: git-push
       if: ${{ vars.asPR == "true" }}
       config:
-        path: ${{ vars.path-out }}
+        path: ${{ vars.path_out }}
         generateTargetBranch: true
     - uses: git-open-pr
       as: open-pr
