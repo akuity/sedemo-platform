@@ -4,7 +4,7 @@ metadata:
   name: rollouts-app-prod-amer-east
   namespace: argocd
   annotations:
-    kargo.akuity.io/authorized-stage: rollouts-app:prod
+    kargo.akuity.io/authorized-stage: rollouts-app:prod-amer-east
 spec:
   project: default
   source:
