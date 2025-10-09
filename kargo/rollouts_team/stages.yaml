@@ -238,7 +238,7 @@ spec:
         as: commit
         config:
           path: ./out
-          message: "Image ${{ imageFrom(vars.imageRepo).Tag }}  "
+          message: "Image ${{ imageFrom(vars.imageRepo).Tag }}  [skip ci]"
       - uses: git-push
         as: push
         config:
@@ -294,7 +294,7 @@ spec:
         as: commit
         config:
           path: ./out
-          message: "Image ${{ imageFrom(vars.imageRepo).Tag }}  "
+          message: "Image ${{ imageFrom(vars.imageRepo).Tag }}  [skip ci]"
       - uses: git-push
         as: push
         config:
@@ -350,7 +350,7 @@ spec:
         as: commit
         config:
           path: ./out
-          message: "Image ${{ imageFrom(vars.imageRepo).Tag }}  "
+          message: "Image ${{ imageFrom(vars.imageRepo).Tag }}  [skip ci]"
       - uses: git-push
         as: push
         config:
