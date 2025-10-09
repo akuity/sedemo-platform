@@ -16,14 +16,4 @@ spec:
       name: dev
     autoPromotionEnabled: true
   - stageSelector:
-      name: prod
-    autoPromotionEnabled: true
-  - stageSelector:
-      name: prod-amer-east
-    autoPromotionEnabled: true
-  - stageSelector:
-      name: prod-emea
-    autoPromotionEnabled: true
-  - stageSelector:
-      name: prod-amer-west
-    autoPromotionEnabled: true
+      name: "regex:prod.*"

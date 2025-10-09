@@ -1,0 +1,82 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: prepare-workdir
+  namespace: rollouts-app
+spec:
+  # Task-wide input variables
+  vars:
+  - name: gitRepo
+  - name: sourceBranch
+    value: main
+  - name: targetBranch
+    value: env/${{ ctx.stage }}
+  - name: path-src
+    value: ./src
+  - name: path-out
+    value: ./out
+  # Sequence of promotion steps
+  steps:
+    - uses: git-clone
+      config:
+        repoURL: ${{ vars.gitRepo }}
+        checkout:
+        - branch: ${{ vars.sourceBranch }}
+          path: ${{ vars.path-src }}
+        - branch: ${{ vars.targetBranch }}
+          create: true
+          path: ${{ vars.path-out }}
+    - uses: git-clear
+      config:
+        path: ${{ vars.path-out }}
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: push-manifests
+  namespace: rollouts-app
+spec:
+  # Task-wide input variables
+  vars:
+  - name: gitRepo
+  - name: sourceBranch
+    value: main
+  - name: targetBranch
+    value: env/${{ ctx.stage }}
+  - name: path-src
+    value: ./src
+  - name: path-out
+    value: ./out
+  - name: asPR
+    value: "false"
+  # Sequence of promotion steps
+  steps:
+    - uses: git-commit
+      as: commit
+      config:
+        path: ${{ vars.path-out }}
+        message: "${{ outputs['update-image'].commitMessage }}[skip ci]"
+    - uses: git-push
+      if: ${{ vars.asPR != "true" }}
+      config:
+        path: ${{ vars.path-out }}
+        targetBranch: ${{ vars.targetBranch }}
+    - uses: git-push
+      if: ${{ vars.asPR == "true" }}
+      config:
+        path: ${{ vars.path-out }}
+        generateTargetBranch: true
+    - uses: git-open-pr
+      as: open-pr
+      if: ${{ vars.asPR == "true" }}
+      config:
+        repoURL: ${{ vars.gitRepo }}
+        createTargetBranch: ${{ vars.asPR }}
+        sourceBranch: ${{ vars.targetBranch }}
+        targetBranch: ${{ vars.targetBranch }}
+    - uses: git-wait-for-pr
+      as: wait-for-pr
+      if: ${{ vars.asPR == "true" }}
+      config:
+        repoURL: ${{ vars.gitRepo }}
+        prNumber: ${{ outputs['open-pr'].pr.id }}

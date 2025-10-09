@@ -16,8 +16,7 @@ This repo respresents the typical objects under control of a central infrastruct
 - [x] Implement webhooks for faster response by kargo 
  - [x] Argo (argo cd calls from kargo not working :()
 - [x] understand argocd implict health checks - https://docs.kargo.io/user-guide/how-to-guides/argo-cd-integration
-
-
+- [ ] Source annotations - https://docs.kargo.io/user-guide/how-to-guides/working-with-freight#adding-annotations-with-docker-buildx
 
 ## Considerations
 
