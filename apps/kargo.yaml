@@ -10,7 +10,7 @@ spec:
     repoURL: https://github.com/eddiewebb/argodemo-platform
     path: kargo
   destination:
-    name: in-cluster
+    name: kargo1
   syncPolicy:
     syncOptions:
     - CreateNamespace=true
