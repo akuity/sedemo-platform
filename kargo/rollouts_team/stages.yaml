@@ -243,7 +243,7 @@ spec:
         as: push
         config:
           path: ./out
-          generateTargetBranch: true
+          targetBranch: env/prod-amer-east
       - uses: argocd-update
         continueOnError: true
         config:
@@ -299,7 +299,7 @@ spec:
         as: push
         config:
           path: ./out
-          generateTargetBranch: true
+          targetBranch: env/prod-emea
       - uses: argocd-update
         continueOnError: true
         config:
@@ -355,7 +355,7 @@ spec:
         as: push
         config:
           path: ./out
-          generateTargetBranch: true
+          targetBranch: env/prod-amer-west
       - uses: argocd-update
         continueOnError: true
         config:
