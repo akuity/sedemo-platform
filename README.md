@@ -8,8 +8,10 @@ This repo respresents the typical objects under control of a central infrastruct
 
 - [x] Delcarative Management (seeting in argo cluster settings)
 - [ ] Use Application set for app environments.
+- [ ] Kargo ROles (dev vs platform)
 - [x] Kargo declarative
 - [ ] Push analysisTemplate for use in verifications
+- [ ] Consider rollouts instead of deployment
 - [x] Implement round-robin coloring.
 - [x] Implement webhooks for faster response by kargo 
  - [x] Argo (argo cd calls from kargo not working :()
