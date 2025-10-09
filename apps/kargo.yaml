@@ -9,6 +9,8 @@ spec:
   source:
     repoURL: https://github.com/eddiewebb/argodemo-platform
     path: kargo
+    directory:
+      recurse: true
   destination:
     name: kargo
   syncPolicy:
