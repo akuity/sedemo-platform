@@ -193,7 +193,7 @@ spec:
         as: wait-for-pr
         config:
           repoURL: ${{ vars.gitRepo }}
-          prNumber: ${{ outputs['open-pr'].prNumber }}
+          prNumber: ${{ outputs['open-pr'].pr.id }}
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
