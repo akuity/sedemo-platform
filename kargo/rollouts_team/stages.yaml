@@ -196,7 +196,7 @@ spec:
       - name: region
         value: amer-east
       steps:
-      - prepare-workdir:
+      - uses: prepare-workdir
         config  :
           sourceBranch: env/prod
           targetBranch: env/prod-${{ vars.region }}
@@ -240,8 +240,8 @@ spec:
       - name: region
         value: amer-west
       steps:
-      - prepare-workdir:
-        config  :
+      - uses: prepare-workdir
+        config:
           sourceBranch: env/prod
           targetBranch: env/prod-${{ vars.region }}
       - uses: copy
@@ -284,7 +284,7 @@ spec:
       - name: region
         value: emea
       steps:
-      - prepare-workdir:
+      - uses: prepare-workdir
         config  :
           sourceBranch: env/prod
           targetBranch: env/prod-${{ vars.region }}
