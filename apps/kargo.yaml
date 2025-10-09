@@ -10,7 +10,7 @@ spec:
     repoURL: https://github.com/eddiewebb/argodemo-platform
     path: kargo
   destination:
-    server: https://hx2pxf3uuurmr2xr.kargo.akuity.cloud/
+    server: https://hx2pxf3uuurmr2xr.kargo.akuity.cloud
   syncPolicy:
     syncOptions:
     - CreateNamespace=true
