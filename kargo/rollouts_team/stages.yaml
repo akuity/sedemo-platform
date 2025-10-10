@@ -202,8 +202,6 @@ spec:
         vars:
         - name: asPR
           value: "true"
-        - name: sourceBranch
-          value: env/staging
         - name: targetBranch
           value: env/prod
 ---
