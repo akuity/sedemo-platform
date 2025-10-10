@@ -62,6 +62,7 @@ spec:
         path: ${{ vars.path_out }}
         targetBranch: ${{ vars.targetBranch }}
     - uses: git-push
+      as: push
       if: ${{ vars.asPR == "true" }}
       config:
         path: ${{ vars.path_out }}
@@ -72,7 +73,7 @@ spec:
       config:
         repoURL: ${{ vars.gitRepo }}
         createTargetBranch: true
-        sourceBranch: ${{ vars.sourceBranch }}
+        sourceBranch: ${{ outputs.push.branch }}
         targetBranch: ${{ vars.targetBranch }}
     - uses: git-wait-for-pr
       as: wait-for-pr
