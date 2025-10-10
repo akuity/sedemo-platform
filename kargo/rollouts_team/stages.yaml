@@ -40,8 +40,6 @@ spec:
               value: ${{ imageFrom(vars.imageRepo).Tag }}
             - key: kargo.stage
               value: ${{ ctx.stage }}
-            - key: namespace
-              value: demo-${{ ctx.stage }}
             - key: nodePort
               value: "30000"
       - task:
@@ -96,8 +94,6 @@ spec:
               value: ${{ imageFrom(vars.imageRepo).Tag }}
             - key: kargo.stage
               value: ${{ ctx.stage }}
-            - key: namespace
-              value: demo-${{ ctx.stage }}
             - key: nodePort
               value: "30001"
       - task:
@@ -155,8 +151,6 @@ spec:
               value: ${{ imageFrom(vars.imageRepo).Tag }}
             - key: kargo.stage
               value: ${{ ctx.stage }}
-            - key: namespace
-              value: demo-${{ ctx.stage }}-${{ vars.region }}
             - key: nodePort
               value: "30002"
       - uses: helm-template
@@ -174,8 +168,6 @@ spec:
               value: ${{ imageFrom(vars.imageRepo).Tag }}
             - key: kargo.stage
               value: ${{ ctx.stage }}
-            - key: namespace
-              value: demo-${{ ctx.stage }}-${{ vars.region }}
             - key: nodePort
               value: "30003"
       - uses: helm-template
@@ -193,8 +185,6 @@ spec:
               value: ${{ imageFrom(vars.imageRepo).Tag }}
             - key: kargo.stage
               value: ${{ ctx.stage }}
-            - key: namespace
-              value: demo-${{ ctx.stage }}-${{ vars.region }}
             - key: nodePort
               value: "30004"
       - task:
