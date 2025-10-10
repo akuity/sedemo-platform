@@ -17,3 +17,4 @@ spec:
     autoPromotionEnabled: true
   - stageSelector:
       name: "regex:prod.*"
+    autoPromotionEnabled: true
