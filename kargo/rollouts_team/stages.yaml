@@ -205,9 +205,9 @@ spec:
       - task:
           name: prepare-workdir
         vars  :
-          name: sourceBranch
+        - name: sourceBranch
           value: env/prod
-          name: targetBranch
+        - name: targetBranch
           value: env/prod-${{ vars.region }}
       - uses: copy
         config:
@@ -216,9 +216,9 @@ spec:
       - task:
           name: push-manifests
         vars:
-          name: sourceBranch
+        - name: sourceBranch
           value: env/prod
-          name: targetBranch
+        - name: targetBranch
           value: env/prod-${{ vars.region }}
       - uses: argocd-update
         continueOnError: true
@@ -255,9 +255,9 @@ spec:
       - task:
           name: prepare-workdir
         vars:
-          name: sourceBranch
+        - name: sourceBranch
           value: env/prod
-          name: targetBranch
+        - name: targetBranch
           value: env/prod-${{ vars.region }}
       - uses: copy
         config:
@@ -266,9 +266,9 @@ spec:
       - task:
           name: push-manifests
         vars:
-          name: sourceBranch
+        - name: sourceBranch
           value: env/prod
-          name: targetBranch
+        - name: targetBranch
           value: env/prod-${{ vars.region }}
       - uses: argocd-update
         continueOnError: true
@@ -305,9 +305,9 @@ spec:
       - task:
           name: prepare-workdir
         vars:
-          name: sourceBranch
+        - name: sourceBranch
           value: env/prod
-          name: targetBranch
+        - name: targetBranch
           value: env/prod-${{ vars.region }}
       - uses: copy
         config:
@@ -316,9 +316,9 @@ spec:
       - task:
           name: push-manifests
         vars:
-          name: sourceBranch
+        - name: sourceBranch
           value: env/prod
-          name: targetBranch
+        - name: targetBranch
           value: env/prod-${{ vars.region }}
       - uses: argocd-update
         continueOnError: true
