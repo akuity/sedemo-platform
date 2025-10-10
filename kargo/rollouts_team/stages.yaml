@@ -34,13 +34,13 @@ spec:
           - ${{ vars.path_src }}/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests.yaml
           setValues:
-            - name: image.tag
+            - key: image.tag
               value: ${{ imageFrom(vars.imageRepo).Tag }}
-            - name: kargo.stage
+            - key: kargo.stage
               value: ${{ ctx.stage }}
-            - name: namespace
+            - key: namespace
               value: demo-${{ ctx.stage }}
-            - name: nodePort
+            - key: nodePort
               value: 30000
       - task:
           name: push-manifests
@@ -88,13 +88,13 @@ spec:
           - ${{ vars.path_src }}/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests.yaml
           setValues:
-            - name: image.tag
+            - key: image.tag
               value: ${{ imageFrom(vars.imageRepo).Tag }}
-            - name: kargo.stage
+            - key: kargo.stage
               value: ${{ ctx.stage }}
-            - name: namespace
+            - key: namespace
               value: demo-${{ ctx.stage }}
-            - name: nodePort
+            - key: nodePort
               value: 30001
       - task:
           name: push-manifests
@@ -151,13 +151,13 @@ spec:
           - ${{ vars.path_src }}/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
           setValues:
-            - name: image.tag
+            - key: image.tag
               value: ${{ imageFrom(vars.imageRepo).Tag }}
-            - name: kargo.stage
+            - key: kargo.stage
               value: ${{ ctx.stage }}
-            - name: namespace
+            - key: namespace
               value: demo-${{ ctx.stage }}-${{ vars.region }}
-            - name: nodePort
+            - key: nodePort
               value: 30002
       - uses: helm-template
         vars:
@@ -170,13 +170,13 @@ spec:
           - ${{ vars.path_src }}/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
           setValues:
-            - name: image.tag
+            - key: image.tag
               value: ${{ imageFrom(vars.imageRepo).Tag }}
-            - name: kargo.stage
+            - key: kargo.stage
               value: ${{ ctx.stage }}
-            - name: namespace
+            - key: namespace
               value: demo-${{ ctx.stage }}-${{ vars.region }}
-            - name: nodePort
+            - key: nodePort
               value: 30003
       - uses: helm-template
         vars:
@@ -189,13 +189,13 @@ spec:
           - ${{ vars.path_src }}/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
           setValues:
-            - name: image.tag
+            - key: image.tag
               value: ${{ imageFrom(vars.imageRepo).Tag }}
-            - name: kargo.stage
+            - key: kargo.stage
               value: ${{ ctx.stage }}
-            - name: namespace
+            - key: namespace
               value: demo-${{ ctx.stage }}-${{ vars.region }}
-            - name: nodePort
+            - key: nodePort
               value: 30004
       - task:
           name: push-manifests
