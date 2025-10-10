@@ -202,6 +202,10 @@ spec:
         vars:
         - name: asPR
           value: "true"
+        - name: sourceBranch
+          value: env/staging
+        - name: targetBranch
+          value: env/prod
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage

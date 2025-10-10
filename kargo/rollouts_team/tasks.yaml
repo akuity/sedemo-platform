@@ -71,8 +71,8 @@ spec:
       if: ${{ vars.asPR == "true" }}
       config:
         repoURL: ${{ vars.gitRepo }}
-        createTargetBranch: ${{ vars.asPR }}
-        sourceBranch: ${{ vars.targetBranch }}
+        createTargetBranch: true
+        sourceBranch: ${{ vars.sourceBranch }}
         targetBranch: ${{ vars.targetBranch }}
     - uses: git-wait-for-pr
       as: wait-for-pr
