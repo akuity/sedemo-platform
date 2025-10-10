@@ -205,8 +205,10 @@ spec:
       - task:
           name: prepare-workdir
         vars  :
-          sourceBranch: env/prod
-          targetBranch: env/prod-${{ vars.region }}
+          name: sourceBranch
+          value: env/prod
+          name: targetBranch
+          value: env/prod-${{ vars.region }}
       - uses: copy
         config:
           inPath: ./src/manifests-${{ vars.region }}.yaml
@@ -214,8 +216,10 @@ spec:
       - task:
           name: push-manifests
         vars:
-          sourceBranch: env/prod
-          targetBranch: env/prod-${{ vars.region }}
+          name: sourceBranch
+          value: env/prod
+          name: targetBranch
+          value: env/prod-${{ vars.region }}
       - uses: argocd-update
         continueOnError: true
         config:
@@ -251,8 +255,10 @@ spec:
       - task:
           name: prepare-workdir
         vars:
-          sourceBranch: env/prod
-          targetBranch: env/prod-${{ vars.region }}
+          name: sourceBranch
+          value: env/prod
+          name: targetBranch
+          value: env/prod-${{ vars.region }}
       - uses: copy
         config:
           inPath: ./src/manifests-${{ vars.region }}.yaml
@@ -260,8 +266,10 @@ spec:
       - task:
           name: push-manifests
         vars:
-          sourceBranch: env/prod
-          targetBranch: env/prod-${{ vars.region }}
+          name: sourceBranch
+          value: env/prod
+          name: targetBranch
+          value: env/prod-${{ vars.region }}
       - uses: argocd-update
         continueOnError: true
         config:
@@ -297,8 +305,10 @@ spec:
       - task:
           name: prepare-workdir
         vars:
-          sourceBranch: env/prod
-          targetBranch: env/prod-${{ vars.region }}
+          name: sourceBranch
+          value: env/prod
+          name: targetBranch
+          value: env/prod-${{ vars.region }}
       - uses: copy
         config:
           inPath: ./src/manifests-${{ vars.region }}.yaml
@@ -306,8 +316,10 @@ spec:
       - task:
           name: push-manifests
         vars:
-          sourceBranch: env/prod
-          targetBranch: env/prod-${{ vars.region }}
+          name: sourceBranch
+          value: env/prod
+          name: targetBranch
+          value: env/prod-${{ vars.region }}
       - uses: argocd-update
         continueOnError: true
         config:
