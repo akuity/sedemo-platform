@@ -19,10 +19,8 @@ spec:
         value: https://github.com/eddiewebb/argodemo-rollouts-app
       - name: imageRepo
         value: ghcr.io/eddiewebb/rollouts
-      - name: path_src
-        value: ./src
-      - name: path_out
-        value: ./out
+      - name: targetBranch
+        value: env/dev
       steps:
       - task:
           name: prepare-workdir 
@@ -73,10 +71,8 @@ spec:
         value: https://github.com/eddiewebb/argodemo-rollouts-app
       - name: imageRepo
         value: ghcr.io/eddiewebb/rollouts
-      - name: path_src
-        value: ./src
-      - name: path_out
-        value: ./out
+      - name: targetBranch
+        value: env/staging
       steps:
       - task:
           name: prepare-workdir 
@@ -127,16 +123,8 @@ spec:
         value: https://github.com/eddiewebb/argodemo-rollouts-app
       - name: imageRepo
         value: ghcr.io/eddiewebb/rollouts
-      steps:
-      vars:
-      - name: gitRepo
-        value: https://github.com/eddiewebb/argodemo-rollouts-app
-      - name: imageRepo
-        value: ghcr.io/eddiewebb/rollouts
-      - name: path_src
-        value: ./src
-      - name: path_out
-        value: ./out
+      - name: targetBranch
+        value: env/prod
       steps:
       - task:
           name: prepare-workdir 
