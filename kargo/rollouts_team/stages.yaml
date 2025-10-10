@@ -48,7 +48,7 @@ spec:
         continueOnError: true
         config:
           apps:
-          - name: rollouts-app-staging
+          - name: rollouts-app-dev
             namespace: argocd
 ---
 apiVersion: kargo.akuity.io/v1alpha1
