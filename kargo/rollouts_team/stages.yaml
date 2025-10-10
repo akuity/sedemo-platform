@@ -28,10 +28,10 @@ spec:
           name: prepare-workdir 
       - uses: helm-template
         config:
+          releaseName: ${{ imageFrom(vars.imageRepo).Tag }}
           path: ${{ vars.path_src }}/deploy/chart
           valuesFiles:
-          - ${{ vars.path_s
-            releaseName: ${{ imageFrom(vars.imageRepo).Tag }}rc }}/deploy/chart/values.yaml
+          - ${{ vars.path_src }}/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests.yaml
           setValues:
             image.tag: ${{ imageFrom(vars.imageRepo).Tag }}
@@ -78,10 +78,10 @@ spec:
           name: prepare-workdir 
       - uses: helm-template
         config:
+          releaseName: ${{ imageFrom(vars.imageRepo).Tag }}
           path: ${{ vars.path_src }}/deploy/chart
           valuesFiles:
-          - ${{ vars.path_s
-            releaseName: ${{ imageFrom(vars.imageRepo).Tag }}rc }}/deploy/chart/values.yaml
+          - ${{ vars.path_src }}/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests.yaml
           setValues:
             image.tag: ${{ imageFrom(vars.imageRepo).Tag }}
