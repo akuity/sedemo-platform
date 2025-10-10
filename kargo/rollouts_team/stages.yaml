@@ -24,7 +24,8 @@ spec:
       - name: path_out
         value: ./out
       steps:
-      - uses: prepare-workdir   
+      - task:
+          name: prepare-workdir 
       - uses: helm-template
         config:
           path: ${{ vars.path_src }}/deploy/chart
@@ -36,7 +37,8 @@ spec:
             kargo.stage: ${{ ctx.stage }}
             namespace: demo-${{ ctx.stage }}
             nodePort: 30000
-      - uses: push-manifests
+      - task:
+          name: push-manifests
       - uses: argocd-update
         continueOnError: true
         config:
@@ -71,7 +73,8 @@ spec:
       - name: path_out
         value: ./out
       steps:
-      - uses: prepare-workdir   
+      - task:
+          name: prepare-workdir 
       - uses: helm-template
         config:
           path: ${{ vars.path_src }}/deploy/chart
@@ -83,7 +86,8 @@ spec:
             kargo.stage: ${{ ctx.stage }}
             namespace: demo-${{ ctx.stage }}
             nodePort: 30001
-      - uses: push-manifests
+      - task:
+          name: push-manifests
       - uses: argocd-update
         continueOnError: true
         config:
@@ -124,7 +128,8 @@ spec:
       - name: path_out
         value: ./out
       steps:
-      - uses: prepare-workdir   
+      - task:
+          name: prepare-workdir 
       - uses: helm-template
         vars:
         - name: region
@@ -167,8 +172,9 @@ spec:
             kargo.stage: ${{ ctx.stage }}
             namespace: demo-${{ ctx.stage }}-${{ vars.region }}
             nodePort: 30004
-      - uses: push-manifests
-        config:
+      - task:
+          name: push-manifests
+        vars:
           asPR: "true"
 ---
 apiVersion: kargo.akuity.io/v1alpha1
@@ -196,16 +202,18 @@ spec:
       - name: region
         value: amer-east
       steps:
-      - uses: prepare-workdir
-        config  :
+      - task:
+          name: prepare-workdir
+        vars  :
           sourceBranch: env/prod
           targetBranch: env/prod-${{ vars.region }}
       - uses: copy
         config:
           inPath: ./src/manifests-${{ vars.region }}.yaml
           outPath: ./out/manifests.yaml
-      - uses: push-manifests
-        config:
+      - task:
+          name: push-manifests
+        vars:
           sourceBranch: env/prod
           targetBranch: env/prod-${{ vars.region }}
       - uses: argocd-update
@@ -240,16 +248,18 @@ spec:
       - name: region
         value: amer-west
       steps:
-      - uses: prepare-workdir
-        config:
+      - task:
+          name: prepare-workdir
+        vars:
           sourceBranch: env/prod
           targetBranch: env/prod-${{ vars.region }}
       - uses: copy
         config:
           inPath: ./src/manifests-${{ vars.region }}.yaml
           outPath: ./out/manifests.yaml
-      - uses: push-manifests
-        config:
+      - task:
+          name: push-manifests
+        vars:
           sourceBranch: env/prod
           targetBranch: env/prod-${{ vars.region }}
       - uses: argocd-update
@@ -284,16 +294,18 @@ spec:
       - name: region
         value: emea
       steps:
-      - uses: prepare-workdir
-        config  :
+      - task:
+          name: prepare-workdir
+        vars:
           sourceBranch: env/prod
           targetBranch: env/prod-${{ vars.region }}
       - uses: copy
         config:
           inPath: ./src/manifests-${{ vars.region }}.yaml
           outPath: ./out/manifests.yaml
-      - uses: push-manifests
-        config:
+      - task:
+          name: push-manifests
+        vars:
           sourceBranch: env/prod
           targetBranch: env/prod-${{ vars.region }}
       - uses: argocd-update
