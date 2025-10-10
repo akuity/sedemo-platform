@@ -30,7 +30,8 @@ spec:
         config:
           path: ${{ vars.path_src }}/deploy/chart
           valuesFiles:
-          - ${{ vars.path_src }}/deploy/chart/values.yaml
+          - ${{ vars.path_s
+            releaseName: ${{ imageFrom(vars.imageRepo).Tag }}rc }}/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests.yaml
           setValues:
             image.tag: ${{ imageFrom(vars.imageRepo).Tag }}
@@ -79,7 +80,8 @@ spec:
         config:
           path: ${{ vars.path_src }}/deploy/chart
           valuesFiles:
-          - ${{ vars.path_src }}/deploy/chart/values.yaml
+          - ${{ vars.path_s
+            releaseName: ${{ imageFrom(vars.imageRepo).Tag }}rc }}/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests.yaml
           setValues:
             image.tag: ${{ imageFrom(vars.imageRepo).Tag }}
@@ -135,6 +137,7 @@ spec:
         - name: region
           value: amer-east
         config:
+          releaseName: ${{ imageFrom(vars.imageRepo).Tag }}
           path: ${{ vars.path_src }}/deploy/chart
           valuesFiles:
           - ${{ vars.path_src }}/deploy/chart/values.yaml
@@ -149,6 +152,7 @@ spec:
         - name: region
           value: amer-west
         config:
+          releaseName: ${{ imageFrom(vars.imageRepo).Tag }}
           path: ${{ vars.path_src }}/deploy/chart
           valuesFiles:
           - ${{ vars.path_src }}/deploy/chart/values.yaml
@@ -163,6 +167,7 @@ spec:
         - name: region
           value: emea
         config:
+          releaseName: ${{ imageFrom(vars.imageRepo).Tag }}
           path: ${{ vars.path_src }}/deploy/chart
           valuesFiles:
           - ${{ vars.path_src }}/deploy/chart/values.yaml
