@@ -125,6 +125,10 @@ spec:
         value: ghcr.io/eddiewebb/rollouts
       - name: targetBranch
         value: env/prod
+      - name: path_src
+        value: ./src
+      - name: path_out
+        value: ./out
       steps:
       - task:
           name: prepare-workdir 
