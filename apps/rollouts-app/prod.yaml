@@ -10,8 +10,8 @@ spec:
   source:
     repoURL: https://github.com/eddiewebb/argodemo-rollouts-app
     # path is root since our Kargo job commits a clean and fully rendered manifest o environment branch
-    path: .
-    targetRevision: env/prod-amer-east
+    path: ./amer-east
+    targetRevision: env/prod
   destination:
     server: http://cluster-eddie-local:8001
     namespace: demo-prod-amer-east
@@ -34,8 +34,8 @@ spec:
   source:
     repoURL: https://github.com/eddiewebb/argodemo-rollouts-app
     # path is root since our Kargo job commits a clean and fully rendered manifest o environment branch
-    path: .
-    targetRevision: env/prod-amer-west
+    path: ./amer-west
+    targetRevision: env/prod
   destination:
     server: http://cluster-eddie-local:8001
     namespace: demo-prod-amer-west
@@ -58,8 +58,8 @@ spec:
   source:
     repoURL: https://github.com/eddiewebb/argodemo-rollouts-app
     # path is root since our Kargo job commits a clean and fully rendered manifest o environment branch
-    path: .
-    targetRevision: env/prod-emea
+    path: ./emea
+    targetRevision: env/prod
   destination:
     server: http://cluster-eddie-local:8001
     namespace: demo-prod-emea
