@@ -145,7 +145,7 @@ spec:
           path: ${{ vars.path_src }}/deploy/chart
           valuesFiles:
           - ${{ vars.path_src }}/deploy/chart/values.yaml
-          outPath: ${{ vars.path_out }}/${{ vars.region }}/manifests.yaml
+          outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
           setValues:
             - key: image.tag
               value: ${{ imageFrom(vars.imageRepo).Tag }}
@@ -162,7 +162,7 @@ spec:
           path: ${{ vars.path_src }}/deploy/chart
           valuesFiles:
           - ${{ vars.path_src }}/deploy/chart/values.yaml
-          outPath: ${{ vars.path_out }}/${{ vars.region }}/manifests.yaml
+          outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
           setValues:
             - key: image.tag
               value: ${{ imageFrom(vars.imageRepo).Tag }}
@@ -179,7 +179,7 @@ spec:
           path: ${{ vars.path_src }}/deploy/chart
           valuesFiles:
           - ${{ vars.path_src }}/deploy/chart/values.yaml
-          outPath: ${{ vars.path_out }}/${{ vars.region }}/manifests.yaml
+          outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
           setValues:
             - key: image.tag
               value: ${{ imageFrom(vars.imageRepo).Tag }}
