@@ -73,7 +73,7 @@ spec:
       config:
         repoURL: ${{ vars.gitRepo }}
         createTargetBranch: true
-        sourceBranch: ${{ outputs.push.branch }}
+        sourceBranch: ${{ task.outputs['push'].branch }}
         targetBranch: ${{ vars.targetBranch }}
     - uses: git-wait-for-pr
       as: wait-for-pr
