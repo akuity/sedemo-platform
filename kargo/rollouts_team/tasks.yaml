@@ -80,4 +80,4 @@ spec:
       if: ${{ vars.asPR == "true" }}
       config:
         repoURL: ${{ vars.gitRepo }}
-        prNumber: ${{ outputs['open-pr'].pr.id }}
+        prNumber: ${{ task.outputs['open-pr'].pr.id }}
