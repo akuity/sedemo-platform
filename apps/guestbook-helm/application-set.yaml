@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: guestbook
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - stage: dev
+      - stage: prod
+      - stage: prod2
+  template:
+    metadata:
+      name: guestbook-{{stage}}
+      annotations:
+        kargo.akuity.io/authorized-stage: guestbook-helm:{{stage}}
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/argoproj/argocd-example-apps
+        path: helm-guestbook
+        targetRevision: HEAD
+      destination:
+        server: http://cluster-eddie-local:8001
+        namespace: guestbook-{{stage}}
+      syncPolicy:
+        automated:
+          prune: true
+          enabled: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
