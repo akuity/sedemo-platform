@@ -7,7 +7,7 @@ This repo respresents the typical objects under control of a central infrastruct
 ### TODOS
 
 - [x] Delcarative Management (seeting in argo cluster settings)
-- [ ] Use Application set for app environments.
+- [ ] Use Application set for app environments
 - [ ] Kargo ROles (dev vs platform)
 - [x] Kargo declarative
 - [ ] Push analysisTemplate for use in verifications

@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: rollouts-app
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - stage: dev
+      - stage: staging 
+      - stage: prod-amer-east
+      - stage: prod-amer-west
+      - stage: prod-emea
+  template:
+    metadata:
+      name: ollouts-app-{{stage}}
+      annotations:
+        kargo.akuity.io/authorized-stage: ollouts-app:{{stage}}
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/eddiewebb/argodemo-rollouts-app
+        targetRevision: env/{{stage}}
+        path: .
+      destination:
+        server: http://cluster-eddie-local:8001
+        namespace: demo-{{stage}}
+      syncPolicy:
+        automated:
+          prune: true
+          enabled: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
