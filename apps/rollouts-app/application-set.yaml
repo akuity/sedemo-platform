@@ -14,9 +14,9 @@ spec:
       - stage: prod-emea
   template:
     metadata:
-      name: ollouts-app-{{stage}}
+      name: rollouts-app-{{stage}}
       annotations:
-        kargo.akuity.io/authorized-stage: ollouts-app:{{stage}}
+        kargo.akuity.io/authorized-stage: rollouts-app:{{stage}}
     spec:
       project: default
       source:
