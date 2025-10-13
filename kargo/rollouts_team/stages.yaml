@@ -40,8 +40,6 @@ spec:
               value: ${{ imageFrom(vars.imageRepo).Tag }}
             - key: kargo.stage
               value: ${{ ctx.stage }}
-            - key: nodePort
-              value: "30000"
       - task:
           name: push-manifests
       - uses: argocd-update
@@ -94,8 +92,6 @@ spec:
               value: ${{ imageFrom(vars.imageRepo).Tag }}
             - key: kargo.stage
               value: ${{ ctx.stage }}
-            - key: nodePort
-              value: "30001"
       - task:
           name: push-manifests
       - uses: argocd-update
@@ -151,8 +147,6 @@ spec:
               value: ${{ imageFrom(vars.imageRepo).Tag }}
             - key: kargo.stage
               value: ${{ ctx.stage }}
-            - key: nodePort
-              value: "30002"
       - uses: helm-template
         vars:
         - name: region
@@ -168,8 +162,6 @@ spec:
               value: ${{ imageFrom(vars.imageRepo).Tag }}
             - key: kargo.stage
               value: ${{ ctx.stage }}
-            - key: nodePort
-              value: "30003"
       - uses: helm-template
         vars:
         - name: region
@@ -185,8 +177,6 @@ spec:
               value: ${{ imageFrom(vars.imageRepo).Tag }}
             - key: kargo.stage
               value: ${{ ctx.stage }}
-            - key: nodePort
-              value: "30004"
       - task:
           name: push-manifests
         vars:
