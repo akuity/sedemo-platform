@@ -11,7 +11,7 @@ spec:
     path: manifests/install.yaml
     directory:
       recurse: false
-      include: ["install.yaml"]
+      include: "install.yaml"
   destination:
         server: http://cluster-eddie-local:8001
         namespace: argo-rollouts
