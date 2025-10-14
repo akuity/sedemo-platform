@@ -146,7 +146,7 @@ spec:
             - key: image.tag
               value: ${{ imageFrom(vars.imageRepo).Tag }}
             - key: kargo.stage
-              value: ${{ ctx.stage }}
+              value: ${{ ctx.stage }}-amer-east
       - uses: helm-template
         vars:
         - name: region
@@ -161,7 +161,7 @@ spec:
             - key: image.tag
               value: ${{ imageFrom(vars.imageRepo).Tag }}
             - key: kargo.stage
-              value: ${{ ctx.stage }}
+              value: ${{ ctx.stage }}-amer-west
       - uses: helm-template
         vars:
         - name: region
@@ -176,7 +176,7 @@ spec:
             - key: image.tag
               value: ${{ imageFrom(vars.imageRepo).Tag }}
             - key: kargo.stage
-              value: ${{ ctx.stage }}
+              value: ${{ ctx.stage }}-emea
       - task:
           name: push-manifests
         vars:
