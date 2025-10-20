@@ -68,7 +68,7 @@ spec:
           path: ./src/oom/manifest/deployment.yaml
           updates:
             - key: spec.template.spec.containers.0.image
-              value: "${{ imageFrom(vars.imageRepo).Tag }}"
+              value: "${{ imageFrom(vars.imageRepo).RepoURL }}:${{ imageFrom(vars.imageRepo).Tag }}"
       - uses: copy
         config:
           inPath: ./src/oom/manifest/deployment.yaml
