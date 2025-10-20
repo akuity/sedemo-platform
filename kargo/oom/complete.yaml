@@ -69,6 +69,10 @@ spec:
           updates:
             - key: spec.template.spec.containers.0.image
               value: ${{ imageFrom("ghcr.io/eddiewebb/oom") }}
+      - uses: copy
+        config:
+          inPath: ./src/oom/manifest/deployment.yaml
+          outPath: ./out/oom/manifest/deployment.yaml
       - uses: git-commit
         as: commit
         config:
