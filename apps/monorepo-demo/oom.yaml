@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: oom
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/akuity/sedemo-app-monorepo
+    path: oom/manifest
+  destination:
+        server: http://cluster-eddie-local:8001
+        namespace: oom-demo
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
