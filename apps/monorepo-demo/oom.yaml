@@ -10,6 +10,7 @@ spec:
   source:
     repoURL: https://github.com/akuity/sedemo-app-monorepo
     path: oom/manifest
+    targetRevision: env/dev
   destination:
         server: http://cluster-eddie-local:8001
         namespace: oom-demo
