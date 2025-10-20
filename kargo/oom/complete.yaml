@@ -55,7 +55,7 @@ spec:
         config:
           repoURL: ${{ vars.gitRepo }}
           checkout:
-          - branch: ${{ vars.sourceBranch }}
+          - branch: main
             path: ${{ vars.path_src }}
           - branch: ${{ vars.targetBranch }}
             create: true
@@ -75,7 +75,6 @@ spec:
           path: ${{ vars.path_out }}
           message: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
       - uses: git-push
-        if: ${{ vars.asPR != "true" }}
         config:
           path: ${{ vars.path_out }}
           targetBranch: ${{ vars.targetBranch }}
