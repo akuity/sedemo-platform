@@ -68,7 +68,7 @@ spec:
           path: ./src/oom/manifest/deployment.yaml
           updates:
             - key: spec.template.spec.containers.0.image
-              value: ${{ imageFrom("ghcr.io/eddiewebb/oom") }}
+              value: "${{ imageFrom(vars.imageRepo).Tag }}"
       - uses: copy
         config:
           inPath: ./src/oom/manifest/deployment.yaml
