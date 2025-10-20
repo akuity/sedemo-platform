@@ -16,9 +16,9 @@ kargo create credentials ghcr-creds \
 --repo-url ghcr.io/${GITHUB_USER}/rollouts
 
 
-export PROJECT_NAME="rollouts-app"
+export PROJECT_NAME="oom-demo"
 kargo create credentials ghcr-creds \
---project oom-demo --image \
+--project ${PROJECT_NAME} --image \
 --username ${GITHUB_USER} --password ${KARGO_QUICKSTART_PAT} \
 --repo-url ghcr.io/${GITHUB_USER}/oom
 

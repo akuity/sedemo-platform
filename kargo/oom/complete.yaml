@@ -68,7 +68,7 @@ spec:
           path: ./src/oom/manifest/deployment.yaml
           updates:
           - key: image.tag
-            value: ${{ imageFrom("eddiewebb/oom").Tag }}
+            value: ${{ imageFrom("ghcr.io/eddiewebb/oom").Tag }}
       - uses: git-commit
         as: commit
         config:
