@@ -21,3 +21,10 @@ kargo create credentials ghcr-creds \
 --project oom-demo --image \
 --username ${GITHUB_USER} --password ${KARGO_QUICKSTART_PAT} \
 --repo-url ghcr.io/${GITHUB_USER}/oom
+
+
+
+kargo create credentials github-creds \
+--project $PROJECT_NAME --git \
+--username ${GITHUB_USER} --password ${KARGO_QUICKSTART_PAT} \
+--repo-url https://github.com/akuity/sedemo-app-monorepo
