@@ -8,8 +8,8 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/akuity/sedemo-app-monorepo
-    path: oom/manifest
+    repoURL: https://github.com/akuity/akp-demo
+    path: oom-demo
     targetRevision: env/dev
   destination:
         server: http://cluster-eddie-local:8001
@@ -17,4 +17,3 @@ spec:
   syncPolicy:
     syncOptions:
     - CreateNamespace=true
-    - Replace=true
