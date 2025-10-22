@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: https://github.com/akuity/akp-demo
     path: oom-demo
-    targetRevision: env/dev
+    targetRevision: main
   destination:
         server: http://cluster-eddie-local:8001
         namespace: oom-demo
