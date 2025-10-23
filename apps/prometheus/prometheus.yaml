@@ -11,11 +11,18 @@ spec:
     targetRevision: 27.41.2
     helm:
       releaseName: prometheus
+      valuesObject:
+        ingress:
+          enabled: true
+          path: /
+          hosts:
+          - prometheus.prometheus.k8s.orb.local
       valuesFiles:
-      - $values/value-overrides/prometheus-values.yaml
+      - $values/prometheus-values.yaml
   - repoURL: https://github.com/akuity/sedemo-platform/
     targetRevision: main
     ref: values #used in url above for valuesFile
+    path: value-overrides
   destination:
         server: http://cluster-eddie-local:8001
         namespace: prometheus
