@@ -14,3 +14,4 @@ spec:
       repoURL: https://github.com/eddiewebb/argodemo-rollouts-app
       includePaths:
       - deploy
+      - Dockerfile
