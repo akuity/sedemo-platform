@@ -14,7 +14,7 @@ spec:
       valuesObject:
         ingress:
           enabled: true
-          kind: nginx
+          ingressClassName: nginx
           path: /
           hosts:
           - prometheus.prometheus.k8s.orb.local
