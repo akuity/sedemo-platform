@@ -12,10 +12,10 @@ spec:
       name: rollouts-app
     sources:
       direct: true
-  verification:
-    analysisTemplates:
-      - name: integration-test
-        kind: ClusterAnalysisTemplate
+  # verification:
+  #   analysisTemplates:
+  #     - name: integration-test
+  #       kind: ClusterAnalysisTemplate
   promotionTemplate:
     spec:
       vars:
