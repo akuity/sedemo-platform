@@ -23,6 +23,8 @@ spec:
   - repoURL: https://github.com/akuity/sedemo-platform/
     targetRevision: main
     ref: values #used in url above for valuesFile
+    directory:
+      recurse: true
   destination:
         server: http://cluster-eddie-local:8001
         namespace: prometheus
