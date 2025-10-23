@@ -12,12 +12,13 @@ spec:
     helm:
       releaseName: prometheus
       valuesObject:
-        ingress:
-          enabled: true
-          ingressClassName: nginx
-          path: /
-          hosts:
-          - prometheus.prometheus.k8s.orb.local
+        server:
+          ingress:
+            enabled: true
+            ingressClassName: nginx
+            path: /
+            hosts:
+            - prometheus.prometheus.k8s.orb.local
       valuesFiles:
       - $values/value-overrides/prometheus-values.yaml
   - repoURL: https://github.com/akuity/sedemo-platform/
