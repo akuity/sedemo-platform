@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: prometheus
+  namespace: argocd
+spec:
+  project: default
+  sources:
+  - chart: prometheus
+    repoURL: https://prometheus-community.github.io/helm-charts
+    targetRevision: 27.41.2
+    helm:
+      releaseName: prometheus
+      valuesFiles:
+      - $values/components/prometheus/values.yaml
+  - repoURL: https://github.com/akuity/sedemo-platform/tree/main
+    targetRevision: main
+    ref: values #used in url above for valuesFile
+  destination:
+        server: http://cluster-eddie-local:8001
+        namespace: prometheus
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
