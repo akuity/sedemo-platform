@@ -12,8 +12,8 @@ spec:
     helm:
       releaseName: prometheus
       valuesFiles:
-      - $values/components/prometheus/values.yaml
-  - repoURL: https://github.com/akuity/sedemo-platform/tree/main
+      - $values/value-overrides/prometheus-values.yaml
+  - repoURL: https://github.com/akuity/sedemo-platform/
     targetRevision: main
     ref: values #used in url above for valuesFile
   destination:
