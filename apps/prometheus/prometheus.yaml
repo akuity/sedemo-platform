@@ -11,19 +11,19 @@ spec:
     targetRevision: 27.41.2
     helm:
       releaseName: prometheus
-      valuesObject:
-        server:
-          ingress:
-            enabled: true
-            ingressClassName: nginx
-            path: /
-            hosts:
-            - prometheus.prometheus.k8s.orb.local
+      # valuesObject:
+      #   server:
+      #     ingress:
+      #       enabled: true
+      #       ingressClassName: nginx
+      #       path: /
+      #       hosts:
+      #       - prometheus.prometheus.k8s.orb.local
       valuesFiles:
-      - $values/value-overrides/prometheus-values.yaml
-  - repoURL: https://github.com/akuity/sedemo-platform/
+      - "$localValues/value-overrides/prometheus-values.yaml"
+  - repoURL: https://github.com/akuity/sedemo-platform.git
     targetRevision: main
-    ref: values #used in url above for valuesFile
+    ref: localValues 
     directory:
       recurse: true
   destination:
