@@ -238,8 +238,8 @@ server:
   ##     secretKeyRef:
   ##       name: mysecret
   ##       key: username
-  env: []
-
+  env: 
+  - --storage.tsdb.retention.time=1d
   # List of flags to override default parameters, e.g:
   # - --enable-feature=agent
   # - --storage.agent.retention.max-time=30m
