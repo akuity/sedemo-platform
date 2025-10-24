@@ -238,13 +238,14 @@ server:
   ##     secretKeyRef:
   ##       name: mysecret
   ##       key: username
-  env: 
-  - --storage.tsdb.retention.time=1d
+  env: []
+  
   # List of flags to override default parameters, e.g:
   # - --enable-feature=agent
   # - --storage.agent.retention.max-time=30m
   # - --config.file=/etc/config/prometheus.yml
-  defaultFlagsOverride: []
+  defaultFlagsOverride: 
+  - --storage.tsdb.retention.time=1d
 
   extraFlags:
     - web.enable-lifecycle
