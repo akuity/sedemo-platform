@@ -848,26 +848,48 @@ serverFiles:
     scrape_configs:
       - job_name: 'rollouts-demo-endpoints'
         kubernetes_sd_configs:
-          - role: service
+          - role: pod
+            namespace: ingress-nginx
         honor_labels: true
         scrape_interval: 15s
+
         relabel_configs:
-          # only scrape services with fastcrape annotation
-          - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_fastscrape] # Replace 'env' with your label key
-            action: keep
-            regex: true 
-          # capture service labels and pod name
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scheme]
+            action: replace
+            regex: (https?)
+            target_label: __scheme__
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_port, __meta_kubernetes_pod_ip]
+            action: replace
+            regex: (\d+);(([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4})
+            replacement: '[$2]:$1'
+            target_label: __address__
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_port, __meta_kubernetes_pod_ip]
+            action: replace
+            regex: (\d+);((([0-9]+?)(\.|$)){4})
+            replacement: $2:$1
+            target_label: __address__
           - action: labelmap
-            regex: __meta_kubernetes_service_label_(.+)
+            regex: __meta_kubernetes_pod_annotation_prometheus_io_param_(.+)
+            replacement: __param_$1
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
           - source_labels: [__meta_kubernetes_namespace]
             action: replace
             target_label: namespace
-          - source_labels: [__meta_kubernetes_service_name]
+          - source_labels: [__meta_kubernetes_pod_name]
             action: replace
-            target_label: service
+            target_label: pod
+          - source_labels: [__meta_kubernetes_pod_phase]
+            regex: Pending|Succeeded|Failed|Completed
+            action: drop
           - source_labels: [__meta_kubernetes_pod_node_name]
             action: replace
             target_label: node
+
       # dont scrape prometheus metrics
       # - job_name: prometheus
       #   static_configs:
