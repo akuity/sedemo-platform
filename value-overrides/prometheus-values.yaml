@@ -851,7 +851,6 @@ serverFiles:
           - role: service
         honor_labels: true
         scrape_interval: 15s
-        evaluation_interval: 15s
         relabel_configs:
           # only scrape services with fastcrape annotation
           - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_fastscrape] # Replace 'env' with your label key
