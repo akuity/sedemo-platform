@@ -244,8 +244,8 @@ server:
   # - --enable-feature=agent
   # - --storage.agent.retention.max-time=30m
   # - --config.file=/etc/config/prometheus.yml
-  defaultFlagsOverride: 
-  - --storage.tsdb.retention.time=1d
+  defaultFlagsOverride: []
+  #- --storage.tsdb.retention.time=1d
 
   extraFlags:
     - web.enable-lifecycle
