@@ -1226,7 +1226,7 @@ extraManifests: []
 alertmanager:
   ## If false, alertmanager will not be installed
   ##
-  enabled: true
+  enabled: false
 
   persistence:
     ## If true, storage will create or use Persistence Volume
