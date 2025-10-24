@@ -859,19 +859,6 @@ serverFiles:
         - source_labels: [__meta_kubernetes_service_name]
           regex: ingress-nginx-controller-metrics
           action: keep
-        # set metrics path from annotation if present (fall back to /metrics)
-        - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
-          action: replace
-          target_label: __metrics_path__
-          regex: (.+)
-        - action: replace
-          target_label: __metrics_path__
-          replacement: /metrics
-        # if service has prometheus.io/port annotation, use it, otherwise use service port
-        - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
-          regex: (.+?)(?:;(.+))?
-          target_label: __address__
-          replacement: $1:$2
 
       # dont scrape prometheus metrics
       # - job_name: prometheus
