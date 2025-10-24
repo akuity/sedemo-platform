@@ -865,7 +865,7 @@ serverFiles:
       # default named port `https`. This works for single API server deployments as
       # well as HA API server deployments.
       - job_name: 'kubernetes-apiservers'
-        static_configs: []. # this shoudl disable this job...
+        static_configs: [] # this shoudl disable this job...
         kubernetes_sd_configs:
           - role: endpoints
 
