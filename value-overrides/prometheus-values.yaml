@@ -844,10 +844,11 @@ serverFiles:
       - /etc/config/alerts
 
     scrape_configs:
-      - job_name: prometheus
-        static_configs:
-          - targets:
-            - localhost:9090
+      # dont scrape prometheus metrics
+      # - job_name: prometheus
+      #   static_configs:
+      #     - targets:
+      #       - localhost:9090
 
       # A scrape configuration for running Prometheus on a Kubernetes cluster.
       # This uses separate scrape configs for cluster components (i.e. API server, node)
@@ -864,7 +865,7 @@ serverFiles:
       # default named port `https`. This works for single API server deployments as
       # well as HA API server deployments.
       - job_name: 'kubernetes-apiservers'
-
+        static_configs: []. # this shoudl disable this job...
         kubernetes_sd_configs:
           - role: endpoints
 
@@ -898,6 +899,7 @@ serverFiles:
             regex: default;kubernetes;https
 
       - job_name: 'kubernetes-nodes'
+        static_configs: [] #disable this job
 
         # Default to scraping over https. If required, just disable this or change to
         # `http`.
@@ -935,7 +937,7 @@ serverFiles:
 
 
       - job_name: 'kubernetes-nodes-cadvisor'
-
+        static_configs: [] #disable this job
         # Default to scraping over https. If required, just disable this or change to
         # `http`.
         scheme: https
@@ -1093,7 +1095,7 @@ serverFiles:
 
       - job_name: 'prometheus-pushgateway'
         honor_labels: true
-
+        static_configs: [] #disable
         kubernetes_sd_configs:
           - role: service
 
@@ -1109,6 +1111,7 @@ serverFiles:
       #
       # * `prometheus.io/probe`: Only probe services that have a value of `true`
       - job_name: 'kubernetes-services'
+        static_configs: [] #disable this job
         honor_labels: true
 
         metrics_path: /probe
