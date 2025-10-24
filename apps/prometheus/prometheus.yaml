@@ -6,6 +6,11 @@ metadata:
 spec:
   project: default
   sources:
+  - repoURL: https://github.com/akuity/sedemo-platform.git
+    targetRevision: main
+    ref: localValues 
+    directory:
+      recurse: true
   - chart: prometheus
     repoURL: https://prometheus-community.github.io/helm-charts
     targetRevision: 27.41.2
@@ -21,11 +26,6 @@ spec:
       #       - prometheus.prometheus.k8s.orb.local
       valuesFiles:
       - "$localValues/value-overrides/prometheus-values.yaml"
-  - repoURL: https://github.com/akuity/sedemo-platform.git
-    targetRevision: main
-    ref: localValues 
-    directory:
-      recurse: true
   destination:
         server: http://cluster-eddie-local:8001
         namespace: prometheus
