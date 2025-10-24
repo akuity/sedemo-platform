@@ -25,10 +25,11 @@ spec:
       #       hosts:
       #       - prometheus.prometheus.k8s.orb.local
       valuesFiles:
-      - "$localValues/value-overrides/prometheus-values.yaml"
+      - $localValues/value-overrides/prometheus-values.yaml
   destination:
         server: http://cluster-eddie-local:8001
         namespace: prometheus
   syncPolicy:
     syncOptions:
     - CreateNamespace=true
+    - ServerSideApply=true
