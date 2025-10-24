@@ -856,8 +856,8 @@ serverFiles:
         scrape_interval: 15s
 
         relabel_configs:    # only keep the ingress controller service in the expected namespace
-        - source_labels: [__meta_kubernetes_service_namespace, __meta_kubernetes_service_name]
-          regex: ingress-nginx;ingress-nginx-controller-metrics
+        - source_labels: [__meta_kubernetes_service_name]
+          regex: ingress-nginx-controller-metrics
           action: keep
         # set metrics path from annotation if present (fall back to /metrics)
         - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
