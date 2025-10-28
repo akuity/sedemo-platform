@@ -39,6 +39,7 @@ spec:
           valuesFiles:
           - ${{ vars.path_src }}/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests.yaml
+          namespace: demo-dev
           setValues:
             - key: image.tag
               value: ${{ imageFrom(vars.imageRepo).Tag }}
@@ -91,6 +92,7 @@ spec:
           valuesFiles:
           - ${{ vars.path_src }}/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests.yaml
+          namespace: demo-staging
           setValues:
             - key: image.tag
               value: ${{ imageFrom(vars.imageRepo).Tag }}
@@ -146,6 +148,7 @@ spec:
           valuesFiles:
           - ${{ vars.path_src }}/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
+          namespace: demo-prod-amer-east
           setValues:
             - key: image.tag
               value: ${{ imageFrom(vars.imageRepo).Tag }}
@@ -161,6 +164,7 @@ spec:
           valuesFiles:
           - ${{ vars.path_src }}/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
+          namespace: demo-prod-amer-west
           setValues:
             - key: image.tag
               value: ${{ imageFrom(vars.imageRepo).Tag }}
@@ -176,6 +180,7 @@ spec:
           valuesFiles:
           - ${{ vars.path_src }}/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
+          namespace: demo-prod-emea
           setValues:
             - key: image.tag
               value: ${{ imageFrom(vars.imageRepo).Tag }}
