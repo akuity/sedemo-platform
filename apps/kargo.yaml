@@ -30,6 +30,7 @@ spec:
   project: default
   source:
     chart: kargo-template
+    targetRevision: 0.1.0
     repoURL: https://github.com/akuity/sedemo-platform
     path: kargo-helm
     directory:
