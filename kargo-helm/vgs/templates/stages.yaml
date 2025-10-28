@@ -41,14 +41,14 @@ spec:
           namespace: {{ .Values.projectName }}-dev
           setValues:
             - key: image.tag
-              value: "{{ printf "${{ imageFrom(\"%s\").Tag }}" .Values.artifactUrl }}"
+              value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }}"
             - key: kargo.stage
               value: dev
       - uses: git-commit
         as: commit
         config:
           path: {{ .Values.git.outPath }}
-          message: "Promote {{ printf "${{ imageFrom(\"%s\").Tag }}" .Values.artifactUrl }} to dev [skip ci]"
+          message: "Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }} to dev [skip ci]"
       - uses: git-push
         config:
           path: {{ .Values.git.outPath }}
@@ -100,14 +100,14 @@ spec:
           namespace: {{ .Values.projectName }}-staging
           setValues:
             - key: image.tag
-              value: "{{ printf "${{ imageFrom(\"%s\").Tag }}" .Values.artifactUrl }}"
+              value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }}"
             - key: kargo.stage
               value: staging
       - uses: git-commit
         as: commit
         config:
           path: {{ .Values.git.outPath }}
-          message: "Promote {{ printf "${{ imageFrom(\"%s\").Tag }}" .Values.artifactUrl }} to staging [skip ci]"
+          message: "Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }} to staging [skip ci]"
       - uses: git-push
         config:
           path: {{ .Values.git.outPath }}
@@ -160,7 +160,7 @@ spec:
           namespace: {{ .Values.projectName }}-prod-amer-east
           setValues:
             - key: image.tag
-              value: "{{ printf "${{ imageFrom(\"%s\").Tag }}" .Values.artifactUrl }}"
+              value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }}"
             - key: kargo.stage
               value: prod-amer-east
       - uses: helm-template
@@ -173,7 +173,7 @@ spec:
           namespace: {{ .Values.projectName }}-prod-amer-west
           setValues:
             - key: image.tag
-              value: "{{ printf "${{ imageFrom(\"%s\").Tag }}" .Values.artifactUrl }}"
+              value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }}"
             - key: kargo.stage
               value: prod-amer-west
       - uses: helm-template
@@ -186,14 +186,14 @@ spec:
           namespace: {{ .Values.projectName }}-prod-emea
           setValues:
             - key: image.tag
-              value: "{{ printf "${{ imageFrom(\"%s\").Tag }}" .Values.artifactUrl }}"
+              value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }}"
             - key: kargo.stage
               value: prod-emea
       - uses: git-commit
         as: commit
         config:
           path: {{ .Values.git.outPath }}
-          message: "Promote {{ printf "${{ imageFrom(\"%s\").Tag }}" .Values.artifactUrl }} to prod [skip ci]"
+          message: "Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }} to prod [skip ci]"
       - uses: git-push
         as: push
         config:
@@ -250,7 +250,7 @@ spec:
         as: commit
         config:
           path: {{ .Values.git.outPath }}
-          message: "Promote {{ printf "${{ imageFrom(\"%s\").Tag }}" .Values.artifactUrl }} to prod-amer-east [skip ci]"
+          message: "Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }} to prod-amer-east [skip ci]"
       - uses: git-push
         config:
           path: {{ .Values.git.outPath }}
@@ -300,7 +300,7 @@ spec:
         as: commit
         config:
           path: {{ .Values.git.outPath }}
-          message: "Promote {{ printf "${{ imageFrom(\"%s\").Tag }}" .Values.artifactUrl }} to prod-amer-west [skip ci]"
+          message: "Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }} to prod-amer-west [skip ci]"
       - uses: git-push
         config:
           path: {{ .Values.git.outPath }}
@@ -350,7 +350,7 @@ spec:
         as: commit
         config:
           path: {{ .Values.git.outPath }}
-          message: "Promote {{ printf "${{ imageFrom(\"%s\").Tag }}" .Values.artifactUrl }} to prod-emea [skip ci]"
+          message: "Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }} to prod-emea [skip ci]"
       - uses: git-push
         config:
           path: {{ .Values.git.outPath }}
