@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: api-conformance-crunch42
+  namespace: {{ .Values.projectName }}
+spec:
+  metrics:
+  - name: policy-analysis
+    provider:
+      job:
+        spec:
+          template:
+            spec:
+              containers:
+              - name: sleep
+                image: alpine:latest
+                command: [sleep, "10"]
+              restartPolicy: Never
+          backoffLimit: 1

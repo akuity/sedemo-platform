@@ -1,0 +1,17 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: {{ .Values.projectName }}
+  namespace: {{ .Values.projectName }}
+spec:
+  subscriptions:
+  - image:
+      repoURL: {{ .Values.artifactUrl }}
+      discoveryLimit: 5
+      imageSelectionStrategy: Lexical
+      allowTags: ^\d*-[a-z]*$
+  - git:
+      repoURL: {{ .Values.repoUrl }}
+      includePaths:
+      - deploy
+      - Dockerfile
