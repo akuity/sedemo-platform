@@ -25,7 +25,7 @@ spec:
         path: .
       destination:
         server: http://cluster-eddie-local:8001
-        namespace: demo-{{stage}}
+        namespace: vgs-demo-{{stage}}
       syncPolicy:
         automated:
           prune: true
