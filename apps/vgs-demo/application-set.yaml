@@ -21,7 +21,7 @@ spec:
       project: default
       source:
         repoURL: https://github.com/eddiewebb/argodemo-rollouts-app
-        targetRevision: env/{{stage}}
+        targetRevision: env/vgs-demo-{{stage}}
         path: .
       destination:
         server: http://cluster-eddie-local:8001
