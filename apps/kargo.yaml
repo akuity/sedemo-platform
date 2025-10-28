@@ -32,9 +32,7 @@ spec:
     chart: kargo-template
     targetRevision: 0.1.0
     repoURL: https://github.com/akuity/sedemo-platform
-    path: kargo-helm
-    directory:
-      recurse: true
+    path: kargo-helm/vgs
   destination:
     name: kargo
   syncPolicy:
