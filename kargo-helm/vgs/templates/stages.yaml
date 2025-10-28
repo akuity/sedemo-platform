@@ -37,6 +37,7 @@ spec:
           valuesFiles:
           - {{ .Values.git.srcPath }}/deploy/chart/values.yaml
           outPath: {{ .Values.git.outPath }}/manifests.yaml
+          namespace: {{ .Values.projectName }}-dev
           setValues:
             - key: image.tag
               value: {{ printf "${{ imageFrom(%s).Tag }}" .Values.artifactUrl }}
@@ -95,6 +96,7 @@ spec:
           valuesFiles:
           - {{ .Values.git.srcPath }}/deploy/chart/values.yaml
           outPath: {{ .Values.git.outPath }}/manifests.yaml
+          namespace: {{ .Values.projectName }}-staging
           setValues:
             - key: image.tag
               value: {{ printf "${{ imageFrom(%s).Tag }}" .Values.artifactUrl }}
@@ -154,6 +156,7 @@ spec:
           valuesFiles:
           - {{ .Values.git.srcPath }}/deploy/chart/values.yaml
           outPath: {{ .Values.git.outPath }}/manifests-amer-east.yaml
+          namespace: {{ .Values.projectName }}-prod-amer-east
           setValues:
             - key: image.tag
               value: {{ printf "${{ imageFrom(%s).Tag }}" .Values.artifactUrl }}
@@ -166,6 +169,7 @@ spec:
           valuesFiles:
           - {{ .Values.git.srcPath }}/deploy/chart/values.yaml
           outPath: {{ .Values.git.outPath }}/manifests-amer-west.yaml
+          namespace: {{ .Values.projectName }}-prod-amer-west
           setValues:
             - key: image.tag
               value: {{ printf "${{ imageFrom(%s).Tag }}" .Values.artifactUrl }}
@@ -178,6 +182,7 @@ spec:
           valuesFiles:
           - {{ .Values.git.srcPath }}/deploy/chart/values.yaml
           outPath: {{ .Values.git.outPath }}/manifests-emea.yaml
+          namespace: {{ .Values.projectName }}-prod-emea
           setValues:
             - key: image.tag
               value: {{ printf "${{ imageFrom(%s).Tag }}" .Values.artifactUrl }}
