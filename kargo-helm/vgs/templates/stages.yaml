@@ -204,13 +204,13 @@ spec:
         config:
           repoURL: {{ .Values.repoUrl }}
           createTargetBranch: true
-          sourceBranch: {{`${{ step.outputs['push'].branch }}`}}
+          sourceBranch: {{`${{ outputs['push'].branch }}`}}
           targetBranch: env/{{ .Values.projectName }}-prod
       - uses: git-wait-for-pr
         as: wait-for-pr
         config:
           repoURL: {{ .Values.repoUrl }}
-          prNumber: {{`${{ step.outputs['open-pr'].pr.id }}`}}
+          prNumber: {{`${{ outputs['open-pr'].pr.id }}`}}
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
