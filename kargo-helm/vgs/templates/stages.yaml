@@ -41,7 +41,7 @@ spec:
           namespace: {{ .Values.projectName }}-dev
           setValues:
             - key: image.tag
-              value: {{ printf "${{ imageFrom(%s).Tag }}" .Values.artifactUrl }}
+              value: "{{ printf "${{ imageFrom(%s).Tag }}" .Values.artifactUrl }}"
             - key: kargo.stage
               value: dev
       - uses: git-commit
@@ -100,7 +100,7 @@ spec:
           namespace: {{ .Values.projectName }}-staging
           setValues:
             - key: image.tag
-              value: {{ printf "${{ imageFrom(%s).Tag }}" .Values.artifactUrl }}
+              value: "{{ printf "${{ imageFrom(%s).Tag }}" .Values.artifactUrl }}"
             - key: kargo.stage
               value: staging
       - uses: git-commit
@@ -160,7 +160,7 @@ spec:
           namespace: {{ .Values.projectName }}-prod-amer-east
           setValues:
             - key: image.tag
-              value: {{ printf "${{ imageFrom(%s).Tag }}" .Values.artifactUrl }}
+              value: "{{ printf "${{ imageFrom(%s).Tag }}" .Values.artifactUrl }}"
             - key: kargo.stage
               value: prod-amer-east
       - uses: helm-template
@@ -173,7 +173,7 @@ spec:
           namespace: {{ .Values.projectName }}-prod-amer-west
           setValues:
             - key: image.tag
-              value: {{ printf "${{ imageFrom(%s).Tag }}" .Values.artifactUrl }}
+              value: "{{ printf "${{ imageFrom(%s).Tag }}" .Values.artifactUrl }}"
             - key: kargo.stage
               value: prod-amer-west
       - uses: helm-template
@@ -186,7 +186,7 @@ spec:
           namespace: {{ .Values.projectName }}-prod-emea
           setValues:
             - key: image.tag
-              value: {{ printf "${{ imageFrom(%s).Tag }}" .Values.artifactUrl }}
+              value: "{{ printf "${{ imageFrom(%s).Tag }}" .Values.artifactUrl }}"
             - key: kargo.stage
               value: prod-emea
       - uses: git-commit
