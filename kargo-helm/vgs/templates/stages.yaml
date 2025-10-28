@@ -17,6 +17,7 @@ spec:
       - name: api-conformance-crunch42
         kind: AnalysisTemplate
   promotionTemplate:
+    spec:
       steps:
       - uses: git-clone
         config:
