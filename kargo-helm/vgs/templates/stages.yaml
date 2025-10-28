@@ -24,7 +24,7 @@ spec:
           checkout:
           - branch: {{ .Values.git.main }}
             path: {{ .Values.git.srcPath }}
-          - branch: env/dev
+          - branch: env/{{ .Values.projectName }}-dev
             create: true
             path: {{ .Values.git.outPath }}
       - uses: git-clear
@@ -51,7 +51,7 @@ spec:
       - uses: git-push
         config:
           path: {{ .Values.git.outPath }}
-          targetBranch: env/dev
+          targetBranch: env/{{ .Values.projectName }}-dev
       - uses: argocd-update
         continueOnError: true
         config:
@@ -83,7 +83,7 @@ spec:
           checkout:
           - branch: {{ .Values.git.main }}
             path: {{ .Values.git.srcPath }}
-          - branch: env/staging
+          - branch: env/{{ .Values.projectName }}-staging
             create: true
             path: {{ .Values.git.outPath }}
       - uses: git-clear
@@ -110,7 +110,7 @@ spec:
       - uses: git-push
         config:
           path: {{ .Values.git.outPath }}
-          targetBranch: env/staging
+          targetBranch: env/{{ .Values.projectName }}-staging
       - uses: argocd-update
         continueOnError: true
         config:
@@ -143,7 +143,7 @@ spec:
           checkout:
           - branch: {{ .Values.git.main }}
             path: {{ .Values.git.srcPath }}
-          - branch: env/prod
+          - branch: env/{{ .Values.projectName }}-prod
             create: true
             path: {{ .Values.git.outPath }}
       - uses: git-clear
@@ -204,7 +204,7 @@ spec:
           repoURL: {{ .Values.repoUrl }}
           createTargetBranch: true
           sourceBranch: {{`${{ step.outputs['push'].branch }}`}}
-          targetBranch: env/prod
+          targetBranch: env/{{ .Values.projectName }}-prod
       - uses: git-wait-for-pr
         as: wait-for-pr
         config:
@@ -233,9 +233,9 @@ spec:
         config:
           repoURL: {{ .Values.repoUrl }}
           checkout:
-          - branch: env/prod
+          - branch: env/{{ .Values.projectName }}-prod
             path: {{ .Values.git.srcPath }}
-          - branch: env/prod-amer-east
+          - branch: env/{{ .Values.projectName }}-prod-amer-east
             create: true
             path: {{ .Values.git.outPath }}
       - uses: git-clear
@@ -253,7 +253,7 @@ spec:
       - uses: git-push
         config:
           path: {{ .Values.git.outPath }}
-          targetBranch: env/prod-amer-east
+          targetBranch: env/{{ .Values.projectName }}-prod-amer-east
       - uses: argocd-update
         continueOnError: true
         config:
@@ -283,9 +283,9 @@ spec:
         config:
           repoURL: {{ .Values.repoUrl }}
           checkout:
-          - branch: env/prod
+          - branch: env/{{ .Values.projectName }}-prod
             path: {{ .Values.git.srcPath }}
-          - branch: env/prod-amer-west
+          - branch: env/{{ .Values.projectName }}-prod-amer-west
             create: true
             path: {{ .Values.git.outPath }}
       - uses: git-clear
@@ -303,7 +303,7 @@ spec:
       - uses: git-push
         config:
           path: {{ .Values.git.outPath }}
-          targetBranch: env/prod-amer-west
+          targetBranch: env/{{ .Values.projectName }}-prod-amer-west
       - uses: argocd-update
         continueOnError: true
         config:
@@ -333,9 +333,9 @@ spec:
         config:
           repoURL: {{ .Values.repoUrl }}
           checkout:
-          - branch: env/prod
+          - branch: env/{{ .Values.projectName }}-prod
             path: {{ .Values.git.srcPath }}
-          - branch: env/prod-emea
+          - branch: env/{{ .Values.projectName }}-prod-emea
             create: true
             path: {{ .Values.git.outPath }}
       - uses: git-clear
@@ -353,7 +353,7 @@ spec:
       - uses: git-push
         config:
           path: {{ .Values.git.outPath }}
-          targetBranch: env/prod-emea
+          targetBranch: env/{{ .Values.projectName }}-prod-emea
       - uses: argocd-update
         continueOnError: true
         config:
