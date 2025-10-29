@@ -193,7 +193,7 @@ spec:
         as: commit
         config:
           path: {{ .Values.git.outPath }}
-          message: "Promote {{ printf "VGS ${{ imageFrom('%s').Tag }}" .Values.artifactUrl }} to prod [skip ci]"
+          message: "Promote {{ printf "%s ${{ imageFrom('%s').Tag }}" .Values.projectName .Values.artifactUrl }} to prod [skip ci]"
       - uses: git-push
         as: push
         config:
