@@ -20,9 +20,9 @@ spec:
           - appname: vgs
   template:
     metadata:
-      name: {{appname}}-demo-{{stage}}
+      name: "{{appname}}-demo-{{stage}}"
       annotations:
-        kargo.akuity.io/authorized-stage: {{appname}}-demo:{{stage}}
+        kargo.akuity.io/authorized-stage: "{{appname}}-demo:{{stage}}"
     spec:
       project: default
       source:
@@ -31,7 +31,7 @@ spec:
         path: .
       destination:
         server: http://cluster-eddie-local:8001
-        namespace: {{appname}}-demo-{{stage}}
+        namespace: "{{appname}}-demo-{{stage}}"
       syncPolicy:
         automated:
           prune: true
