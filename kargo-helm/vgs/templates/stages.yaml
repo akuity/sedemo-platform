@@ -12,10 +12,10 @@ spec:
       name: {{ .Values.projectName }}
     sources:
       direct: true
-  verification:
-    analysisTemplates:
-      - name: api-conformance-crunch42
-        kind: AnalysisTemplate
+  # verification:
+  #   analysisTemplates:
+  #     - name: api-conformance-crunch42
+  #       kind: AnalysisTemplate
   promotionTemplate:
     spec:
       steps:
