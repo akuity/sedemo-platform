@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: kargo-helm
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - appname: abc
+      - appname: vgs
+  template:
+    metadata:
+      name: kargo-{{appname}}-definition
+      namespace: argocd
+    spec:
+      project: default
+      sources:
+      - repoURL: https://github.com/akuity/sedemo-platform.git
+        targetRevision: main
+        ref: appValues 
+      - targetRevision: HEAD
+        repoURL: https://github.com/akuity/sedemo-platform
+        path: kargo-helm/chart
+        helm:
+          valueFiles:
+          - $appValues/kargo-helm/{{appname}}/values.yaml
+      destination:
+        name: kargo
+      syncPolicy:
+        automated:
+          prune: true
+          enabled: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true

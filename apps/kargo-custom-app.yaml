@@ -1,0 +1,43 @@
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kargo-rollouts-definition
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/akuity/sedemo-platform
+    path: kargo-simple
+    directory:
+      recurse: true
+  destination:
+    name: kargo
+  syncPolicy:
+    automated:
+      prune: true
+      enabled: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+---
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: kargo-helm
+#   namespace: argocd
+# spec:
+#   project: default
+#   source:
+#     targetRevision: HEAD
+#     repoURL: https://github.com/akuity/sedemo-platform
+#     path: kargo-helm/vgs
+#   destination:
+#     name: kargo
+#   syncPolicy:
+#     automated:
+#       prune: true
+#       enabled: true
+#       selfHeal: true
+#     syncOptions:
+#     - CreateNamespace=true
