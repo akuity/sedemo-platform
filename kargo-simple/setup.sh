@@ -1,31 +1,31 @@
+source ../argodemo-infra-iac/.env
 
 export GITHUB_USER="eddiewebb"
-export KARGO_QUICKSTART_PAT=$GH_AKUITY_DEMO_PAT # Replace with your actual
-export GITHUB_REPOSITORY="argodemo-rollouts-app"
-export PROJECT_NAME="rollouts-app"
+export GITHUB_PAT=$TF_VAR_gh_pat_kargo
+export KARGO_PASSWORD=$TF_VAR_argo_admin_password
 
 
-kargo create credentials github-creds \
---project $PROJECT_NAME --git \
---username ${GITHUB_USER} --password ${KARGO_QUICKSTART_PAT} \
---repo-url https://github.com/${GITHUB_USER}/${GITHUB_REPOSITORY}
+projects=$(kargo get projects|tail -n+2|cut -d' ' -f1)
+
+for project in $projects; do
+    echo "Publishing git credentials for project: $project"
+
+    # Get repo URL for project
+    repo_url=$(kargo get warehouses -p $project -o json | jq -r '.spec.subscriptions[] | select(.git !=null).git.repoURL')
+    image_url=$(kargo get warehouses -p $project -o json | jq -r '.spec.subscriptions[] | select(.image !=null).image.repoURL')
+    
+    echo "Using repo URL: $repo_url, image URL ${image_url}"
+    #echo "Using GH PAT var name: $gh_pat_var_name"
+    # Publish git credentials to Kargo secrets
+    kargo create credentials github-creds \
+    --project $project --git \
+    --username ${GITHUB_USER} --password ${GITHUB_PAT} \
+    --repo-url $repo_url
+
+    kargo create credentials ghcr-creds \
+    --project $project --image \
+    --username ${GITHUB_USER} --password ${GITHUB_PAT} \
+    --repo-url $image_url
 
 
-kargo create credentials ghcr-creds \
---project $PROJECT_NAME --image \
---username ${GITHUB_USER} --password ${KARGO_QUICKSTART_PAT} \
---repo-url ghcr.io/${GITHUB_USER}/rollouts
-
-
-export PROJECT_NAME="oom-demo"
-kargo create credentials ghcr-creds \
---project ${PROJECT_NAME} --image \
---username ${GITHUB_USER} --password ${KARGO_QUICKSTART_PAT} \
---repo-url ghcr.io/${GITHUB_USER}/oom
-
-
-
-kargo create credentials github-creds \
---project $PROJECT_NAME --git \
---username ${GITHUB_USER} --password ${KARGO_QUICKSTART_PAT} \
---repo-url https://github.com/akuity/sedemo-app-monorepo
+done

@@ -5,27 +5,31 @@ metadata:
   namespace: argocd
 spec:
   generators:
-  - list:
-      elements:
-      - stage: dev
-      - stage: staging 
-      - stage: prod-amer-east
-      - stage: prod-amer-west
-      - stage: prod-emea
-  template:
+  - matrix:
+    - list:
+        elements:
+        - stage: dev
+        - stage: staging 
+        - stage: prod-amer-east
+        - stage: prod-amer-west
+        - stage: prod-emea
+    - list:
+        elements:
+        - appname: abc
+        - appname: vgs
     metadata:
-      name: vgs-demo-{{stage}}
+      name: {{appname}}-demo-{{stage}}
       annotations:
-        kargo.akuity.io/authorized-stage: vgs-demo:{{stage}}
+        kargo.akuity.io/authorized-stage: {{appname}}-demo:{{stage}}
     spec:
       project: default
       source:
         repoURL: https://github.com/eddiewebb/argodemo-rollouts-app
-        targetRevision: env/vgs-demo-{{stage}}
+        targetRevision: env/{{appname}}-demo-{{stage}}
         path: .
       destination:
         server: http://cluster-eddie-local:8001
-        namespace: vgs-demo-{{stage}}
+        namespace: {{appname}}-demo-{{stage}}
       syncPolicy:
         automated:
           prune: true
