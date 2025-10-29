@@ -6,18 +6,18 @@ metadata:
 spec:
   generators:
   - matrix:
-    generators:
-    - list:
-        elements:
-        - stage: dev
-        - stage: staging 
-        - stage: prod-amer-east
-        - stage: prod-amer-west
-        - stage: prod-emea
-    - list:
-        elements:
-        - appname: abc
-        - appname: vgs
+      generators:
+      - list:
+          elements:
+          - stage: dev
+          - stage: staging 
+          - stage: prod-amer-east
+          - stage: prod-amer-west
+          - stage: prod-emea
+      - list:
+          elements:
+          - appname: abc
+          - appname: vgs
   template:
     metadata:
       name: {{appname}}-demo-{{stage}}
