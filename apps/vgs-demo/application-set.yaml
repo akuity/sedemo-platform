@@ -17,6 +17,7 @@ spec:
         elements:
         - appname: abc
         - appname: vgs
+  template:
     metadata:
       name: {{appname}}-demo-{{stage}}
       annotations:
