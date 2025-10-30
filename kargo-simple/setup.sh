@@ -20,9 +20,18 @@ for project in $projects; do
     kargo create credentials github-creds \
     --project $project --git \
     --username ${GITHUB_USER} --password ${GITHUB_PAT} \
+    --repo-url $repo_url 2>/dev/null || \
+    kargo update credentials github-creds \
+    --project $project --git \
+    --username ${GITHUB_USER} --password ${GITHUB_PAT} \
     --repo-url $repo_url
 
+
     kargo create credentials ghcr-creds \
+    --project $project --image \
+    --username ${GITHUB_USER} --password ${GITHUB_PAT} \
+    --repo-url $image_url 2>/dev/null || \
+    kargo update credentials ghcr-creds \
     --project $project --image \
     --username ${GITHUB_USER} --password ${GITHUB_PAT} \
     --repo-url $image_url
