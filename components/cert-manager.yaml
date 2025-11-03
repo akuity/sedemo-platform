@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+  namespace: argocd
+spec:
+  project: components
+  sources:
+  - repoURL: https://github.com/akuity/sedemo-platform.git
+    targetRevision: main
+    ref: localValues 
+    directory:
+      recurse: true
+  - chart: cert-manager
+    repoURL: oci://quay.io/jetstack/charts/cert-manager
+    targetRevision: v1.19.1
+    helm:
+      releaseName: cert-manager
+      # valuesObject:
+      #   server:
+      #     ingress:
+      #       enabled: true
+      #       ingressClassName: nginx
+      #       path: /
+      #       hosts:
+      #       - prometheus.prometheus.k8s.orb.local
+      valueFiles:
+      - $localValues/value-overrides/cert-manager-values.yaml
+  destination:
+        name: sedemo-primary
+        namespace: cert-manager
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
+    - ServerSideApply=true
+
+
+
