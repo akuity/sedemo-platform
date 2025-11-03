@@ -45,6 +45,8 @@ spec:
               value: ${{ imageFrom(vars.imageRepo).Tag }}
             - key: kargo.stage
               value: ${{ ctx.stage }}
+            - key: ingress.root_domain
+              value: akpdemoapps.link
       - task:
           name: push-manifests
       - uses: argocd-update
@@ -98,6 +100,8 @@ spec:
               value: ${{ imageFrom(vars.imageRepo).Tag }}
             - key: kargo.stage
               value: ${{ ctx.stage }}
+            - key: ingress.root_domain
+              value: akpdemoapps.link
       - task:
           name: push-manifests
       - uses: argocd-update
@@ -154,6 +158,8 @@ spec:
               value: ${{ imageFrom(vars.imageRepo).Tag }}
             - key: kargo.stage
               value: ${{ ctx.stage }}-amer-east
+            - key: ingress.root_domain
+              value: akpdemoapps.link
       - uses: helm-template
         vars:
         - name: region
@@ -170,6 +176,8 @@ spec:
               value: ${{ imageFrom(vars.imageRepo).Tag }}
             - key: kargo.stage
               value: ${{ ctx.stage }}-amer-west
+            - key: ingress.root_domain
+              value: akpdemoapps.link
       - uses: helm-template
         vars:
         - name: region
@@ -186,6 +194,8 @@ spec:
               value: ${{ imageFrom(vars.imageRepo).Tag }}
             - key: kargo.stage
               value: ${{ ctx.stage }}-emea
+            - key: ingress.root_domain
+              value: akpdemoapps.link
       - task:
           name: push-manifests
         vars:
