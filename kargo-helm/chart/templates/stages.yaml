@@ -44,6 +44,8 @@ spec:
               value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }}"
             - key: kargo.stage
               value: dev
+            - key: ingress.root_domain
+              value: akpdemoapps.link
       - uses: git-commit
         as: commit
         config:
@@ -103,6 +105,8 @@ spec:
               value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }}"
             - key: kargo.stage
               value: staging
+            - key: ingress.root_domain
+              value: akpdemoapps.link
       - uses: git-commit
         as: commit
         config:
@@ -163,6 +167,8 @@ spec:
               value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }}"
             - key: kargo.stage
               value: prod-amer-east
+            - key: ingress.root_domain
+              value: akpdemoapps.link
       - uses: helm-template
         config:
           releaseName: deploy
@@ -176,6 +182,8 @@ spec:
               value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }}"
             - key: kargo.stage
               value: prod-amer-west
+            - key: ingress.root_domain
+              value: akpdemoapps.link
       - uses: helm-template
         config:
           releaseName: deploy
@@ -189,6 +197,8 @@ spec:
               value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }}"
             - key: kargo.stage
               value: prod-emea
+            - key: ingress.root_domain
+              value: akpdemoapps.link
       - uses: git-commit
         as: commit
         config:
