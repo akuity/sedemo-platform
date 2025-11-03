@@ -12,7 +12,7 @@ spec:
     path: oom-demo
     targetRevision: main
   destination:
-        server: http://cluster-eddie-local:8001
+        name: sedemo-primary
         namespace: oom-demo
   syncPolicy:
     syncOptions:

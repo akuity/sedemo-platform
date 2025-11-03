@@ -24,7 +24,7 @@ spec:
         targetRevision: env/{{stage}}
         path: .
       destination:
-        server: http://cluster-eddie-local:8001
+        name: sedemo-primary
         namespace: demo-{{stage}}
       syncPolicy:
         automated:

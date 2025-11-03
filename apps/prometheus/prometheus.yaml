@@ -27,7 +27,7 @@ spec:
       valueFiles:
       - $localValues/value-overrides/prometheus-values.yaml
   destination:
-        server: http://cluster-eddie-local:8001
+        name: sedemo-primary
         namespace: prometheus
   syncPolicy:
     syncOptions:

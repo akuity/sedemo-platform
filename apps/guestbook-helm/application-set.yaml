@@ -22,7 +22,7 @@ spec:
         path: helm-guestbook
         targetRevision: HEAD
       destination:
-        server: http://cluster-eddie-local:8001
+        name: sedemo-primary
         namespace: guestbook-{{stage}}
       syncPolicy:
         automated:
