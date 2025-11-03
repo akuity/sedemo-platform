@@ -5,7 +5,7 @@ metadata:
   name: kargo-rollouts-definition
   namespace: argocd
 spec:
-  project: default
+  project: kargo
   source:
     repoURL: https://github.com/akuity/sedemo-platform
     path: kargo-simple

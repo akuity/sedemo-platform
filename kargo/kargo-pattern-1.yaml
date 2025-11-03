@@ -14,7 +14,7 @@ spec:
       name: kargo-{{appname}}-definition
       namespace: argocd
     spec:
-      project: default
+      project: kargo
       sources:
       - repoURL: https://github.com/akuity/sedemo-platform.git
         targetRevision: main
