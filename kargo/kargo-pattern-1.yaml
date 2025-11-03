@@ -21,7 +21,7 @@ spec:
         ref: appValues 
       - targetRevision: HEAD
         repoURL: https://github.com/akuity/sedemo-platform
-        path: kargo-helm/chart
+        path: kargo/kargo-helm/chart
         helm:
           valueFiles:
           - $appValues/kargo-helm/{{appname}}/values.yaml

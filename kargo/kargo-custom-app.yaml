@@ -8,7 +8,7 @@ spec:
   project: kargo
   source:
     repoURL: https://github.com/akuity/sedemo-platform
-    path: kargo-simple
+    path: kargo/kargo-simple
     directory:
       recurse: true
   destination:
