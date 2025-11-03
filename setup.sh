@@ -6,7 +6,6 @@ export GITHUB_USER="eddiewebb"
 export GITHUB_PAT=$TF_VAR_gh_pat_kargo
 export KARGO_PASSWORD=$TF_VAR_argo_admin_password
 
-
 projects=$(kargo get projects|tail -n+2|cut -d' ' -f1)
 
 for project in $projects; do
