@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: vgs-demo
+  namespace: argocd
+spec:
+  generators:
+  - matrix:
+      generators:
+      - list:
+          elements:
+          - stage: dev
+          - stage: staging 
+          - stage: prod-amer-east
+          - stage: prod-amer-west
+          - stage: prod-emea
+      - list:
+          elements:
+          - appname: abc
+          - appname: vgs
+  template:
+    metadata:
+      name: "{{appname}}-demo-{{stage}}"
+      annotations:
+        kargo.akuity.io/authorized-stage: "{{appname}}-demo:{{stage}}"
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/eddiewebb/argodemo-rollouts-app
+        targetRevision: env/{{appname}}-demo-{{stage}}
+        path: .
+      destination:
+        name: sedemo-primary
+        namespace: "{{appname}}-demo-{{stage}}"
+      syncPolicy:
+        automated:
+          prune: true
+          enabled: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
