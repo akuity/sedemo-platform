@@ -13,7 +13,7 @@ spec:
       recurse: false
       include: "install.yaml"
   destination:
-        server: http://cluster-eddie-local:8001
+        name: sedemo-primary
         namespace: argo-rollouts
   syncPolicy:
     automated:
