@@ -19,3 +19,9 @@ spec:
   destinations:
   - name: 'kargo'
     namespace: '*'
+    server: '*'
+
+
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
