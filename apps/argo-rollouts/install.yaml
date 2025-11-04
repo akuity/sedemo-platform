@@ -5,7 +5,7 @@ metadata:
   name: argo-rollouts
   namespace: argocd
 spec:
-  project: rollouts
+  project: components
   source:
     repoURL: https://github.com/argoproj/argo-rollouts
     path: manifests
