@@ -24,7 +24,7 @@ spec:
       annotations:
         kargo.akuity.io/authorized-stage: "{{appname}}-demo:{{stage}}"
     spec:
-      project: patterns
+      project: pattern-apps
       source:
         repoURL: https://github.com/eddiewebb/argodemo-rollouts-app
         targetRevision: env/{{appname}}-demo-{{stage}}
