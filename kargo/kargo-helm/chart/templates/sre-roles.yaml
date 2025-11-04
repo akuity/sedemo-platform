@@ -1,0 +1,76 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: site-reliability
+  namespace: {{ .Values.projectName }}
+  annotations:
+    kargo.akuity.io/description: Promotion and freight creation, all stages.
+    rbac.kargo.akuity.io/claims: |
+      {
+        "sub": ["sre", "cloud" ],
+        "email": "admin1@example.com",
+        "groups": ["sre", "cloud"]
+      }
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: site-reliability
+  namespace: {{ .Values.projectName }}
+rules:
+- apiGroups:
+  - kargo.akuity.io
+  resources:
+  - promotions
+  verbs:
+  - create
+  - patch
+  - update
+- apiGroups:
+  - kargo.akuity.io
+  resources:
+  - 'stages'
+  verbs:
+  - promote
+  # Limit promotions to a subset of Stages
+  resourceNames:
+  - '*'
+- apiGroups:
+  - kargo.akuity.io
+  resources:
+  - 'freight'
+  verbs:
+  - create
+  resourceNames:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: site-reliability
+  namespace: {{ .Values.projectName }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: site-reliability
+subjects:
+- kind: ServiceAccount
+  name: site-reliability
+  namespace: {{ .Values.projectName }}
+---
+# This RoleBinding allows the site-reliability ServiceAccount to view project
+# resources (without redefining read rules), by binding it to the
+# built-in kargo-viewer Role.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: site-reliability-viewer
+  namespace: {{ .Values.projectName }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kargo-viewer
+subjects:
+- kind: ServiceAccount
+  name: site-reliability
+  namespace: {{ .Values.projectName }}
