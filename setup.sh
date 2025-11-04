@@ -45,13 +45,13 @@ for project in $projects; do
     echo "URL: $wh_url"
     echo '
         {
-        "name":"kargo",
+        "name":"web",
         "active":true,
         "events":["push","pull_request"],
             "config":{"url":"'$wh_url'",
-            "content_type":"json",
+            "content_type":"application/json",
             "insecure_ssl":"0",
             "secret":"thisisverysecret"
             }
-        }' #| gh api repos/$GITHUB_USER/argodemo-rollouts-app/hooks --input - -X POST
+        }' | tr -d '\n' | gh api repos/$GITHUB_USER/argodemo-rollouts-app/hooks --input - -X POST
 done

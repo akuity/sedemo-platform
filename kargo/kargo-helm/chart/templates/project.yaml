@@ -28,7 +28,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: gh-wh-secret
-  namespace: rollouts-app
+  namespace: {{ .Values.projectName }}
   labels:
     kargo.akuity.io/cred-type: generic
 data:
