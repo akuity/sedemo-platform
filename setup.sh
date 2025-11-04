@@ -1,12 +1,15 @@
 source ../argodemo-infra-iac/.env
 
-kargo login https://yz0qxt8l0dixl8rc.kargo.akuity.cloud/ --admin
 
 export GITHUB_USER="eddiewebb"
 export GITHUB_PAT=$TF_VAR_gh_pat_kargo
 export KARGO_PASSWORD=$TF_VAR_argo_admin_password
 
+kargo login https://yz0qxt8l0dixl8rc.kargo.akuity.cloud/ --admin --password $KARGO_PASSWORD
+
 projects=$(kargo get projects|tail -n+2|cut -d' ' -f1)
+
+gh auth login --hostname github.com --with-token <<< "$GITHUB_PAT"
 
 for project in $projects; do
     echo "Publishing git credentials for project: $project"
@@ -37,5 +40,18 @@ for project in $projects; do
     --username ${GITHUB_USER} --password ${GITHUB_PAT} \
     --repo-url $image_url
 
-
+    echo "Creating GH Webhook"
+    wh_url=`kargo get projectconfig --project $project -ojson | jq -r '.status.webhookReceivers[] | select(.name == "gh-wh-receiver").url'`
+    echo "URL: $wh_url"
+    echo '
+        {
+        "name":"kargo",
+        "active":true,
+        "events":["push","pull_request"],
+            "config":{"url":"'$wh_url'",
+            "content_type":"json",
+            "insecure_ssl":"0",
+            "secret":"thisisverysecret"
+            }
+        }' #| gh api repos/$GITHUB_USER/argodemo-rollouts-app/hooks --input - -X POST
 done
