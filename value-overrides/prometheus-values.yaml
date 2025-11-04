@@ -394,7 +394,7 @@ server:
     ## Must be provided if Ingress is enabled
     ##
     hosts: 
-    - prometheus.prometheus.k8s.orb.local
+    - prometheus.akpdemoapps.link
         #   - prometheus.domain.com
     #   - domain.com/prometheus
 
