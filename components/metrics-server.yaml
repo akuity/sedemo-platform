@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: prometheus
+  name: metrics-server
   namespace: argocd
 spec:
   project: components
@@ -16,16 +16,6 @@ spec:
     targetRevision: 3.13.0
     helm:
       releaseName: metrics-server
-      # valuesObject:
-      #   server:
-      #     ingress:
-      #       enabled: true
-      #       ingressClassName: nginx
-      #       path: /
-      #       hosts:
-      #       - prometheus.prometheus.k8s.orb.local
-      # valueFiles:
-      # - $localValues/value-overrides/prometheus-values.yaml
   destination:
         name: sedemo-primary
         namespace: default
