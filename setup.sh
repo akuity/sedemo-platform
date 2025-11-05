@@ -49,9 +49,9 @@ for project in $projects; do
         "active":true,
         "events":["push","pull_request"],
             "config":{"url":"'$wh_url'",
-            "content_type":"application/json",
+            "content_type":"json",
             "insecure_ssl":"0",
             "secret":"thisisverysecret"
             }
-        }' | tr -d '\n' | gh api repos/$GITHUB_USER/argodemo-rollouts-app/hooks --input - -X POST
+        }' | tr -d '\n' | gh api --silent repos/$GITHUB_USER/argodemo-rollouts-app/hooks --input - -X POST
 done
