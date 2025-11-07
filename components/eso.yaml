@@ -25,6 +25,7 @@ spec:
     syncOptions:
     - CreateNamespace=true
     - ServerSideApply=true 
+    - Replace=true # This is required to update CRDs
 
 
 
