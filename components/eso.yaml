@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+  namespace: argocd
+spec:
+  project: components
+  sources:
+  - repoURL: https://github.com/akuity/sedemo-platform.git
+    targetRevision: main
+    ref: localValues 
+    directory:
+      recurse: true
+  - chart: external-secrets
+    repoURL: https://charts.external-secrets.io
+    targetRevision: 1.0.0
+    helm:
+      releaseName: external-secrets
+      valueFiles:
+      - $localValues/value-overrides/external-secrets-operator.yaml
+  destination:
+        name: sedemo-primary
+        namespace: external-secrets
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
+
+
+
+
+
+
+
+
+
+
