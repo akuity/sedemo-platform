@@ -1,8 +1,8 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
-  name: rollouts-app
-  namespace: rollouts-app
+  name: rollouts-app-remote
+  namespace: rollouts-app-remote
 spec:
   subscriptions:
   - image:
@@ -11,7 +11,7 @@ spec:
       imageSelectionStrategy: Lexical
       allowTags: ^\d*-[a-z]*$
   - git:
-      repoURL: https://github.com/eddiewebb/argodemo-rollouts-app
+      repoURL: https://github.com/eddiewebb/argodemo-rollouts-app-remote
       includePaths:
       - deploy
       - Dockerfile

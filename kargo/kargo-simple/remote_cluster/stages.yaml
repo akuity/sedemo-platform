@@ -2,14 +2,14 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: dev
-  namespace: rollouts-app
+  namespace: rollouts-app-remote
   annotations:
     kargo.akuity.io/color: red
 spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: rollouts-app
+      name: rollouts-app-remote
     sources:
       direct: true
   # verification:
@@ -20,7 +20,7 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/eddiewebb/argodemo-rollouts-app
+        value: https://github.com/eddiewebb/argodemo-rollouts-app-remote
       - name: imageRepo
         value: ghcr.io/eddiewebb/rollouts
       - name: targetBranch
@@ -60,14 +60,14 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: staging
-  namespace: rollouts-app
+  namespace: rollouts-app-remote
   annotations:
     kargo.akuity.io/color: amber
 spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: rollouts-app
+      name: rollouts-app-remote
     sources:
       stages:
       - dev
@@ -75,7 +75,7 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/eddiewebb/argodemo-rollouts-app
+        value: https://github.com/eddiewebb/argodemo-rollouts-app-remote
       - name: imageRepo
         value: ghcr.io/eddiewebb/rollouts
       - name: targetBranch
@@ -115,14 +115,14 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: prod
-  namespace: rollouts-app
+  namespace: rollouts-app-remote
   annotations:
     kargo.akuity.io/color: violet
 spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: rollouts-app
+      name: rollouts-app-remote
     sources:
       stages:
       - staging
@@ -130,7 +130,7 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/eddiewebb/argodemo-rollouts-app
+        value: https://github.com/eddiewebb/argodemo-rollouts-app-remote
       - name: imageRepo
         value: ghcr.io/eddiewebb/rollouts
       - name: targetBranch
@@ -208,14 +208,14 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: prod-amer-east
-  namespace: rollouts-app
+  namespace: rollouts-app-remote
   annotations:
     kargo.akuity.io/color: violet
 spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: rollouts-app
+      name: rollouts-app-remote
     sources:
       stages:
       - prod
@@ -223,7 +223,7 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/eddiewebb/argodemo-rollouts-app
+        value: https://github.com/eddiewebb/argodemo-rollouts-app-remote
       - name: imageRepo
         value: ghcr.io/eddiewebb/rollouts
       - name: region
@@ -258,14 +258,14 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: prod-amer-west
-  namespace: rollouts-app
+  namespace: rollouts-app-remote
   annotations:
     kargo.akuity.io/color: violet
 spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: rollouts-app
+      name: rollouts-app-remote
     sources:
       stages:
       - prod
@@ -273,7 +273,7 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/eddiewebb/argodemo-rollouts-app
+        value: https://github.com/eddiewebb/argodemo-rollouts-app-remote
       - name: imageRepo
         value: ghcr.io/eddiewebb/rollouts
       - name: region
@@ -308,14 +308,14 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: prod-emea
-  namespace: rollouts-app
+  namespace: rollouts-app-remote
   annotations:
     kargo.akuity.io/color: violet
 spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: rollouts-app
+      name: rollouts-app-remote
     sources:
       stages:
       - prod
@@ -323,7 +323,7 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/eddiewebb/argodemo-rollouts-app
+        value: https://github.com/eddiewebb/argodemo-rollouts-app-remote
       - name: imageRepo
         value: ghcr.io/eddiewebb/rollouts
       - name: region

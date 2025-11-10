@@ -2,7 +2,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
   name: prepare-workdir
-  namespace: rollouts-app
+  namespace: rollouts-app-remote
 spec:
   # Task-wide input variables
   vars:
@@ -34,7 +34,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
   name: push-manifests
-  namespace: rollouts-app
+  namespace: rollouts-app-remote
 spec:
   # Task-wide input variables
   vars:
