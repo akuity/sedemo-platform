@@ -3,6 +3,8 @@ kind: Warehouse
 metadata:
   name: rollouts-app-remote
   namespace: rollouts-app-remote
+  labels:
+    kargo.akuity.io/shard: sedemo-primary
 spec:
   subscriptions:
   - image:

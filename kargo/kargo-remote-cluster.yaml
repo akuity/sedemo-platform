@@ -12,7 +12,7 @@ spec:
     directory:
       recurse: true
   destination:
-    name: sedemo-primary
+    name: kargo
   syncPolicy:
     automated:
       prune: true
