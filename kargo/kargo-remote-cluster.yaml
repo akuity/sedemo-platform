@@ -2,17 +2,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: kargo-rollouts-definition
+  name: kargo-rollouts-definition-sedemo
   namespace: argocd
 spec:
   project: kargo
   source:
     repoURL: https://github.com/akuity/sedemo-platform
-    path: kargo/kargo-simple/rollouts_team
+    path: kargo/kargo-simple/remote_cluster
     directory:
       recurse: true
   destination:
-    name: kargo
+    name: sedemo-primary
   syncPolicy:
     automated:
       prune: true

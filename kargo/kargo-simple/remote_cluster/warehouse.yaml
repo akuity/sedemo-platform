@@ -1,0 +1,17 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: rollouts-app
+  namespace: rollouts-app
+spec:
+  subscriptions:
+  - image:
+      repoURL: ghcr.io/eddiewebb/rollouts
+      discoveryLimit: 5
+      imageSelectionStrategy: Lexical
+      allowTags: ^\d*-[a-z]*$
+  - git:
+      repoURL: https://github.com/eddiewebb/argodemo-rollouts-app
+      includePaths:
+      - deploy
+      - Dockerfile
