@@ -1,0 +1,174 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev
+  namespace: lock-it-down
+  annotations:
+    kargo.akuity.io/color: red
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: lock-it-down
+    sources:
+      direct: true
+  # verification:
+  #   analysisTemplates:
+  #     - name: integration-test
+  #       kind: ClusterAnalysisTemplate
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/eddiewebb/argodemo-rollouts-app
+      - name: imageRepo
+        value: ghcr.io/eddiewebb/rollouts
+      - name: targetBranch
+        value: locked-env/dev 
+      - name: path_src
+        value: ./src
+      - name: path_out
+        value: ./out
+      steps:
+      - task:
+          name: prepare-workdir 
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ${{ vars.path_src }}/deploy/chart
+          valuesFiles:
+          - ${{ vars.path_src }}/deploy/chart/values.yaml
+          outPath: ${{ vars.path_out }}/manifests.yaml
+          namespace: lock-it-down-dev
+          setValues:
+            - key: image.tag
+              value: ${{ imageFrom(vars.imageRepo).Tag }}
+            - key: kargo.stage
+              value: ${{ ctx.stage }}
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+      - task:
+          name: push-manifests
+      - uses: argocd-update
+        continueOnError: true
+        config:
+          apps:
+          - name: lock-it-down-dev
+            namespace: argocd
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: staging
+  namespace: lock-it-down
+  annotations:
+    kargo.akuity.io/color: amber
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: lock-it-down
+    sources:
+      stages:
+      - dev
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/eddiewebb/argodemo-rollouts-app
+      - name: imageRepo
+        value: ghcr.io/eddiewebb/rollouts
+      - name: targetBranch
+        value: locked-env/staging
+      - name: path_src
+        value: ./src
+      - name: path_out
+        value: ./out
+      steps:
+      - task:
+          name: prepare-workdir 
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ${{ vars.path_src }}/deploy/chart
+          valuesFiles:
+          - ${{ vars.path_src }}/deploy/chart/values.yaml
+          outPath: ${{ vars.path_out }}/manifests.yaml
+          namespace: lock-it-down-staging
+          setValues:
+            - key: image.tag
+              value: ${{ imageFrom(vars.imageRepo).Tag }}
+            - key: kargo.stage
+              value: ${{ ctx.stage }}
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+      - task:
+          name: push-manifests
+      - uses: argocd-update
+        continueOnError: true
+        config:
+          apps:
+          - name: lock-it-down-staging
+            namespace: argocd
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod
+  namespace: lock-it-down
+  annotations:
+    kargo.akuity.io/color: violet
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: lock-it-down
+    sources:
+      stages:
+      - staging
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/eddiewebb/argodemo-rollouts-app
+      - name: imageRepo
+        value: ghcr.io/eddiewebb/rollouts
+      - name: targetBranch
+        value: locked-env/prod
+      - name: path_src
+        value: ./src
+      - name: path_out
+        value: ./out
+      steps:
+      - task:
+          name: prepare-workdir 
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ${{ vars.path_src }}/deploy/chart
+          valuesFiles:
+          - ${{ vars.path_src }}/deploy/chart/values.yaml
+          outPath: ${{ vars.path_out }}/manifests.yaml
+          namespace: lockitdown-prod
+          setValues:
+            - key: image.tag
+              value: ${{ imageFrom(vars.imageRepo).Tag }}
+            - key: kargo.stage
+              value: ${{ ctx.stage }}
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+      - task:
+          name: push-manifests
+        vars:
+        - name: asPR
+          value: "true"
+        - name: targetBranch
+          value: locked-env/prod
+      - uses: argocd-update
+        config:
+          apps:
+          - name: lock-it-down-${{ vars.region }}
+            namespace: argocd

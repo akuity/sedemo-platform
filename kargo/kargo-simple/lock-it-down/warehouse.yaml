@@ -1,8 +1,8 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
-  name: rollouts-app-remote
-  namespace: rollouts-app-remote
+  name: lock-it-down
+  namespace: lock-it-down
 spec:
   shard: sedemo-primary
   subscriptions:

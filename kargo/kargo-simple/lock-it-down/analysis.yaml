@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
   name: policy-analysis
-  namespace: rollouts-app-remote
+  namespace: lock-it-down
 spec:
   metrics:
   - name: policy-analysis

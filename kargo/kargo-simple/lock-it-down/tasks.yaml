@@ -2,7 +2,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
   name: prepare-workdir
-  namespace: rollouts-app-remote
+  namespace: lock-it-down
 spec:
   # Task-wide input variables
   vars:
@@ -10,7 +10,7 @@ spec:
   - name: sourceBranch
     value: main
   - name: targetBranch
-    value: env/${{ ctx.stage }}
+    value: locked-env/${{ ctx.stage }}
   - name: path_src
     value: ./src
   - name: path_out
@@ -34,7 +34,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
   name: push-manifests
-  namespace: rollouts-app-remote
+  namespace: lock-it-down
 spec:
   # Task-wide input variables
   vars:
@@ -42,7 +42,7 @@ spec:
   - name: sourceBranch
     value: main
   - name: targetBranch
-    value: env/${{ ctx.stage }}
+    value: locked-env/${{ ctx.stage }}
   - name: path_src
     value: ./src
   - name: path_out
