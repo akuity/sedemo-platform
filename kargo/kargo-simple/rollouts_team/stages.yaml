@@ -207,10 +207,12 @@ spec:
           credentials:
             secretName: jira-secret
           createIssue:
-            projectKey: CHANGE
+            projectKey: CM
             summary: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }}"
             description: "Promoteing ${{ imageFrom(vars.imageRepo).RepoURL }}:${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} environment. Promotion ID: ${{ ctx.promotion }}. Freight: ${{ ctx.targetFreight.name }}."
             issueType: Request a Change
+            customFields:
+              customfield_11490: Standard
             labels:
             - promotion
             - "${{ ctx.stage }}"
