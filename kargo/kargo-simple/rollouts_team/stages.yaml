@@ -222,20 +222,20 @@ spec:
           name: push-manifests
         vars:
         - name: targetBranch
-          value: change/prod-${{ outputs['create-change-ticket'].key }}
+          value: change/${{ outputs['create-change-ticket'].key }}
       - uses: jira
         config:
           credentials:
             secretName: jira-secret
           waitForStatus:
             issueKey: "${{ outputs['create-change-ticket'].key }}"
-            expectedStatus: "Iplementing"
+            expectedStatus: "Implementing"
       - uses: git-open-pr
         as: open-pr
         config:
           repoURL: ${{ vars.gitRepo }}
           createTargetBranch: false
-          sourceBranch: change/prod-${{ outputs['create-change-ticket'].key }}
+          sourceBranch: change/${{ outputs['create-change-ticket'].key }}
           targetBranch: env/prod
       - uses: git-merge-pr
         config:
