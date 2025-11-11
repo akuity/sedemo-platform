@@ -2,13 +2,13 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: kargo-rollouts-definition-sedemo
+  name: kargo-lock-it-down
   namespace: argocd
 spec:
   project: kargo
   source:
     repoURL: https://github.com/akuity/sedemo-platform
-    path: kargo/kargo-simple/remote_cluster
+    path: kargo/kargo-simple/lock-it-down
     directory:
       recurse: true
   destination:
