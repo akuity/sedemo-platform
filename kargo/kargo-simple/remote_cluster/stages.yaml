@@ -21,7 +21,7 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/eddiewebb/argodemo-rollouts-app-remote
+        value: https://github.com/eddiewebb/argodemo-rollouts-app
       - name: imageRepo
         value: ghcr.io/eddiewebb/rollouts
       - name: targetBranch
@@ -77,7 +77,7 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/eddiewebb/argodemo-rollouts-app-remote
+        value: https://github.com/eddiewebb/argodemo-rollouts-app
       - name: imageRepo
         value: ghcr.io/eddiewebb/rollouts
       - name: targetBranch
@@ -133,7 +133,7 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/eddiewebb/argodemo-rollouts-app-remote
+        value: https://github.com/eddiewebb/argodemo-rollouts-app
       - name: imageRepo
         value: ghcr.io/eddiewebb/rollouts
       - name: targetBranch
@@ -227,7 +227,7 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/eddiewebb/argodemo-rollouts-app-remote
+        value: https://github.com/eddiewebb/argodemo-rollouts-app
       - name: imageRepo
         value: ghcr.io/eddiewebb/rollouts
       - name: region
@@ -278,7 +278,7 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/eddiewebb/argodemo-rollouts-app-remote
+        value: https://github.com/eddiewebb/argodemo-rollouts-app
       - name: imageRepo
         value: ghcr.io/eddiewebb/rollouts
       - name: region
@@ -329,7 +329,7 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/eddiewebb/argodemo-rollouts-app-remote
+        value: https://github.com/eddiewebb/argodemo-rollouts-app
       - name: imageRepo
         value: ghcr.io/eddiewebb/rollouts
       - name: region
