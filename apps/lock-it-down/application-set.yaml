@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: lock-it-down
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - stage: dev
+      - stage: staging 
+      - stage: prod
+  template:
+    metadata:
+      name: lock-it-down-{{stage}}
+      annotations:
+        kargo.akuity.io/authorized-stage: lock-it-down:{{stage}}
+    spec:
+      project: rollouts
+      source:
+        repoURL: https://github.com/eddiewebb/argodemo-rollouts-app
+        targetRevision: locked-env/{{stage}}
+        path: .
+      destination:
+        name: sedemo-primary
+        namespace: lockitdown-{{stage}}
+      syncPolicy:
+        automated:
+          prune: true
+          enabled: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
