@@ -205,7 +205,7 @@ spec:
         as: create-change-ticket
         config:
           credentials:
-            secretName: jira-access-secret
+            secretName: jira-secret
           createIssue:
             projectKey: CHANGE
             summary: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }}"
@@ -224,7 +224,7 @@ spec:
       - uses: jira
         config:
           credentials:
-            secretName: jira-credentials
+            secretName: jira-secret
           waitForStatus:
             issueKey: "${{ outputs['create-change-ticket'].key }}"
             expectedStatus: "Iplementing"
