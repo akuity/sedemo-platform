@@ -12,7 +12,7 @@ spec:
       imageSelectionStrategy: Lexical
       allowTags: ^\d*-[a-z]*$
   - git:
-      repoURL: https://github.com/eddiewebb/argodemo-rollouts-app-remote
+      repoURL: https://github.com/eddiewebb/argodemo-rollouts-app
       includePaths:
       - deploy
       - Dockerfile
