@@ -211,8 +211,8 @@ spec:
             summary: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }}"
             description: "Promoteing ${{ imageFrom(vars.imageRepo).RepoURL }}:${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} environment. Promotion ID: ${{ ctx.promotion }}. Freight: ${{ ctx.targetFreight.name }}."
             issueType: Request a Change
-            customFields:
-              customfield_11490: 10204
+            # customFields:
+            #   customfield_11490: 10204
 
             labels:
             - promotion
