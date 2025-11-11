@@ -202,5 +202,5 @@ spec:
       - uses: argocd-update
         config:
           apps:
-          - name: lock-it-down-${{ vars.region }}
+          - name: lock-it-down-prod
             namespace: argocd
