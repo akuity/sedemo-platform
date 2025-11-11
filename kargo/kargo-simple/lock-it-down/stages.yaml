@@ -160,13 +160,45 @@ spec:
               value: ${{ ctx.stage }}
             - key: ingress.root_domain
               value: akpdemoapps.link
+      - uses: jira
+        as: create-change-ticket
+        config:
+          credentials:
+            secretName: jira-secret
+          createIssue:
+            projectKey: CM
+            summary: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }}"
+            description: "Promoteing ${{ imageFrom(vars.imageRepo).RepoURL }}:${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} environment. Promotion ID: ${{ ctx.promotion }}. Freight: ${{ ctx.targetFreight.name }}."
+            issueType: Request a Change
+            # customFields:
+            #   customfield_11490: 10204
+            labels:
+            - promotion
+            - "${{ ctx.stage }}"
+            - "release-${{ imageFrom(vars.imageRepo).Tag }}"
       - task:
           name: push-manifests
         vars:
-        - name: asPR
-          value: "true"
         - name: targetBranch
-          value: locked-env/prod
+          value: change/${{ outputs['create-change-ticket'].key }}
+      - uses: jira
+        config:
+          credentials:
+            secretName: jira-secret
+          waitForStatus:
+            issueKey: "${{ outputs['create-change-ticket'].key }}"
+            expectedStatus: "Implementing"
+      - uses: git-open-pr
+        as: open-pr
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          createTargetBranch: false
+          sourceBranch: change/${{ outputs['create-change-ticket'].key }}
+          targetBranch: locked-env/prod
+      - uses: git-merge-pr
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          prNumber: ${{ outputs['open-pr'].pr.id }}
       - uses: argocd-update
         config:
           apps:

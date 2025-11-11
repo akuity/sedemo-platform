@@ -16,9 +16,6 @@ spec:
       name: dev
     autoPromotionEnabled: true
   - stageSelector:
-      name: staging
-    autoPromotionEnabled: true
-  - stageSelector:
       name: "regex:prod.*"
     autoPromotionEnabled: true
   webhookReceivers: 
