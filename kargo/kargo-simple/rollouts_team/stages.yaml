@@ -211,7 +211,6 @@ spec:
             summary: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }}"
             description: "Promoteing ${{ imageFrom(vars.imageRepo).RepoURL }}:${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} environment. Promotion ID: ${{ ctx.promotion }}. Freight: ${{ ctx.targetFreight.name }}."
             issueType: Request a Change
-            assigneeEmail: eddie.webbinaro@akuity.io
             labels:
             - promotion
             - "${{ ctx.stage }}"
