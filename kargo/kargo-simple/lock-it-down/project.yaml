@@ -18,19 +18,3 @@ spec:
   - stageSelector:
       name: "regex:prod.*"
     autoPromotionEnabled: true
-  webhookReceivers: 
-    - name: gh-wh-receiver
-      github:
-        secretRef:
-          name: gh-wh-secret
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: gh-wh-secret
-  namespace: lock-it-down
-  labels:
-    kargo.akuity.io/cred-type: generic
-data:
-  # thisisverysecret
-  secret: dGhpc2lzdmVyeXNlY3JldA==
