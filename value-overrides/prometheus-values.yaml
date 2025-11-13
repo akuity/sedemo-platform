@@ -221,7 +221,7 @@ server:
 
   ## External URL which can access prometheus
   ## Maybe same with Ingress host name
-  baseURL: ""
+  baseURL: "/prometheus"
 
   ## Additional server container environment variables
   ##
@@ -247,7 +247,7 @@ server:
   defaultFlagsOverride: 
     - --storage.tsdb.retention.time=1d
     - --config.file=/etc/config/prometheus.yml
-    - --web.external-url=/prometheus
+    #- --web.external-url=/prometheus
     #- --web.route-prefix=""
   extraFlags:
     - web.enable-lifecycle
