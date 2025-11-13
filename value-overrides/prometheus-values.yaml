@@ -248,7 +248,7 @@ server:
     - --storage.tsdb.retention.time=1d
     - --config.file=/etc/config/prometheus.yml
     - --web.external-url=/prometheus/
-    - --web.route-prefix=/
+    - --web.route-prefix=/prometheus/
 
   extraFlags:
     - web.enable-lifecycle
