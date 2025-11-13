@@ -247,7 +247,7 @@ server:
   defaultFlagsOverride: 
     - --storage.tsdb.retention.time=1d
     - --config.file=/etc/config/prometheus.yml
-    - --web.external-url=https://akpdemoapps.link/prometheus/
+    - --web.external-url=/prometheus
     #- --web.route-prefix=/prometheus/
   extraFlags:
     - web.enable-lifecycle
