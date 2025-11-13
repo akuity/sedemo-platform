@@ -248,7 +248,7 @@ server:
     - --storage.tsdb.retention.time=1d
     - --config.file=/etc/config/prometheus.yml
     - --web.external-url=https://akpdemoapps.link/prometheus/
-    - --web.route-prefix=/prometheus/
+    #- --web.route-prefix=/prometheus/
   extraFlags:
     - web.enable-lifecycle
     ## web.enable-admin-api flag controls access to the administrative HTTP API which includes functionality such as
