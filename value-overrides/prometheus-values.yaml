@@ -459,7 +459,7 @@ server:
 
       ## Filters define the filters that are applied to requests that match
       ## this rule
-      filters: []
+      filters: 
       - type: URLRewrite
         urlRewrite:
           path:
