@@ -200,7 +200,7 @@ server:
   ## Prometheus server command
   ##
   command: 
-    - --web.external-url=/prometheus/
+    - '--web.external-url=/prometheus/'
 
   ## prometheus server priorityClassName
   ##
