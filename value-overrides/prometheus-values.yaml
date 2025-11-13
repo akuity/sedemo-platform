@@ -457,12 +457,12 @@ server:
 
       ## Filters define the filters that are applied to requests that match
       ## this rule
-      filters: []
-      # - type: URLRewrite
-      #   urlRewrite:
-      #     path:
-      #       replacePrefixMatch: /
-      #       type: ReplacePrefixMatch
+      filters: 
+      - type: URLRewrite
+        urlRewrite:
+          path:
+            replacePrefixMatch: /
+            type: ReplacePrefixMatch
 
       ## Matches define conditions used for matching the rule against incoming
       ## HTTP requests
