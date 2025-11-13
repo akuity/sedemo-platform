@@ -398,7 +398,7 @@ server:
         #   - prometheus.domain.com
     #   - domain.com/prometheus
 
-    path: /
+    path: /prometheus
 
     # pathType is only for k8s >= 1.18
     pathType: Prefix
