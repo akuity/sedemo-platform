@@ -217,7 +217,7 @@ server:
   ## The URL prefix at which the container can be accessed. Useful in the case the '-web.external-url' includes a slug
   ## so that the various internal URLs are still able to access as they are in the default case.
   ## (Optional)
-  prefixURL: "/prometheus"
+  prefixURL: ""
 
   ## External URL which can access prometheus
   ## Maybe same with Ingress host name
@@ -247,8 +247,8 @@ server:
   defaultFlagsOverride: 
     - --storage.tsdb.retention.time=1d
     - --config.file=/etc/config/prometheus.yml
-    # - --web.external-url=https://akpdemoapps.link/prometheus/
-    # - --web.route-prefix=/prometheus/
+    - --web.external-url=https://akpdemoapps.link/prometheus/
+    - --web.route-prefix=/prometheus/
   extraFlags:
     - web.enable-lifecycle
     ## web.enable-admin-api flag controls access to the administrative HTTP API which includes functionality such as
