@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ingress-config
+  namespace: argocd
+spec:
+  project: components
+  sources:
+  - repoURL: https://github.com/akuity/sedemo-platform.git
+    targetRevision: main
+    path: ingress
+    directory:
+      recurse: true
+  destination:
+    name: sedemo-primary
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      enabled: true
+      selfHeal: true

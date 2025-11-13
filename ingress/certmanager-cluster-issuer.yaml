@@ -1,0 +1,19 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    email: eddie.webbinaro@akuity.io
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      # Secret resource that will be used to store the account's private key.
+      name: issuer-account-key
+    # Add a single challenge solver, HTTP01 using NGINX Gateway Fabric
+    solvers:
+    - http01:
+        gatewayHTTPRoute:
+          parentRefs: # This is the name of the Gateway that will be created in the next step
+          - name: gateway
+            namespace: default
+            kind: Gateway
