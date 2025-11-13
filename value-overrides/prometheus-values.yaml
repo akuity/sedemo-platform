@@ -247,6 +247,7 @@ server:
   defaultFlagsOverride: 
     - --storage.tsdb.retention.time=1d
     - --config.file=/etc/config/prometheus.yml
+    - --web.external-url=/prometheus/
 
   extraFlags:
     - web.enable-lifecycle
@@ -254,7 +255,6 @@ server:
     ## deleting time series. This is disabled by default.
     - web.enable-admin-api
 
-    - '--web.external-url=/prometheus/'
     ##
     ## storage.tsdb.no-lockfile flag controls BD locking
     # - storage.tsdb.no-lockfile
