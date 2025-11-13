@@ -221,7 +221,7 @@ server:
 
   ## External URL which can access prometheus
   ## Maybe same with Ingress host name
-  baseURL: "https://akpdemoapps.link/prometheus/"
+  baseURL: "https://akpdemoapps.link/prometheus"
 
   ## Additional server container environment variables
   ##
