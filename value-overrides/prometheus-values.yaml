@@ -373,7 +373,7 @@ server:
   ingress:
     ## If true, Prometheus server Ingress will be created
     ##
-    enabled: true
+    enabled: false
 
     ingressClassName: "nginx"
 
@@ -424,7 +424,7 @@ server:
   route:
     main:
       ## Enable this route
-      enabled: false
+      enabled: true
 
       ## ApiVersion set by default to "gateway.networking.k8s.io/v1"
       apiVersion: ""
@@ -437,34 +437,45 @@ server:
       labels: {}
 
       ## ParentRefs refers to resources this HTTPRoute is to be attached to (Gateways)
-      parentRefs: []
+      parentRefs: 
+      - group: gateway.networking.k8s.io
+        kind: Gateway
+        name: gateway
+        namespace: nginx-gateway
+      
         # - name: contour
         #   sectionName: http
 
       ## Hostnames (templated) defines a set of hostnames that should match against the HTTP Host
       ## header to select a HTTPRoute used to process the request
-      hostnames: []
-        # - my.example.com
+      hostnames: 
+        - akpdemoapps.link
 
       ## additionalRules (templated) allows adding custom rules to the route
-      additionalRules: []
+      additionalRules:  []
+      
 
       ## Filters define the filters that are applied to requests that match
       ## this rule
-      filters: []
+      filters: 
+      - type: URLRewrite
+        urlRewrite:
+          path:
+            replacePrefixMatch: /
+            type: ReplacePrefixMatch
 
       ## Matches define conditions used for matching the rule against incoming
       ## HTTP requests
       matches:
         - path:
             type: PathPrefix
-            value: /
+            value: /prometheus
 
       ## httpsRedirect adds a filter for redirecting to https (HTTP 301 Moved Permanently).
       ## To redirect HTTP traffic to HTTPS, you need to have a Gateway with both HTTP and HTTPS listeners.
       ## Matches and filters do not take effect if enabled.
       ## Ref. https://gateway-api.sigs.k8s.io/guides/http-redirect-rewrite/
-      httpsRedirect: false
+      httpsRedirect: true
 
   ## Server Deployment Strategy type
   strategy:
