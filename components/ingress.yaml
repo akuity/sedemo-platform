@@ -13,7 +13,7 @@ spec:
       recurse: true
   destination:
     name: sedemo-primary
-    namespace: default
+    namespace: nginx-gateway
   syncPolicy:
     automated:
       prune: true
