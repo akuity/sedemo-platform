@@ -199,7 +199,8 @@ server:
 
   ## Prometheus server command
   ##
-  command: []
+  command: 
+    - --web.external-url=/prometheus/
 
   ## prometheus server priorityClassName
   ##
@@ -221,7 +222,7 @@ server:
 
   ## External URL which can access prometheus
   ## Maybe same with Ingress host name
-  baseURL: "/prometheus"
+  baseURL: ""
 
   ## Additional server container environment variables
   ##
