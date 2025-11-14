@@ -194,18 +194,18 @@ spec:
                   - type: link
                     attrs:
                       href: "https://kargo.akpdemoapps.link/project/lock-it-down/promotion/${{ ctx.promotion }}"
-              # - type: paragraph
-              #   content:
-              #   - type: text
-              #     text: "*Freight ID*:"
-              #     marks:
-              #     - type: strong
-              #   - type: text
-              #     text: ${{ ctx.targetFreight }}
-              #     marks:
-              #     - type: link
-              #       attrs:
-              #         href: "https://kargo.akpdemoapps.link/project/lock-it-down/freight/${{ ctx.targetFreight.id }}"
+              - type: paragraph
+                content:
+                - type: text
+                  text: "Freight ID:"
+                  marks:
+                  - type: strong
+                - type: text
+                  text: ${{ ctx.targetFreight }}
+                  marks:
+                  - type: link
+                    attrs:
+                      href: "https://kargo.akpdemoapps.link/project/lock-it-down/freight/${{ ctx.targetFreight.id }}"
               # - type: paragraph
               #   content:
               #   - type: text
