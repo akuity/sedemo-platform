@@ -185,7 +185,7 @@ spec:
               - type: paragraph
                 content:
                 - type: text
-                  text: "Promotion ID:"
+                  text: "Promotion ID: "
                   marks:
                   - type: strong
                 - type: text
@@ -197,7 +197,7 @@ spec:
               - type: paragraph
                 content:
                 - type: text
-                  text: "Freight ID:"
+                  text: "Freight ID: "
                   marks:
                   - type: strong
                 - type: text
@@ -205,7 +205,7 @@ spec:
                   marks:
                   - type: link
                     attrs:
-                      href: "https://kargo.akpdemoapps.link/project/lock-it-down/freight/${{ ctx.targetFreight.id }}"
+                      href: "https://kargo.akpdemoapps.link/project/lock-it-down/freight/${{ ctx.targetFreight.name }}"
               # - type: paragraph
               #   content:
               #   - type: text
@@ -223,11 +223,22 @@ spec:
         as: jira-link
         config:
           url: https://eddiewebb.atlassian.net/jira/servicedesk/projects/CM/queues/custom/21/${{ outputs['create-change-ticket'].key }}
-      - task:
-          name: push-manifests
-        vars:
-        - name: targetBranch
-          value: change/${{ outputs['create-change-ticket'].key }}
+      - uses: git-commit
+        as: commit
+        config:
+          path: ${{ vars.path_out }}
+          message: "${{ outputs['create-change-ticket'].key }}: Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
+      - uses: git-push
+        config:
+          path: ${{ vars.path_out }}
+          targetBranch: change/${{ outputs['create-change-ticket'].key }}
+      - uses: git-open-pr
+        as: open-pr
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          createTargetBranch: false
+          sourceBranch: change/${{ outputs['create-change-ticket'].key }}
+          targetBranch: locked-env/prod
       - uses: jira
         as: wait-for-approval
         config:
@@ -236,13 +247,6 @@ spec:
           waitForStatus:
             issueKey: "${{ outputs['create-change-ticket'].key }}"
             expectedStatus: "Implementing"
-      - uses: git-open-pr
-        as: open-pr
-        config:
-          repoURL: ${{ vars.gitRepo }}
-          createTargetBranch: false
-          sourceBranch: change/${{ outputs['create-change-ticket'].key }}
-          targetBranch: locked-env/prod
       - uses: git-merge-pr
         config:
           repoURL: ${{ vars.gitRepo }}
