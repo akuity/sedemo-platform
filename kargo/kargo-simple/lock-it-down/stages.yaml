@@ -213,8 +213,8 @@ spec:
               #   - type: text
               #     text: ${{ imageFrom(vars.imageRepo).RepoURL }}
             issueType: Request a Change
-            # customFields:
-            #   customfield_11490: 10204
+            customFields:
+              customfield_11301: Standard
             labels:
             - promotion
             - "${{ ctx.stage }}"
