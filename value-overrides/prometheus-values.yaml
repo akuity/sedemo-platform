@@ -1169,7 +1169,7 @@ serverFiles:
 extraScrapeConfigs: |
   - job_name: 'rollouts-demo-endpoints'
     kubernetes_sd_configs:
-      - role: service
+      - role: pod
         namespaces:
           names:
           - nginx-gateway
