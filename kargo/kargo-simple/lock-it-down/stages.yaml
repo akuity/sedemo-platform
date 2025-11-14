@@ -249,7 +249,7 @@ spec:
             secretName: jira-access-secret
           waitForStatus:
             issueKey: "${{ outputs['create-change-ticket'].key }}"
-            expectedStatus: "Approved"
+            expectedStatus: "APPROVED"
       - uses: git-merge-pr
         config:
           repoURL: ${{ vars.gitRepo }}
