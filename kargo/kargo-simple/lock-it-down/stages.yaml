@@ -228,7 +228,7 @@ spec:
         as: commit
         config:
           path: ${{ vars.path_out }}
-          message: "${{ outputs['create-change-ticket'].key }}: Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
+          message: "${{ outputs['create-change-ticket'].key }} : Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
       - uses: git-push
         config:
           path: ${{ vars.path_out }}
@@ -240,6 +240,8 @@ spec:
           createTargetBranch: false
           sourceBranch: change/${{ outputs['create-change-ticket'].key }}
           targetBranch: locked-env/prod
+          adfDescription: |
+            Approve this change via Jira Change Ticket [${{ outputs['create-change-ticket'].key }}](https://eddiewebb.atlassian.net/browse/${{ outputs['create-change-ticket'].key }})
       - uses: jira
         as: wait-for-approval
         config:
