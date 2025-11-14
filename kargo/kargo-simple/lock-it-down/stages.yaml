@@ -201,7 +201,7 @@ spec:
                   marks:
                   - type: strong
                 - type: text
-                  text: ${{ ctx.targetFreight }}
+                  text: ${{ ctx.targetFreight.name }}
                   marks:
                   - type: link
                     attrs:
