@@ -177,21 +177,23 @@ spec:
                   level: 3
                 content:
                 - type: text
-                  text: "${{ ctx.stage }} Promotion: "
+                  text: "Promotion: ${{ ctx.stage }},  "
                 - type: text
                   text: "${{ imageFrom(vars.imageRepo).Tag }}"
                   marks:
-              #     - type: code
-              # - type: paragraph
-              #   content:
-              #   - type: text
-              #     text: "*Promotion ID*:"
-              #   - type: text
-              #     text: ${{ ctx.promotion }}
-              #     marks:
-              #     - type: link
-              #       attrs:
-              #         href: "https://kargo.akpdemoapps.link/project/lock-it-down/promotion/${{ ctx.promotion }}"
+                  - type: code
+              - type: paragraph
+                content:
+                - type: text
+                  text: "Promotion ID:"
+                  marks:
+                  - type: strong
+                - type: text
+                  text: ${{ ctx.promotion }}
+                  marks:
+                  - type: link
+                    attrs:
+                      href: "https://kargo.akpdemoapps.link/project/lock-it-down/promotion/${{ ctx.promotion }}"
               # - type: paragraph
               #   content:
               #   - type: text
