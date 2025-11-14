@@ -166,7 +166,7 @@ spec:
           credentials:
             secretName: jira-access-secret
           createIssue:
-            projectKey: CM
+            projectKey: CHANGE
             summary: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }}"
             adfDescription:
               type: doc
@@ -246,7 +246,7 @@ spec:
             secretName: jira-access-secret
           waitForStatus:
             issueKey: "${{ outputs['create-change-ticket'].key }}"
-            expectedStatus: "Implementing"
+            expectedStatus: "Approved"
       - uses: git-merge-pr
         config:
           repoURL: ${{ vars.gitRepo }}
