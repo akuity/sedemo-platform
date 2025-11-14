@@ -214,7 +214,7 @@ spec:
               #     text: ${{ imageFrom(vars.imageRepo).RepoURL }}
             issueType: task
             customFields:
-              customfield_11301: Standard
+              #customfield_11301: Standard
               customfield_10800: Request a change
             labels:
             - promotion
