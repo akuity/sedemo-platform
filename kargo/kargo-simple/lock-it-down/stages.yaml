@@ -210,10 +210,6 @@ spec:
                   text: "*Image Repo*:"
                 - type: text
                   text: ${{ imageFrom(vars.imageRepo).RepoURL }}
-
-              "Repo ${{ imageFrom(vars.imageRepo).RepoURL }}: 
-              *Promotion ID*: [${{ ctx.promotion }}|https://kargo.akpdemoapps.link/project/lock-it-down/promotion/${{ ctx.promotion }}]. 
-              *Freight*: [${{ ctx.targetFreight.name }}|https://kargo.akpdemoapps.link/project/lock-it-down/freight/${{ ctx.targetFreight.id }}]."
             issueType: Request a Change
             # customFields:
             #   customfield_11490: 10204
