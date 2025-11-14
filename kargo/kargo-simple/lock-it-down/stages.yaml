@@ -169,9 +169,9 @@ spec:
             projectKey: CM
             summary: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }}"
             description: |
-              "Promoting ${{ imageFrom(vars.imageRepo).RepoURL }}:${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} environment. 
-              *Promotion ID*: [${{ ctx.promotion }}](https://kargo.akpdemoapps.link/project/lock-it-down/promotion/${{ ctx.promotion }}). 
-              *Freight*: [${{ ctx.targetFreight.name }}|https://kargo.akpdemoapps.link/project/lock-it-down/freight/${{ ctx.targetFreight.id }}]."
+              Promoting ${{ imageFrom(vars.imageRepo).RepoURL }}:${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} environment. 
+              *Promotion ID*: [${{ ctx.promotion }}](https://kargo.akpdemoapps.link/project/lock-it-down/promotion/${{ ctx.promotion }})
+              *Freight*: [${{ ctx.targetFreight.name }}](https://kargo.akpdemoapps.link/project/lock-it-down/freight/${{ ctx.targetFreight.id }})
             issueType: Request a Change
             # customFields:
             #   customfield_11490: 10204
