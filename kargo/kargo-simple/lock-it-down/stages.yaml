@@ -212,7 +212,7 @@ spec:
               #     text: "*Image Repo*:"
               #   - type: text
               #     text: ${{ imageFrom(vars.imageRepo).RepoURL }}
-            issueType: Task
+            issueType: 3
             customFields:
               customfield_11301: Standard
               customfield_10800: Request a change
