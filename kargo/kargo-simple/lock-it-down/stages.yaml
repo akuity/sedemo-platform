@@ -215,7 +215,7 @@ spec:
             issueType: Task
             customFields:
               customfield_11301: Standard
-              issuetype: Request a change
+              customfield_10800: Request a change
             labels:
             - promotion
             - "${{ ctx.stage }}"
