@@ -168,7 +168,10 @@ spec:
           createIssue:
             projectKey: CM
             summary: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }}"
-            description: "Promoteing ${{ imageFrom(vars.imageRepo).RepoURL }}:${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} environment. Promotion ID: ${{ ctx.promotion }}. Freight: ${{ ctx.targetFreight.name }}."
+            description: |
+              "Promoting ${{ imageFrom(vars.imageRepo).RepoURL }}:${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} environment. 
+              *Promotion ID*: [${{ ctx.promotion }}|https://kargo.akpdemoapps.link/project/lock-it-down/promotion/${{ ctx.promotion }}]. 
+              *Freight*: [${{ ctx.targetFreight.name }}|https://kargo.akpdemoapps.link/project/lock-it-down/freight/${{ ctx.targetFreight.id }}]."
             issueType: Request a Change
             # customFields:
             #   customfield_11490: 10204
@@ -176,12 +179,17 @@ spec:
             - promotion
             - "${{ ctx.stage }}"
             - "release-${{ imageFrom(vars.imageRepo).Tag }}"
+      - uses: compose-output
+        as: jira-link
+        config:
+          url: https://eddiewebb.atlassian.net/jira/servicedesk/projects/CM/queues/custom/21/${{ outputs['create-change-ticket'].key }}
       - task:
           name: push-manifests
         vars:
         - name: targetBranch
           value: change/${{ outputs['create-change-ticket'].key }}
       - uses: jira
+        as: wait-for-approval
         config:
           credentials:
             secretName: jira-access-secret
