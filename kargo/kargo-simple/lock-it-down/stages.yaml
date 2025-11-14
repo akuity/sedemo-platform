@@ -240,7 +240,7 @@ spec:
           createTargetBranch: false
           sourceBranch: change/${{ outputs['create-change-ticket'].key }}
           targetBranch: locked-env/prod
-          adfDescription: |
+          description: |
             Approve this change via Jira Change Ticket [${{ outputs['create-change-ticket'].key }}](https://eddiewebb.atlassian.net/browse/${{ outputs['create-change-ticket'].key }})
       - uses: jira
         as: wait-for-approval
