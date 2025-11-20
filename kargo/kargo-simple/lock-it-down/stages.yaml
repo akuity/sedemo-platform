@@ -143,6 +143,14 @@ spec:
       - name: path_out
         value: ./out
       steps:
+      - uses: http
+        as: query-primary-cluster
+        config:
+          url: http://www.randomnumberapi.com/api/v1.0/randomstring?max=5&min=5&count=1
+          successExpression: response.body.status == '200'
+          outputs:
+          - name: targetCluster
+            fromExpression: response.body[0]
       - task:
           name: prepare-workdir 
       - uses: helm-template
@@ -206,6 +214,14 @@ spec:
                   - type: link
                     attrs:
                       href: "https://kargo.akpdemoapps.link/project/lock-it-down/freight/${{ ctx.targetFreight.name }}"
+              - type: paragraph
+                content:
+                - type: text
+                  text: "Primary Cluster: "
+                  marks:
+                  - type: strong
+                - type: text
+                  text: ${{ outputs['query-primary-cluster'].targetCluster }}
               # - type: paragraph
               #   content:
               #   - type: text
