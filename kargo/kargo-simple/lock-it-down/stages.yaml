@@ -147,7 +147,7 @@ spec:
         as: query-primary-cluster
         config:
           url: http://www.randomnumberapi.com/api/v1.0/randomstring?max=5&min=5&count=1
-          successExpression: response.body.status == '200'
+          successExpression: response.body.status == 200
           outputs:
           - name: targetCluster
             fromExpression: response.body[0]
