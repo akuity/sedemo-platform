@@ -15,51 +15,40 @@ spec:
       direct: true
   promotionTemplate:
     spec:
-      vars:
-      - name: gitRepo
-        value: https://github.com/eddiewebb/argodemo-rollouts-app
-      - name: imageRepo
-        value: ghcr.io/eddiewebb/rollouts
-      - name: targetBranch
-        value: locked-env/dev 
-      - name: path_src
-        value: ./src
-      - name: path_out
-        value: ./out
       steps:
       - task:
           name: prepare-workdir 
-      - uses: helm-template
-        config:
-          releaseName: deploy
-          path: ${{ vars.path_src }}/deploy/chart
-          valuesFiles:
-          - ${{ vars.path_src }}/deploy/chart/values.yaml
-          outPath: ${{ vars.path_out }}/manifests.yaml
-          namespace: many-argocds-dev
-          setValues:
-            - key: image.tag
-              value: ${{ imageFrom(vars.imageRepo).Tag }}
-            - key: kargo.stage
-              value: ${{ ctx.stage }}
-            - key: ingress.root_domain
-              value: akpdemoapps.link
-      - uses: git-commit
-        as: commit
-        config:
-          path: ${{ vars.path_out }}
-          message: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
-      - uses: git-push
-        config:
-          path: ${{ vars.path_out }}
-          targetBranch: ${{ vars.targetBranch }}
-      - uses: argocd-update
-        config:
-          apps:
-          - labels:
-            - kargo.akuity.io/authorized-stage: "athena-dev"
-          - name: many-argocds-dev
-            namespace: argocd
+      # - uses: helm-template
+      #   config:
+      #     releaseName: deploy
+      #     path: ${{ vars.path_src }}/deploy/chart
+      #     valuesFiles:
+      #     - ${{ vars.path_src }}/deploy/chart/values.yaml
+      #     outPath: ${{ vars.path_out }}/manifests.yaml
+      #     namespace: many-argocds-dev
+      #     setValues:
+      #       - key: image.tag
+      #         value: ${{ imageFrom(vars.imageRepo).Tag }}
+      #       - key: kargo.stage
+      #         value: ${{ ctx.stage }}
+      #       - key: ingress.root_domain
+      #         value: akpdemoapps.link
+      # - uses: git-commit
+      #   as: commit
+      #   config:
+      #     path: ${{ vars.path_out }}
+      #     message: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
+      # - uses: git-push
+      #   config:
+      #     path: ${{ vars.path_out }}
+      #     targetBranch: ${{ vars.targetBranch }}
+      # - uses: argocd-update
+      #   config:
+      #     apps:
+      #     - labels:
+      #       - kargo.akuity.io/authorized-stage: "athena-dev"
+      #     - name: many-argocds-dev
+      #       namespace: argocd
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -79,51 +68,40 @@ spec:
       - dev
   promotionTemplate:
     spec:
-      vars:
-      - name: gitRepo
-        value: https://github.com/eddiewebb/argodemo-rollouts-app
-      - name: imageRepo
-        value: ghcr.io/eddiewebb/rollouts
-      - name: targetBranch
-        value: locked-env/staging
-      - name: path_src
-        value: ./src
-      - name: path_out
-        value: ./out
       steps:
       - task:
           name: prepare-workdir 
-      - uses: helm-template
-        config:
-          releaseName: deploy
-          path: ${{ vars.path_src }}/deploy/chart
-          valuesFiles:
-          - ${{ vars.path_src }}/deploy/chart/values.yaml
-          outPath: ${{ vars.path_out }}/manifests.yaml
-          namespace: many-argocds-dev
-          setValues:
-            - key: image.tag
-              value: ${{ imageFrom(vars.imageRepo).Tag }}
-            - key: kargo.stage
-              value: ${{ ctx.stage }}
-            - key: ingress.root_domain
-              value: akpdemoapps.link
-      - uses: git-commit
-        as: commit
-        config:
-          path: ${{ vars.path_out }}
-          message: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
-      - uses: git-push
-        config:
-          path: ${{ vars.path_out }}
-          targetBranch: ${{ vars.targetBranch }}
-      - uses: argocd-update
-        config:
-          apps:
-          - labels:
-            - kargo.akuity.io/authorized-stage: "athena-dev"
-          - name: many-argocds-dev
-            namespace: argocd
+      # - uses: helm-template
+      #   config:
+      #     releaseName: deploy
+      #     path: ${{ vars.path_src }}/deploy/chart
+      #     valuesFiles:
+      #     - ${{ vars.path_src }}/deploy/chart/values.yaml
+      #     outPath: ${{ vars.path_out }}/manifests.yaml
+      #     namespace: many-argocds-dev
+      #     setValues:
+      #       - key: image.tag
+      #         value: ${{ imageFrom(vars.imageRepo).Tag }}
+      #       - key: kargo.stage
+      #         value: ${{ ctx.stage }}
+      #       - key: ingress.root_domain
+      #         value: akpdemoapps.link
+      # - uses: git-commit
+      #   as: commit
+      #   config:
+      #     path: ${{ vars.path_out }}
+      #     message: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
+      # - uses: git-push
+      #   config:
+      #     path: ${{ vars.path_out }}
+      #     targetBranch: ${{ vars.targetBranch }}
+      # - uses: argocd-update
+      #   config:
+      #     apps:
+      #     - labels:
+      #       - kargo.akuity.io/authorized-stage: "athena-dev"
+      #     - name: many-argocds-dev
+      #       namespace: argocd
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -144,13 +122,15 @@ spec:
   promotionTemplate:
     spec:
       steps:
-      - uses: argocd-update
-        config:
-          apps:
-          # This is an example of what future filtering might look like. Subject to change
-          - labels:
-            - our-custom-labe: "clients-realm-prod-2"
-            - kargo.akuity.io/authorized-stage: "many-argocds:prod-internal-clusters"
+      - task:
+          name: prepare-workdir 
+      # - uses: argocd-update
+      #   config:
+      #     apps:
+      #     # This is an example of what future filtering might look like. Subject to change
+      #     - labels:
+      #       - our-custom-labe: "clients-realm-prod-2"
+      #       - kargo.akuity.io/authorized-stage: "many-argocds:prod-internal-clusters"
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -171,12 +151,14 @@ spec:
   promotionTemplate:
     spec:
       steps:
-      - uses: argocd-update
-        config:
-          apps:
-          # This is an example of what future filtering might look like. Subject to change
-          - labels:
-            - our-custom-labe: "clients-realm-prod-1"
+      - task:
+          name: prepare-workdir 
+      # - uses: argocd-update
+      #   config:
+      #     apps:
+      #     # This is an example of what future filtering might look like. Subject to change
+      #     - labels:
+      #       - our-custom-labe: "clients-realm-prod-1"
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -197,12 +179,14 @@ spec:
   promotionTemplate:
     spec:
       steps:
-      - uses: argocd-update
-        config:
-          apps:
-          # This is an example of what future filtering might look like. Subject to change
-          - labels:
-            - our-custom-labe: "clients-realm-prod-2"
+      - task:
+          name: prepare-workdir 
+      # - uses: argocd-update
+      #   config:
+      #     apps:
+      #     # This is an example of what future filtering might look like. Subject to change
+      #     - labels:
+      #       - our-custom-labe: "clients-realm-prod-2"
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -223,9 +207,11 @@ spec:
   promotionTemplate:
     spec:
       steps:
-      - uses: argocd-update
-        config:
-          apps:
-          # This is an example of what future filtering might look like. Subject to change
-          - names:
-            - "transaction-service-*"
+      - task:
+          name: prepare-workdir 
+      # - uses: argocd-update
+      #   config:
+      #     apps:
+      #     # This is an example of what future filtering might look like. Subject to change
+      #     - names:
+      #       - "transaction-service-*"
