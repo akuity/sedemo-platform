@@ -329,9 +329,10 @@ spec:
       - uses: argocd-update
         config:
           apps:
-          # Pending spec for filtering. Subject to change
-          - selectors:
+          - selector:
               matchExpressions:
-                - key: "example.com/customer-realm"
-                  operator: in
-                  value: wave-a
+              - key: environment
+                operator: In
+                values:
+                - staging
+                - production
