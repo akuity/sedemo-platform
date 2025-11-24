@@ -251,8 +251,8 @@ spec:
           # Pending spec for filtering. Subject to change
           - selectors:
               expressions:
-              - key: "applicationSet-Foo"
-              	operator: exists
+                - key: "applicationSet-Foo"
+                  operator: exists
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -332,6 +332,6 @@ spec:
           # Pending spec for filtering. Subject to change
           - selectors:
               expressions:
-              - key: "example.com/customer-realm"
-              	operator: in
-                value: wave-a
+                - key: "example.com/customer-realm"
+                  operator: in
+                  value: wave-a
