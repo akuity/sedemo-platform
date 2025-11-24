@@ -334,5 +334,4 @@ spec:
               - key: environment
                 operator: In
                 values:
-                - staging
                 - production
