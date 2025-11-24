@@ -15,6 +15,16 @@ spec:
       direct: true
   promotionTemplate:
     spec:
+      vars:
+      - name: gitRepo
+      - name: sourceBranch
+        value: main
+      - name: targetBranch
+        value: env/${{ ctx.stage }}
+      - name: path_src
+        value: ./src
+      - name: path_out
+        value: ./out
       steps:
       - uses: git-clone
         config:
@@ -78,6 +88,16 @@ spec:
       - dev
   promotionTemplate:
     spec:
+      vars:
+      - name: gitRepo
+      - name: sourceBranch
+        value: main
+      - name: targetBranch
+        value: env/${{ ctx.stage }}
+      - name: path_src
+        value: ./src
+      - name: path_out
+        value: ./out
       steps:
       - uses: git-clone
         config:
@@ -141,6 +161,16 @@ spec:
       - staging
   promotionTemplate:
     spec:
+      vars:
+      - name: gitRepo
+      - name: sourceBranch
+        value: main
+      - name: targetBranch
+        value: env/${{ ctx.stage }}
+      - name: path_src
+        value: ./src
+      - name: path_out
+        value: ./out
       steps:
       - uses: git-clone
         config:
@@ -180,6 +210,16 @@ spec:
       - staging
   promotionTemplate:
     spec:
+      vars:
+      - name: gitRepo
+      - name: sourceBranch
+        value: main
+      - name: targetBranch
+        value: env/${{ ctx.stage }}
+      - name: path_src
+        value: ./src
+      - name: path_out
+        value: ./out
       steps:
       - uses: git-clone
         config:
@@ -218,6 +258,16 @@ spec:
       - prod-clients-wave-a
   promotionTemplate:
     spec:
+      vars:
+      - name: gitRepo
+      - name: sourceBranch
+        value: main
+      - name: targetBranch
+        value: env/${{ ctx.stage }}
+      - name: path_src
+        value: ./src
+      - name: path_out
+        value: ./out
       steps:
       - uses: git-clone
         config:
@@ -256,6 +306,16 @@ spec:
       - prod-clients-wave-b
   promotionTemplate:
     spec:
+      vars:
+      - name: gitRepo
+      - name: sourceBranch
+        value: main
+      - name: targetBranch
+        value: env/${{ ctx.stage }}
+      - name: path_src
+        value: ./src
+      - name: path_out
+        value: ./out
       steps:
       - uses: git-clone
         config:
