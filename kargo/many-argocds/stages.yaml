@@ -250,7 +250,7 @@ spec:
           apps:
           # Pending spec for filtering. Subject to change
           - selectors:
-              expressions:
+              matchExpressions:
                 - key: "applicationSet-Foo"
                   operator: exists
 ---
@@ -279,7 +279,7 @@ spec:
           apps:
           # Pending spec for filtering. Subject to change
           - selectors:
-              match-labels:
+              matchLabels:
               - our-custom-label: "client-app"
 ---
 apiVersion: kargo.akuity.io/v1alpha1
@@ -331,7 +331,7 @@ spec:
           apps:
           # Pending spec for filtering. Subject to change
           - selectors:
-              expressions:
+              matchExpressions:
                 - key: "example.com/customer-realm"
                   operator: in
                   value: wave-a
