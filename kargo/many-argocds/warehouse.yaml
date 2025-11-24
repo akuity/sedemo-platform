@@ -1,0 +1,18 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: many-argocds
+  namespace: many-argocds
+spec:
+  shard: sedemo-primary
+  subscriptions:
+  - image:
+      repoURL: ghcr.io/eddiewebb/rollouts
+      discoveryLimit: 5
+      imageSelectionStrategy: Lexical
+      allowTags: ^\d*-[a-z]*$
+  - git:
+      repoURL: https://github.com/eddiewebb/argodemo-rollouts-app
+      includePaths:
+      - deploy
+      - Dockerfile

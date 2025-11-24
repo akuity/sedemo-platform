@@ -1,0 +1,17 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: many-argocds
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: many-argocds
+  namespace: many-argocds
+spec:
+  promotionPolicies:
+  - stageSelector:
+      name: dev
+    autoPromotionEnabled: true
