@@ -16,7 +16,6 @@ spec:
   promotionTemplate:
     spec:
       steps:
-      - task:
       - uses: git-clone
         config:
           repoURL: ${{ vars.gitRepo }}
@@ -80,7 +79,6 @@ spec:
   promotionTemplate:
     spec:
       steps:
-      - task:
       - uses: git-clone
         config:
           repoURL: ${{ vars.gitRepo }}
@@ -144,7 +142,6 @@ spec:
   promotionTemplate:
     spec:
       steps:
-      - task:
       - uses: git-clone
         config:
           repoURL: ${{ vars.gitRepo }}
@@ -184,7 +181,6 @@ spec:
   promotionTemplate:
     spec:
       steps:
-      - task:
       - uses: git-clone
         config:
           repoURL: ${{ vars.gitRepo }}
@@ -223,7 +219,6 @@ spec:
   promotionTemplate:
     spec:
       steps:
-      - task:
       - uses: git-clone
         config:
           repoURL: ${{ vars.gitRepo }}
@@ -262,7 +257,6 @@ spec:
   promotionTemplate:
     spec:
       steps:
-      - task:
       - uses: git-clone
         config:
           repoURL: ${{ vars.gitRepo }}
