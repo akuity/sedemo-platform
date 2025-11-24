@@ -8,7 +8,7 @@ spec:
   project: kargo
   source:
     repoURL: https://github.com/akuity/sedemo-platform
-    path: kargo/kargo-simple/many-argocds
+    path: kargo/many-argocds
     directory:
       recurse: true
   destination:
