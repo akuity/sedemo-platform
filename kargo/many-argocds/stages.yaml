@@ -17,6 +17,9 @@ spec:
     spec:
       vars:
       - name: gitRepo
+        value: https://github.com/eddiewebb/argodemo-rollouts-app
+      - name: imageRepo
+        value: ghcr.io/eddiewebb/rollouts
       - name: sourceBranch
         value: main
       - name: targetBranch
@@ -90,6 +93,9 @@ spec:
     spec:
       vars:
       - name: gitRepo
+        value: https://github.com/eddiewebb/argodemo-rollouts-app
+      - name: imageRepo
+        value: ghcr.io/eddiewebb/rollouts
       - name: sourceBranch
         value: main
       - name: targetBranch
@@ -163,6 +169,9 @@ spec:
     spec:
       vars:
       - name: gitRepo
+        value: https://github.com/eddiewebb/argodemo-rollouts-app
+      - name: imageRepo
+        value: ghcr.io/eddiewebb/rollouts
       - name: sourceBranch
         value: main
       - name: targetBranch
@@ -212,6 +221,9 @@ spec:
     spec:
       vars:
       - name: gitRepo
+        value: https://github.com/eddiewebb/argodemo-rollouts-app
+      - name: imageRepo
+        value: ghcr.io/eddiewebb/rollouts
       - name: sourceBranch
         value: main
       - name: targetBranch
@@ -260,6 +272,9 @@ spec:
     spec:
       vars:
       - name: gitRepo
+        value: https://github.com/eddiewebb/argodemo-rollouts-app
+      - name: imageRepo
+        value: ghcr.io/eddiewebb/rollouts
       - name: sourceBranch
         value: main
       - name: targetBranch
@@ -308,6 +323,9 @@ spec:
     spec:
       vars:
       - name: gitRepo
+        value: https://github.com/eddiewebb/argodemo-rollouts-app
+      - name: imageRepo
+        value: ghcr.io/eddiewebb/rollouts
       - name: sourceBranch
         value: main
       - name: targetBranch
