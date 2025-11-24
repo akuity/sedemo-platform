@@ -245,12 +245,14 @@ spec:
       - uses: git-clear
         config:
           path: ${{ vars.path_out }}
-      # - uses: argocd-update
-      #   config:
-      #     apps:
-      #     # This is an example of what future filtering might look like. Subject to change
-      #     - labels:
-      #       - our-custom-labe: "clients-realm-prod-1"
+      - uses: argocd-update
+        config:
+          apps:
+          # Pending spec for filtering. Subject to change
+          - selectors:
+              expressions:
+              - key: "applicationSet-Foo"
+              	operator: exists
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -270,38 +272,15 @@ spec:
       - prod-clients-wave-a
   promotionTemplate:
     spec:
-      vars:
-      - name: gitRepo
-        value: https://github.com/eddiewebb/argodemo-rollouts-app
-      - name: imageRepo
-        value: ghcr.io/eddiewebb/rollouts
-      - name: sourceBranch
-        value: main
-      - name: targetBranch
-        value: env/${{ ctx.stage }}
-      - name: path_src
-        value: ./src
-      - name: path_out
-        value: ./out
       steps:
       - uses: git-clone
+      - uses: argocd-update
         config:
-          repoURL: ${{ vars.gitRepo }}
-          checkout:
-          - branch: ${{ vars.sourceBranch }}
-            path: ${{ vars.path_src }}
-          - branch: ${{ vars.targetBranch }}
-            create: true
-            path: ${{ vars.path_out }}
-      - uses: git-clear
-        config:
-          path: ${{ vars.path_out }}
-      # - uses: argocd-update
-      #   config:
-      #     apps:
-      #     # This is an example of what future filtering might look like. Subject to change
-      #     - labels:
-      #       - our-custom-labe: "clients-realm-prod-2"
+          apps:
+          # Pending spec for filtering. Subject to change
+          - selectors:
+              match-labels:
+              - our-custom-label: "client-app"
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -347,9 +326,12 @@ spec:
       - uses: git-clear
         config:
           path: ${{ vars.path_out }}
-      # - uses: argocd-update
-      #   config:
-      #     apps:
-      #     # This is an example of what future filtering might look like. Subject to change
-      #     - names:
-      #       - "transaction-service-*"
+      - uses: argocd-update
+        config:
+          apps:
+          # Pending spec for filtering. Subject to change
+          - selectors:
+              expressions:
+              - key: "example.com/customer-realm"
+              	operator: in
+                value: wave-a
