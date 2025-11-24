@@ -17,7 +17,18 @@ spec:
     spec:
       steps:
       - task:
-          name: prepare-workdir 
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: ${{ vars.sourceBranch }}
+            path: ${{ vars.path_src }}
+          - branch: ${{ vars.targetBranch }}
+            create: true
+            path: ${{ vars.path_out }}
+      - uses: git-clear
+        config:
+          path: ${{ vars.path_out }}
       # - uses: helm-template
       #   config:
       #     releaseName: deploy
@@ -70,7 +81,18 @@ spec:
     spec:
       steps:
       - task:
-          name: prepare-workdir 
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: ${{ vars.sourceBranch }}
+            path: ${{ vars.path_src }}
+          - branch: ${{ vars.targetBranch }}
+            create: true
+            path: ${{ vars.path_out }}
+      - uses: git-clear
+        config:
+          path: ${{ vars.path_out }}
       # - uses: helm-template
       #   config:
       #     releaseName: deploy
@@ -123,7 +145,18 @@ spec:
     spec:
       steps:
       - task:
-          name: prepare-workdir 
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: ${{ vars.sourceBranch }}
+            path: ${{ vars.path_src }}
+          - branch: ${{ vars.targetBranch }}
+            create: true
+            path: ${{ vars.path_out }}
+      - uses: git-clear
+        config:
+          path: ${{ vars.path_out }}
       # - uses: argocd-update
       #   config:
       #     apps:
@@ -152,7 +185,18 @@ spec:
     spec:
       steps:
       - task:
-          name: prepare-workdir 
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: ${{ vars.sourceBranch }}
+            path: ${{ vars.path_src }}
+          - branch: ${{ vars.targetBranch }}
+            create: true
+            path: ${{ vars.path_out }}
+      - uses: git-clear
+        config:
+          path: ${{ vars.path_out }}
       # - uses: argocd-update
       #   config:
       #     apps:
@@ -180,7 +224,18 @@ spec:
     spec:
       steps:
       - task:
-          name: prepare-workdir 
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: ${{ vars.sourceBranch }}
+            path: ${{ vars.path_src }}
+          - branch: ${{ vars.targetBranch }}
+            create: true
+            path: ${{ vars.path_out }}
+      - uses: git-clear
+        config:
+          path: ${{ vars.path_out }}
       # - uses: argocd-update
       #   config:
       #     apps:
@@ -208,7 +263,18 @@ spec:
     spec:
       steps:
       - task:
-          name: prepare-workdir 
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: ${{ vars.sourceBranch }}
+            path: ${{ vars.path_src }}
+          - branch: ${{ vars.targetBranch }}
+            create: true
+            path: ${{ vars.path_out }}
+      - uses: git-clear
+        config:
+          path: ${{ vars.path_out }}
       # - uses: argocd-update
       #   config:
       #     apps:
