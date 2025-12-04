@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Values.projectName }}
   annotations:
     kargo.akuity.io/description: Promote to Staging only
-    rbac.kargo.akuity.io/claims: '{"groups":["devops"]}'
+    rbac.kargo.akuity.io/claims: '{"groups":["testers"]}'
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
