@@ -7,11 +7,8 @@ metadata:
   annotations:
     kargo.akuity.io/description: Promotion and freight creation, all stages.
     rbac.kargo.akuity.io/claims: |
-      {
-        "sub": ["sre", "cloud" ],
-        "email": "admin1@example.com",
-        "groups": ["sre", "cloud"]
-      }
+      groups: ["sre", "cloud"]
+      
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
