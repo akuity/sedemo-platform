@@ -6,8 +6,7 @@ metadata:
   namespace: {{ .Values.projectName }}
   annotations:
     kargo.akuity.io/description: Promotion and freight creation, all stages.
-    rbac.kargo.akuity.io/claims: |
-      groups: [sre, cloud]
+    rbac.kargo.akuity.io/claims: '{"groups":["devops"]}'
       
 ---
 apiVersion: rbac.authorization.k8s.io/v1
