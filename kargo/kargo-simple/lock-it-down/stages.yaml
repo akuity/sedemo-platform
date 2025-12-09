@@ -33,6 +33,21 @@ spec:
       steps:
       - task:
           name: prepare-workdir 
+      - uses: yaml-update
+        config:
+          path: ${{ vars.path_src }}/deploy/chart/values.yaml
+          updates:
+            - key: image.tag
+              value: ${{ quote('12.3') }}
+      - uses: git-commit
+        as: commit
+        config:
+          path: ${{ vars.path_src }}
+          message: ${{ outputs['yaml-update'].commitMessage }}
+      - uses: git-push
+        config:
+          path: ${{ vars.path_src }}
+          targetBranch: test/yaml-update
       - uses: helm-template
         config:
           releaseName: deploy
@@ -48,12 +63,6 @@ spec:
               value: ${{ ctx.stage }}
             - key: ingress.root_domain
               value: akpdemoapps.link
-      - uses: yaml-update
-        config:
-          path: ${{ vars.path_src }}/deploy/chart/values.yaml
-          updates:
-            - key: image.tag
-              value: ${{ quote('12.3') }}
       - task:
           name: push-manifests
       - uses: argocd-update
