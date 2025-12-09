@@ -43,7 +43,7 @@ spec:
         as: commit
         config:
           path: ${{ vars.path_src }}
-          message: ${{ outputs['yaml-update'].commitMessage }}
+          message: "testing yaml update"
       - uses: git-push
         config:
           path: ${{ vars.path_src }}
