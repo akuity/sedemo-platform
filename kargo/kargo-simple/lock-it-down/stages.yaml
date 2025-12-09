@@ -32,13 +32,17 @@ spec:
         value: ./out
       steps:
       - task:
-          name: prepare-workdir 
+          name: prepare-workdir
+      - uses: compose-output
+        as: make-variable
+        config:
+          version: 20251105.173810
       - uses: yaml-update
         config:
           path: ${{ vars.path_src }}/deploy/chart/values.yaml
           updates:
             - key: image.tag
-              value: ${{ quote('12.3') }}
+              value: ${{ quote(outputs['make-variable'].version) }}
       - uses: git-commit
         as: commit
         config:
