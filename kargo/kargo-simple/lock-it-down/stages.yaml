@@ -33,20 +33,20 @@ spec:
       steps:
       - task:
           name: prepare-workdir
-      - uses: yaml-update
-        config:
-          path: ${{ vars.path_src }}/deploy/chart/values.yaml
-          updates:
-            - key: image.tag
-              value: ${{ quote(imageFrom( vars.imageRepo ).Tag) }}
-      - uses: git-commit
-        as: commit
-        config:
-          path: ${{ vars.path_src }}
-          message: "testing yaml update"
-      - uses: git-push
-        config:
-          path: ${{ vars.path_src }}
+      # - uses: yaml-update
+      #   config:
+      #     path: ${{ vars.path_src }}/deploy/chart/values.yaml
+      #     updates:
+      #       - key: image.tag
+      #         value: ${{ quote(imageFrom( vars.imageRepo ).Tag) }}
+      # - uses: git-commit
+      #   as: commit
+      #   config:
+      #     path: ${{ vars.path_src }}
+      #     message: "testing yaml update"
+      # - uses: git-push
+      #   config:
+      #     path: ${{ vars.path_src }}
       - uses: helm-template
         config:
           releaseName: deploy
