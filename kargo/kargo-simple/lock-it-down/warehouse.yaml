@@ -8,8 +8,8 @@ spec:
   subscriptions:
   - image:
       repoURL: ghcr.io/eddiewebb/rollouts
-      discoveryLimit: 5
-      imageSelectionStrategy: Lexical
+      discoveryLimit: 20
+      imageSelectionStrategy: NewestBuild
   - git:
       repoURL: https://github.com/eddiewebb/argodemo-rollouts-app
       includePaths:
