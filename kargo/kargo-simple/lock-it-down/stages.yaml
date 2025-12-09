@@ -48,6 +48,12 @@ spec:
               value: ${{ ctx.stage }}
             - key: ingress.root_domain
               value: akpdemoapps.link
+      - uses: yaml-update
+        config:
+          path: ${{ vars.path_src }}/deploy/chart/values.yaml
+          updates:
+            - key: image.tag
+              value: ${{ quote('12.3') }}
       - task:
           name: push-manifests
       - uses: argocd-update
