@@ -51,7 +51,6 @@ spec:
       - uses: git-push
         config:
           path: ${{ vars.path_src }}
-          targetBranch: test/yaml-update
       - uses: helm-template
         config:
           releaseName: deploy
