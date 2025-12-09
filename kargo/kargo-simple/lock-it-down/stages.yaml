@@ -42,7 +42,7 @@ spec:
           path: ${{ vars.path_src }}/deploy/chart/values.yaml
           updates:
             - key: image.tag
-              value: ${{ quote(imageFrom( vars.image ).Tag) }}
+              value: ${{ quote(imageFrom( vars.imageRepo ).Tag) }}
       - uses: git-commit
         as: commit
         config:
