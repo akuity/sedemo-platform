@@ -15,8 +15,5 @@ spec:
         name: sedemo-primary
         namespace: oom-demo
   syncPolicy:
-    automated:
-      enabled: true
-      selfHeal: true
     syncOptions:
     - CreateNamespace=true
