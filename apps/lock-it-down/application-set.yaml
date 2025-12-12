@@ -18,7 +18,7 @@ spec:
     spec:
       project: rollouts
       source:
-        repoURL: https://github.com/eddiewebb/argodemo-rollouts-app
+        repoURL: https://github.com/akuity/sedemo-rollouts-app
         targetRevision: locked-env/{{stage}}
         path: .
       destination:

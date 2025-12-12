@@ -3,7 +3,7 @@
 
 projectName: abc-demo
 
-repoUrl: https://github.com/eddiewebb/argodemo-rollouts-app
+repoUrl: https://github.com/akuity/sedemo-rollouts-app
 
 artifactUrl: ghcr.io/eddiewebb/rollouts
 

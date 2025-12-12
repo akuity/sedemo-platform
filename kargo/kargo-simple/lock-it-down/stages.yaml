@@ -21,7 +21,7 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/eddiewebb/argodemo-rollouts-app
+        value: https://github.com/akuity/sedemo-rollouts-app
       - name: imageRepo
         value: ghcr.io/eddiewebb/rollouts
       - name: targetBranch
@@ -91,7 +91,7 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/eddiewebb/argodemo-rollouts-app
+        value: https://github.com/akuity/sedemo-rollouts-app
       - name: imageRepo
         value: ghcr.io/eddiewebb/rollouts
       - name: targetBranch
@@ -147,7 +147,7 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/eddiewebb/argodemo-rollouts-app
+        value: https://github.com/akuity/sedemo-rollouts-app
       - name: imageRepo
         value: ghcr.io/eddiewebb/rollouts
       - name: targetBranch
