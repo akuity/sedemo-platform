@@ -5,7 +5,7 @@ projectName: vgs-demo
 
 repoUrl: https://github.com/akuity/sedemo-rollouts-app
 
-artifactUrl: ghcr.io/eddiewebb/rollouts
+artifactUrl: ghcr.io/akuity/sedemo-rollouts-app
 
 git:
   srcPath: src

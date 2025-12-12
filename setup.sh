@@ -2,15 +2,16 @@ source ../argodemo-infra-iac/.env
 
 
 export GITHUB_USER="eddiewebb"
+export GITHUB_ORG="akuity"
 export GITHUB_PAT=$TF_VAR_gh_pat_kargo
 export KARGO_PASSWORD=$TF_VAR_argo_admin_password
 
-kargo login https://yz0qxt8l0dixl8rc.kargo.akuity.cloud/ --admin --password $KARGO_PASSWORD
+kargo login https://kargo.akpdemoapps.link/ --admin --password $KARGO_PASSWORD
 
 projects=$(kargo get projects|tail -n+2|cut -d' ' -f1)
 
 gh auth login --hostname github.com --with-token <<< "$GITHUB_PAT"
-
+echo "GH Login status: $?"
 for project in $projects; do
     echo "Publishing git credentials for project: $project"
 
@@ -53,5 +54,5 @@ for project in $projects; do
             "insecure_ssl":"0",
             "secret":"thisisverysecret"
             }
-        }' | tr -d '\n' | gh api --silent repos/$GITHUB_USER/argodemo-rollouts-app/hooks --input - -X POST
+        }' | tr -d '\n' | gh api --silent repos/$GITHUB_USER/sedemo-rollouts-app/hooks --input - -X POST
 done

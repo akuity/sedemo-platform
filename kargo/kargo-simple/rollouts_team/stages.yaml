@@ -22,7 +22,7 @@ spec:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-rollouts-app
       - name: imageRepo
-        value: ghcr.io/eddiewebb/rollouts
+        value: ghcr.io/akuity/sedemo-rollouts-app
       - name: targetBranch
         value: env/dev 
       - name: path_src
@@ -77,7 +77,7 @@ spec:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-rollouts-app
       - name: imageRepo
-        value: ghcr.io/eddiewebb/rollouts
+        value: ghcr.io/akuity/sedemo-rollouts-app
       - name: targetBranch
         value: env/staging
       - name: path_src
@@ -132,7 +132,7 @@ spec:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-rollouts-app
       - name: imageRepo
-        value: ghcr.io/eddiewebb/rollouts
+        value: ghcr.io/akuity/sedemo-rollouts-app
       - name: targetBranch
         value: env/prod
       - name: path_src
@@ -226,7 +226,7 @@ spec:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-rollouts-app
       - name: imageRepo
-        value: ghcr.io/eddiewebb/rollouts
+        value: ghcr.io/akuity/sedemo-rollouts-app
       - name: region
         value: amer-east
       steps:
@@ -276,7 +276,7 @@ spec:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-rollouts-app
       - name: imageRepo
-        value: ghcr.io/eddiewebb/rollouts
+        value: ghcr.io/akuity/sedemo-rollouts-app
       - name: region
         value: amer-west
       steps:
@@ -326,7 +326,7 @@ spec:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-rollouts-app
       - name: imageRepo
-        value: ghcr.io/eddiewebb/rollouts
+        value: ghcr.io/akuity/sedemo-rollouts-app
       - name: region
         value: emea
       steps:
