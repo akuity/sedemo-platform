@@ -1,8 +1,8 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
-  name: lock-it-down
-  namespace: lock-it-down
+  name: local-shard-eso
+  namespace: local-shard-eso
 spec:
   shard: sedemo-primary
   subscriptions:

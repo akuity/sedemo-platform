@@ -1,15 +1,15 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Project
 metadata:
-  name: lock-it-down
+  name: local-shard-eso
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: ProjectConfig
 metadata:
-  name: lock-it-down
-  namespace: lock-it-down
+  name: local-shard-eso
+  namespace: local-shard-eso
 spec:
   promotionPolicies:
   - stageSelector:

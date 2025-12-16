@@ -1,21 +1,76 @@
 # Argo Demo - Platform Setup
 
-This repo respresents the typical objects under control of a central infrastructure or platform team for organizations using Argo CD and Kargo.
+This repo respresents the typical objects under control of a central platform team for organizations using Argo CD and Kargo on the Akuity Platform.
+
+## General Access and Change Mangement
+
+### Access to EKS Cluster
+
+To use this repo, first ensure you have access to AWS Account and roles as described in [Infra Demo - AWS Readme](https://github.com/akuity/sedemo-infra-iac/blob/main/core-env/aws/README.md)
+
+### Making changes
+
+Because the new demo environment if fully defined as IaC, you can open pull requests on this repo or infra repo to add or change demos.
+
+## Directory Structure
+
+This repo contains ArgoCD `application` manifests that control all apps, components, and Kargo workflows used in our demo clusters.
+
+- [Demo Apps `apps`](/apps/)  
+- [Component Management `components`](/components/)
+- [Kargo Projects `kargo`](/kargo/)
+- [External Secrets `secrets`](/secrets/)
+- [Helm Value Overrides `value-overrides`](/value-overrides)
 
 
+## Use Cases Demonstrated
+
+### Progressive Delivery with Argo Rollouts
+
+Several apps make use of Argo-Rollouts in their delivery, but the primary one is [rollouts-app](apps/rollouts-app/) which also uses a `control-flow` and `fan-out` pattern in Kargo to deploy to several prod stages concurrently.
+
+#### Rollouts analysis
+
+To enable realistic demo of rollouts, the cluster includes a deployment of Prometheus which monitors traffic for non-200 response codes (which can be triggered from rollouts app UI).  You can see analysis results in Argo's Rollouts tab.
+
+#### App URLS
+
+- [demo-{stage}.akpdemoapps.link](demo-dev.akpdemoapps.link)
+- [prometheus.akpdemoapps.link](prometheus.akpdemoapps.link)
+
+### Templatized Kargo Projects w/ Helm
+
+The idea of a "golden path" or "standard pipeline" was manifested as a single Kargo project definition templatized w/ Helm.
+
+
+### Vendor Helm Charts with custom values
+
+Most external helm charts will need some level of internal customizations. For that we make use of multi-source applications from [components](/components/) which reference value files in [value-overrides](/value-overrides/)
+
+#### Prometheus 
+
+For instance, our [prometheus](/components/) install pulls vendor provided helm chart, and customizes the use of custom url and scrap jobs via our own [values file](/value-overrides/prometheus-values.yaml)
+
+#### Cert Manager
+
+**Not Currently Implemented**
+
+#### External Secrets Operator
+
+Connects to AWS Secrets Manager to pull secrets used in [Local SHard demo](/kargo/kargo-simple/local_shard_eso/).   See Also [secrets](/secrets/)
+
+### Missing / Needed Use Cases
+
+Please note any use cases we should expand, add, or refine.
+
+
+
+## Contributing & Dev Notes
 
 ### TODOS
 
-- [x] Delcarative Management (seeting in argo cluster settings)
-- [ ] Use Application set for app environments
-- [ ] Kargo ROles (dev vs platform)
-- [x] Kargo declarative
+
 - [ ] Push analysisTemplate for use in verifications
-- [ ] Consider rollouts instead of deployment
-- [x] Implement round-robin coloring.
-- [x] Implement webhooks for faster response by kargo 
- - [x] Argo (argo cd calls from kargo not working :()
-- [x] understand argocd implict health checks - https://docs.kargo.io/user-guide/how-to-guides/argo-cd-integration
 - [ ] Source annotations - https://docs.kargo.io/user-guide/how-to-guides/working-with-freight#adding-annotations-with-docker-buildx
 
 ## Considerations

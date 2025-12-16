@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
   name: policy-analysis
-  namespace: lock-it-down
+  namespace: local-shard-eso
 spec:
   metrics:
   - name: policy-analysis
