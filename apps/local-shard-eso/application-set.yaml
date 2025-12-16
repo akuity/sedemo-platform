@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: lock-it-down
+  name: local-shard-eso
   namespace: argocd
 spec:
   generators:
@@ -12,9 +12,9 @@ spec:
       - stage: prod
   template:
     metadata:
-      name: lock-it-down-{{stage}}
+      name: local-shard-eso-{{stage}}
       annotations:
-        kargo.akuity.io/authorized-stage: lock-it-down:{{stage}}
+        kargo.akuity.io/authorized-stage: local-shard-eso:{{stage}}
     spec:
       project: rollouts
       source:
