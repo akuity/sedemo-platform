@@ -38,11 +38,26 @@ To enable realistic demo of rollouts, the cluster includes a deployment of Prome
 - [demo-{stage}.akpdemoapps.link](demo-dev.akpdemoapps.link)
 - [prometheus.akpdemoapps.link](prometheus.akpdemoapps.link)
 
+### Templatized Kargo Projects w/ Helm
+
+The idea of a "golden path" or "standard pipeline" was manifested as a single Kargo project definition templatized w/ Helm.
+
+
 ### Vendor Helm Charts with custom values
 
 Most external helm charts will need some level of internal customizations. For that we make use of multi-source applications from [components](/components/) which reference value files in [value-overrides](/value-overrides/)
 
-For instance, our [prometheus](/components/)
+#### Prometheus 
+
+For instance, our [prometheus](/components/) install pulls vendor provided helm chart, and customizes the use of custom url and scrap jobs via our own [values file](/value-overrides/prometheus-values.yaml)
+
+#### Cert Manager
+
+**Not Currently Implemented**
+
+#### External Secrets Operator
+
+Connects to AWS Secrets Manager to pull secrets used in [Local SHard demo](/kargo/kargo-simple/local_shard_eso/).   See Also [secrets](/secrets/)
 
 ### Missing / Needed Use Cases
 
