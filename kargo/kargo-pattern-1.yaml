@@ -7,8 +7,9 @@ spec:
   generators:
   - list:
       elements:
-      - appname: abc
-      - appname: vgs
+      - appname: eddie
+      - appname: daniel
+      - appname: emily
   template:
     metadata:
       name: kargo-{{appname}}-definition
