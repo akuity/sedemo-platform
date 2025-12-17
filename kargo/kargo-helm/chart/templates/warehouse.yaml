@@ -14,3 +14,4 @@ spec:
       repoURL: {{ .Values.repoUrl }}
       includePaths:
       - deploy
+      - Dockerfile

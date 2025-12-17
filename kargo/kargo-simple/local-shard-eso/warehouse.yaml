@@ -15,3 +15,4 @@ spec:
       repoURL: https://github.com/akuity/sedemo-rollouts-app
       includePaths:
       - deploy
+      - Dockerfile
