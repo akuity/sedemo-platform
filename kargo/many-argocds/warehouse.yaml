@@ -9,7 +9,7 @@ spec:
   - image:
       repoURL: ghcr.io/akuity/sedemo-rollouts-app
       discoveryLimit: 5
-      imageSelectionStrategy: Lexical
+      imageSelectionStrategy: NewestBuild
       allowTags: ^\d*-[a-z]*$
   - git:
       repoURL: https://github.com/akuity/sedemo-rollouts-app

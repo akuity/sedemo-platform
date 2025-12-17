@@ -8,7 +8,7 @@ spec:
   - image:
       repoURL: {{ .Values.artifactUrl }}
       discoveryLimit: 5
-      imageSelectionStrategy: Lexical
+      imageSelectionStrategy: NewestBuild
       allowTags: ^\d*-[a-z]*$
   - git:
       repoURL: {{ .Values.repoUrl }}
