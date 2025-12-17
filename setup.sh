@@ -14,13 +14,17 @@ gh auth login --hostname github.com --with-token <<< "$GITHUB_PAT"
 echo "GH Login status: $?"
 for project in $projects; do
     echo "Publishing git credentials for project: $project"
+    if [ "$project" == "local-shard-eso" ]; then
+        echo -e "\tSkipping GH Creds for local-shard-eso project"
+        continue
+    fi
 
     # Get repo URL for project
     repo_url=$(kargo get warehouses -p $project -o json | jq -r '.spec.subscriptions[] | select(.git !=null).git.repoURL')
     image_url=$(kargo get warehouses -p $project -o json | jq -r '.spec.subscriptions[] | select(.image !=null).image.repoURL')
     
-    echo "Using repo URL: $repo_url, image URL ${image_url}"
-    #echo "Using GH PAT var name: $gh_pat_var_name"
+    echo -e "\tUsing repo URL: $repo_url, image URL ${image_url}"
+    #echo -e "\tUsing GH PAT var name: $gh_pat_var_name"
     # Publish git credentials to Kargo secrets
     kargo create credentials github-creds \
     --project $project --git \
@@ -41,9 +45,9 @@ for project in $projects; do
     --username ${GITHUB_USER} --password ${GITHUB_PAT} \
     --repo-url $image_url
 
-    echo "Creating GH Webhook"
+    echo -e "\tCreating GH Webhook"
     wh_url=`kargo get projectconfig --project $project -ojson | jq -r '.status.webhookReceivers[] | select(.name == "gh-wh-receiver").url'`
-    echo "URL: $wh_url"
+    echo -e "\tURL: $wh_url"
     echo '
         {
         "name":"web",
