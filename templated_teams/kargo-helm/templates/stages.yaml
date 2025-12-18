@@ -41,7 +41,7 @@ spec:
           namespace: {{ .Values.projectName }}-dev
           setValues:
             - key: image.tag
-              value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }}"
+              value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}"
             - key: kargo.stage
               value: dev
             - key: ingress.root_domain
@@ -50,7 +50,7 @@ spec:
         as: commit
         config:
           path: ./out
-          message: "Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }} to dev [skip ci]"
+          message: "Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }} to dev [skip ci]"
       - uses: git-push
         config:
           path: ./out
@@ -102,7 +102,7 @@ spec:
           namespace: '{{ .Values.projectName }}-staging'
           setValues:
             - key: image.tag
-              value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }}"
+              value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}"
             - key: kargo.stage
               value: staging
             - key: ingress.root_domain
@@ -111,7 +111,7 @@ spec:
         as: commit
         config:
           path: ./out
-          message: "Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }} to staging [skip ci]"
+          message: "Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }} to staging [skip ci]"
       - uses: git-push
         config:
           path: ./out
@@ -164,7 +164,7 @@ spec:
           namespace: '{{ .Values.projectName }}-prod'
           setValues:
             - key: image.tag
-              value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }}"
+              value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}"
             - key: kargo.stage
               value: prod
             - key: ingress.root_domain
@@ -173,7 +173,7 @@ spec:
         as: commit
         config:
           path: ./out
-          message: "Promote {{ printf "%s ${{ imageFrom('%s').Tag }}" .Values.projectName .Values.artifactUrl }} to prod [skip ci]"
+          message: "Promote {{ printf "%s ${{ imageFrom('%s').Tag }}" .Values.projectName .Values.image.repository }} to prod [skip ci]"
       - uses: git-push
         as: push
         config:
