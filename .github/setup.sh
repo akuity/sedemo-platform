@@ -9,7 +9,7 @@ kargo login https://kargo.akpdemoapps.link/ --admin --password $KARGO_PASSWORD
 projects=$(kargo get projects|tail -n+2|cut -d' ' -f1)
 
 for project in $projects; do
-    echo "Publishing git credentials for project: $project"
+    echo -e "\n\nPublishing git credentials for project: $project"
     if [ "$project" == "local-shard-eso" ]; then
         echo -e "\tSkipping GH Creds for local-shard-eso project"
         continue
@@ -44,15 +44,11 @@ for project in $projects; do
     echo -e "\tCreating GH Webhook"
     wh_url=`kargo get projectconfig --project $project -ojson | jq -r '.status.webhookReceivers[] | select(.name == "gh-wh-receiver").url'`
     echo -e "\tURL: $wh_url"
-    echo '
-        {
-        "name":"web",
-        "active":true,
-        "events":["push","pull_request"],
-            "config":{"url":"'$wh_url'",
-            "content_type":"json",
-            "insecure_ssl":"0",
-            "secret":"thisisverysecret"
-            }
-        }' | tr -d '\n' | gh api --silent repos/$GITHUB_ORG/sedemo-rollouts-app/hooks --input - -X POST
+    curl -L \
+          -X POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${GITHUB_PAT}" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          api.github.com/$GITHUB_ORG/sedemo-rollouts-app/webhooks \
+          -d '{"name":"Kargo-Webhook","active":true,"events":["push"],"config":{"url":"'$wh_url'","content_type":"json","secret":"thisisverysecret"}}'
 done
