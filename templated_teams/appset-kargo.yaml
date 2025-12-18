@@ -27,7 +27,7 @@ spec:
       # apply to platform team managed kargo templates
       - targetRevision: HEAD
         repoURL: https://github.com/akuity/sedemo-platform
-        path: templated_teams/kargo-helm/Chart.yaml
+        path: templated_teams/kargo-helm/
         helm:
           valueFiles:
           - '$appValues/templated/{{.path.basename}}/platform/app-values.yaml'
