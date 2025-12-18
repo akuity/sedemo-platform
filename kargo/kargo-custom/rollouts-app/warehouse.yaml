@@ -6,7 +6,7 @@ metadata:
 spec:
   subscriptions:
   - image:
-      repoURL: ghcr.io/akuity/sedemo-monorepo
+      repoURL: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       discoveryLimit: 5
       imageSelectionStrategy: NewestBuild
       allowTags: ^\d*-[a-z]*$
