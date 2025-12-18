@@ -2,7 +2,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: dev
-  namespace: eddies-app
+  namespace: eddies-custom-workflow
   annotations:
     kargo.akuity.io/color: red
 spec:
@@ -60,7 +60,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: staging
-  namespace: eddies-app
+  namespace: eddies-custom-workflow
   annotations:
     kargo.akuity.io/color: amber
 spec:
@@ -115,7 +115,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: prod
-  namespace: eddies-app
+  namespace: eddies-custom-workflow
   annotations:
     kargo.akuity.io/color: violet
 spec:
@@ -209,7 +209,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: prod-amer-east
-  namespace: eddies-app
+  namespace: eddies-custom-workflow
   annotations:
     kargo.akuity.io/color: violet
 spec:
@@ -259,7 +259,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: prod-amer-west
-  namespace: eddies-app
+  namespace: eddies-custom-workflow
   annotations:
     kargo.akuity.io/color: violet
 spec:
@@ -309,7 +309,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: prod-emea
-  namespace: eddies-app
+  namespace: eddies-custom-workflow
   annotations:
     kargo.akuity.io/color: violet
 spec:

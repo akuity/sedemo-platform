@@ -2,7 +2,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
   name: eddies-app
-  namespace: eddies-app
+  namespace: eddies-custom-workflow
 spec:
   subscriptions:
   - image:

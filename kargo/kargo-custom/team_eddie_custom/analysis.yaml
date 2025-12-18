@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
   name: policy-analysis
-  namespace: eddies-app
+  namespace: eddies-custom-workflow
 spec:
   metrics:
   - name: policy-analysis

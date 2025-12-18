@@ -1,7 +1,7 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Project
 metadata:
-  name: eddies-app
+  name: eddies-custom-workflow
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
 ---
@@ -9,7 +9,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: ProjectConfig
 metadata:
   name: eddies-app
-  namespace: eddies-app
+  namespace: eddies-custom-workflow
 spec:
   promotionPolicies:
   - stageSelector:
@@ -28,7 +28,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: gh-wh-secret
-  namespace: eddies-app
+  namespace: eddies-custom-workflow
   labels:
     kargo.akuity.io/cred-type: generic
 data:
