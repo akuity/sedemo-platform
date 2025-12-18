@@ -1,0 +1,17 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: eddies-app
+  namespace: eddies-app
+spec:
+  subscriptions:
+  - image:
+      repoURL: ghcr.io/akuity/sedemo-eddies-app
+      discoveryLimit: 5
+      imageSelectionStrategy: NewestBuild
+      allowTags: ^\d*-[a-z]*$
+  - git:
+      repoURL: https://github.com/akuity/sedemo-eddies-app
+      includePaths:
+      - deploy
+      - Dockerfile
