@@ -20,6 +20,14 @@ spec:
     spec:
       steps:
       - uses: git-clone
+        as: clone-base-chart
+        config:
+          repoURL: {{ .Values.chartUrl }}
+          checkout:
+          - branch: main
+            path: ./chart
+      - uses: git-clone
+        as: clone-app-team-values
         config:
           repoURL: {{ .Values.repoUrl }}
           checkout:
@@ -35,7 +43,7 @@ spec:
         config:
           releaseName: deploy
           #TODO PULL THIS FROM PLATFORM REPO
-          path: ./src/deploy/chart
+          path: ./chart/{{ .Values.chartPath}}
           valuesFiles:
           - ./src/templated/{{ .Values.projectName }}/platform/app-values.yaml
           outPath: ./out/manifests.yaml

@@ -14,3 +14,7 @@ spec:
       repoURL: {{ .Values.repoUrl }}
       includePaths:
       - {{ .Values.projectPath }}
+  - git:
+      repoURL: {{ .Values.chartUrl }}
+      includePaths:
+      - {{ .Values.chartPath }}

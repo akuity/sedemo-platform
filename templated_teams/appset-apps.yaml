@@ -42,6 +42,8 @@ spec:
           - $appValues/templated/{{.path.basename}}/platform/app-values.yaml
           valuesObject:
             repoUrl: https://github.com/akuity/sedemo-monorepo.git
+            chartUrl: https://github.com/akuity/sedemo-platform
+            chartPath: templated_teams/apps-helm/
             projectPath: templated/{{.path.basename}}
             projectName: '{{.path.basename}}'
             kargo:
