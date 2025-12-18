@@ -7,7 +7,7 @@ spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:
-    matrix:
+    - matrix:
       generators:
       - git:
           repoURL: https://github.com/akuity/sedemo-monorepo
