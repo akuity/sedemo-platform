@@ -13,5 +13,4 @@ spec:
   - git:
       repoURL: {{ .Values.repoUrl }}
       includePaths:
-      - deploy
-      - Dockerfile
+      - {{ .Values.projectPath }}

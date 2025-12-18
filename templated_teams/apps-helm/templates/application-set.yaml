@@ -1,27 +1,25 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: vgs-demo
+  name: '{{ .Values.projectName }}-apps'
   namespace: argocd
 spec:
   generators:
-  - matrix:
-      generators:
-      - list:
-          elements:
-          - stage: dev
-          - stage: staging 
-          - stage: password
+    - list:
+        elements:
+        - stage: dev
+        - stage: staging 
+        - stage: prod
   template:
     metadata:
-      name: "{{appname}}-demo-{{stage}}"
+      name: "{{ .Values.projectName }}-demo-{{stage}}"
       annotations:
-        kargo.akuity.io/authorized-stage: "{{appname}}-demo:{{stage}}"
+        kargo.akuity.io/authorized-stage: "{{ .Values.projectName }}-demo:{{stage}}"
     spec:
       project: {{ .Values.projectName }}
       source:
         repoURL: {{ .Values.repoUrl }}
-        targetRevision: env{{ .Values.projectName }}-{{stage}}
+        targetRevision: env-{{ .Values.projectName }}-{{stage}}
         path: .
       destination:
         name: sedemo-primary
