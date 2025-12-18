@@ -48,6 +48,7 @@ spec:
             kargo.stage: '{{.stage}}'
       destination:
         name: sedemo-primary
+        namespace: '{{.path.basename}}-{{.stage}}'
       syncPolicy:
         automated:
           prune: true
