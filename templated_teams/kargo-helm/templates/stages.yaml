@@ -42,7 +42,6 @@ spec:
       - uses: helm-template
         config:
           releaseName: deploy
-          #TODO PULL THIS FROM PLATFORM REPO
           path: ./chart/{{ .Values.chartPath}}
           valuesFiles:
           - ./src/templated/{{ .Values.projectName }}/platform/app-values.yaml
@@ -92,6 +91,13 @@ spec:
     spec:
       steps:
       - uses: git-clone
+        as: clone-base-chart
+        config:
+          repoURL: {{ .Values.chartUrl }}
+          checkout:
+          - branch: main
+            path: ./chart
+      - uses: git-clone
         config:
           repoURL: {{ .Values.repoUrl }}
           checkout:
@@ -106,7 +112,7 @@ spec:
       - uses: helm-template
         config:
           releaseName: deploy
-          path: ./src/deploy/chart
+          path: ./chart/{{ .Values.chartPath}}
           valuesFiles:
           - ./src/templated/{{ .Values.projectName }}/platform/app-values.yaml
           outPath: ./out/manifests.yaml
@@ -118,6 +124,8 @@ spec:
               value: staging
             - key: ingress.root_domain
               value: akpdemoapps.link
+            - key: projectName
+              value: '{{ .Values.projectName }}'
       - uses: git-commit
         as: commit
         config:
@@ -152,7 +160,13 @@ spec:
   promotionTemplate:
     spec:
       steps:
-
+      - uses: git-clone
+        as: clone-base-chart
+        config:
+          repoURL: {{ .Values.chartUrl }}
+          checkout:
+          - branch: main
+            path: ./chart
       - uses: git-clone
         config:
           repoURL: {{ .Values.repoUrl }}
@@ -168,10 +182,10 @@ spec:
       - uses: helm-template
         config:
           releaseName: deploy
-          path: ./src/deploy/chart
+          path: ./chart/{{ .Values.chartPath}}
           valuesFiles:
           - ./src/templated/{{ .Values.projectName }}/platform/app-values.yaml
-          outPath: ./out/manifests-prod.yaml
+          outPath: ./out/manifests.yaml
           namespace: '{{ .Values.projectName }}-prod'
           setValues:
             - key: image.tag
@@ -180,6 +194,8 @@ spec:
               value: prod
             - key: ingress.root_domain
               value: akpdemoapps.link
+            - key: projectName
+              value: '{{ .Values.projectName }}'
       - uses: git-commit
         as: commit
         config:
