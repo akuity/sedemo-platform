@@ -7,11 +7,7 @@ on:
       - auto-credentials
     paths:
       - 'kargo/**'
-      - '.github/workflows/run-kargo-setup.yaml'
-permissions:
-  contents: read
-  actions: read
-  id-token: write
+      - '.github/**'
 jobs:
   setup:
     runs-on: ubuntu-latest
@@ -26,5 +22,4 @@ jobs:
         env:
             KARGO_PASSWORD: ${{ secrets.KARGO_PASSWORD }}
             GITHUB_PAT: ${{ secrets.EDDIES_GITHUB_PAT }}
-            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash .github/setup.sh
