@@ -44,7 +44,8 @@ spec:
             repoUrl: https://github.com/akuity/sedemo-monorepo.git
             projectPath: templated/{{.path.basename}}
             projectName: '{{.path.basename}}'
-            kargo.stage: '{{.stage}}'
+            kargo:
+              stage: '{{.stage}}'
       destination:
         name: sedemo-primary
         namespace: '{{.path.basename}}-{{.stage}}'
