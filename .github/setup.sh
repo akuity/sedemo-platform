@@ -51,13 +51,5 @@ for project in $projects; do
           -H "X-GitHub-Api-Version: 2022-11-28" \
           "https://api.github.com/repos/$GITHUB_ORG/sedemo-rollouts-app/hooks" \
           -d '{"name":"Kargo-Webhook","active":true,"events":["push"],"config":{"url":"'$wh_url'","content_type":"json","secret":"thisisverysecret"}}'
-    echo<<<EOF
-    -X POST \
-          -H "Accept: application/vnd.github+json" \
-          -H "Authorization: Bearer ${GH_PAT}" \
-          -H "X-GitHub-Api-Version: 2022-11-28" \
-          "https://api.github.com/repos/$GITHUB_ORG/sedemo-rollouts-app/hooks" \
-          -d '{"name":"Kargo-Webhook","active":true,"events":["push"],"config":{"url":"'$wh_url'","content_type":"json","secret":"thisisverysecret"}}'
-    EOF
-    exit
+    
 done
