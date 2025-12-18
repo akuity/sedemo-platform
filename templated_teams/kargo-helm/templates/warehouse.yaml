@@ -6,7 +6,7 @@ metadata:
 spec:
   subscriptions:
   - image:
-      repoURL: {{ .Values.artifactUrl }}
+      repoURL: {{ .Values.image.repository }}
       discoveryLimit: 5
       imageSelectionStrategy: NewestBuild
       allowTags: ^\d*-[a-z]*$

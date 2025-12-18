@@ -7,15 +7,25 @@ spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:
-    - git:
-        repoURL: https://github.com/akuity/sedemo-monorepo
-        revision: main
-        directories:
-        - path: templated/*
+    matrix:
+      generators:
+      - git:
+          repoURL: https://github.com/akuity/sedemo-monorepo
+          revision: main
+          directories:
+          - path: templated/*
+
+      - list:
+          elements:
+          - stage: dev
+          - stage: staging 
+          - stage: prod
   template:
     metadata:
       name: '{{.path.basename}}-apps-definition'
       namespace: argocd
+      annotations:
+        kargo.akuity.io/authorized-stage: '{{.path.basename}}-demo:{{.stage}}'
     spec:
       #project: '{{.path.basename}}'
       project: templated-apps
@@ -35,12 +45,13 @@ spec:
             repoUrl: https://github.com/akuity/sedemo-monorepo.git
             projectPath: templated/{{.path.basename}}
             projectName: '{{.path.basename}}'
+            kargo.stage: '{{.stage}}'
       destination:
         name: sedemo-primary
       syncPolicy:
         automated:
           prune: true
-          enabled: true
-          selfHeal: true
+          #enabled: true
+          #selfHeal: true
         syncOptions:
         - CreateNamespace=true
