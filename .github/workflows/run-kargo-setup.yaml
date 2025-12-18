@@ -18,12 +18,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Seup Kargo CLI
-        shell: bash
-        env:
-            KARGO_PASSWORD: ${{ secrets.KARGO_PASSWORD }}
-            GITHUB_PAT: ${{ secrets.EDDIES_GITHUB_PAT }}
         run: |
           curl -L -o /usr/local/bin/kargo https://github.com/akuity/kargo/releases/latest/download/kargo-linux-amd64
           chmod +x /usr/local/bin/kargo
       - name: Run Kargo Setup Script
+        shell: bash
+        env:
+            KARGO_PASSWORD: ${{ secrets.KARGO_PASSWORD }}
+            GITHUB_PAT: ${{ secrets.EDDIES_GITHUB_PAT }}
         run: bash setup.sh
