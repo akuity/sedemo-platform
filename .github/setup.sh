@@ -8,8 +8,6 @@ kargo login https://kargo.akpdemoapps.link/ --admin --password $KARGO_PASSWORD
 
 projects=$(kargo get projects|tail -n+2|cut -d' ' -f1)
 
-gh auth login --hostname github.com --with-token <<< "$GITHUB_TOKEN"
-echo "GH Login status: $?"
 for project in $projects; do
     echo "Publishing git credentials for project: $project"
     if [ "$project" == "local-shard-eso" ]; then

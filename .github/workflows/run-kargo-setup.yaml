@@ -26,4 +26,5 @@ jobs:
         env:
             KARGO_PASSWORD: ${{ secrets.KARGO_PASSWORD }}
             GITHUB_PAT: ${{ secrets.EDDIES_GITHUB_PAT }}
-        run: bash setup.sh
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash .github/setup.sh
