@@ -37,7 +37,7 @@ spec:
           #TODO PULL THIS FROM PLATFORM REPO
           path: ./src/deploy/chart
           valuesFiles:
-          - ./src/templated/{{ .Values.projectName }}/plaform/app-values.yaml
+          - ./src/templated/{{ .Values.projectName }}/platform/app-values.yaml
           outPath: ./out/manifests.yaml
           namespace: '{{ .Values.projectName }}-dev'
           setValues:
@@ -98,7 +98,7 @@ spec:
           releaseName: deploy
           path: ./src/deploy/chart
           valuesFiles:
-          - ./src/templated/{{ .Values.projectName }}/plaform/app-values.yaml
+          - ./src/templated/{{ .Values.projectName }}/platform/app-values.yaml
           outPath: ./out/manifests.yaml
           namespace: '{{ .Values.projectName }}-staging'
           setValues:
@@ -160,7 +160,7 @@ spec:
           releaseName: deploy
           path: ./src/deploy/chart
           valuesFiles:
-          - ./src/templated/{{ .Values.projectName }}/plaform/app-values.yaml
+          - ./src/templated/{{ .Values.projectName }}/platform/app-values.yaml
           outPath: ./out/manifests-prod.yaml
           namespace: '{{ .Values.projectName }}-prod'
           setValues:
