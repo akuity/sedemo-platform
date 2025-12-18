@@ -9,7 +9,7 @@ spec:
   - port: 80
     targetPort: 8080
   selector:
-    app: app
+    app: '{{ .Values.projectName }}-app'
 ---
 apiVersion: v1
 kind: Service
@@ -22,4 +22,4 @@ spec:
   - port: 80
     targetPort: 8080
   selector:
-    app: {{ .Values.projectName }}-app
+    app: '{{ .Values.projectName }}-app'
