@@ -15,7 +15,8 @@ spec:
       name: '{{.path.basename}}-kargo-definition'
       namespace: argocd
     spec:
-      project: '{{.path.basename}}'
+      #project: '{{.path.basename}}'
+      project: templated-apps
       sources:
       #pull custom values from team managed monorepo folder
       - repoURL: https://github.com/akuity/sedemo-monorepo.git
