@@ -21,7 +21,7 @@ spec:
               - stage: prod
   template:
     metadata:
-      name: '{{.path.basename}}-apps-definition'
+      name: '{{.path.basename}}-{{.stage}}'
       namespace: argocd
       annotations:
         kargo.akuity.io/authorized-stage: '{{.path.basename}}:{{.stage}}'
