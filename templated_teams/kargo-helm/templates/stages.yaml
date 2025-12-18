@@ -55,6 +55,8 @@ spec:
               value: dev
             - key: ingress.root_domain
               value: akpdemoapps.link
+            - key: projectName
+              value: '{{.path.basename}}'
       - uses: git-commit
         as: commit
         config:
