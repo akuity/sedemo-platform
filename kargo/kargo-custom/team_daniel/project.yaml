@@ -1,0 +1,23 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: team-daniel
+  namespace: team-daniel
+spec:
+  promotionPolicies:
+  - stageSelector:
+      name: test
+    autoPromotionEnabled: true
+  - stageSelector:
+      name: uat
+    autoPromotionEnabled: true
+  - stageSelector:
+      name: prod-uswest
+    autoPromotionEnabled: true

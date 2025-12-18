@@ -1,0 +1,237 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: promote-standard
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  vars:
+  - name: gitRepo
+    value: https://github.com/akuity/sedemo-platform
+  - name: imageRepo
+    value: ghcr.io/dhpup/guestbook
+  steps:
+  # Clone the Git repository containing the Kustomize configuration to ./src
+  # and checkout the target stage branch to ./out (create if it doesn't exist)
+  - uses: git-clone
+    as: clone
+    config:
+      repoURL: ${{ vars.gitRepo }}
+      checkout:
+      - branch: main
+        path: ./src
+      - branch: stage/team-daniel/${{ ctx.stage }}
+        create: true
+        path: ./out
+        as: out
+  # Clear all files in the ./out directory to ensure a clean rendered state
+  # Following the "rendered branch" pattern where only generated manifests exist
+  - uses: git-clear
+    config:
+      path: ./out
+  # Update the image tag in the Kustomize configuration for this stage
+  # Uses the image tag from the freight being promoted
+  - uses: kustomize-set-image
+    as: update-image
+    config:
+      path: ./src/apps/team_daniel/stages/${{ ctx.stage }}
+      images:
+      - image: ${{ vars.imageRepo }}
+        tag: ${{ imageFrom(vars.imageRepo).Tag }}
+  # Build the Kustomize configuration and output the rendered manifests
+  # to ./out/manifests.yaml for the stage branch
+  - uses: kustomize-build
+    config:
+      path: ./src/apps/team_daniel/stages/${{ ctx.stage }}
+      outPath: ./out/manifests.yaml
+  # Commit the rendered manifests to the stage branch
+  # Uses a descriptive commit message with the image tag being promoted
+  - uses: git-commit
+    as: commit
+    config:
+      path: ./out
+      message: "Promote ${{ ctx.stage }} to ${{ imageFrom(vars.imageRepo).Tag }}"
+  # Push the commit to the remote stage branch
+  - uses: git-push
+    as: push
+    config:
+      path: ./out
+      targetBranch: stage/team-daniel/${{ ctx.stage }}
+  # Trigger ArgoCD to refresh and sync the application
+  - uses: argocd-update
+    config:
+      apps:
+      - name: team-daniel-${{ ctx.stage }}
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: promote-with-pr
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  vars:
+  - name: gitRepo
+    value: https://github.com/akuity/sedemo-platform
+  - name: imageRepo
+    value: ghcr.io/dhpup/guestbook
+  steps:
+  # Clone the Git repository containing the Kustomize configuration to ./src
+  # and checkout the target stage branch to ./out (create if it doesn't exist)
+  - uses: git-clone
+    config:
+      repoURL: ${{ vars.gitRepo }}
+      checkout:
+      - branch: main
+        path: ./src
+      - branch: stage/team-daniel/${{ ctx.stage }}
+        create: true
+        path: ./out
+  # Clear all files in the ./out directory to ensure a clean rendered state
+  # Following the "rendered branch" pattern where only generated manifests exist
+  - uses: git-clear
+    config:
+      path: ./out
+  # Update the image tag in the Kustomize configuration for this stage
+  # Uses the image tag from the freight being promoted
+  - uses: kustomize-set-image
+    as: update-image
+    config:
+      path: ./src/apps/team_daniel/stages/${{ ctx.stage }}
+      images:
+      - image: ${{ vars.imageRepo }}
+        tag: ${{ imageFrom(vars.imageRepo).Tag }}
+  # Build the Kustomize configuration and output the rendered manifests
+  # to ./out/manifests.yaml for the stage branch
+  - uses: kustomize-build
+    config:
+      path: ./src/apps/team_daniel/stages/${{ ctx.stage }}
+      outPath: ./out/manifests.yaml
+  # Commit the rendered manifests to a temporary branch
+  # Uses a descriptive commit message with the image tag being promoted
+  - uses: git-commit
+    as: commit
+    config:
+      path: ./out
+      message: "Promote ${{ ctx.stage }} to ${{ imageFrom(vars.imageRepo).Tag }}"
+  # Push the commit to a new automatically-generated branch
+  # This branch will be used as the source for the PR
+  - uses: git-push
+    as: push
+    config:
+      path: ./out
+      generateTargetBranch: true
+  # Open a pull request from the generated branch to the stage branch
+  # This allows for manual review before deploying to production
+  # Uses the branch name from the previous git-push step
+  - uses: git-open-pr
+    as: openpr
+    config:
+      repoURL: ${{ vars.gitRepo }}
+      createTargetBranch: true
+      sourceBranch: ${{ task.outputs['push'].branch }}
+      targetBranch: stage/team-daniel/${{ ctx.stage }}
+  # Wait for the pull request to be merged before proceeding
+  # Blocks the promotion until manual approval is complete
+  - uses: git-wait-for-pr
+    as: wait-for-pr
+    config:
+      repoURL: ${{ vars.gitRepo }}
+      prNumber: ${{ task.outputs['openpr'].pr.id }}
+  # Trigger ArgoCD to refresh and sync the application
+  - uses: argocd-update
+    config:
+      apps:
+      - name: team-daniel-${{ ctx.stage }}
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: promote-with-github-action
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  vars:
+  - name: gitRepo
+    value: https://github.com/akuity/sedemo-platform
+  - name: imageRepo
+    value: ghcr.io/dhpup/guestbook
+  - name: githubtoken
+    value: githubtoken
+  steps:
+  # Clone the Git repository containing the Kustomize configuration to ./src
+  # and checkout the target stage branch to ./out (create if it doesn't exist)
+  - uses: git-clone
+    as: clone
+    config:
+      repoURL: ${{ vars.gitRepo }}
+      checkout:
+      - branch: main
+        path: ./src
+      - branch: stage/team-daniel/${{ ctx.stage }}
+        create: true
+        path: ./out
+        as: out
+  # Clear all files in the ./out directory to ensure a clean rendered state
+  # Following the "rendered branch" pattern where only generated manifests exist
+  - uses: git-clear
+    config:
+      path: ./out
+  # Update the image tag in the Kustomize configuration for this stage
+  # Uses the image tag from the freight being promoted
+  - uses: kustomize-set-image
+    as: update-image
+    config:
+      path: ./src/apps/team_daniel/stages/${{ ctx.stage }}
+      images:
+      - image: ${{ vars.imageRepo }}
+        tag: ${{ imageFrom(vars.imageRepo).Tag }}
+  # Build the Kustomize configuration and output the rendered manifests
+  # to ./out/manifests.yaml for the stage branch
+  - uses: kustomize-build
+    config:
+      path: ./src/apps/team_daniel/stages/${{ ctx.stage }}
+      outPath: ./out/manifests.yaml
+  # Commit the rendered manifests to the stage branch
+  # Uses a descriptive commit message with the image tag being promoted
+  - uses: git-commit
+    as: commit
+    config:
+      path: ./out
+      message: "Promote ${{ ctx.stage }} to ${{ imageFrom(vars.imageRepo).Tag }}"
+  # Push the commit to the remote stage branch
+  - uses: git-push
+    as: push
+    config:
+      path: ./out
+      targetBranch: stage/team-daniel/${{ ctx.stage }}
+  # Trigger a GitHub Action workflow using gha-dispatch-workflow
+  - uses: gha-dispatch-workflow
+    as: dispatch-github-action
+    config:
+      credentials:
+        secretName: ${{ vars.githubtoken }}
+      owner: akuity
+      repo: sedemo-platform
+      workflowFile: team-daniel-deploy.yml
+      ref: main
+      inputs:
+        environment: ${{ ctx.stage }}
+        version: ${{ imageFrom(vars.imageRepo).Tag }}
+  # Wait for the GitHub Action workflow to complete using gha-wait-for-workflow
+  - uses: gha-wait-for-workflow
+    as: wait-for-github-action
+    config:
+      credentials:
+        secretName: ${{ vars.githubtoken }}
+      owner: akuity
+      repo: sedemo-platform
+      runID: ${{ task.outputs['dispatch-github-action'].runID }}
+  # Trigger ArgoCD to refresh and sync the application
+  - uses: argocd-update
+    config:
+      apps:
+      - name: team-daniel-${{ ctx.stage }}

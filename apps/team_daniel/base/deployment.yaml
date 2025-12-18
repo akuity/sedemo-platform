@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: team-daniel-app
+spec:
+  replicas: 1
+  progressDeadlineSeconds: 60
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app: team-daniel-app
+  template:
+    metadata:
+      labels:
+        app: team-daniel-app
+    spec:
+      containers:
+      - image: ghcr.io/dhpup/guestbook
+        name: guestbook
+        ports:
+        - containerPort: 80

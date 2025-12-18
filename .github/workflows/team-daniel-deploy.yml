@@ -1,0 +1,30 @@
+name: Team Daniel Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+      version:
+        description: 'Version to deploy'
+        required: true
+        default: 'latest'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to ${{ github.event.inputs.environment }}
+        run: |
+          echo "Deploying version ${{ github.event.inputs.version }} to ${{ github.event.inputs.environment }}"
+          # Add your deployment commands here
+          echo "Deployment completed successfully!"
+
+      - name: Notify completion
+        run: |
+          echo "Workflow ${{ github.workflow }} completed for environment ${{ github.event.inputs.environment }}"
