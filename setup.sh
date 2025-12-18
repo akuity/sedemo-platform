@@ -1,7 +1,7 @@
 
 export GITHUB_USER="eddiewebb"
 export GITHUB_ORG="akuity"
-export GITHUB_PAT=$EDDIES_GITHUB_PAT # long-lived token different then short-lived GITHUB_TOKEN
+#export GITHUB_PAT=$EDDIES_GITHUB_PAT # long-lived token different then short-lived GITHUB_TOKEN
 # export KARGO_PASSWORD=$TF_VAR_argo_admin_password
 
 kargo login https://kargo.akpdemoapps.link/ --admin --password $KARGO_PASSWORD
