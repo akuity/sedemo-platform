@@ -21,7 +21,7 @@ spec:
       source:
         repoURL: {{ .Values.repoUrl }}
         targetRevision: env-{{ .Values.projectName }}-{{ printf "{{stage}}" }}
-        path: .
+        path: templated/{{ .Values.projectName }}
       destination:
         name: sedemo-primary
         namespace: '{{ .Values.projectName }}-{{ printf "{{stage}}" }}'
