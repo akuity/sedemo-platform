@@ -1,0 +1,92 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: test
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    kargo.akuity.io/color: red
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: team-daniel
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: promote-standard
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: uat
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    kargo.akuity.io/color: amber
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: team-daniel
+    sources:
+      stages:
+      - test
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: promote-with-github-action
+  verification:
+    analysisTemplates:
+    - name: pokemon-xp
+    args:
+    - name: pokemon
+      value: pikachu
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod-useast
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    kargo.akuity.io/color: violet
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: team-daniel
+    sources:
+      stages:
+      - uat
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: promote-with-pr
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod-uswest
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    kargo.akuity.io/color: violet
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: team-daniel
+    sources:
+      stages:
+      - uat
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: promote-standard

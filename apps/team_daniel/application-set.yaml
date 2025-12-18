@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: team-daniel
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - stage: test
+      - stage: uat
+      - stage: prod-useast
+      - stage: prod-uswest
+  template:
+    metadata:
+      name: team-daniel-{{stage}}
+      annotations:
+        kargo.akuity.io/authorized-stage: team-daniel:{{stage}}
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/akuity/sedemo-platform
+        targetRevision: stage/team-daniel/{{stage}}
+        path: .
+      destination:
+        name: sedemo-primary
+        namespace: team-daniel-{{stage}}
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
