@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: cert-manager
+  name: prometheus
   namespace: argocd
 spec:
   project: components
@@ -11,11 +11,11 @@ spec:
     ref: localValues 
     directory:
       recurse: true
-  - chart: cert-manager
-    repoURL: oci://quay.io/jetstack/charts/cert-manager
-    targetRevision: v1.19.1
+  - chart: prometheus
+    repoURL: https://prometheus-community.github.io/helm-charts
+    targetRevision: 27.41.2
     helm:
-      releaseName: cert-manager
+      releaseName: prometheus
       # valuesObject:
       #   server:
       #     ingress:
@@ -25,14 +25,11 @@ spec:
       #       hosts:
       #       - prometheus.prometheus.k8s.orb.local
       valueFiles:
-      - $localValues/value-overrides/cert-manager-values.yaml
+      - $localValues/components/value-overrides/prometheus-values.yaml
   destination:
         name: sedemo-primary
-        namespace: cert-manager
+        namespace: prometheus
   syncPolicy:
     syncOptions:
     - CreateNamespace=true
     - ServerSideApply=true
-
-
-

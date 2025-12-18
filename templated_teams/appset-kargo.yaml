@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: templated-team-kargos
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/akuity/sedemo-monorepo
+        revision: main
+        directories:
+        - path: templated
+  template:
+    metadata:
+      name: '{{.path.basename}}-kargo-definition'
+      namespace: argocd
+    spec:
+      project: '{{.path.basename}}'
+      sources:
+      #pull custom values from team managed monorepo folder
+      - repoURL: https://github.com/akuity/sedemo-monorepo.git
+        targetRevision: main
+        ref: appValues 
+      # apply to platform team managed kargo templates
+      - targetRevision: HEAD
+        repoURL: https://github.com/akuity/sedemo-platform
+        path: templated_teams/kargo-helm/Chart.yaml
+        helm:
+          valueFiles:
+          - $appValues/templated/{{.path.basename}}/platform/app-values.yaml
+      destination:
+        name: kargo
+      syncPolicy:
+        automated:
+          prune: true
+          enabled: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true

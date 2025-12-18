@@ -1,0 +1,7 @@
+
+
+projectName: eddies-team
+projectPath: templated/eddies-team
+repoUrl: https://github.com/akuity/sedemo-monorepo
+artifactUrl: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+namespace: eddies-team
