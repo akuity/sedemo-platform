@@ -11,7 +11,7 @@ spec:
         repoURL: https://github.com/akuity/sedemo-monorepo
         revision: main
         directories:
-        - path: templated
+        - path: templated/*
   template:
     metadata:
       name: '{{.path.basename}}-apps-definition'
