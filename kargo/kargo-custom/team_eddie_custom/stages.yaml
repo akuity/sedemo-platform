@@ -35,9 +35,9 @@ spec:
       - uses: helm-template
         config:
           releaseName: deploy
-          path: ${{ vars.path_src }}/deploy/chart
+          path: ${{ vars.path_src }}/rollouts-app/deploy/chart
           valuesFiles:
-          - ${{ vars.path_src }}/deploy/chart/values.yaml
+          - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests.yaml
           namespace: demo-dev
           setValues:
@@ -90,9 +90,9 @@ spec:
       - uses: helm-template
         config:
           releaseName: deploy
-          path: ${{ vars.path_src }}/deploy/chart
+          path: ${{ vars.path_src }}/rollouts-app/deploy/chart
           valuesFiles:
-          - ${{ vars.path_src }}/deploy/chart/values.yaml
+          - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests.yaml
           namespace: demo-staging
           setValues:
@@ -148,9 +148,9 @@ spec:
           value: amer-east
         config:
           releaseName: deploy
-          path: ${{ vars.path_src }}/deploy/chart
+          path: ${{ vars.path_src }}/rollouts-app/deploy/chart
           valuesFiles:
-          - ${{ vars.path_src }}/deploy/chart/values.yaml
+          - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
           namespace: demo-prod-amer-east
           setValues:
@@ -166,9 +166,9 @@ spec:
           value: amer-west
         config:
           releaseName: deploy
-          path: ${{ vars.path_src }}/deploy/chart
+          path: ${{ vars.path_src }}/rollouts-app/deploy/chart
           valuesFiles:
-          - ${{ vars.path_src }}/deploy/chart/values.yaml
+          - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
           namespace: demo-prod-amer-west
           setValues:
@@ -184,9 +184,9 @@ spec:
           value: emea
         config:
           releaseName: deploy
-          path: ${{ vars.path_src }}/deploy/chart
+          path: ${{ vars.path_src }}/rollouts-app/deploy/chart
           valuesFiles:
-          - ${{ vars.path_src }}/deploy/chart/values.yaml
+          - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
           namespace: demo-prod-emea
           setValues:

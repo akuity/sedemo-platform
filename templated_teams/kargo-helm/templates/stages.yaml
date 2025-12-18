@@ -34,11 +34,12 @@ spec:
       - uses: helm-template
         config:
           releaseName: deploy
+          #TODO PULL THIS FROM PLATFORM REPO
           path: ./src/deploy/chart
           valuesFiles:
-          - ./src/deploy/chart/values.yaml
+          - ./src/templated/{{ .Values.projectName }}/plaform/app-values.yaml
           outPath: ./out/manifests.yaml
-          namespace: {{ .Values.projectName }}-dev
+          namespace: '{{ .Values.projectName }}-dev'
           setValues:
             - key: image.tag
               value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}"
@@ -97,7 +98,7 @@ spec:
           releaseName: deploy
           path: ./src/deploy/chart
           valuesFiles:
-          - ./src/deploy/chart/values.yaml
+          - ./src/templated/{{ .Values.projectName }}/plaform/app-values.yaml
           outPath: ./out/manifests.yaml
           namespace: '{{ .Values.projectName }}-staging'
           setValues:
@@ -159,7 +160,7 @@ spec:
           releaseName: deploy
           path: ./src/deploy/chart
           valuesFiles:
-          - ./src/deploy/chart/values.yaml
+          - ./src/templated/{{ .Values.projectName }}/plaform/app-values.yaml
           outPath: ./out/manifests-prod.yaml
           namespace: '{{ .Values.projectName }}-prod'
           setValues:
