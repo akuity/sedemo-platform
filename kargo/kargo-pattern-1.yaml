@@ -25,7 +25,7 @@ spec:
         path: kargo/kargo-helm/chart
         helm:
           valueFiles:
-          - $appValues/kargo/kargo-helm/{{appname}}/values.yaml
+          - $appValues/kargo/kargo-helm/team_{{appname}}/values.yaml
       destination:
         name: kargo
       syncPolicy:
