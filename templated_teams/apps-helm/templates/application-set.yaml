@@ -16,7 +16,8 @@ spec:
       annotations:
         kargo.akuity.io/authorized-stage: '{{ .Values.projectName }}-demo:{{ printf "{{stage}}" }}'
     spec:
-      project: {{ .Values.projectName }}
+      #project: {{ .Values.projectName }}
+      project: templated-apps
       source:
         repoURL: {{ .Values.repoUrl }}
         targetRevision: env-{{ .Values.projectName }}-{{ printf "{{stage}}" }}
