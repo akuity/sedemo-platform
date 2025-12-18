@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Seup Kargo CLI
+      - name: Setup Kargo CLI
         run: |
           curl -L -o /usr/local/bin/kargo https://github.com/akuity/kargo/releases/latest/download/kargo-linux-amd64
           chmod +x /usr/local/bin/kargo
