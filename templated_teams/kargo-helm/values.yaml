@@ -1,0 +1,6 @@
+
+
+git:
+    main: main
+    outPath: out
+    srcPth: src
