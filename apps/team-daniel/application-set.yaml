@@ -17,7 +17,7 @@ spec:
       annotations:
         kargo.akuity.io/authorized-stage: team-daniel:{{stage}}
     spec:
-      project: default
+      project: team-daniel
       source:
         repoURL: https://github.com/akuity/sedemo-platform
         targetRevision: stage/team-daniel/{{stage}}
