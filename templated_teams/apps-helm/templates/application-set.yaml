@@ -12,7 +12,7 @@ spec:
         - stage: prod
   template:
     metadata:
-      name: "{{ .Values.projectName }}-demo-{{ printf \"{{stage}}\" }}"
+      name: '{{ .Values.projectName }}-demo-{{ printf "{{stage}}" }}'
       annotations:
         kargo.akuity.io/authorized-stage: "{{ .Values.projectName }}-demo:{{stage}}"
     spec:
