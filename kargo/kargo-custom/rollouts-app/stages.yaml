@@ -20,13 +20,13 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/akuity/sedemo-rollouts-app
+        value: https://github.com/akuity/sedemo-monorepo
       - name: imageRepo
-        value: ghcr.io/akuity/sedemo-rollouts-app
+        value: ghcr.io/akuity/sedemo-monorepo
       - name: targetBranch
-        value: env/dev 
+        value: env-rollouts/dev 
       - name: path_src
-        value: ./src
+        value: ./src/rollouts-app
       - name: path_out
         value: ./out
       steps:
@@ -75,13 +75,13 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/akuity/sedemo-rollouts-app
+        value: https://github.com/akuity/sedemo-monorepo
       - name: imageRepo
-        value: ghcr.io/akuity/sedemo-rollouts-app
+        value: ghcr.io/akuity/sedemo-monorepo
       - name: targetBranch
-        value: env/staging
+        value: env-rollouts/staging
       - name: path_src
-        value: ./src
+        value: ./src/rollouts-app
       - name: path_out
         value: ./out
       steps:
@@ -130,13 +130,13 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/akuity/sedemo-rollouts-app
+        value: https://github.com/akuity/sedemo-monorepo
       - name: imageRepo
-        value: ghcr.io/akuity/sedemo-rollouts-app
+        value: ghcr.io/akuity/sedemo-monorepo
       - name: targetBranch
-        value: env/prod
+        value: env-rollouts/prod
       - name: path_src
-        value: ./src
+        value: ./src/rollouts-app
       - name: path_out
         value: ./out
       steps:
@@ -202,7 +202,7 @@ spec:
         - name: asPR
           value: "true"
         - name: targetBranch
-          value: env/prod
+          value: env-rollouts/prod
 
 ---
 apiVersion: kargo.akuity.io/v1alpha1
@@ -224,9 +224,9 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/akuity/sedemo-rollouts-app
+        value: https://github.com/akuity/sedemo-monorepo
       - name: imageRepo
-        value: ghcr.io/akuity/sedemo-rollouts-app
+        value: ghcr.io/akuity/sedemo-monorepo
       - name: region
         value: amer-east
       steps:
@@ -234,9 +234,9 @@ spec:
           name: prepare-workdir
         vars  :
         - name: sourceBranch
-          value: env/prod
+          value: env-rollouts/prod
         - name: targetBranch
-          value: env/prod-${{ vars.region }}
+          value: env-rollouts/prod-${{ vars.region }}
       - uses: copy
         config:
           inPath: ./src/manifests-${{ vars.region }}.yaml
@@ -245,9 +245,9 @@ spec:
           name: push-manifests
         vars:
         - name: sourceBranch
-          value: env/prod
+          value: env-rollouts/prod
         - name: targetBranch
-          value: env/prod-${{ vars.region }}
+          value: env-rollouts/prod-${{ vars.region }}
       - uses: argocd-update
         continueOnError: true
         config:
@@ -274,9 +274,9 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/akuity/sedemo-rollouts-app
+        value: https://github.com/akuity/sedemo-monorepo
       - name: imageRepo
-        value: ghcr.io/akuity/sedemo-rollouts-app
+        value: ghcr.io/akuity/sedemo-monorepo
       - name: region
         value: amer-west
       steps:
@@ -284,9 +284,9 @@ spec:
           name: prepare-workdir
         vars:
         - name: sourceBranch
-          value: env/prod
+          value: env-rollouts/prod
         - name: targetBranch
-          value: env/prod-${{ vars.region }}
+          value: env-rollouts/prod-${{ vars.region }}
       - uses: copy
         config:
           inPath: ./src/manifests-${{ vars.region }}.yaml
@@ -295,9 +295,9 @@ spec:
           name: push-manifests
         vars:
         - name: sourceBranch
-          value: env/prod
+          value: env-rollouts/prod
         - name: targetBranch
-          value: env/prod-${{ vars.region }}
+          value: env-rollouts/prod-${{ vars.region }}
       - uses: argocd-update
         continueOnError: true
         config:
@@ -324,9 +324,9 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/akuity/sedemo-rollouts-app
+        value: https://github.com/akuity/sedemo-monorepo
       - name: imageRepo
-        value: ghcr.io/akuity/sedemo-rollouts-app
+        value: ghcr.io/akuity/sedemo-monorepo
       - name: region
         value: emea
       steps:
@@ -334,9 +334,9 @@ spec:
           name: prepare-workdir
         vars:
         - name: sourceBranch
-          value: env/prod
+          value: env-rollouts/prod
         - name: targetBranch
-          value: env/prod-${{ vars.region }}
+          value: env-rollouts/prod-${{ vars.region }}
       - uses: copy
         config:
           inPath: ./src/manifests-${{ vars.region }}.yaml
@@ -345,9 +345,9 @@ spec:
           name: push-manifests
         vars:
         - name: sourceBranch
-          value: env/prod
+          value: env-rollouts/prod
         - name: targetBranch
-          value: env/prod-${{ vars.region }}
+          value: env-rollouts/prod-${{ vars.region }}
       - uses: argocd-update
         continueOnError: true
         config:
