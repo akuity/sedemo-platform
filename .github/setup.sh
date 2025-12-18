@@ -1,7 +1,7 @@
 
 export GITHUB_USER="eddiewebb"
 export GITHUB_ORG="akuity"
-#export GITHUB_PAT=$EDDIES_GITHUB_PAT # long-lived token different then short-lived GITHUB_TOKEN
+#export GH_PAT=$EDDIES_GH_PAT # long-lived token different then short-lived GITHUB_TOKEN
 # export KARGO_PASSWORD=$TF_VAR_argo_admin_password
 
 kargo login https://kargo.akpdemoapps.link/ --admin --password $KARGO_PASSWORD
@@ -24,21 +24,21 @@ for project in $projects; do
     # Publish git credentials to Kargo secrets
     kargo create credentials github-creds \
     --project $project --git \
-    --username ${GITHUB_USER} --password ${GITHUB_PAT} \
+    --username ${GITHUB_USER} --password ${GH_PAT} \
     --repo-url $repo_url 2>/dev/null || \
     kargo update credentials github-creds \
     --project $project --git \
-    --username ${GITHUB_USER} --password ${GITHUB_PAT} \
+    --username ${GITHUB_USER} --password ${GH_PAT} \
     --repo-url $repo_url
 
 
     kargo create credentials ghcr-creds \
     --project $project --image \
-    --username ${GITHUB_USER} --password ${GITHUB_PAT} \
+    --username ${GITHUB_USER} --password ${GH_PAT} \
     --repo-url $image_url 2>/dev/null || \
     kargo update credentials ghcr-creds \
     --project $project --image \
-    --username ${GITHUB_USER} --password ${GITHUB_PAT} \
+    --username ${GITHUB_USER} --password ${GH_PAT} \
     --repo-url $image_url
 
     echo -e "\tCreating GH Webhook"
@@ -47,7 +47,7 @@ for project in $projects; do
     curl -L \
           -X POST \
           -H "Accept: application/vnd.github+json" \
-          -H "Authorization: Bearer ${GITHUB_PAT}" \
+          -H "Authorization: Bearer ${GH_PAT}" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
           api.github.com/repos/$GITHUB_ORG/sedemo-rollouts-app/hooks \
           -d '{"name":"Kargo-Webhook","active":true,"events":["push"],"config":{"url":"'$wh_url'","content_type":"json","secret":"thisisverysecret"}}'
