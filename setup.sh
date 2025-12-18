@@ -1,10 +1,8 @@
-source ../argodemo-infra-iac/.env
-
 
 export GITHUB_USER="eddiewebb"
 export GITHUB_ORG="akuity"
-export GITHUB_PAT=$TF_VAR_gh_pat_kargo
-export KARGO_PASSWORD=$TF_VAR_argo_admin_password
+export GITHUB_PAT=$EDDIES_GITHUB_PAT
+# export KARGO_PASSWORD=$TF_VAR_argo_admin_password
 
 kargo login https://kargo.akpdemoapps.link/ --admin --password $KARGO_PASSWORD
 
@@ -58,5 +56,5 @@ for project in $projects; do
             "insecure_ssl":"0",
             "secret":"thisisverysecret"
             }
-        }' | tr -d '\n' | gh api --silent repos/$GITHUB_USER/sedemo-rollouts-app/hooks --input - -X POST
+        }' | tr -d '\n' | gh api --silent repos/$GITHUB_ORG/sedemo-rollouts-app/hooks --input - -X POST
 done

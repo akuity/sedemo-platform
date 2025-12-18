@@ -1,0 +1,17 @@
+name: Kargo Setup
+run-name: Run setup.sh for kargo creds
+on:
+  push:
+    branches:
+      - main
+      - auto-credentials
+    paths:
+      - 'kargo/**'
+      - '.github/workflows/run-kargo-setup.yaml'
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run Kargo Setup Script
+        run: ./setup.sh
