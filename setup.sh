@@ -1,14 +1,14 @@
 
 export GITHUB_USER="eddiewebb"
 export GITHUB_ORG="akuity"
-export GITHUB_PAT=$EDDIES_GITHUB_PAT
+export GITHUB_PAT=$EDDIES_GITHUB_PAT # long-lived token different then short-lived GITHUB_TOKEN
 # export KARGO_PASSWORD=$TF_VAR_argo_admin_password
 
 kargo login https://kargo.akpdemoapps.link/ --admin --password $KARGO_PASSWORD
 
 projects=$(kargo get projects|tail -n+2|cut -d' ' -f1)
 
-gh auth login --hostname github.com --with-token <<< "$GITHUB_PAT"
+gh auth login --hostname github.com --with-token <<< "$GITHUB_TOKEN"
 echo "GH Login status: $?"
 for project in $projects; do
     echo "Publishing git credentials for project: $project"

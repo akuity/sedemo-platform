@@ -8,10 +8,20 @@ on:
     paths:
       - 'kargo/**'
       - '.github/workflows/run-kargo-setup.yaml'
+permissions:
+  contents: read
+  actions: read
+  id-token: write
 jobs:
   setup:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Seup Kargo CLI
+        run: |
+          arch=$(uname -m)
+          [ "$arch" = "x86_64" ] && arch=amd64
+          curl -L -o kargo https://github.com/akuity/kargo/releases/latest/download/kargo-"$(uname -s | tr '[:upper:]' '[:lower:]')-${arch}"
+          chmod +x kargo  
       - name: Run Kargo Setup Script
         run: bash setup.sh
