@@ -14,16 +14,16 @@ spec:
     metadata:
       name: '{{ .Values.projectName }}-demo-{{ printf "{{stage}}" }}'
       annotations:
-        kargo.akuity.io/authorized-stage: "{{ .Values.projectName }}-demo:{{stage}}"
+        kargo.akuity.io/authorized-stage: '{{ .Values.projectName }}-demo:{{ printf "{{stage}}" }}'
     spec:
       project: {{ .Values.projectName }}
       source:
         repoURL: {{ .Values.repoUrl }}
-        targetRevision: env-{{ .Values.projectName }}-{{stage}}
+        targetRevision: env-{{ .Values.projectName }}-{{ printf "{{stage}}" }}
         path: .
       destination:
         name: sedemo-primary
-        namespace: "{{ .Values.projectName }}-{{stage}}"
+        namespace: '{{ .Values.projectName }}-{{ printf "{{stage}}" }}'
       syncPolicy:
         automated:
           prune: true
