@@ -4,6 +4,8 @@ metadata:
   name: templated-team-apps
   namespace: argocd
 spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
   generators:
     - git:
         repoURL: https://github.com/akuity/sedemo-monorepo
