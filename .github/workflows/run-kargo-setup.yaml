@@ -1,0 +1,25 @@
+name: Kargo Setup
+run-name: Run setup.sh for kargo creds
+on:
+  push:
+    branches:
+      - main
+      - auto-credentials
+    paths:
+      - 'kargo/**'
+      - '.github/**'
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Kargo CLI
+        run: |
+          curl -L -o /usr/local/bin/kargo https://github.com/akuity/kargo/releases/latest/download/kargo-linux-amd64
+          chmod +x /usr/local/bin/kargo
+      - name: Run Kargo Setup Script
+        shell: bash
+        env:
+            KARGO_PASSWORD: ${{ secrets.KARGO_PASSWORD }}
+            GH_PAT: ${{ secrets.EDDIES_GITHUB_PAT }}
+        run: bash .github/setup.sh
