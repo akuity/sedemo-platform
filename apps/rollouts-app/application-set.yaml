@@ -20,9 +20,9 @@ spec:
     spec:
       project: rollouts
       source:
-        repoURL: https://github.com/akuity/sedemo-rollouts-app
+        repoURL: https://github.com/akuity/sedemo-monorepo
         targetRevision: env/{{stage}}
-        path: .
+        path: rollouts-app
       destination:
         name: sedemo-primary
         namespace: demo-{{stage}}
