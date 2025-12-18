@@ -20,9 +20,9 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/akuity/sedemo-eddies-app
+        value: https://github.com/akuity/sedemo-monorepo
       - name: imageRepo
-        value: ghcr.io/akuity/sedemo-eddies-app
+        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       - name: targetBranch
         value: env/dev 
       - name: path_src
@@ -75,9 +75,9 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/akuity/sedemo-eddies-app
+        value: https://github.com/akuity/sedemo-monorepo
       - name: imageRepo
-        value: ghcr.io/akuity/sedemo-eddies-app
+        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       - name: targetBranch
         value: env/staging
       - name: path_src
@@ -130,9 +130,9 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/akuity/sedemo-eddies-app
+        value: https://github.com/akuity/sedemo-monorepo
       - name: imageRepo
-        value: ghcr.io/akuity/sedemo-eddies-app
+        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       - name: targetBranch
         value: env/prod
       - name: path_src
@@ -224,9 +224,9 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/akuity/sedemo-eddies-app
+        value: https://github.com/akuity/sedemo-monorepo
       - name: imageRepo
-        value: ghcr.io/akuity/sedemo-eddies-app
+        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       - name: region
         value: amer-east
       steps:
@@ -274,9 +274,9 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/akuity/sedemo-eddies-app
+        value: https://github.com/akuity/sedemo-monorepo
       - name: imageRepo
-        value: ghcr.io/akuity/sedemo-eddies-app
+        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       - name: region
         value: amer-west
       steps:
@@ -324,9 +324,9 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/akuity/sedemo-eddies-app
+        value: https://github.com/akuity/sedemo-monorepo
       - name: imageRepo
-        value: ghcr.io/akuity/sedemo-eddies-app
+        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       - name: region
         value: emea
       steps:

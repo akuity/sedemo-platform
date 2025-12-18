@@ -6,12 +6,12 @@ metadata:
 spec:
   subscriptions:
   - image:
-      repoURL: ghcr.io/akuity/sedemo-eddies-app
+      repoURL: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       discoveryLimit: 5
       imageSelectionStrategy: NewestBuild
       allowTags: ^\d*-[a-z]*$
   - git:
-      repoURL: https://github.com/akuity/sedemo-eddies-app
+      repoURL: https://github.com/akuity/sedemo-monorepo
       includePaths:
       - deploy
       - Dockerfile
