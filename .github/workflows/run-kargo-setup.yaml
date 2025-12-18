@@ -19,9 +19,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Seup Kargo CLI
         run: |
-          curl -L -o kargo https://github.com/akuity/kargo/releases/latest/download/kargo-linux-amd64
-          ls -la
-          ls -la kargo
-          chmod +x kargo  
+          curl -L -o /usr/local/bin/kargo https://github.com/akuity/kargo/releases/latest/download/kargo-linux-amd64
+          chmod +x /usr/local/bin/kargo
       - name: Run Kargo Setup Script
         run: bash setup.sh
