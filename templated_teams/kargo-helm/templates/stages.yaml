@@ -24,20 +24,20 @@ spec:
           repoURL: {{ .Values.repoUrl }}
           checkout:
           - branch: {{ .Values.git.main }}
-            path: {{ .Values.git.srcPath }}
+            path: ./src
           - branch: env/{{ .Values.projectName }}-dev
             create: true
-            path: {{ .Values.git.outPath }}
+            path: ./out
       - uses: git-clear
         config:
-          path: {{ .Values.git.outPath }}
+          path: ./out
       - uses: helm-template
         config:
           releaseName: deploy
-          path: {{ .Values.git.srcPath }}/deploy/chart
+          path: ./src/deploy/chart
           valuesFiles:
-          - {{ .Values.git.srcPath }}/deploy/chart/values.yaml
-          outPath: {{ .Values.git.outPath }}/manifests.yaml
+          - ./src/deploy/chart/values.yaml
+          outPath: ./out/manifests.yaml
           namespace: {{ .Values.projectName }}-dev
           setValues:
             - key: image.tag
@@ -49,11 +49,11 @@ spec:
       - uses: git-commit
         as: commit
         config:
-          path: {{ .Values.git.outPath }}
+          path: ./out
           message: "Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }} to dev [skip ci]"
       - uses: git-push
         config:
-          path: {{ .Values.git.outPath }}
+          path: ./out
           targetBranch: env/{{ .Values.projectName }}-dev
       - uses: argocd-update
         continueOnError: true
@@ -85,21 +85,21 @@ spec:
           repoURL: {{ .Values.repoUrl }}
           checkout:
           - branch: {{ .Values.git.main }}
-            path: {{ .Values.git.srcPath }}
+            path: ./src
           - branch: env/{{ .Values.projectName }}-staging
             create: true
-            path: {{ .Values.git.outPath }}
+            path: ./out
       - uses: git-clear
         config:
-          path: {{ .Values.git.outPath }}
+          path: ./out
       - uses: helm-template
         config:
           releaseName: deploy
-          path: {{ .Values.git.srcPath }}/deploy/chart
+          path: ./src/deploy/chart
           valuesFiles:
-          - {{ .Values.git.srcPath }}/deploy/chart/values.yaml
-          outPath: {{ .Values.git.outPath }}/manifests.yaml
-          namespace: {{ .Values.projectName }}-staging
+          - ./src/deploy/chart/values.yaml
+          outPath: ./out/manifests.yaml
+          namespace: '{{ .Values.projectName }}-staging'
           setValues:
             - key: image.tag
               value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }}"
@@ -110,17 +110,17 @@ spec:
       - uses: git-commit
         as: commit
         config:
-          path: {{ .Values.git.outPath }}
+          path: ./out
           message: "Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }} to staging [skip ci]"
       - uses: git-push
         config:
-          path: {{ .Values.git.outPath }}
+          path: ./out
           targetBranch: env/{{ .Values.projectName }}-staging
       - uses: argocd-update
         continueOnError: true
         config:
           apps:
-          - name: {{ .Values.projectName }}-staging
+          - name: '{{ .Values.projectName }}-staging'
             namespace: argocd
 ---
 apiVersion: kargo.akuity.io/v1alpha1
@@ -147,67 +147,37 @@ spec:
           repoURL: {{ .Values.repoUrl }}
           checkout:
           - branch: {{ .Values.git.main }}
-            path: {{ .Values.git.srcPath }}
+            path: ./src
           - branch: env/{{ .Values.projectName }}-prod
             create: true
-            path: {{ .Values.git.outPath }}
+            path: ./out
       - uses: git-clear
         config:
-          path: {{ .Values.git.outPath }}
+          path: ./out
       - uses: helm-template
         config:
           releaseName: deploy
-          path: {{ .Values.git.srcPath }}/deploy/chart
+          path: ./src/deploy/chart
           valuesFiles:
-          - {{ .Values.git.srcPath }}/deploy/chart/values.yaml
-          outPath: {{ .Values.git.outPath }}/manifests-amer-east.yaml
-          namespace: {{ .Values.projectName }}-prod-amer-east
+          - ./src/deploy/chart/values.yaml
+          outPath: ./out/manifests-prod.yaml
+          namespace: '{{ .Values.projectName }}-prod'
           setValues:
             - key: image.tag
               value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }}"
             - key: kargo.stage
-              value: prod-amer-east
-            - key: ingress.root_domain
-              value: akpdemoapps.link
-      - uses: helm-template
-        config:
-          releaseName: deploy
-          path: {{ .Values.git.srcPath }}/deploy/chart
-          valuesFiles:
-          - {{ .Values.git.srcPath }}/deploy/chart/values.yaml
-          outPath: {{ .Values.git.outPath }}/manifests-amer-west.yaml
-          namespace: {{ .Values.projectName }}-prod-amer-west
-          setValues:
-            - key: image.tag
-              value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }}"
-            - key: kargo.stage
-              value: prod-amer-west
-            - key: ingress.root_domain
-              value: akpdemoapps.link
-      - uses: helm-template
-        config:
-          releaseName: deploy
-          path: {{ .Values.git.srcPath }}/deploy/chart
-          valuesFiles:
-          - {{ .Values.git.srcPath }}/deploy/chart/values.yaml
-          outPath: {{ .Values.git.outPath }}/manifests-emea.yaml
-          namespace: {{ .Values.projectName }}-prod-emea
-          setValues:
-            - key: image.tag
-              value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }}"
-            - key: kargo.stage
-              value: prod-emea
+              value: prod
             - key: ingress.root_domain
               value: akpdemoapps.link
       - uses: git-commit
         as: commit
         config:
-          path: {{ .Values.git.outPath }}
+          path: ./out
           message: "Promote {{ printf "%s ${{ imageFrom('%s').Tag }}" .Values.projectName .Values.artifactUrl }} to prod [skip ci]"
       - uses: git-push
         as: push
         config:
-          path: {{ .Values.git.outPath }}
+          path: ./out
           generateTargetBranch: true
       - uses: git-open-pr
         as: open-pr
@@ -221,153 +191,8 @@ spec:
         config:
           repoURL: {{ .Values.repoUrl }}
           prNumber: {{`${{ outputs['open-pr'].pr.id }}`}}
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: prod-amer-east
-  namespace: {{ .Values.projectName }}
-  annotations:
-    kargo.akuity.io/color: violet
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: {{ .Values.projectName }}
-    sources:
-      stages:
-      - prod
-  promotionTemplate:
-    spec:
-      steps:
-      - uses: git-clone
-        config:
-          repoURL: {{ .Values.repoUrl }}
-          checkout:
-          - branch: env/{{ .Values.projectName }}-prod
-            path: {{ .Values.git.srcPath }}
-          - branch: env/{{ .Values.projectName }}-prod-amer-east
-            create: true
-            path: {{ .Values.git.outPath }}
-      - uses: git-clear
-        config:
-          path: {{ .Values.git.outPath }}
-      - uses: copy
-        config:
-          inPath: ./src/manifests-amer-east.yaml
-          outPath: ./out/manifests.yaml
-      - uses: git-commit
-        as: commit
-        config:
-          path: {{ .Values.git.outPath }}
-          message: "Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }} to prod-amer-east [skip ci]"
-      - uses: git-push
-        config:
-          path: {{ .Values.git.outPath }}
-          targetBranch: env/{{ .Values.projectName }}-prod-amer-east
       - uses: argocd-update
-        continueOnError: true
         config:
           apps:
-          - name: {{ .Values.projectName }}-prod-amer-east
-            namespace: argocd
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: prod-amer-west
-  namespace: {{ .Values.projectName }}
-  annotations:
-    kargo.akuity.io/color: violet
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: {{ .Values.projectName }}
-    sources:
-      stages:
-      - prod
-  promotionTemplate:
-    spec:
-      steps:
-      - uses: git-clone
-        config:
-          repoURL: {{ .Values.repoUrl }}
-          checkout:
-          - branch: env/{{ .Values.projectName }}-prod
-            path: {{ .Values.git.srcPath }}
-          - branch: env/{{ .Values.projectName }}-prod-amer-west
-            create: true
-            path: {{ .Values.git.outPath }}
-      - uses: git-clear
-        config:
-          path: {{ .Values.git.outPath }}
-      - uses: copy
-        config:
-          inPath: ./src/manifests-amer-west.yaml
-          outPath: ./out/manifests.yaml
-      - uses: git-commit
-        as: commit
-        config:
-          path: {{ .Values.git.outPath }}
-          message: "Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }} to prod-amer-west [skip ci]"
-      - uses: git-push
-        config:
-          path: {{ .Values.git.outPath }}
-          targetBranch: env/{{ .Values.projectName }}-prod-amer-west
-      - uses: argocd-update
-        continueOnError: true
-        config:
-          apps:
-          - name: {{ .Values.projectName }}-prod-amer-west
-            namespace: argocd
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: prod-emea
-  namespace: {{ .Values.projectName }}
-  annotations:
-    kargo.akuity.io/color: violet
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: {{ .Values.projectName }}
-    sources:
-      stages:
-      - prod
-  promotionTemplate:
-    spec:
-      steps:
-      - uses: git-clone
-        config:
-          repoURL: {{ .Values.repoUrl }}
-          checkout:
-          - branch: env/{{ .Values.projectName }}-prod
-            path: {{ .Values.git.srcPath }}
-          - branch: env/{{ .Values.projectName }}-prod-emea
-            create: true
-            path: {{ .Values.git.outPath }}
-      - uses: git-clear
-        config:
-          path: {{ .Values.git.outPath }}
-      - uses: copy
-        config:
-          inPath: ./src/manifests-emea.yaml
-          outPath: ./out/manifests.yaml
-      - uses: git-commit
-        as: commit
-        config:
-          path: {{ .Values.git.outPath }}
-          message: "Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.artifactUrl }} to prod-emea [skip ci]"
-      - uses: git-push
-        config:
-          path: {{ .Values.git.outPath }}
-          targetBranch: env/{{ .Values.projectName }}-prod-emea
-      - uses: argocd-update
-        continueOnError: true
-        config:
-          apps:
-          - name: {{ .Values.projectName }}-prod-emea
+          - name: '{{ .Values.projectName }}-prod'
             namespace: argocd
