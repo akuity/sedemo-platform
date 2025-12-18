@@ -260,6 +260,7 @@ spec:
           path: ${{ vars.path_out }}
           message: "${{ outputs['create-change-ticket'].key }} : Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
       - uses: git-push
+        as: push
         config:
           path: ${{ vars.path_out }}
           targetBranch: change/${{ outputs['create-change-ticket'].key }}
@@ -284,6 +285,22 @@ spec:
         config:
           repoURL: ${{ vars.gitRepo }}
           prNumber: ${{ outputs['open-pr'].pr.id }}
+      - uses: compose-output
+        as: branch-name
+        config:
+          branchName: ${{ outputs.push.branch }}
+      - uses: gha-dispatch-workflow
+        as: dispatch-deployment
+        config:
+          credentials:
+            secretName: github-credentials # this may need to change
+          owner: akuity
+          repo: sedemo-platform
+          workflowFile: delete-branch.yaml
+          ref: main
+          inputs:
+            branchName: ${{ outputs['branch-name'].branchName }}
+          timeout: 120
       - uses: argocd-update
         config:
           apps:
