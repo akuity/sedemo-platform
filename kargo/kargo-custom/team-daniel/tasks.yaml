@@ -35,7 +35,7 @@ spec:
   - uses: kustomize-set-image
     as: update-image
     config:
-      path: ./src/apps/team_daniel/stages/${{ ctx.stage }}
+      path: ./src/apps/team-daniel/stages/${{ ctx.stage }}
       images:
       - image: ${{ vars.imageRepo }}
         tag: ${{ imageFrom(vars.imageRepo).Tag }}
@@ -43,7 +43,7 @@ spec:
   # to ./out/manifests.yaml for the stage branch
   - uses: kustomize-build
     config:
-      path: ./src/apps/team_daniel/stages/${{ ctx.stage }}
+      path: ./src/apps/team-daniel/stages/${{ ctx.stage }}
       outPath: ./out/manifests.yaml
   # Commit the rendered manifests to the stage branch
   # Uses a descriptive commit message with the image tag being promoted
@@ -99,7 +99,7 @@ spec:
   - uses: kustomize-set-image
     as: update-image
     config:
-      path: ./src/apps/team_daniel/stages/${{ ctx.stage }}
+      path: ./src/apps/team-daniel/stages/${{ ctx.stage }}
       images:
       - image: ${{ vars.imageRepo }}
         tag: ${{ imageFrom(vars.imageRepo).Tag }}
@@ -107,7 +107,7 @@ spec:
   # to ./out/manifests.yaml for the stage branch
   - uses: kustomize-build
     config:
-      path: ./src/apps/team_daniel/stages/${{ ctx.stage }}
+      path: ./src/apps/team-daniel/stages/${{ ctx.stage }}
       outPath: ./out/manifests.yaml
   # Commit the rendered manifests to a temporary branch
   # Uses a descriptive commit message with the image tag being promoted
@@ -185,7 +185,7 @@ spec:
   - uses: kustomize-set-image
     as: update-image
     config:
-      path: ./src/apps/team_daniel/stages/${{ ctx.stage }}
+      path: ./src/apps/team-daniel/stages/${{ ctx.stage }}
       images:
       - image: ${{ vars.imageRepo }}
         tag: ${{ imageFrom(vars.imageRepo).Tag }}
@@ -193,7 +193,7 @@ spec:
   # to ./out/manifests.yaml for the stage branch
   - uses: kustomize-build
     config:
-      path: ./src/apps/team_daniel/stages/${{ ctx.stage }}
+      path: ./src/apps/team-daniel/stages/${{ ctx.stage }}
       outPath: ./out/manifests.yaml
   # Commit the rendered manifests to the stage branch
   # Uses a descriptive commit message with the image tag being promoted

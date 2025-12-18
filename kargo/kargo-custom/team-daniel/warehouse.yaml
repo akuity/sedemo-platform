@@ -11,6 +11,6 @@ spec:
       repoURL: https://github.com/akuity/sedemo-platform
       branch: main
       includePaths:
-      - apps/team_daniel/**
+      - apps/team-daniel/**
   - image:
       repoURL: ghcr.io/dhpup/guestbook
