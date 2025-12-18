@@ -20,6 +20,8 @@ jobs:
       - name: Seup Kargo CLI
         run: |
           curl -L -o kargo https://github.com/akuity/kargo/releases/latest/download/kargo-linux-amd64
+          ls -la
+          ls -la kargo
           chmod +x kargo  
       - name: Run Kargo Setup Script
         run: bash setup.sh
