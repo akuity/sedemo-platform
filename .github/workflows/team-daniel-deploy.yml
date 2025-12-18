@@ -1,4 +1,4 @@
-name: Team Daniel Deploy
+name: Example GitHub Action Workflow
 
 on:
   workflow_dispatch:
