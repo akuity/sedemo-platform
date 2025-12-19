@@ -4,3 +4,7 @@ git:
     main: main
     outPath: out
     srcPth: src
+
+
+environments:
+  staging: true

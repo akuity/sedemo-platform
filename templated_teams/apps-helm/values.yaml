@@ -19,3 +19,6 @@ ingress:
 
 rollouts:
   enabled: true
+
+environments:
+  staging: true
