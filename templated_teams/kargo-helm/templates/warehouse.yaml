@@ -14,6 +14,14 @@ spec:
       repoURL: {{ .Values.repoUrl }}
       includePaths:
       - {{ .Values.projectPath }}
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: '{{ .Values.projectName }}-chart'
+  namespace: {{ .Values.projectName }}
+spec:
+  subscriptions:
   - git:
       repoURL: {{ .Values.chartUrl }}
       includePaths:
