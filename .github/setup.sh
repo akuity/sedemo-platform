@@ -16,22 +16,23 @@ for project in $projects; do
     fi
 
     # Get repo URL for project
-    repo_url=$(kargo get warehouses -p $project -o json | jq -r '.spec.subscriptions[] | select(.git !=null).git.repoURL')
+    repo_urls=$(kargo get warehouses -p $project -o json | jq -r '.spec.subscriptions[] | select(.git !=null).git.repoURL')
     image_url=$(kargo get warehouses -p $project -o json | jq -r '.spec.subscriptions[] | select(.image !=null).image.repoURL')
     
-    echo -e "\tUsing repo URL: $repo_url, image URL ${image_url}"
-    #echo -e "\tUsing GH PAT var name: $gh_pat_var_name"
-    # Publish git credentials to Kargo secrets
-    kargo create credentials github-creds \
-    --project $project --git \
-    --username ${GITHUB_USER} --password ${GH_PAT} \
-    --repo-url $repo_url 2>/dev/null || \
-    kargo update credentials github-creds \
-    --project $project --git \
-    --username ${GITHUB_USER} --password ${GH_PAT} \
-    --repo-url $repo_url
-
-
+    for repo_url in $repo_urls; do
+        echo -e "\tUsing repo URL: $repo_url"
+        #echo -e "\tUsing GH PAT var name: $gh_pat_var_name"
+        # Publish git credentials to Kargo secrets
+        kargo create credentials github-creds \
+        --project $project --git \
+        --username ${GITHUB_USER} --password ${GH_PAT} \
+        --repo-url $repo_url 2>/dev/null || \
+        kargo update credentials github-creds \
+        --project $project --git \
+        --username ${GITHUB_USER} --password ${GH_PAT} \
+        --repo-url $repo_url
+    done
+    echo -e "\t adding creds for image URL ${image_url}"
     kargo create credentials ghcr-creds \
     --project $project --image \
     --username ${GITHUB_USER} --password ${GH_PAT} \
