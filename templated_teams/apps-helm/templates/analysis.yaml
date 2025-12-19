@@ -1,4 +1,5 @@
-{{- if .Values.rollout.enabled }}
+{{ if or ( .Values.environments.staging) (ne .Values.kargo.stage "staging") }}
+{{- if .Values.rollouts.enabled }}
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
@@ -20,3 +21,4 @@ spec:
           /
           ( sum(rate(nginx_ingress_controller_requests{namespace="{{  .Release.Namespace }}",canary="{{  .Release.Namespace }}-svc-canary-80"}[30s])) + 1 )
 {{- end }}
+{{ end }}

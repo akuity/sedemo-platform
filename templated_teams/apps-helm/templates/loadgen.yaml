@@ -1,4 +1,5 @@
-{{- if .Values.rollout.enabled }}
+{{ if or ( .Values.environments.staging) (ne .Values.kargo.stage "staging") }}
+{{- if .Values.rollouts.enabled }}
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
@@ -18,3 +19,4 @@ spec:
               restartPolicy: Never
           backoffLimit: 1
 {{- end }}
+{{ end }}

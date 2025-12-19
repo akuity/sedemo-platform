@@ -1,4 +1,5 @@
-{{- if .Values.rollout.enabled }}
+{{ if or ( .Values.environments.staging) (ne .Values.kargo.stage "staging") }}
+{{- if .Values.rollouts.enabled }}
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 {{- else }}
@@ -33,7 +34,7 @@ spec:
                   fieldPath: metadata.namespace
   minReadySeconds: 30
   revisionHistoryLimit: 3
-  {{- if .Values.rollout.enabled }}
+  {{- if .Values.rollouts.enabled }}
   strategy:
     canary: #Indicates that the rollout should use the Canary strategy
       canaryService: svc-canary  # required
@@ -65,3 +66,4 @@ spec:
             duration: 20s 
         - setWeight: 100
   {{- end  }}
+  {{ end}}
