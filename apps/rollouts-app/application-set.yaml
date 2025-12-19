@@ -22,7 +22,7 @@ spec:
       source:
         repoURL: https://github.com/akuity/sedemo-monorepo
         targetRevision: env-rollouts/{{stage}}
-        path: rollouts-app
+        path: .
       destination:
         name: sedemo-primary
         namespace: demo-{{stage}}
