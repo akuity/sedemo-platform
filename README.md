@@ -16,11 +16,11 @@ Because the new demo environment if fully defined as IaC, you can open pull requ
 
 This repo contains ArgoCD `application` manifests that control all apps, components, and Kargo workflows used in our demo clusters.
 
-- [Demo Apps `apps`](/apps/)  
-- [Component Management `components`](/components/)
-- [Kargo Projects `kargo`](/kargo/)
-- [External Secrets `secrets`](/secrets/)
-- [Helm Value Overrides `value-overrides`](/value-overrides)
+- [Demo Apps `apps`](/apps/)  is most of the argo Applications. If adding your own app, add it here. 
+- [Component Management `components`](/components/) is for cluster components.
+- [Kargo Projects `kargo`](/kargo/) defines the workflows that deploy apps in the first directory.  If creating custom kargo workflows, add it here.
+- [External Secrets `secrets`](/secrets/) defines the secrets on our EKS cluster, setup by ESO or cert-manager.
+- [Templated Projects](/value-overrides) defines "platform owned" projects where kargo and k8s resources are locked down from application teams. Actual deployable binaries are defined in [app monorepo](https://github.com/akuity/sedemo-monorepo/tree/main/templated)
 
 
 ## Use Cases Demonstrated
@@ -38,18 +38,19 @@ To enable realistic demo of rollouts, the cluster includes a deployment of Prome
 - [demo-{stage}.akpdemoapps.link](demo-dev.akpdemoapps.link)
 - [prometheus.akpdemoapps.link](prometheus.akpdemoapps.link)
 
-### Templatized Kargo Projects w/ Helm
+### Templatized Projects w/ Helm
 
-The idea of a "golden path" or "standard pipeline" was manifested as a single Kargo project definition templatized w/ Helm.
+The idea of a "golden path" or "standard pipeline" was manifested as a single Kargo project definition templatized w/ Helm. The k8s rollout and ingress is all controlled by central team.  Application teams just build a docker image and have a few parameters they can play with. 
+[Templated Projects](/value-overrides)
 
 
 ### Vendor Helm Charts with custom values
 
-Most external helm charts will need some level of internal customizations. For that we make use of multi-source applications from [components](/components/) which reference value files in [value-overrides](/value-overrides/)
+Most external helm charts will need some level of internal customizations. For that we make use of multi-source applications from [components](/components/) which reference value files in [value-overrides](/components/value-overrides/)
 
 #### Prometheus 
 
-For instance, our [prometheus](/components/) install pulls vendor provided helm chart, and customizes the use of custom url and scrap jobs via our own [values file](/value-overrides/prometheus-values.yaml)
+For instance, our [prometheus](/components/) install pulls vendor provided helm chart, and customizes the use of custom url and scrap jobs via our own [values file](/components/value-overrides/prometheus-values.yaml)
 
 #### Cert Manager
 
