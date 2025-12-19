@@ -1,6 +1,6 @@
 apiVersion: v2
 name: apps-template
-description: Templated application for templated compliant apps.
+description: Templated kargo project for NSA compliant apps.
 
 
 type: application
