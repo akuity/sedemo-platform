@@ -12,6 +12,11 @@ spec:
       name: {{ .Values.projectName }}
     sources:
       direct: true
+  - origin:
+      kind: Warehouse
+      name: '{{ .Values.projectName }}-chart'
+    sources:
+      direct: true
   # verification:
   #   analysisTemplates:
   #     - name: api-conformance-crunch42
@@ -88,6 +93,12 @@ spec:
     sources:
       stages:
       - dev
+  - origin:
+      kind: Warehouse
+      name: '{{ .Values.projectName }}-chart'
+    sources:
+      stages:
+      - dev
   promotionTemplate:
     spec:
       steps:
@@ -156,6 +167,16 @@ spec:
   - origin:
       kind: Warehouse
       name: {{ .Values.projectName }}
+    sources:
+      stages:
+      {{- if .Values.environments.staging }}
+      - staging
+      {{- else }}
+      - dev
+      {{- end }}
+  - origin:
+      kind: Warehouse
+      name: '{{ .Values.projectName }}-chart'
     sources:
       stages:
       {{- if .Values.environments.staging }}
