@@ -1,0 +1,16 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: team-daniel
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  subscriptions:
+  - git:
+      repoURL: https://github.com/akuity/sedemo-platform
+      branch: main
+      includePaths:
+      - apps/team-daniel
+  - image:
+      repoURL: ghcr.io/dhpup/guestbook
