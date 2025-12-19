@@ -1,10 +1,9 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{.Values.projectName}}-kargo
+  name: '{{.Values.projectName}}-kargo'
   namespace: argocd
 spec:
-  #project: '{{.path.basename}}'
   project: templated-apps
   sources:
   #pull custom values from team managed monorepo folder

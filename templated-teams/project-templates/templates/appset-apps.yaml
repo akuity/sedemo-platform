@@ -1,13 +1,11 @@
 # could we create appproject also?
-{{ environments:={"dev","staging","prod"} }}
-{{ with environments }}
+{{ range $key, $val := .Values.environments }}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{.Values.projectName}}-{{.}}
+  name: '{{$.Values.projectName}}-{{$key}}'
   namespace: argocd
 spec:
-  #project: '{{.path.basename}}'
   project: templated-apps
   sources:
   #pull custom values from team managed monorepo folder
@@ -20,16 +18,16 @@ spec:
     path: templated-teams/apps-chart/
     helm:
       valueFiles:
-      - '$appValues/templated/{{ .Values.projectName }}/platform/app-values.yaml'
+      - '$appValues/templated/{{ $.Values.projectName }}/platform/app-values.yaml'
       valuesObject:
         repoUrl: https://github.com/akuity/sedemo-monorepo.git
-        projectPath: templated/{{ .Values.projectName }}
-        projectName: '{{ .Values.projectName }}'
+        projectPath: templated/{{ $.Values.projectName }}
+        projectName: '{{ $.Values.projectName }}'
         kargo:
-          stage: '{{ environment }}'
+          stage: '{{ $key }}'
   destination:
     name: sedemo-primary
-    namespace: {{ .Values.projectName }}-{{.}}
+    namespace: {{ $.Values.projectName }}-{{$key}}
   syncPolicy:
     automated:
       prune: true
