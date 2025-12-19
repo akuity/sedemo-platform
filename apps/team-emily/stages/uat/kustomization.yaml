@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ../../base
+# - rollout.yaml
+
+# patches:
+#   - target:
+#       kind: Deployment
+#       name: guestbook
+#     patch: |
+#       $patch: delete
+#       apiVersion: apps/v1
+#       kind: Deployment
+#       metadata:
+#         name: delete for rollout

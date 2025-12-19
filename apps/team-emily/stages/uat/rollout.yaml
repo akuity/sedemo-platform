@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: guestbook
+spec:
+  replicas: 2
+  progressDeadlineSeconds: 3
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: guestbook
+  template:
+    metadata:
+      labels:
+        app: guestbook
+    spec:
+      containers:
+      - image: ghcr.io/emilyxinyi/guestbook
+        name: guestbook
+        ports:
+        - containerPort: 80
+  strategy:
+    canary:
+      canaryService: preview-guestbook
+      steps:
+      - setWeight: 50
+      - pause: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: preview-guestbook
+spec:
+  ports:
+    - name: https
+      port: 80
+      targetPort: https
+  selector:
+      app: guestbook
+  type: ClusterIP

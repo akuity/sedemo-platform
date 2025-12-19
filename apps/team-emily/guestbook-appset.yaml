@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: team-emily-guestbook
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - stage: test
+      - stage: uat
+      - stage: prod-useast
+      - stage: prod-uswest
+  template:
+    metadata:
+      name: team-emily-guestbook-{{stage}}
+      annotations:
+        kargo.akuity.io/authorized-stage: team-emily-guestbook:{{stage}}
+    spec:
+      project: team-emily-guestbook
+      source:
+        repoURL: https://github.com/akuity/sedemo-platform
+        targetRevision: stage/team-emily/{{stage}}
+        path: .
+      destination:
+        name: sedemo-primary
+        namespace: team-emily-guestbook-{{stage}}
+      syncPolicy:
+        syncOptions:
+        - CreateNamespace=true
