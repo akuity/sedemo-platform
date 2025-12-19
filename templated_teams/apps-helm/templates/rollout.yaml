@@ -1,5 +1,10 @@
+{{- if .Values.rollout.enabled }}
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
+{{- else }}
+apiVersion: apps/v1
+kind: Deployment
+{{- end}}
 metadata:
   name: "{{ .Values.projectName }}-app"
 spec:
@@ -28,6 +33,7 @@ spec:
                   fieldPath: metadata.namespace
   minReadySeconds: 30
   revisionHistoryLimit: 3
+  {{- if .Values.rollout.enabled }}
   strategy:
     canary: #Indicates that the rollout should use the Canary strategy
       canaryService: svc-canary  # required
@@ -58,3 +64,4 @@ spec:
         - pause:
             duration: 20s 
         - setWeight: 100
+  {{- end  }}

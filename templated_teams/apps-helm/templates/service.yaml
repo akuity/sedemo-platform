@@ -10,6 +10,7 @@ spec:
     targetPort: 8080
   selector:
     app: '{{ .Values.projectName }}-app'
+{{- if .Values.rollout.enabled }}
 ---
 apiVersion: v1
 kind: Service
@@ -23,3 +24,4 @@ spec:
     targetPort: 8080
   selector:
     app: '{{ .Values.projectName }}-app'
+{{- end }}

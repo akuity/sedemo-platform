@@ -1,3 +1,4 @@
+{{- if .Values.rollout.enabled }}
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
@@ -16,3 +17,4 @@ spec:
                 command: [ab,"-n20","http://{{ .Values.kargo.stage }}.{{ .Values.ingress.custom_prefix }}.{{ .Values.ingress.root_domain }}/"]
               restartPolicy: Never
           backoffLimit: 1
+{{- end }}

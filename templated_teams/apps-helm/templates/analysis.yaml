@@ -1,3 +1,4 @@
+{{- if .Values.rollout.enabled }}
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
@@ -18,3 +19,4 @@ spec:
           ( sum(rate(nginx_ingress_controller_requests{namespace="{{  .Release.Namespace }}",status="200",canary="{{  .Release.Namespace }}-svc-canary-80"}[30s])) + 1 )
           /
           ( sum(rate(nginx_ingress_controller_requests{namespace="{{  .Release.Namespace }}",canary="{{  .Release.Namespace }}-svc-canary-80"}[30s])) + 1 )
+{{- end }}
