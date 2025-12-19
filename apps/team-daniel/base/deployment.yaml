@@ -4,7 +4,7 @@ metadata:
   name: team-daniel-app
 spec:
   replicas: 1
-  progressDeadlineSeconds: 60
+  progressDeadlineSeconds: 8
   revisionHistoryLimit: 1
   selector:
     matchLabels:
