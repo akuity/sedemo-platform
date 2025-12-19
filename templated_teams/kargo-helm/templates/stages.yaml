@@ -71,6 +71,7 @@ spec:
           apps:
           - name: {{ .Values.projectName }}-dev
             namespace: argocd
+{{ if .Values.environments.staging }}
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -141,6 +142,7 @@ spec:
           apps:
           - name: '{{ .Values.projectName }}-staging'
             namespace: argocd
+{{ end }}
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -156,7 +158,11 @@ spec:
       name: {{ .Values.projectName }}
     sources:
       stages:
+      {{- if .Values.environments.staging }}
       - staging
+      {{- else }}
+      - dev
+      {{- end }}
   promotionTemplate:
     spec:
       steps:
