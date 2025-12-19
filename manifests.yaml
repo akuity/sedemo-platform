@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: team-daniel-app
 spec:
-  progressDeadlineSeconds: 60
+  progressDeadlineSeconds: 8
   replicas: 1
   revisionHistoryLimit: 1
   selector:
