@@ -8,7 +8,7 @@ spec:
   - uses: argocd-update
     config:
       apps:
-      - name: intelligence-demo-guestbook-${{ ctx.stage }}
+      - name: intelligence-demo-${{ ctx.stage }}
         sources:
         - helm:
             images:
