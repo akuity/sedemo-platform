@@ -1,6 +1,6 @@
 apiVersion: v2
 name: apps-template
-description: Templated kargo project for NSA compliant apps.
+description: Applications for each environment of templated teams in sedemo-monorepo
 
 
 type: application

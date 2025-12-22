@@ -3,6 +3,7 @@
 
 replicaCount: 2
 
+# this will be used to template namespaced resources, matches the path within monorepo. 
 projectName: template
 
 # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
@@ -14,6 +15,7 @@ image:
   tag: 218-yellow
 
 kargo:
+  # this will be overridden per environment by kargo promo steps.
   stage: dev
 
 git:
@@ -21,7 +23,7 @@ git:
     outPath: out
     srcPth: src
 
-
+# Some level of control exposed to app teams on how they want apps exposed to internet
 ingress:
   root_domain: akpdemoapps.link
   custom_prefix: eddie

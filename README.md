@@ -41,7 +41,7 @@ To enable realistic demo of rollouts, the cluster includes a deployment of Prome
 ### Templatized Projects w/ Helm
 
 The idea of a "golden path" or "standard pipeline" was manifested as a single Kargo project definition templatized w/ Helm. The k8s rollout and ingress is all controlled by central team.  Application teams just build a docker image and have a few parameters they can play with. 
-[Templated Projects](/value-overrides)
+[Templated Projects](/templated-teams)
 
 
 ### Vendor Helm Charts with custom values
