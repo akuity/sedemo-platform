@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: intelligence-demo-guestbook
+  name: intelligence-demo
   namespace: argocd
 spec:
   generators:
@@ -12,7 +12,7 @@ spec:
       - stage: prod
   template:
     metadata:
-      name: intelligence-demo-guestbook-{{stage}}
+      name: intelligence-demo-{{stage}}
       annotations:
         kargo.akuity.io/authorized-stage: intelligence-demo:{{stage}}
     spec:
