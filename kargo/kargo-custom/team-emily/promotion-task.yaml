@@ -2,7 +2,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
   name: standard-process
-  namespace: guestbook
+  namespace: team-emily-guestbook
 spec:
   vars:
   - name: app

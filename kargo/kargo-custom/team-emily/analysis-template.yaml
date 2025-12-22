@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
   name: guestbook-verification-3
-  namespace: guestbook
+  namespace: team-emily-guestbook
 spec:
   metrics:
     - name: test

@@ -2,7 +2,7 @@ apiVersion: ee.kargo.akuity.io/v1alpha1
 kind: EventRouter
 metadata:
   name: test-router
-  namespace: guestbook
+  namespace: team-emily-guestbook
 spec:
   channels:
     - kind: MessageChannel
