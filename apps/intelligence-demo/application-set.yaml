@@ -1,0 +1,73 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: intelligence-demo-guestbook
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - stage: dev
+      - stage: staging
+      - stage: prod
+  template:
+    metadata:
+      name: intelligence-demo-guestbook-{{stage}}
+      annotations:
+        kargo.akuity.io/authorized-stage: intelligence-demo:{{stage}}
+    spec:
+      project: intelligence-demo
+      source:
+        repoURL: https://github.com/akuity/sedemo-platform
+        targetRevision: main
+        path: apps/intelligence-demo/guestbook/chart
+        helm:
+          releaseName: "{{stage}}"
+          valueFiles:
+          - values-{{stage}}.yaml
+      destination:
+        name: sedemo-primary
+        namespace: intelligence-demo
+      syncPolicy:
+        syncOptions:
+        - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: intelligence-demo-prod-oom
+  namespace: argocd
+  annotations:
+    kargo.akuity.io/authorized-stage: intelligence-demo:prod-oom
+spec:
+  project: intelligence-demo
+  source:
+    repoURL: https://github.com/akuity/sedemo-platform
+    targetRevision: main
+    path: apps/intelligence-demo/oom-demo
+  destination:
+    name: sedemo-primary
+    namespace: intelligence-demo
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: intelligence-demo-prod-crashloop
+  namespace: argocd
+  annotations:
+    kargo.akuity.io/authorized-stage: intelligence-demo:prod-crashloop
+spec:
+  project: intelligence-demo
+  source:
+    repoURL: https://github.com/akuity/sedemo-platform
+    targetRevision: main
+    path: apps/intelligence-demo/crashloop-demo
+  destination:
+    name: sedemo-primary
+    namespace: intelligence-demo
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
