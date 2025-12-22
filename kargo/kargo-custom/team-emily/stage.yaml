@@ -1,0 +1,332 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: test
+  namespace: guestbook
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  # shard: kargo-agent
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: guestbook
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      vars:
+      - name: app
+        value: team-emily-guestbook
+      - name: imageRepo 
+        value: ghcr.io/emilyxinyi/${{ vars.app }}
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-platform
+      steps:
+      - task: 
+          name: standard-process
+      # - uses: jira
+      #   as: create-deployment-issue
+      #   config:
+      #     credentials:
+      #       secretName: jira-credentials
+      #     createIssue:
+      #       projectKey: SCRUM
+      #       summary: "Deploy ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }}"
+      #       description: "Deploying ${{ imageFrom(vars.imageRepo).RepoURL }}:${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} environment. Promotion ID: ${{ ctx.promotion }}. Freight: ${{ ctx.targetFreight.name }}."
+      #       issueType: Task
+      #       labels:
+      #         - deployment
+      #         - "${{ ctx.stage }}"
+      #         - "release-${{ imageFrom(vars.imageRepo).Tag }}"
+      - uses: set-metadata
+        config: 
+          updates: 
+            - kind: Freight
+              name: "${{ ctx.targetFreight.name }}"
+              values: 
+                nickname: "${{ ctx.targetFreight.name }}'s pikachu"
+      - uses: http
+        as: cat-facts
+        config:
+          method: GET
+          url: https://www.catfacts.net/api/
+          outputs:
+          - name: status
+            fromExpression: response.status
+          - name: fact1
+            fromExpression: response.body.facts[0]
+          - name: fact2
+            fromExpression: response.body.facts[1]
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: uat
+  namespace: guestbook
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  # shard: kargo-agent
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: guestbook
+    sources:
+      stages:
+      - test
+      # requiredSoakTime: 2m0s
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-platform
+        name: imageRepo
+        value: ghcr.io/emilyxinyi/guestbook
+      steps:
+      # - uses: jira
+      #   as: add-progress-comment
+      #   config:
+      #     credentials:
+      #       secretName: jira-credentials
+      #     commentOnIssue:
+      #       issueKey: "${{ freightMetadata(ctx.targetFreight.name, 'jira-issue-key') }}"
+      #       body: "Promotion started. Environment: ${{ ctx.stage }}. Image: ${{ imageFrom(vars.imageRepo).RepoURL }}:${{ imageFrom(vars.imageRepo).Tag }}. Promotion: ${{ ctx.promotion }}. Status: Deploying to ${{ ctx.stage }} environment..."
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: main
+            path: ./src
+          - branch: stage/team-emily/${{ ctx.stage }}
+            create: true
+            path: ./out
+      - uses: git-clear
+        config:
+          path: ./out
+      - uses: kustomize-set-image
+        as: update-image
+        config:
+          path: ./src/guestbook/stages/uat
+          images:
+          - image: ghcr.io/emilyxinyi/guestbook
+            tag: ${{ imageFrom(vars.imageRepo).Tag }}
+      - uses: kustomize-build
+        config:
+          path: ./src/guestbook/stages/uat
+          outPath: ./out/manifests.yaml
+      - uses: git-commit
+        as: commit
+        config:
+          path: ./out
+          message: | 
+            ${{ ctx.stage }}: ${{ outputs['update-image'].commitMessage}}
+      - uses: git-push
+        as: push
+        config:
+          path: ./out
+          generateTargetBranch: true
+      - uses: git-open-pr
+        as: open-pr
+        config:
+          repoURL: 
+          createTargetBranch: true
+          sourceBranch: ${{ outputs.push.branch }}
+          targetBranch: stage/team-emily/${{ ctx.stage }}
+      - uses: git-merge-pr
+        config: 
+          repoURL: ${{ vars.gitRepo }}
+          prNumber: ${{ outputs['open-pr'].pr.id }}
+      - uses: compose-output
+        as: branch-name
+        config:
+          branchName: ${{ outputs.push.branch }}
+      # - uses: gha-dispatch-workflow
+      #   as: dispatch-deployment
+      #   config:
+      #     credentials:
+      #       secretName: github-credentials
+      #     owner: emilyxinyi
+      #     repo: kargo
+      #     workflowFile: delete-branch.yaml
+      #     ref: main
+      #     inputs:
+      #       branch_name: ${{ outputs['branch-name'].branchName }}
+      #     timeout: 120
+      # - uses: gha-wait-for-workflow
+      #   config:
+      #     credentials:
+      #       secretName: github-credentials
+      #     owner: emilyxinyi
+      #     repo: kargo
+      #     runID: "${{ outputs['dispatch-deployment'].runID }}"
+      #     expectedConclusion: success
+      # - uses: jira
+      #   as: wait-for-status
+      #   config:
+      #     credentials:
+      #       secretName: jira-credentials
+      #     waitForStatus:
+      #       issueKey: "${{ freightMetadata(ctx.targetFreight.name, 'jira-issue-key') }}"
+      #       expectedStatus: "STAGED"
+      - uses: argocd-update
+        config:
+          apps:
+          - name: team-emily-guestbook-${{ ctx.stage }}
+            sources:
+            - repoURL: ${{ vars.gitRepo }}
+      # - uses: jira
+      #   as: delete-progress-comment
+      #   config:
+      #     credentials:
+      #       secretName: jira-credentials
+      #     deleteComment:
+      #       issueKey: "${{ freightMetadata(ctx.targetFreight.name, 'jira-issue-key') }}"
+      #       commentID: "${{ quote(outputs['add-progress-comment'].commentID) }}"
+  # verification:
+  #   analysisTemplates:
+  #   - name: guestbook-verification-3
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod-useast
+  namespace: guestbook
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  # shard: kargo-agent
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: guestbook
+    sources:
+      stages:
+      - uat
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-platform
+        name: imageRepo
+        value: ghcr.io/emilyxinyi/guestbook
+      steps:
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: main
+            path: ./src
+          - branch: stage/team-emily/${{ ctx.stage }}
+            create: true
+            path: ./out
+      - uses: git-clear
+        config:
+          path: ./out
+      - uses: kustomize-set-image
+        as: update-image
+        config:
+          path: ./src/guestbook/base
+          images:
+          - image: ${{ vars.imageRepo }}
+            # tag: ${{ imageFrom(ghcr.io/emilyxinyi/guestbook).Tag }}
+            tag: ${{ imageFrom(vars.imageRepo).Tag }}
+      - uses: kustomize-build
+        config:
+          path: ./src/guestbook/stages/prod-useast
+          outPath: ./out/manifests.yaml
+      - uses: git-commit
+        as: commit
+        config:
+          path: ./out
+          message: | 
+            ${{ ctx.stage }}: ${{ outputs['update-image'].commitMessage}}
+      - uses: git-push
+        as: push
+        config:
+          path: ./out
+          generateTargetBranch: true
+          # targetBranch: stage/prod-useast
+      - uses: git-open-pr
+        as: open-pr
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          createTargetBranch: true
+          sourceBranch: ${{ outputs.push.branch }}
+          # targetBranch: stage/${{ ctx.stage }}
+          targetBranch: stage/team-emily/${{ ctx.stage }}
+      - uses: compose-output
+        as: pr-link
+        config:
+          url: https://github.com/akuity/sedemo-platform/pull/${{ outputs['open-pr'].pr.id }}
+      # - uses: send-message 
+      #   as: slack-message
+      #   config: 
+      #     channel: 
+      #       kind: MessageChannel
+      #       name: slack
+      #     message: "PR created:  + ${{ outputs['pr-link'].url }}"
+      - uses: git-wait-for-pr
+        as: wait-for-pr
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          prNumber: ${{ outputs['open-pr'].pr.id }}
+      # - uses: jira
+      #   as: search-issue
+      #   config:
+      #     credentials:
+      #       secretName: jira-credentials
+      #     searchIssue:
+      #       jql: "created <= 1d and labels IN (release-${{ imageFrom(vars.imageRepo).Tag }}) ORDER BY created DESC"
+      #       expectMultiple: true
+      #       fields:
+      #         - key
+      #       # Wait for final production approval
+      # - uses: jira
+      #   as: wait-for-approval
+      #   config:
+      #     credentials:
+      #       secretName: jira-credentials
+      #     waitForStatus:
+      #       issueKey: ${{ outputs['search-issue'].key }}
+      #       expectedStatus: RELEASED
+      - uses: argocd-update
+        config:
+          apps:
+          - name: team-emily-guestbook-prod-useast
+            sources:
+            - repoURL: ${{ vars.gitRepo }}
+              desiredRevision: ${{ outputs['wait-for-pr'].commit }}
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod-uswest
+  namespace: guestbook
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  # shard: kargo-agent
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: guestbook
+    sources:
+      stages:
+      - uat
+  promotionTemplate:
+    spec:
+      vars:
+      - name: app
+        value: team-emily-guestbook
+      - name: imageRepo 
+        value: ghcr.io/emilyxinyi/${{ vars.app }}
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-platform
+      steps:
+      - task: 
+          name: standard-process
+      - uses: compose-output
+        as: get-freight-nickname
+        config:
+          frieghtNickname: ${{ freightMetadata(ctx.targetFreight.name).nickname }}

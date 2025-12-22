@@ -1,0 +1,30 @@
+name: Delete Specific Branch
+
+on:
+  # This allows you to run the action manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      branch_name:
+        description: 'The name of the branch to delete'
+        required: true
+        type: string
+
+jobs:
+  delete-branch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Delete the branch
+        env:
+          BRANCH_TO_DELETE: ${{ inputs.branch_name }}
+        run: |
+          git fetch origin
+          
+          git push origin --delete "$BRANCH_TO_DELETE" 
+          
+          echo "Branch '$BRANCH_TO_DELETE' deleted."

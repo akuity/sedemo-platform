@@ -1,0 +1,10 @@
+apiVersion: ee.kargo.akuity.io/v1alpha1
+kind: MessageChannel
+metadata:
+  name: slack
+  namespace: guestbook
+spec:
+  secretRef:
+    name: slack
+  slack:
+    channelID: C08CPA2KB9A

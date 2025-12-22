@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: team-emily-app
+spec:
+  replicas: 1
+  progressDeadlineSeconds: 9
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: team-emily-app
+  template:
+    metadata:
+      labels:
+        app: team-emily-app
+    spec:
+      containers:
+      - image: ghcr.io/emilyxinyi/guestbook
+        name: guestbook
+        ports:
+        - containerPort: 80
