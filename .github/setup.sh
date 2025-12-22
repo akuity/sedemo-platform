@@ -15,9 +15,9 @@ for project in $projects; do
         continue
     fi
 
-    # Get repo URL for project
-    repo_urls=$(kargo get warehouses -p $project -o json | jq -r '.spec.subscriptions[] | select(.git !=null).git.repoURL')
-    image_url=$(kargo get warehouses -p $project -o json | jq -r '.spec.subscriptions[] | select(.image !=null).image.repoURL')
+    # Get repo URL for project. (the funk items[]? // allows list and single item support)
+    repo_urls=$(kargo get warehouses -p $project -o json | jq -r '.items[]?.spec // .spec | .subscriptions[] | select(.git !=null).git.repoURL')
+    image_url=$(kargo get warehouses -p $project -o json | jq -r '.items[]?.spec // .spec | .subscriptions[] | select(.image !=null).image.repoURL')
     
     let i=0
     for repo_url in $repo_urls; do
