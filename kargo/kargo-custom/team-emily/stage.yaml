@@ -81,17 +81,19 @@ spec:
       vars:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-platform
-        name: imageRepo
+      - name: imageRepo
         value: ghcr.io/emilyxinyi/guestbook
+      - name: githubtoken
+        value: githubtoken
       steps:
-      # - uses: jira
-      #   as: add-progress-comment
-      #   config:
-      #     credentials:
-      #       secretName: jira-credentials
-      #     commentOnIssue:
-      #       issueKey: "${{ freightMetadata(ctx.targetFreight.name, 'jira-issue-key') }}"
-      #       body: "Promotion started. Environment: ${{ ctx.stage }}. Image: ${{ imageFrom(vars.imageRepo).RepoURL }}:${{ imageFrom(vars.imageRepo).Tag }}. Promotion: ${{ ctx.promotion }}. Status: Deploying to ${{ ctx.stage }} environment..."
+      - uses: jira
+        as: add-progress-comment
+        config:
+          credentials:
+            secretName: jira-credentials
+          commentOnIssue:
+            issueKey: "${{ freightMetadata(ctx.targetFreight.name, 'jira-issue-key') }}"
+            body: "Promotion started. Environment: ${{ ctx.stage }}. Image: ${{ imageFrom(vars.imageRepo).RepoURL }}:${{ imageFrom(vars.imageRepo).Tag }}. Promotion: ${{ ctx.promotion }}. Status: Deploying to ${{ ctx.stage }} environment..."
       - uses: git-clone
         config:
           repoURL: ${{ vars.gitRepo }}
@@ -141,51 +143,51 @@ spec:
         as: branch-name
         config:
           branchName: ${{ outputs.push.branch }}
-      # - uses: gha-dispatch-workflow
-      #   as: dispatch-deployment
-      #   config:
-      #     credentials:
-      #       secretName: github-credentials
-      #     owner: emilyxinyi
-      #     repo: kargo
-      #     workflowFile: delete-branch.yaml
-      #     ref: main
-      #     inputs:
-      #       branch_name: ${{ outputs['branch-name'].branchName }}
-      #     timeout: 120
-      # - uses: gha-wait-for-workflow
-      #   config:
-      #     credentials:
-      #       secretName: github-credentials
-      #     owner: emilyxinyi
-      #     repo: kargo
-      #     runID: "${{ outputs['dispatch-deployment'].runID }}"
-      #     expectedConclusion: success
-      # - uses: jira
-      #   as: wait-for-status
-      #   config:
-      #     credentials:
-      #       secretName: jira-credentials
-      #     waitForStatus:
-      #       issueKey: "${{ freightMetadata(ctx.targetFreight.name, 'jira-issue-key') }}"
-      #       expectedStatus: "STAGED"
+      - uses: gha-dispatch-workflow
+        as: dispatch-deployment
+        config:
+          credentials:
+            secretName: ${{ vars.githubtoken }}
+          owner: akuity
+          repo: sedemo-platform
+          workflowFile: delete-branch.yaml
+          ref: main
+          inputs:
+            branch_name: ${{ outputs['branch-name'].branchName }}
+          timeout: 120
+      - uses: gha-wait-for-workflow
+        config:
+          credentials:
+            secretName: ${{ vars.githubtoken }}
+          owner: akuity
+          repo: sedemo-platform
+          runID: "${{ outputs['dispatch-deployment'].runID }}"
+          expectedConclusion: success
+      - uses: jira
+        as: wait-for-status
+        config:
+          credentials:
+            secretName: jira-credentials
+          waitForStatus:
+            issueKey: "${{ freightMetadata(ctx.targetFreight.name, 'jira-issue-key') }}"
+            expectedStatus: "STAGED"
       - uses: argocd-update
         config:
           apps:
           - name: team-emily-guestbook-${{ ctx.stage }}
             sources:
             - repoURL: ${{ vars.gitRepo }}
-      # - uses: jira
-      #   as: delete-progress-comment
-      #   config:
-      #     credentials:
-      #       secretName: jira-credentials
-      #     deleteComment:
-      #       issueKey: "${{ freightMetadata(ctx.targetFreight.name, 'jira-issue-key') }}"
-      #       commentID: "${{ quote(outputs['add-progress-comment'].commentID) }}"
-  # verification:
-  #   analysisTemplates:
-  #   - name: guestbook-verification-3
+      - uses: jira
+        as: delete-progress-comment
+        config:
+          credentials:
+            secretName: jira-credentials
+          deleteComment:
+            issueKey: "${{ freightMetadata(ctx.targetFreight.name, 'jira-issue-key') }}"
+            commentID: "${{ quote(outputs['add-progress-comment'].commentID) }}"
+  verification:
+    analysisTemplates:
+    - name: guestbook-verification-3
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -259,37 +261,37 @@ spec:
         as: pr-link
         config:
           url: https://github.com/akuity/sedemo-platform/pull/${{ outputs['open-pr'].pr.id }}
-      # - uses: send-message 
-      #   as: slack-message
-      #   config: 
-      #     channel: 
-      #       kind: MessageChannel
-      #       name: slack
-      #     message: "PR created:  + ${{ outputs['pr-link'].url }}"
+      - uses: send-message 
+        as: slack-message
+        config: 
+          channel: 
+            kind: MessageChannel
+            name: slack
+          message: "PR created:  + ${{ outputs['pr-link'].url }}"
       - uses: git-wait-for-pr
         as: wait-for-pr
         config:
           repoURL: ${{ vars.gitRepo }}
           prNumber: ${{ outputs['open-pr'].pr.id }}
-      # - uses: jira
-      #   as: search-issue
-      #   config:
-      #     credentials:
-      #       secretName: jira-credentials
-      #     searchIssue:
-      #       jql: "created <= 1d and labels IN (release-${{ imageFrom(vars.imageRepo).Tag }}) ORDER BY created DESC"
-      #       expectMultiple: true
-      #       fields:
-      #         - key
-      #       # Wait for final production approval
-      # - uses: jira
-      #   as: wait-for-approval
-      #   config:
-      #     credentials:
-      #       secretName: jira-credentials
-      #     waitForStatus:
-      #       issueKey: ${{ outputs['search-issue'].key }}
-      #       expectedStatus: RELEASED
+      - uses: jira
+        as: search-issue
+        config:
+          credentials:
+            secretName: jira-credentials
+          searchIssue:
+            jql: "created <= 1d and labels IN (release-${{ imageFrom(vars.imageRepo).Tag }}) ORDER BY created DESC"
+            expectMultiple: true
+            fields:
+              - key
+            # Wait for final production approval
+      - uses: jira
+        as: wait-for-approval
+        config:
+          credentials:
+            secretName: jira-credentials
+          waitForStatus:
+            issueKey: ${{ outputs['search-issue'].key }}
+            expectedStatus: RELEASED
       - uses: argocd-update
         config:
           apps:
