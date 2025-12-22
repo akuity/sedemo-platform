@@ -1,0 +1,32 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: promote
+  namespace: intelligence-demo
+spec:
+  steps:
+  - uses: argocd-update
+    config:
+      apps:
+      - name: intelligence-demo-guestbook-${{ ctx.stage }}
+        sources:
+        - helm:
+            images:
+            - key: image.tag
+              value: ${{ imageFrom("ghcr.io/akuity/guestbook").Tag }}
+          repoURL: https://github.com/akuity/sedemo-platform.git
+---
+# This promotion will only sync the application without updating the image
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: promote-sync-only
+  namespace: intelligence-demo
+spec:
+  steps:
+  - uses: argocd-update
+    config:
+      apps:
+      - name: intelligence-demo-${{ ctx.stage }}
+        sources:
+        - repoURL: https://github.com/akuity/sedemo-platform.git

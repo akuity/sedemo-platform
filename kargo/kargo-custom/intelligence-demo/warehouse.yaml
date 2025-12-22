@@ -1,0 +1,11 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: guestbook
+  namespace: intelligence-demo
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  subscriptions:
+  - image:
+      repoURL: ghcr.io/akuity/guestbook
