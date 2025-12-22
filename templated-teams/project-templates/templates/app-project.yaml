@@ -1,0 +1,13 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: '{{ .Values.projectName }}'
+  namespace: argocd
+spec:
+  sourceRepos: []
+  sourceNamespaces: []
+  destinations: 
+  - namespace: '{{ .Values.projectName }}-*'
+    name: 'sedemo-primary'
+  - namespace: '{{ .Values.projectName }}'
+    name: 'kargo'
