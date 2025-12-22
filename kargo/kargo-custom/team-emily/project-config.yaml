@@ -1,8 +1,8 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: ProjectConfig
 metadata:
-  name: guestbook
-  namespace: guestbook
+  name: team-emily-guestbook-config
+  namespace: team-emily-guestbook
 spec:
   promotionPolicies:
   - stageSelector:
