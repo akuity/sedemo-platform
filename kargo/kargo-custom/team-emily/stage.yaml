@@ -2,7 +2,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: test
-  namespace: team-emily-guestbook
+  namespace: guestbook
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
@@ -63,7 +63,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: uat
-  namespace: team-emily-guestbook
+  namespace: guestbook
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
@@ -191,7 +191,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: prod-useast
-  namespace: team-emily-guestbook
+  namespace: guestbook
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
@@ -302,7 +302,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: prod-uswest
-  namespace: team-emily-guestbook
+  namespace: guestbook
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:

@@ -2,7 +2,7 @@ apiVersion: ee.kargo.akuity.io/v1alpha1
 kind: MessageChannel
 metadata:
   name: slack
-  namespace: team-emily-guestbook
+  namespace: guestbook
 spec:
   secretRef:
     name: slack
