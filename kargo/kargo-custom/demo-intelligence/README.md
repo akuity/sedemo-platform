@@ -8,7 +8,7 @@ This demo is migrated from https://github.com/dhpup/akp-demo and demonstrates Ak
 
 ## Structure
 
-### ArgoCD Applications (`apps/intelligence-demo/`)
+### ArgoCD Applications (`apps/demo-intelligence/`)
 - **appproject.yaml** - ArgoCD project definition
 - **application-set.yaml** - ApplicationSet for guestbook stages + individual apps for OOM/crashloop demos
 - **guestbook/chart/** - Helm chart for the guestbook application
@@ -16,7 +16,7 @@ This demo is migrated from https://github.com/dhpup/akp-demo and demonstrates Ak
 - **crashloop-demo/** - Deployment that intentionally crashloops
 - **runbooks/** - Runbook documentation for incident response
 
-### Kargo Resources (`kargo/kargo-custom/intelligence-demo/`)
+### Kargo Resources (`kargo/kargo-custom/demo-intelligence/`)
 - **project.yaml** - Kargo project with auto-promotion for crashloop stage
 - **warehouse.yaml** - Watches `ghcr.io/akuity/guestbook` images
 - **stages.yaml** - Five stages: dev, staging, prod, prod-oom, prod-crashloop
@@ -37,8 +37,8 @@ Auto-promoted, sync-only - demonstrates crashloop scenario for debugging.
 
 ```bash
 # Apply ArgoCD resources
-kubectl apply -f apps/intelligence-demo/
+kubectl apply -f apps/demo-intelligence/
 
 # Apply Kargo resources  
-kubectl apply -f kargo/kargo-custom/intelligence-demo/
+kubectl apply -f kargo/kargo-custom/demo-intelligence/
 ```

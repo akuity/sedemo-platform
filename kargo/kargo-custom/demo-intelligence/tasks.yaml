@@ -27,6 +27,6 @@ spec:
   - uses: argocd-update
     config:
       apps:
-      - name: intelligence-demo-${{ ctx.stage }}
+      - name: demo-intelligence-${{ ctx.stage }}
         sources:
         - repoURL: https://github.com/akuity/sedemo-platform.git
