@@ -5,7 +5,7 @@ metadata:
   name: '{{$.Values.projectName}}-{{$key}}'
   namespace: argocd
 spec:
-  project: '{{.Values.projectName}}'
+  project: '{{$.Values.projectName}}'
   sources:
   #pull custom values from team managed monorepo folder
   - repoURL: https://github.com/akuity/sedemo-monorepo.git
