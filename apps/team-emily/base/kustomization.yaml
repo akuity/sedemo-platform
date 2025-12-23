@@ -4,7 +4,3 @@ kind: Kustomization
 resources:
 - deployment.yaml
 - service.yaml
-
-images:
-- name: ghcr.io/emilyxinyi/guestbook
-  newTag: latest
