@@ -14,7 +14,7 @@ spec:
         - path: templated/*
   template:
     metadata:
-      name: '{{.path.basename}}-kargo-definition'
+      name: '{{.path.basename}}-appsets'
       namespace: argocd
     spec:
       #project: '{{.path.basename}}'
@@ -24,21 +24,20 @@ spec:
       - repoURL: https://github.com/akuity/sedemo-monorepo.git
         targetRevision: main
         ref: appValues 
-      # apply to platform team managed kargo templates
+      # create underlying appsets for Kargo and Argo in the Argo Control plane
+      # they will in turn create kargo and argo assets.
       - targetRevision: HEAD
         repoURL: https://github.com/akuity/sedemo-platform
-        path: templated_teams/kargo-helm/
+        path: templated-teams/project-template/
         helm:
           valueFiles:
-          - '$appValues/templated/{{.path.basename}}/platform/app-values.yaml'
+          - '$appValues/templated/{{.path.basename}/platform/app-values.yaml'
           valuesObject:
-            chartUrl: https://github.com/akuity/sedemo-platform
-            chartPath: templated_teams/apps-helm/
             repoUrl: https://github.com/akuity/sedemo-monorepo.git
             projectPath: templated/{{.path.basename}}
             projectName: '{{.path.basename}}'
       destination:
-        name: kargo
+        name: in-cluster
       syncPolicy:
         automated:
           prune: true

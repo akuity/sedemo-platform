@@ -1,0 +1,38 @@
+
+
+
+replicaCount: 2
+
+# this will be used to template namespaced resources, matches the path within monorepo. 
+projectName: template
+
+# This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
+image:
+  repository: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+  # This sets the pull policy for images.
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: 218-yellow
+
+kargo:
+  # this will be overridden per environment by kargo promo steps.
+  stage: dev
+
+git:
+    main: main
+    outPath: out
+    srcPth: src
+
+# Some level of control exposed to app teams on how they want apps exposed to internet
+ingress:
+  root_domain: akpdemoapps.link
+  custom_prefix: eddie
+
+
+rollouts:
+  enabled: true
+
+environments:
+  dev: true
+  staging: true
+  prod: true
