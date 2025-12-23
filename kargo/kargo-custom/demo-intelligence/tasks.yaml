@@ -2,13 +2,13 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
   name: promote
-  namespace: intelligence-demo
+  namespace: demo-intelligence
 spec:
   steps:
   - uses: argocd-update
     config:
       apps:
-      - name: intelligence-demo-${{ ctx.stage }}
+      - name: demo-intelligence-${{ ctx.stage }}
         sources:
         - helm:
             images:
@@ -21,7 +21,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
   name: promote-sync-only
-  namespace: intelligence-demo
+  namespace: demo-intelligence
 spec:
   steps:
   - uses: argocd-update

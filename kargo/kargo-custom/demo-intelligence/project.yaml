@@ -1,15 +1,15 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Project
 metadata:
-  name: intelligence-demo
+  name: demo-intelligence
   annotations:
     argocd.argoproj.io/sync-wave: "-3"
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: ProjectConfig
 metadata:
-  name: intelligence-demo
-  namespace: intelligence-demo
+  name: demo-intelligence
+  namespace: demo-intelligence
   annotations:
     argocd.argoproj.io/sync-wave: "-2"
 spec:

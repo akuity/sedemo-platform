@@ -3,7 +3,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: dev
-  namespace: intelligence-demo
+  namespace: demo-intelligence
 spec:
   requestedFreight:
   - origin:
@@ -21,7 +21,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: staging
-  namespace: intelligence-demo
+  namespace: demo-intelligence
 spec:
   requestedFreight:
   - origin:
@@ -40,7 +40,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: prod
-  namespace: intelligence-demo
+  namespace: demo-intelligence
 spec:
   requestedFreight:
   - origin:
@@ -59,7 +59,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: prod-oom
-  namespace: intelligence-demo
+  namespace: demo-intelligence
 spec:
   requestedFreight:
   - origin:
@@ -78,7 +78,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: prod-crashloop
-  namespace: intelligence-demo
+  namespace: demo-intelligence
 spec:
   requestedFreight:
   - origin:

@@ -2,7 +2,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
   name: guestbook
-  namespace: intelligence-demo
+  namespace: demo-intelligence
   annotations:
     argocd.argoproj.io/sync-wave: "-2"
 spec:
