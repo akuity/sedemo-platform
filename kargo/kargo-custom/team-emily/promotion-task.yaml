@@ -24,13 +24,13 @@ spec:
   - uses: kustomize-set-image
     as: update-image
     config:
-      path: ./src/${{ vars.app }}/base
+      path: ./src/apps/team-emily/stages/${{ ctx.stage }}
       images:
       - image: ${{ vars.imageRepo }}
         tag: ${{ imageFrom(vars.imageRepo).Tag }}
   - uses: kustomize-build
     config:
-      path: ./src/${{ vars.app }}/stages/${{ ctx.stage }}
+      path: ./src/apps/team-emily/stages/${{ ctx.stage }}
       outPath: ./out/manifests.yaml
   - uses: git-commit
     as: commit

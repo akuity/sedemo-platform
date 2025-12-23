@@ -12,6 +12,6 @@ spec:
       repoURL: https://github.com/akuity/sedemo-platform
       branch: main
       includePaths:
-      - apps/team-emily/**
+      - apps/team-emily
   - image:
       repoURL: ghcr.io/emilyxinyi/guestbook
