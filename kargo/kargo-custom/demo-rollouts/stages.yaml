@@ -266,7 +266,7 @@ spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: rollouts-app
+      name: demo-rollouts
     sources:
       stages:
       - prod
@@ -316,7 +316,7 @@ spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: rollouts-app
+      name: demo-rollouts
     sources:
       stages:
       - prod
