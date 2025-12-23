@@ -2,14 +2,14 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: dev
-  namespace: rollouts-app
+  namespace: demo-rollouts
   annotations:
     kargo.akuity.io/color: red
 spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: rollouts-app
+      name: demo-rollouts
     sources:
       direct: true
   # verification:
@@ -53,21 +53,21 @@ spec:
         continueOnError: true
         config:
           apps:
-          - name: rollouts-app-dev
+          - name: demo-rollouts-dev
             namespace: argocd
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: staging
-  namespace: rollouts-app
+  namespace: demo-rollouts
   annotations:
     kargo.akuity.io/color: amber
 spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: rollouts-app
+      name: demo-rollouts
     sources:
       stages:
       - dev
@@ -108,21 +108,21 @@ spec:
         continueOnError: true
         config:
           apps:
-          - name: rollouts-app-staging
+          - name: demo-rollouts-staging
             namespace: argocd
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: prod
-  namespace: rollouts-app
+  namespace: demo-rollouts
   annotations:
     kargo.akuity.io/color: violet
 spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: rollouts-app
+      name: demo-rollouts
     sources:
       stages:
       - staging
@@ -209,14 +209,14 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: prod-amer-east
-  namespace: rollouts-app
+  namespace: demo-rollouts
   annotations:
     kargo.akuity.io/color: violet
 spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: rollouts-app
+      name: demo-rollouts
     sources:
       stages:
       - prod
@@ -252,14 +252,14 @@ spec:
         continueOnError: true
         config:
           apps:
-          - name: rollouts-app-prod-${{ vars.region }}
+          - name: demo-rollouts-prod-${{ vars.region }}
             namespace: argocd
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: prod-amer-west
-  namespace: rollouts-app
+  namespace: demo-rollouts
   annotations:
     kargo.akuity.io/color: violet
 spec:
@@ -302,14 +302,14 @@ spec:
         continueOnError: true
         config:
           apps:
-          - name: rollouts-app-prod-${{ vars.region }}
+          - name: demo-rollouts-prod-${{ vars.region }}
             namespace: argocd
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: prod-emea
-  namespace: rollouts-app
+  namespace: demo-rollouts
   annotations:
     kargo.akuity.io/color: violet
 spec:

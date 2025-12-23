@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: rollouts-app
+  name: demo-rollouts
   namespace: argocd
 spec:
   generators:
@@ -14,9 +14,9 @@ spec:
       - stage: prod-emea
   template:
     metadata:
-      name: rollouts-app-{{stage}}
+      name: demo-rollouts-{{stage}}
       annotations:
-        kargo.akuity.io/authorized-stage: rollouts-app:{{stage}}
+        kargo.akuity.io/authorized-stage: demo-rollouts:{{stage}}
     spec:
       project: rollouts
       source:

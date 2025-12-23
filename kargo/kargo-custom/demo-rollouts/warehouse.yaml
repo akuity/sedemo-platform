@@ -1,8 +1,8 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
-  name: rollouts-app
-  namespace: rollouts-app
+  name: demo-rollouts
+  namespace: demo-rollouts
 spec:
   subscriptions:
   - image:
