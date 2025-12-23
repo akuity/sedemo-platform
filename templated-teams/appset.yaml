@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: templated-team-kargos
+  name: templated-team-projects
   namespace: argocd
 spec:
   goTemplate: true
@@ -31,7 +31,7 @@ spec:
         path: templated-teams/project-template/
         helm:
           valueFiles:
-          - '$appValues/templated/{{.path.basename}/platform/app-values.yaml'
+          - '$appValues/templated/{{.path.basename}}/platform/app-values.yaml'
           valuesObject:
             repoUrl: https://github.com/akuity/sedemo-monorepo.git
             projectPath: templated/{{.path.basename}}
