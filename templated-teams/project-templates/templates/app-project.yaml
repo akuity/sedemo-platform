@@ -6,6 +6,8 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "-1" #create project before apps
 spec:
+  sourceRepos:
+  - '*'
   destinations: 
   - namespace: '{{ .Values.projectName }}-*'
     name: 'sedemo-primary'
@@ -13,3 +15,6 @@ spec:
     name: 'kargo'
   - namespace: ''
     name: 'kargo'
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
