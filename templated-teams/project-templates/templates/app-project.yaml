@@ -6,10 +6,10 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "-1" #create project before apps
 spec:
-  sourceRepos: []
-  sourceNamespaces: []
   destinations: 
   - namespace: '{{ .Values.projectName }}-*'
     name: 'sedemo-primary'
   - namespace: '{{ .Values.projectName }}'
+    name: 'kargo'
+  - namespace: ''
     name: 'kargo'
