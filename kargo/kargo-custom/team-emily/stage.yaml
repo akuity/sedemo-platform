@@ -133,7 +133,7 @@ spec:
       - uses: git-open-pr
         as: open-pr
         config:
-          repoURL: 
+          repoURL: ${{ vars.gitRepo }}
           createTargetBranch: true
           sourceBranch: ${{ outputs.push.branch }}
           targetBranch: stage/team-emily/${{ ctx.stage }}
