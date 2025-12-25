@@ -211,7 +211,7 @@ spec:
       vars:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-platform
-        name: imageRepo
+      - name: imageRepo
         value: ghcr.io/emilyxinyi/guestbook
       steps:
       - uses: git-clone
@@ -322,7 +322,7 @@ spec:
       - name: app
         value: team-emily-guestbook
       - name: imageRepo 
-        value: ghcr.io/emilyxinyi/${{ vars.app }}
+        value: ghcr.io/emilyxinyi/guestbook
       - name: gitRepo
         value: https://github.com/akuity/sedemo-platform
       steps:
