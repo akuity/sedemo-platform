@@ -4,19 +4,31 @@ metadata:
   name: guestbook-verification-3
   namespace: team-emily-guestbook
 spec:
+  # metrics:
+  #   - name: test
+  #     provider:
+  #       job:
+  #         spec:
+  #           backoffLimit: 1
+  #           template:
+  #             spec:
+  #               containers:
+  #                 - command:
+  #                     - /bin/sh
+  #                     - -c
+  #                     - exit 1
+  #                   image: alpine:latest
+  #                   name: test
+  #               restartPolicy: Never
+  args:
+  - name: pokemon
   metrics:
-    - name: test
-      provider:
-        job:
-          spec:
-            backoffLimit: 1
-            template:
-              spec:
-                containers:
-                  - command:
-                      - /bin/sh
-                      - -c
-                      - exit 1
-                    image: alpine:latest
-                    name: test
-                restartPolicy: Never
+  - name: pokemon-xp
+    interval: 5s
+    count: 5
+    successCondition: result < 200
+    failureLimit: 3
+    provider:
+      web:
+        url: https://pokeapi.co/api/v2/pokemon/{{args.pokemon}}
+        jsonPath: "{$.base_experience}"
