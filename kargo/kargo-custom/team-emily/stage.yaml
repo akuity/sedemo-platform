@@ -158,7 +158,7 @@ spec:
       - uses: gha-wait-for-workflow
         config:
           credentials:
-            secretName: ${{ vars.githubtoken }}
+            secretName: github-credentials
           owner: akuity
           repo: sedemo-platform
           runID: "${{ outputs['dispatch-deployment'].runID }}"
