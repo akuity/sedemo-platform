@@ -85,8 +85,6 @@ spec:
         value: https://github.com/akuity/sedemo-platform
       - name: imageRepo
         value: ghcr.io/emilyxinyi/guestbook
-      - name: githubtoken
-        value: githubtoken
       steps:
       - uses: jira
         as: add-progress-comment
@@ -149,7 +147,7 @@ spec:
         as: dispatch-deployment
         config:
           credentials:
-            secretName: ${{ vars.githubtoken }}
+            secretName: github-credentials
           owner: akuity
           repo: sedemo-platform
           workflowFile: delete-branch.yaml
