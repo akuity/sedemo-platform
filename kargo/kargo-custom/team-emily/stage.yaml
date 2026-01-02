@@ -7,7 +7,7 @@ metadata:
     kargo.akuity.io/color: blue
     argocd.argoproj.io/sync-wave: "2"
 spec:
-  # shard: kargo-agent
+  shard: kargo-agent
   requestedFreight:
   - origin:
       kind: Warehouse
@@ -59,6 +59,12 @@ spec:
             fromExpression: response.body.facts[0]
           - name: fact2
             fromExpression: response.body.facts[1]
+    verification:
+    analysisTemplates:
+    - name: e2e-verification
+    args:
+    - name: pokemon
+      value: pikachu
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -187,7 +193,7 @@ spec:
             commentID: "${{ quote(outputs['add-progress-comment'].commentID) }}"
   verification:
     analysisTemplates:
-    - name: guestbook-verification-3
+    - name: pokemon-verification
     args:
     - name: pokemon
       value: pikachu
