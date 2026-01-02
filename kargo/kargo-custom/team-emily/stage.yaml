@@ -59,12 +59,9 @@ spec:
             fromExpression: response.body.facts[0]
           - name: fact2
             fromExpression: response.body.facts[1]
-    verification:
+  verification:
     analysisTemplates:
     - name: e2e-verification
-    args:
-    - name: pokemon
-      value: pikachu
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
