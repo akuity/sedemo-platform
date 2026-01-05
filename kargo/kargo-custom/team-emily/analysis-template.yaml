@@ -25,10 +25,13 @@ metadata:
 spec:
   metrics:
     - name: test
+      interval: 5s
+      count: 2
+      failureLimit: 2
       provider:
         job:
           spec:
-            backoffLimit: 2
+            backoffLimit: 1
             template:
               spec:
                 containers:
