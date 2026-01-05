@@ -28,7 +28,7 @@ spec:
       provider:
         job:
           spec:
-            backoffLimit: 1
+            backoffLimit: 2
             template:
               spec:
                 containers:
