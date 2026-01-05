@@ -30,5 +30,5 @@ spec:
           valueFrom:
             secretKeyRef:
               name: gh-image-creds
-              key: pat
+              key: password
   backoffLimit: 4
