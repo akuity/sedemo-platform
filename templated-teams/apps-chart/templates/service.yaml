@@ -8,7 +8,7 @@ metadata:
 spec:
   ports:
   - port: 80
-    targetPort: 8080
+    targetPort: {{ .Values.image.containerPort }}
   selector:
     app: '{{ .Values.projectName }}-app'
 {{- if .Values.rollouts.enabled }}
@@ -22,7 +22,7 @@ metadata:
 spec:
   ports:
   - port: 80
-    targetPort: 8080
+    targetPort: {{ .Values.image.containerPort }}
   selector:
     app: '{{ .Values.projectName }}-app'
 {{- end }}
