@@ -25,9 +25,6 @@ metadata:
 spec:
   metrics:
     - name: test
-      interval: 5s
-      count: 2
-      failureLimit: 1
       provider:
         job:
           spec:
