@@ -9,7 +9,11 @@ spec:
       repoURL: {{ .Values.image.repository }}
       discoveryLimit: 5
       imageSelectionStrategy: {{ .Values.image.selectionStrategy }}
+      {{ if eq .Values.image.selectionStrategy "Digest" }}
+      constraint: {{ .Values.image.tag }} 
+      {{ else }}
       allowTags: ^\d*-[a-z]*$
+      {{ end }}
   - git:
       repoURL: {{ .Values.repoUrl }}
       includePaths:
