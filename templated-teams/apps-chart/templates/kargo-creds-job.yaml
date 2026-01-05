@@ -9,10 +9,10 @@ metadata:
 spec:
   template:
     spec:
+      restartPolicy: Never
       containers:
       - name: kargo-sync
         image: "ghcr.io/akuity/sedemo-monorepo-kargo-cred-sync-job:latest"
-        restartPolicy: Never
         pullPolicy: Always
         env:
         - name: GITHUB_USER
