@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sync-kargo-creds
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/hook: PostSync
+spec:
+  template:
+    spec:
+      containers:
+      - name: kargo-sync
+        image: "ghcr.io/akuity/sedemo-monorepo-kargo-cred-sync-job:latest"
+        restartPolicy: Never
+        pullPolicy: Always
+        env:
+        - name: GITHUB_USER
+          value: "eddiewebb"
+        - name: GITHUB_ORG
+          value: "akuity"
+        - name: KARGO_PROJECT
+          value: "{{ .Values.projectName }}"
+        - name: KARGO_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: kargo-admin-creds
+              key: password
+        - name: GITHUB_PAT
+          valueFrom:
+            secretKeyRef:
+              name: gh-image-creds
+              key: pat
+  backoffLimit: 4
