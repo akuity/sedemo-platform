@@ -13,7 +13,7 @@ spec:
       containers:
       - name: kargo-sync
         image: "ghcr.io/akuity/sedemo-monorepo-kargo-cred-sync-job:latest"
-        pullPolicy: Always
+        imagePullPolicy: Always
         env:
         - name: GITHUB_USER
           value: "eddiewebb"
