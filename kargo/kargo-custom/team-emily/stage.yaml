@@ -7,7 +7,8 @@ metadata:
     kargo.akuity.io/color: blue
     argocd.argoproj.io/sync-wave: "2"
 spec:
-  shard: kargo-agent
+  # shard: kargo-agent
+  shard: sedemo-primary
   requestedFreight:
   - origin:
       kind: Warehouse
