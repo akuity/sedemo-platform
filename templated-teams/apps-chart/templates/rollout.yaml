@@ -22,7 +22,7 @@ spec:
         - image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           name: "{{ .Values.projectName }}-app"
           ports:
-            - containerPort: 8080
+            - containerPort: {{ .Values.image.containerPort | default 8080 }}
           env:
             - name: SEMVER
               value: "{{.Values.image.tag}}"
@@ -32,6 +32,13 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+          resources:
+            limits:
+              memory: {{ .Values.image.memoryLimit | default "28Mi" }}
+              cpu: {{ .Values.image.cpuLimit | default "50m" }}
+            requests:
+              memory: {{ .Values.image.memoryLimit | default "28Mi" }}
+              cpu: {{ .Values.image.cpuLimit | default "50m" }}
   minReadySeconds: 30
   revisionHistoryLimit: 3
   {{- if .Values.rollouts.enabled }}
