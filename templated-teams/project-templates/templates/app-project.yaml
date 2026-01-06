@@ -3,6 +3,8 @@ kind: AppProject
 metadata:
   name: '{{ .Values.projectName }}'
   namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
   annotations:
     argocd.argoproj.io/sync-wave: "-1" #create project before apps
 spec:
