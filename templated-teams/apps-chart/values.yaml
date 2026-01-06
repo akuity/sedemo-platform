@@ -11,6 +11,8 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: 14-blue
   containerPort: 8080
+  memoryLimit: 28Mi
+  cpuLimit: 50m
 
 kargo:
   stage: dev
