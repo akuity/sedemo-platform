@@ -23,7 +23,7 @@ spec:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-rollouts-app
       - name: imageRepo
-        value: ghcr.io/akuity/sedemo-rollouts-app
+        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       - name: targetBranch
         value: locked-env/dev 
       - name: path_src
@@ -93,7 +93,7 @@ spec:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-rollouts-app
       - name: imageRepo
-        value: ghcr.io/akuity/sedemo-rollouts-app
+        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       - name: targetBranch
         value: locked-env/staging
       - name: path_src
@@ -149,7 +149,7 @@ spec:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-rollouts-app
       - name: imageRepo
-        value: ghcr.io/akuity/sedemo-rollouts-app
+        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       - name: targetBranch
         value: locked-env/prod
       - name: path_src
