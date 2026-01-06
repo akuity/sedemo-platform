@@ -1,4 +1,3 @@
-{{ if or ( .Values.environments.staging) (ne .Values.kargo.stage "staging") }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -16,4 +15,3 @@ spec:
             name: svc-stable
             port:
               number: 80
-{{ end}}
