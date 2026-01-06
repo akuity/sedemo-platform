@@ -15,9 +15,6 @@ spec:
   - stageSelector:
       name: dev
     autoPromotionEnabled: true
-  - stageSelector:
-      name: "regex:prod.*"
-    autoPromotionEnabled: true
   webhookReceivers: 
     - name: gh-wh-receiver
       github:

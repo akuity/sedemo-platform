@@ -5,7 +5,8 @@ kind: Application
 metadata:
   name: '{{$.Values.projectName}}-{{$key}}'
   namespace: argocd
-
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
   annotations:
     kargo.akuity.io/authorized-stage: '{{$.Values.projectName}}:{{$key}}'
     argocd.argoproj.io/sync-wave: "1" #create argo apps after kargo project created

@@ -232,19 +232,7 @@ spec:
         as: push
         config:
           path: ./out
-          generateTargetBranch: true
-      - uses: git-open-pr
-        as: open-pr
-        config:
-          repoURL: {{ .Values.repoUrl }}
-          createTargetBranch: true
-          sourceBranch: {{`${{ outputs['push'].branch }}`}}
           targetBranch: env/{{ .Values.projectName }}-prod
-      - uses: git-wait-for-pr
-        as: wait-for-pr
-        config:
-          repoURL: {{ .Values.repoUrl }}
-          prNumber: {{`${{ outputs['open-pr'].pr.id }}`}}
       - uses: argocd-update
         config:
           apps:
