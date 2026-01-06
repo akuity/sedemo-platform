@@ -1,5 +1,5 @@
 {{ range $key, $val := .Values.environments }}
-{{ if or ( $.Values.environments.staging) (ne $val "staging") }}
+{{ if or ( $.Values.environments.staging) (ne $key "staging") }}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
