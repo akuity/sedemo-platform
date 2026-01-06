@@ -35,7 +35,7 @@ spec:
           name: prepare-workdir
       # - uses: yaml-update
       #   config:
-      #     path: ${{ vars.path_src }}/deploy/chart/values.yaml
+      #     path: ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
       #     updates:
       #       - key: image.tag
       #         value: ${{ quote(imageFrom( vars.imageRepo ).Tag) }}
@@ -50,9 +50,9 @@ spec:
       - uses: helm-template
         config:
           releaseName: deploy
-          path: ${{ vars.path_src }}/deploy/chart
+          path: ${{ vars.path_src }}/rollouts-app/deploy/chart
           valuesFiles:
-          - ${{ vars.path_src }}/deploy/chart/values.yaml
+          - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests.yaml
           namespace: local-shard-eso-dev
           setValues:
@@ -106,9 +106,9 @@ spec:
       - uses: helm-template
         config:
           releaseName: deploy
-          path: ${{ vars.path_src }}/deploy/chart
+          path: ${{ vars.path_src }}/rollouts-app/deploy/chart
           valuesFiles:
-          - ${{ vars.path_src }}/deploy/chart/values.yaml
+          - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests.yaml
           namespace: local-shard-eso-staging
           setValues:
@@ -170,9 +170,9 @@ spec:
       - uses: helm-template
         config:
           releaseName: deploy
-          path: ${{ vars.path_src }}/deploy/chart
+          path: ${{ vars.path_src }}/rollouts-app/deploy/chart
           valuesFiles:
-          - ${{ vars.path_src }}/deploy/chart/values.yaml
+          - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests.yaml
           namespace: lockitdown-prod
           setValues:
