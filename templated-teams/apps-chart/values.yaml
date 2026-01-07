@@ -3,7 +3,7 @@ application:
 
 project:
   name: templated-name
-  sso-group: akuityio:demo
+  group: akuityio:demo
   path: templated/name
 
 

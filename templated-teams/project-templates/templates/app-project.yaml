@@ -30,4 +30,4 @@ spec:
     - 'p, role:app-team, repositories, get, *, allow'
     - 'p, role:app-team, logs, get, {{ .Values.project.name }}/*, allow'
     groups:
-    - '{{ .Values.project.sso-group }}'
+    - '{{ .Values.project.group }}'
