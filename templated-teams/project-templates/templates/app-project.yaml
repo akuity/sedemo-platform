@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: '{{ .Values.projectName }}'
+  name: 'templated-{{ .Values.projectName }}'
   namespace: argocd
   finalizers:
   - resources-finalizer.argocd.argoproj.io
@@ -20,3 +20,14 @@ spec:
   clusterResourceWhitelist:
   - group: '*'
     kind: '*'
+  roles:
+  - name: 'app-team'
+    description: 'Role for application team members'
+    policies:
+    - 'p, role:app-team, applications, *, {{ .Values.projectName }}-*, allow'
+    - 'p, role:app-team, projects, get, templated-{{ .Values.projectName }}, allow'
+    - 'p, role:app-team, clusters, get, sedemo-primary, allow'
+    - 'p, role:app-team, repositories, get, *, allow'
+    - 'p, role:app-team, logs, get, {{ .Values.projectName }}-*, allow'
+    groups:
+    - '{{ .Values.policy.sso-group }}'

@@ -30,3 +30,7 @@ environments:
   dev: true
   staging: true
   prod: true
+
+
+policy:
+  sso-group: akuityio:demo
