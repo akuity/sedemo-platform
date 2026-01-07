@@ -11,9 +11,9 @@ spec:
   sourceRepos:
   - '*'
   destinations: 
-  - namespace: '{{ .Values.project.name }}-*'
+  - namespace: '{{ .Values.application.name }}-*'
     name: 'sedemo-primary'
-  - namespace: '{{ .Values.project.name }}'
+  - namespace: '{{ .Values.application.name }}'
     name: 'kargo'
   - namespace: ''
     name: 'kargo'
@@ -24,10 +24,10 @@ spec:
   - name: 'app-team'
     description: 'Role for application team members'
     policies:
-    - 'p, role:app-team, applications, *, {{ .Values.project.name }}-*, allow'
-    - 'p, role:app-team, projects, get, templated-{{ .Values.project.name }}, allow'
-    - 'p, role:app-team, clusters, get, sedemo-primary, allow'
+    - 'p, role:app-team, applications, *, {{ .Values.project.name }}/*, allow'
+    - 'p, role:app-team, projects, get, {{ .Values.project.name }}, allow'
+    - 'p, role:app-team, clusters, get, *, allow'
     - 'p, role:app-team, repositories, get, *, allow'
-    - 'p, role:app-team, logs, get, {{ .Values.project.name }}-*, allow'
+    - 'p, role:app-team, logs, get, {{ .Values.project.name }}/*, allow'
     groups:
-    - '{{ .Values.policy.sso-group }}'
+    - '{{ .Values.project.sso-group }}'
