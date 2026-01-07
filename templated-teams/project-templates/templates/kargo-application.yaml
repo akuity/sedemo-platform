@@ -24,8 +24,8 @@ spec:
         chartPath: templated-teams/apps-chart/
         repoUrl: https://github.com/akuity/sedemo-monorepo.git
         project:
-          path: templated/{{.Values.application.name}}
-          name: 'templated-{{.Values.application.name}}'
+          path: '{{.Values.project.path }}'
+          name: '{{.Values.project.name}}'
         application:
           name: '{{.Values.application.name}}'
   destination:
