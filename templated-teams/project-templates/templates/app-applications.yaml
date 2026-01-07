@@ -40,6 +40,8 @@ spec:
       selfHeal: true
     syncOptions:
     - CreateNamespace=true
+    retry:
+      limit: 2
 ---
 {{ end }}
 {{ end }}
