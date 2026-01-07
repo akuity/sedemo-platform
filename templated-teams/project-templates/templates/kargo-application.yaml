@@ -1,12 +1,12 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: '{{.Values.projectName}}-kargo'
+  name: '{{.Values.application.name}}-kargo'
   namespace: argocd
   finalizers:
   - resources-finalizer.argocd.argoproj.io
 spec:
-  project: '{{.Values.projectName}}'
+  project: '{{.Values.project.name}}'
   sources:
   #pull custom values from team managed monorepo folder
   - repoURL: https://github.com/akuity/sedemo-monorepo.git
@@ -18,13 +18,16 @@ spec:
     path: templated-teams/kargo-chart/
     helm:
       valueFiles:
-      - '$appValues/templated/{{.Values.projectName}}/platform/app-values.yaml'
+      - '$appValues/templated/{{.Values.application.name}}/platform/app-values.yaml'
       valuesObject:
         chartUrl: https://github.com/akuity/sedemo-platform
         chartPath: templated-teams/apps-chart/
         repoUrl: https://github.com/akuity/sedemo-monorepo.git
-        projectPath: templated/{{.Values.projectName}}
-        projectName: '{{.Values.projectName}}'
+        project:
+          path: '{{.Values.project.path }}'
+          name: '{{.Values.project.name}}'
+        application:
+          name: '{{.Values.application.name}}'
   destination:
     name: kargo
   syncPolicy:

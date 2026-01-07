@@ -20,7 +20,7 @@ spec:
         - name: GITHUB_ORG
           value: "akuity"
         - name: KARGO_PROJECT
-          value: "{{ .Values.projectName }}"
+          value: "{{ .Values.application.name }}"
         - name: KARGO_PASSWORD
           valueFrom:
             secretKeyRef:

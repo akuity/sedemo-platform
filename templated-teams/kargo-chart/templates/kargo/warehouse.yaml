@@ -1,8 +1,8 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
-  name: {{ .Values.projectName }}
-  namespace: {{ .Values.projectName }}
+  name: {{ .Values.application.name }}
+  namespace: {{ .Values.application.name }}
 spec:
   subscriptions:
   - image:
@@ -22,8 +22,8 @@ spec:
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
-  name: '{{ .Values.projectName }}-chart'
-  namespace: {{ .Values.projectName }}
+  name: '{{ .Values.application.name }}-chart'
+  namespace: {{ .Values.application.name }}
 spec:
   subscriptions:
   - git:

@@ -34,8 +34,11 @@ spec:
           - '$appValues/templated/{{.path.basename}}/platform/app-values.yaml'
           valuesObject:
             repoUrl: https://github.com/akuity/sedemo-monorepo.git
-            projectPath: templated/{{.path.basename}}
-            projectName: '{{.path.basename}}'
+            project:
+              path: templated/{{.path.basename}}
+              name: 'templated-{{.path.basename}}'
+            application:
+              name: '{{.path.basename}}'
       destination:
         name: in-cluster
       syncPolicy:

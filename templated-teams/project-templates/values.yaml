@@ -4,8 +4,13 @@
 replicaCount: 2
 
 # this will be used to template namespaced resources, matches the path within monorepo. 
-projectName: template
+application:
+  name: template
 
+project:
+  name: templated-name
+  sso-group: akuityio:demo
+  path: templated/name
 
 
 kargo:
@@ -30,3 +35,4 @@ environments:
   dev: true
   staging: true
   prod: true
+
