@@ -3,15 +3,15 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: '{{$.Values.projectName}}-{{$key}}'
+  name: '{{$.Values.application.name}}-{{$key}}'
   namespace: argocd
   finalizers:
   - resources-finalizer.argocd.argoproj.io
   annotations:
-    kargo.akuity.io/authorized-stage: '{{$.Values.projectName}}:{{$key}}'
+    kargo.akuity.io/authorized-stage: '{{$.Values.application.name}}:{{$key}}'
     argocd.argoproj.io/sync-wave: "1" #create argo apps after kargo project created
 spec:
-  project: '{{$.Values.projectName}}'
+  project: '{{$.Values.project.name}}'
   sources:
   #pull custom values from team managed monorepo folder
   - repoURL: https://github.com/akuity/sedemo-monorepo.git
@@ -23,16 +23,19 @@ spec:
     path: templated-teams/apps-chart/
     helm:
       valueFiles:
-      - '$appValues/templated/{{ $.Values.projectName }}/platform/app-values.yaml'
+      - '$appValues/templated/{{ $.Values.application.name }}/platform/app-values.yaml'
       valuesObject:
         repoUrl: https://github.com/akuity/sedemo-monorepo.git
-        projectPath: templated/{{ $.Values.projectName }}
-        projectName: '{{ $.Values.projectName }}'
+        project:
+          path: templated/{{ $.Values.application.name }}
+          name: 'templated-{{ $.Values.application.name }}'
+        application:
+          name: '{{ $.Values.application.name }}'
         kargo:
           stage: '{{ $key }}'
   destination:
     name: sedemo-primary
-    namespace: {{ $.Values.projectName }}-{{$key}}
+    namespace: {{ $.Values.application.name }}-{{$key}}
   syncPolicy:
     automated:
       prune: true

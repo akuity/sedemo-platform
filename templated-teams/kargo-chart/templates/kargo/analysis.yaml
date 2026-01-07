@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
   name: api-conformance-crunch42
-  namespace: {{ .Values.projectName }}
+  namespace: {{ .Values.application.name }}
 spec:
   metrics:
   - name: policy-analysis

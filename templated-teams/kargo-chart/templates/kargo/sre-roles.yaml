@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: site-reliability
-  namespace: {{ .Values.projectName }}
+  namespace: {{ .Values.application.name }}
   annotations:
     kargo.akuity.io/description: Promotion and freight creation, all stages.
     rbac.kargo.akuity.io/claims: '{"groups":["devops"]}'
@@ -13,7 +13,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: site-reliability
-  namespace: {{ .Values.projectName }}
+  namespace: {{ .Values.application.name }}
 rules:
 - apiGroups:
   - kargo.akuity.io
@@ -45,7 +45,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: site-reliability
-  namespace: {{ .Values.projectName }}
+  namespace: {{ .Values.application.name }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -53,7 +53,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: site-reliability
-  namespace: {{ .Values.projectName }}
+  namespace: {{ .Values.application.name }}
 ---
 # This RoleBinding allows the site-reliability ServiceAccount to view project
 # resources (without redefining read rules), by binding it to the
@@ -62,7 +62,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: site-reliability-viewer
-  namespace: {{ .Values.projectName }}
+  namespace: {{ .Values.application.name }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -70,4 +70,4 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: site-reliability
-  namespace: {{ .Values.projectName }}
+  namespace: {{ .Values.application.name }}

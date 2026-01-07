@@ -1,4 +1,10 @@
+application:
+  name: template
 
+project:
+  name: templated-name
+  sso-group: akuityio:demo
+  path: templated/name
 
 
 replicaCount: 2

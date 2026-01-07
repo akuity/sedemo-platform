@@ -9,7 +9,7 @@ spec:
   - port: 80
     targetPort: {{ .Values.image.containerPort }}
   selector:
-    app: '{{ .Values.projectName }}-app'
+    app: '{{ .Values.application.name }}-app'
 {{- if .Values.rollouts.enabled }}
 ---
 apiVersion: v1
@@ -23,5 +23,5 @@ spec:
   - port: 80
     targetPort: {{ .Values.image.containerPort }}
   selector:
-    app: '{{ .Values.projectName }}-app'
+    app: '{{ .Values.application.name }}-app'
 {{- end }}

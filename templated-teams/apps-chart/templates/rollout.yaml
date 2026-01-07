@@ -6,20 +6,20 @@ apiVersion: apps/v1
 kind: Deployment
 {{- end}}
 metadata:
-  name: "{{ .Values.projectName }}-app"
+  name: "{{ .Values.application.name }}-app"
 spec:
   replicas: {{ .Values.replicaCount | default 1 }}
   selector:
     matchLabels:
-      app: "{{ .Values.projectName }}-app"
+      app: "{{ .Values.application.name }}-app"
   template:
     metadata:
       labels:
-        app: "{{ .Values.projectName }}-app"
+        app: "{{ .Values.application.name }}-app"
     spec:
       containers:
         - image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          name: "{{ .Values.projectName }}-app"
+          name: "{{ .Values.application.name }}-app"
           ports:
             - containerPort: {{ .Values.image.containerPort | default 8080 }}
           env:
