@@ -2,8 +2,14 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: stable-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
   ingressClassName: nginx
+  tls:
+  - hosts:
+    - "{{ .Values.kargo.stage }}.{{ .Values.ingress.custom_prefix }}.{{ .Values.ingress.root_domain }}"
+    secretName: tls-secret
   rules:
   - host: "{{ .Values.kargo.stage }}.{{ .Values.ingress.custom_prefix }}.{{ .Values.ingress.root_domain }}"
     http:
