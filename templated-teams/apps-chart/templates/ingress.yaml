@@ -6,6 +6,10 @@ metadata:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
   ingressClassName: nginx
+  tls:
+  - hosts:
+    - "{{ .Values.kargo.stage }}.{{ .Values.ingress.custom_prefix }}.{{ .Values.ingress.root_domain }}"
+    secretName: tls-secret
   rules:
   - host: "{{ .Values.kargo.stage }}.{{ .Values.ingress.custom_prefix }}.{{ .Values.ingress.root_domain }}"
     http:
