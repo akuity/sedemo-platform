@@ -24,10 +24,10 @@ spec:
   - name: 'app-team'
     description: 'Role for application team members'
     policies:
-    - 'p, role:app-team, applications, *, {{ .Values.project.name }}/*, allow'
-    - 'p, role:app-team, projects, get, {{ .Values.project.name }}, allow'
-    - 'p, role:app-team, clusters, get, *, allow'
-    - 'p, role:app-team, repositories, get, *, allow'
-    - 'p, role:app-team, logs, get, {{ .Values.project.name }}/*, allow'
+    - 'p, proj:{{ .Values.project.name }}:app-team, applications, *, {{ .Values.project.name }}/*, allow'
+    - 'p, proj:{{ .Values.project.name }}:app-team, projects, get, {{ .Values.project.name }}, allow'
+    - 'p, proj:{{ .Values.project.name }}:app-team, clusters, get, *, allow'
+    - 'p, proj:{{ .Values.project.name }}:app-team, repositories, get, *, allow'
+    - 'p, proj:{{ .Values.project.name }}:app-team, logs, get, {{ .Values.project.name }}/*, allow'
     groups:
     - '{{ .Values.project.group }}'
