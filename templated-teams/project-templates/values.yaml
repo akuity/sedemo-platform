@@ -9,7 +9,7 @@ application:
 
 project:
   name: templated-name
-  group: akuityio:demo
+  group: sedemo-team-open
   path: templated/name
 
 
@@ -25,7 +25,7 @@ git:
 # Some level of control exposed to app teams on how they want apps exposed to internet
 ingress:
   root_domain: akpdemoapps.link
-  custom_prefix: eddie
+  custom_prefix: example
 
 
 rollouts:
