@@ -15,7 +15,7 @@ spec:
         app: team-emily-app
     spec:
       containers:
-      - image: ghcr.io/emilyxinyi/guestbook:0.1.32
+      - image: ghcr.io/emilyxinyi/guestbook:0.1.31
         name: guestbook
         ports:
         - containerPort: 80
