@@ -17,7 +17,7 @@ spec:
   - git:
       repoURL: {{ .Values.repoUrl }}
       includePaths:
-      - {{ .Values.projectPath }}
+      - {{ .Values.project.path }}
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
