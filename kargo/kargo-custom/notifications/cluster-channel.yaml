@@ -1,0 +1,15 @@
+apiVersion: ee.kargo.akuity.io/v1alpha1
+kind: ClusterMessageChannel
+metadata:
+  name: devops-team-slack
+spec:
+  # A reference to a Secret containing the Slack token. This is required for Slack. The Secret must
+  # contain the following key:
+  # - `apiKey`: The Slack token with permissions to post messages to the desired channel
+  secretRef:
+    # The name of the Secret in the cluster secrets namespace
+    name: slack-token
+  # Configuration specific to Slack
+  slack:
+    # kargo-notifications in Demo org
+    channelID: C0A8YDED6BU
