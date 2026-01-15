@@ -38,7 +38,7 @@ spec:
           valueFiles:
           - '$appValues/platform/app-values.yaml'
           valuesObject:
-            repoUrl: https://github.com/{{.organization}}/{{.repository}}.git
+            repoUrl: https://github.com/{{.organization}}/{{.repository}}
             project:
               path: '.'
               name: 'templated-{{.repository}}'

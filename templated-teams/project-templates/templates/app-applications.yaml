@@ -14,7 +14,7 @@ spec:
   project: '{{$.Values.project.name}}'
   sources:
   #pull custom values from team managed monorepo folder
-  - repoURL: https://github.com/akuity/sedemo-monorepo.git
+  - repoURL: {{.Values.repoUrl}}
     targetRevision: main
     ref: appValues 
   # apply to platform team managed kargo templates
@@ -23,9 +23,9 @@ spec:
     path: templated-teams/apps-chart/
     helm:
       valueFiles:
-      - '$appValues/templated/{{ $.Values.application.name }}/platform/app-values.yaml'
+      - '$appValues/{{$.Values.project.path}}/platform/app-values.yaml'
       valuesObject:
-        repoUrl: https://github.com/akuity/sedemo-monorepo.git
+        repoUrl: {{.Values.repoUrl}}
         project:
           path: '{{$.Values.project.path }}'
           name: '{{$.Values.project.name}}'
