@@ -1,0 +1,53 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: templated-repo-projects
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - scmProvider:
+        cloneProtocol: ssh
+        github:
+          organization: akuity
+        filters:
+        # Include any repository starting with "myapp" AND including a Kustomize config AND labeled with "deploy-ok" ...
+        - repositoryMatch: ^sedemo-
+          pathsExist: [platform/app-values.yaml]
+  template:
+    metadata:
+      name: '{{.repository}}-appsets'
+      namespace: argocd
+    spec:
+      #project: '{{.repository}}'
+      project: templated-apps
+      sources:
+      #pull custom values from team managed monorepo folder
+      - repoURL: https://github.com/{{.organization}}/{{.repository}}.git
+        targetRevision: main
+        ref: appValues 
+      # create underlying appsets for Kargo and Argo in the Argo Control plane
+      # they will in turn create kargo and argo assets.
+      - targetRevision: HEAD
+        repoURL: https://github.com/akuity/sedemo-platform
+        path: templated-teams/project-templates/
+        helm:
+          valueFiles:
+          - '$appValues/platform/app-values.yaml'
+          valuesObject:
+            repoUrl: https://github.com/{{.organization}}/{{.repository}}.git
+            project:
+              path: '.'
+              name: 'templated-{{.repository}}'
+            application:
+              name: '{{.repository}}'
+      destination:
+        name: in-cluster
+      syncPolicy:
+        automated:
+          prune: true
+          enabled: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
