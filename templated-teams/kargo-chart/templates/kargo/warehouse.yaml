@@ -12,7 +12,7 @@ spec:
       {{ if eq .Values.image.selectionStrategy "Digest" }}
       constraint: {{ .Values.image.tag }} 
       {{ else }}
-      allowTags: {{.Values.tagRegex}}
+      allowTags: {{.Values.image.tagRegex}}
       {{ end }}
   - git:
       repoURL: {{ .Values.repoUrl }}
