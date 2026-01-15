@@ -14,7 +14,7 @@ spec:
   project: '{{$.Values.project.name}}'
   sources:
   #pull custom values from team managed monorepo folder
-  - repoURL: {{.Values.repoUrl}}
+  - repoURL: '{{$.Values.repoUrl}}'
     targetRevision: main
     ref: appValues 
   # apply to platform team managed kargo templates
@@ -25,7 +25,7 @@ spec:
       valueFiles:
       - '$appValues/{{$.Values.project.path}}/platform/app-values.yaml'
       valuesObject:
-        repoUrl: {{.Values.repoUrl}}
+        repoUrl: '{{$.Values.repoUrl}}'
         project:
           path: '{{$.Values.project.path }}'
           name: '{{$.Values.project.name}}'
