@@ -75,6 +75,28 @@ spec:
         createTargetBranch: true
         sourceBranch: ${{ task.outputs['push'].branch }}
         targetBranch: ${{ vars.targetBranch }}
+    - uses: send-message
+      if: ${{ vars.asPR == "true" }}
+      config:
+        channel:
+          kind: ClusterMessageChannel
+          name: kargo-notifications
+        message: |
+          blocks:
+            - type: section
+              text:
+                type: mrkdwn
+                text: "*Kargo Approval Needed* :eyes:"
+            - type: section
+              fields:
+                - type: mrkdwn
+                  text: "*Stage:*\n${{ ctx.stage }}"
+                - type: mrkdwn
+                  text: "*Version:*\n${{ imageFrom(vars.imageRepo).Tag }}"
+                - type: mrkdwn
+                  text: "*Pull Request:*\n<${{ task.outputs['open-pr'].pr.id }}|Link>"
+          icon_emoji: ":rocket:"
+        encodingType: yaml
     - uses: git-wait-for-pr
       as: wait-for-pr
       if: ${{ vars.asPR == "true" }}
