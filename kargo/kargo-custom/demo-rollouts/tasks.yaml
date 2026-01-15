@@ -94,7 +94,7 @@ spec:
                 - type: mrkdwn
                   text: "*Version:*\n${{ imageFrom(vars.imageRepo).Tag }}"
                 - type: mrkdwn
-                  text: "*Pull Request:*\n[${{ task.outputs['open-pr'].pr.id }}](${{ task.outputs['open-pr'].pr.url }})"
+                  text: "*Pull Request:*\n<${{ task.outputs['open-pr'].pr.url }}|${{ task.outputs['open-pr'].pr.id }}>"
           icon_emoji: ":rocket:"
           title: "Kargo Promotion Approval Needed"
         encodingType: yaml
