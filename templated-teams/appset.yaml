@@ -39,6 +39,7 @@ spec:
               name: 'templated-{{.path.basename}}'
             application:
               name: '{{.path.basename}}'
+            isStandalone: false
       destination:
         name: in-cluster
       syncPolicy:
