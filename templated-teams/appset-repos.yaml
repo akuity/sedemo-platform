@@ -8,7 +8,6 @@ spec:
   goTemplateOptions: ["missingkey=error"]
   generators:
     - scmProvider:
-        cloneProtocol: ssh
         github:
           organization: akuity
           tokenRef:
