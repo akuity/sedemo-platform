@@ -15,6 +15,7 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: 218-yellow
   selectionStrategy: NewestBuild
+  tagRegex: '^\d*-[a-z]*$'
 
 kargo:
   stage: dev
