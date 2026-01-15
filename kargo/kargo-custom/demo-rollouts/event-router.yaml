@@ -7,6 +7,7 @@ spec:
   types:
     - PromotionFailed
     - PromotionErrored
+    - PromotionSucceeded
   channels:
     - name: kargo-notifications
       kind: ClusterMessageChannel
