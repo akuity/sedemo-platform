@@ -94,8 +94,9 @@ spec:
                 - type: mrkdwn
                   text: "*Version:*\n${{ imageFrom(vars.imageRepo).Tag }}"
                 - type: mrkdwn
-                  text: "*Pull Request:*\n<${{ task.outputs['open-pr'].pr.id }}|Link>"
+                  text: "*Pull Request:*\n[${{ task.outputs['open-pr'].pr.id }}](${{ task.outputs['open-pr'].pr.url }})">"
           icon_emoji: ":rocket:"
+          title: "Kargo Promotion Approval Needed"
         encodingType: yaml
     - uses: git-wait-for-pr
       as: wait-for-pr
