@@ -11,6 +11,9 @@ spec:
         cloneProtocol: ssh
         github:
           organization: akuity
+          tokenRef:
+            name: github-token
+            key: token
         filters:
         - repositoryMatch: ^sedemo-app-
           pathsExist: [platform/app-values.yaml]
