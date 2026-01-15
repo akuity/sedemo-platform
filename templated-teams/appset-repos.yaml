@@ -12,8 +12,7 @@ spec:
         github:
           organization: akuity
         filters:
-        # Include any repository starting with "myapp" AND including a Kustomize config AND labeled with "deploy-ok" ...
-        - repositoryMatch: ^sedemo-
+        - repositoryMatch: ^sedemo-app-
           pathsExist: [platform/app-values.yaml]
   template:
     metadata:
