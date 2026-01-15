@@ -90,11 +90,11 @@ spec:
             - type: section
               fields:
                 - type: mrkdwn
-                  text: "*Stage:*\n${{ ctx.stage }}"
+                  text: "*Stage:* ${{ ctx.stage }}"
                 - type: mrkdwn
-                  text: "*Version:*\n${{ imageFrom(vars.imageRepo).Tag }}"
+                  text: "*Version:* ${{ imageFrom(vars.imageRepo).Tag }}"
                 - type: mrkdwn
-                  text: "*Pull Request:*\n<${{ task.outputs['open-pr'].pr.url }}|${{ task.outputs['open-pr'].pr.id }}>"
+                  text: "*Pull Request:* <${{ task.outputs['open-pr'].pr.url }}|#${{ task.outputs['open-pr'].pr.id }}>"
           icon_emoji: ":rocket:"
           title: "Kargo Promotion Approval Needed"
         encodingType: yaml
