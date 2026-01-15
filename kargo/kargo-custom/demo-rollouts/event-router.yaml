@@ -1,0 +1,12 @@
+kind: EventRouter
+apiVersion: ee.kargo.akuity.io/v1alpha1
+metadata:
+  name: promotion-status
+  namespace: demo-rollouts
+spec:
+  types:
+    - PromotionFailed
+    - PromotionErrored
+  channels:
+    - name: kargo-notifications
+      kind: ClusterMessageChannel
