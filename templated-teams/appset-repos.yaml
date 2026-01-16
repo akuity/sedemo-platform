@@ -11,7 +11,7 @@ spec:
         github:
           organization: akuity
           tokenRef:
-            secretName: github-token-generator
+            secretName: application-set-secret
             key: token
         filters:
         - repositoryMatch: ^sedemo-app-
