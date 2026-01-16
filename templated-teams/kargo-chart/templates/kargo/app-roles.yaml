@@ -25,6 +25,13 @@ rules:
 - apiGroups:
   - kargo.akuity.io
   resources:
+  - projects
+  verbs:
+  - list
+  - get
+- apiGroups:
+  - kargo.akuity.io
+  resources:
   - stages
   verbs:
   - promote
