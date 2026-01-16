@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Values.application.name }}
   annotations:
     kargo.akuity.io/description: Promote to Staging only
-    rbac.kargo.akuity.io/claims: '{"groups":["testers"]}'
+    rbac.kargo.akuity.io/claims: '{"groups":["sedemo-qa"]}'
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role

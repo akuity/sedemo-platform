@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Values.application.name }}
   annotations:
     kargo.akuity.io/description: Permissions to promote into dev.
-    rbac.kargo.akuity.io/claims: '{"groups":["developer"]}'
+    rbac.kargo.akuity.io/claims: '{"groups":["{{.Values.project.group}}"]}'
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
