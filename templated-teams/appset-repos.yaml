@@ -20,6 +20,8 @@ spec:
     metadata:
       name: '{{.repository}}-appsets'
       namespace: argocd
+      finalizers:
+      - resources-finalizer.argocd.argoproj.io
     spec:
       #project: '{{.repository}}'
       project: templated-apps

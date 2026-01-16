@@ -16,6 +16,8 @@ spec:
     metadata:
       name: '{{.path.basename}}-appsets'
       namespace: argocd
+      finalizers:
+      - resources-finalizer.argocd.argoproj.io
     spec:
       #project: '{{.path.basename}}'
       project: templated-apps
