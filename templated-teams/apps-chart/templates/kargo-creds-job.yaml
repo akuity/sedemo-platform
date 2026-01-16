@@ -2,8 +2,6 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: sync-kargo-creds
-  annotations:
-    argocd.argoproj.io/sync-wave: "1"
     #argocd.argoproj.io/hook: PostSync. #app depends on branch created by kargo workflow, and won't be healthy until then, post sync wont work
     # instead we set a sync-wave on the app of apps to ensure it comes after the kargo project
 spec:
