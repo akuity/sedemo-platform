@@ -49,20 +49,16 @@ spec:
         config:
           path: ./out
       {{if .Values.services.s3.enabled }}
-      - uses: hcl-update
-        config:
-          path: ./chart/terraform/env.auto.tfvars
-          updates:
-          - key: app_name
-            value: {{ .Values.application.name }}
-          - key: stage
-            value: dev
       - uses: tf-apply
         config:
           dir: ./chart/terraform
           env:
           - name: AWS_REGION
             value: us-west-2
+          - key: TF_VAR_app_name
+            value: {{ .Values.application.name }}
+          - key: TF_VAR_stage
+            value: dev
       {{ end }}
       - uses: helm-template
         config:
