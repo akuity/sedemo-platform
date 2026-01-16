@@ -31,3 +31,7 @@ rollouts:
 
 environments:
   staging: true
+
+services:
+  s3: 
+    enabled: false

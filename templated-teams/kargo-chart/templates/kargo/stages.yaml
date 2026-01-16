@@ -6,6 +6,10 @@ metadata:
   annotations:
     kargo.akuity.io/color: red
 spec:
+{{if .Values.services.s3.enabled }}
+  # if using s3 service, we need access to IRSA role with permission to AWS.
+  shard: sedemo-primary
+{{ end }}
   requestedFreight:
   - origin:
       kind: Warehouse
@@ -44,6 +48,22 @@ spec:
       - uses: git-clear
         config:
           path: ./out
+      {{if .Values.services.s3.enabled }}
+      - uses: hcl-update
+        config:
+          path: ./chart/terraform/env.auto.tfvars
+          updates:
+          - key: app_name
+            value: {{ .Values.application.name }}
+          - key: stage
+            value: dev
+      - uses: tf-apply
+        config:
+          dir: ./chart/terraform
+          env:
+          - name: AWS_REGION
+            value: us-west-2
+      {{ end }}
       - uses: helm-template
         config:
           releaseName: deploy
@@ -61,6 +81,10 @@ spec:
               value: akpdemoapps.link
             - key: projectName
               value: '{{ .Values.application.name }}'
+            {{if .Values.services.s3.enabled }}
+            - key: services.s3.bucketName
+              value: "{{ .Values.application.name }}-dev-bucket"
+            {{ end  }}
       - uses: git-commit
         as: commit
         config:
