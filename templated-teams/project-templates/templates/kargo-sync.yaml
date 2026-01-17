@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: '{{.Values.application.name}}-kargo-sync'
-  namespace: kargo-sync-jobs
+  namespace: argocd
   finalizers:
   - resources-finalizer.argocd.argoproj.io
   annotations:
@@ -22,6 +22,7 @@ spec:
           name: '{{.Values.application.name}}'
   destination:
     name: sedemo-primary
+    namespace: kargo-sync-jobs
   syncPolicy:
     automated:
       prune: true
