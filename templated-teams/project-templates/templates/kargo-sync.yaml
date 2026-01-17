@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: '{{.Values.application.name}}-kargo-sync'
-  namespace: default
+  namespace: kargo-sync-jobs
   finalizers:
   - resources-finalizer.argocd.argoproj.io
   annotations:
