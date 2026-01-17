@@ -10,7 +10,7 @@ metadata:
 spec:
   project: '{{.Values.project.name}}'
   source:
-    chart: kargo-creds-template
+    chart: .
     targetRevision: HEAD
     repoURL: https://github.com/akuity/sedemo-platform
     path: templated-teams/kargo-cred-sync/
