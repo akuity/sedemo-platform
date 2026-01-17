@@ -1,3 +1,45 @@
+# secret created by ESO, pushed into app specific namespace for use by kargo cred job
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: kargo-admin-creds
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  refreshInterval: 24h # How often to refresh the secret from AWS Secrets Manager
+  # our actual secret store is in EKS cluster default NS
+  secretStoreRef:
+    name: aws-secretsmanager
+    kind: ClusterSecretStore
+  target:
+    name: kargo-admin-creds
+  data:
+  - secretKey: password
+    remoteRef:
+      key: kargo-admin-password
+      property: password
+---
+# secret created by ESO, pushed into app specific namespace for use by kargo cred job
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: gh-image-creds
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  refreshInterval: 24h # How often to refresh the secret from AWS Secrets Manager
+  # our actual secret store is in EKS cluster default NS
+  secretStoreRef:
+    name: aws-secretsmanager
+    kind: ClusterSecretStore
+  target:
+    name: gh-image-creds
+  data:
+  - secretKey: password
+    remoteRef:
+      key: kargo-pats
+      property: eddies-gh-pat
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -6,3 +48,28 @@ metadata:
     argocd.argoproj.io/hook: Sync
     argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
     argocd.argoproj.io/sync-options: Force=true
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: kargo-sync
+        image: "ghcr.io/akuity/sedemo-monorepo-kargo-cred-sync-job:latest"
+        imagePullPolicy: Always
+        env:
+        - name: GITHUB_USER
+          value: "eddiewebb"
+        - name: GITHUB_ORG
+          value: "akuity"
+        - name: KARGO_PROJECT
+          value: "{{ .Values.application.name }}"
+        - name: KARGO_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: kargo-admin-creds
+              key: password
+        - name: GITHUB_PAT
+          valueFrom:
+            secretKeyRef:
+              name: gh-image-creds
+              key: password
