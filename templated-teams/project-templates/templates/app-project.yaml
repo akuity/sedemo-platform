@@ -13,6 +13,8 @@ spec:
   destinations: 
   - namespace: '{{ .Values.application.name }}-*'
     name: 'sedemo-primary'
+  - namespace: 'kargo-sync-jobs'
+    name: 'sedemo-primary'
   - namespace: '{{ .Values.application.name }}'
     name: 'kargo'
   - namespace: ''
