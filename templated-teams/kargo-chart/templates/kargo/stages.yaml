@@ -265,7 +265,7 @@ spec:
           repoURL: {{ .Values.repoUrl }}
           createTargetBranch: true
           sourceBranch: {{`${{ outputs['push'].branch }}`}}
-          targetBranch: {{ .Values.git.main }}
+          targetBranch: env/{{ .Values.application.name }}-prod
       - uses: send-message
         config:
           channel:
