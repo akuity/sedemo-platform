@@ -10,14 +10,11 @@ metadata:
 spec:
   project: '{{.Values.project.name}}'
   source:
-    targetRevision: HEAD
+    targetRevision: main
     repoURL: https://github.com/akuity/sedemo-platform
     path: templated-teams/kargo-cred-sync/
     helm:
       valuesObject:
-        project:
-          path: '{{.Values.project.path }}'
-          name: '{{.Values.project.name}}'
         application:
           name: '{{.Values.application.name}}'
   destination:
