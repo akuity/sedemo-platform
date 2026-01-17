@@ -282,9 +282,9 @@ spec:
                   - type: mrkdwn
                     text: "*Stage:* {{`${{ ctx.stage }}`}}"
                   - type: mrkdwn
-                    text: "*Version:* {{`${{ imageFrom(vars.imageRepo).Tag }}`}}"
+                    text: "*Version:* {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}"
                   - type: mrkdwn
-                    text: "*Pull Request:* <{{`${{ outputs['open-pr'].pr.url }}`}}|#{{`${{ task.outputs['open-pr'].pr.id }}`}}>
+                    text: "*Pull Request:* <{{`${{ outputs['open-pr'].pr.url }}`}}|#{{`${{ outputs['open-pr'].pr.id }}`}}>
             icon_emoji: ":rocket:"
             title: "Kargo Promotion Approval Needed"
           encodingType: yaml
