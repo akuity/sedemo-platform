@@ -254,7 +254,6 @@ spec:
         config:
           path: ./out
           message: "Promote {{ printf "%s ${{ imageFrom('%s').Tag }}" .Values.application.name .Values.image.repository }} to prod [skip ci]"
-      
       - uses: git-push
         as: push
         config:
@@ -263,10 +262,10 @@ spec:
       - uses: git-open-pr
         as: open-pr
         config:
-          repoURL: {{`${{ vars.gitRepo }}`}}
+          repoURL: {{ .Values.repoUrl }}
           createTargetBranch: true
           sourceBranch: {{`${{ outputs['push'].branch }}`}}
-          targetBranch: {{`${{ vars.targetBranch }}`}}
+          targetBranch: {{ .Values.git.main }}
       - uses: send-message
         config:
           channel:
@@ -292,7 +291,7 @@ spec:
       - uses: git-wait-for-pr
         as: wait-for-pr
         config:
-          repoURL: {{`${{ vars.gitRepo }}`}}
+          repoURL: {{ .Values.repoUrl }}
           prNumber: {{`${{ outputs['open-pr'].pr.id }}`}}
       - uses: argocd-update
         config:
