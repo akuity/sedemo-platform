@@ -9,7 +9,6 @@ metadata:
   - resources-finalizer.argocd.argoproj.io
   annotations:
     kargo.akuity.io/authorized-stage: '{{$.Values.application.name}}:{{$key}}'
-    argocd.argoproj.io/sync-wave: "1" #create argo apps after kargo project created
 spec:
   project: '{{$.Values.project.name}}'
   source:
