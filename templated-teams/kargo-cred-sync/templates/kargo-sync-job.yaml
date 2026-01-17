@@ -27,3 +27,8 @@ spec:
             secretKeyRef:
               name: gh-image-creds
               key: password
+        - name: SLACK_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: kargo-admin-creds
+              key: slack-token
