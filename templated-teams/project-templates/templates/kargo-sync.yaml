@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: '{{.Values.application.name}}-kargo-sync'
+  namespace: default
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: '{{.Values.project.name}}'
+  source:
+    targetRevision: HEAD
+    repoURL: https://github.com/akuity/sedemo-platform
+    path: templated-teams/kargo-cred-sync/
+    helm:
+      valuesObject:
+        project:
+          path: '{{.Values.project.path }}'
+          name: '{{.Values.project.name}}'
+        application:
+          name: '{{.Values.application.name}}'
+  destination:
+    name: sedemo-primary
+  syncPolicy:
+    automated:
+      prune: true
+      enabled: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
