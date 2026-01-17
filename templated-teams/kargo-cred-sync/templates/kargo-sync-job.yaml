@@ -2,10 +2,6 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: kargo-sync-job-{{ .Values.application.name }}
-  annotations:
-    argocd.argoproj.io/hook: Sync
-    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
-    argocd.argoproj.io/sync-options: Force=true
 spec:
   template:
     spec:
