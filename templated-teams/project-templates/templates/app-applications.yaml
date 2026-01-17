@@ -12,27 +12,11 @@ metadata:
     argocd.argoproj.io/sync-wave: "1" #create argo apps after kargo project created
 spec:
   project: '{{$.Values.project.name}}'
-  sources:
-  #pull custom values from team managed monorepo folder
-  - repoURL: '{{$.Values.repoUrl}}'
-    targetRevision: main
-    ref: appValues 
-  # apply to platform team managed kargo templates
-  - targetRevision: HEAD
-    repoURL: https://github.com/akuity/sedemo-platform
-    path: templated-teams/apps-chart/
-    helm:
-      valueFiles:
-      - '$appValues/{{$.Values.project.path}}/platform/app-values.yaml'
-      valuesObject:
-        repoUrl: '{{$.Values.repoUrl}}'
-        project:
-          path: '{{$.Values.project.path }}'
-          name: '{{$.Values.project.name}}'
-        application:
-          name: '{{ $.Values.application.name }}'
-        kargo:
-          stage: '{{ $key }}'
+  source:
+  #pull custom values from team managed monorepo folder (rendered by Kargo)
+    repoURL: '{{$.Values.repoUrl}}'
+    targetRevision: env/{{ $.Values.application.name }}-{{$key}}
+    path: .
   destination:
     name: sedemo-primary
     namespace: {{ $.Values.application.name }}-{{$key}}
