@@ -258,7 +258,7 @@ spec:
       - uses: git-push
         as: push
         config:
-          path: {{`${{ vars.path_out }}`}}
+          path: ./out
           generateTargetBranch: true
       - uses: git-open-pr
         as: open-pr
