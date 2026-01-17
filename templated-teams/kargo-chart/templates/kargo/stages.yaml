@@ -254,11 +254,46 @@ spec:
         config:
           path: ./out
           message: "Promote {{ printf "%s ${{ imageFrom('%s').Tag }}" .Values.application.name .Values.image.repository }} to prod [skip ci]"
+      
       - uses: git-push
         as: push
         config:
-          path: ./out
-          targetBranch: env/{{ .Values.application.name }}-prod
+          path: {{`${{ vars.path_out }}`}}
+          generateTargetBranch: true
+      - uses: git-open-pr
+        as: open-pr
+        config:
+          repoURL: {{`${{ vars.gitRepo }}`}}
+          createTargetBranch: true
+          sourceBranch: {{`${{ outputs['push'].branch }}`}}
+          targetBranch: {{`${{ vars.targetBranch }}`}}
+      - uses: send-message
+        config:
+          channel:
+            kind: ClusterMessageChannel
+            name: kargo-notifications
+          message: |
+            blocks:
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: "*Kargo Approval Needed* :eyes:"
+              - type: section
+                fields:
+                  - type: mrkdwn
+                    text: "*Stage:* {{`${{ ctx.stage }}`}}"
+                  - type: mrkdwn
+                    text: "*Version:* {{`${{ imageFrom(vars.imageRepo).Tag }}`}}"
+                  - type: mrkdwn
+                    text: "*Pull Request:* <{{`${{ outputs['open-pr'].pr.url }}`}}|#{{`${{ task.outputs['open-pr'].pr.id }}`}}>
+            icon_emoji: ":rocket:"
+            title: "Kargo Promotion Approval Needed"
+          encodingType: yaml
+      - uses: git-wait-for-pr
+        as: wait-for-pr
+        config:
+          repoURL: {{`${{ vars.gitRepo }}`}}
+          prNumber: {{`${{ outputs['open-pr'].pr.id }}`}}
       - uses: argocd-update
         config:
           apps:
