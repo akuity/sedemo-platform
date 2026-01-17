@@ -75,7 +75,9 @@ spec:
               value: dev
             - key: ingress.root_domain
               value: akpdemoapps.link
-            - key: projectName
+            - key: project.name
+              value: '{{ .Values.application.name }}'
+            - key: application.name
               value: '{{ .Values.application.name }}'
             {{if .Values.services.s3.enabled }}
             - key: services.s3.bucketName
@@ -156,7 +158,9 @@ spec:
               value: staging
             - key: ingress.root_domain
               value: akpdemoapps.link
-            - key: projectName
+            - key: project.name
+              value: '{{ .Values.application.name }}'
+            - key: application.name
               value: '{{ .Values.application.name }}'
       - uses: git-commit
         as: commit
@@ -241,7 +245,9 @@ spec:
               value: prod
             - key: ingress.root_domain
               value: akpdemoapps.link
-            - key: projectName
+            - key: project.name
+              value: '{{ .Values.application.name }}'
+            - key: application.name
               value: '{{ .Values.application.name }}'
       - uses: git-commit
         as: commit
