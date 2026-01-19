@@ -2,19 +2,23 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: dev
-  namespace: {{ .Values.projectName }}
+  namespace: {{ .Values.application.name }}
   annotations:
     kargo.akuity.io/color: red
 spec:
+{{if .Values.services.s3.enabled }}
+  # if using s3 service, we need access to IRSA role with permission to AWS.
+  shard: sedemo-primary
+{{ end }}
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: {{ .Values.projectName }}
+      name: {{ .Values.application.name }}
     sources:
       direct: true
   - origin:
       kind: Warehouse
-      name: '{{ .Values.projectName }}-chart'
+      name: '{{ .Values.application.name }}-chart'
     sources:
       direct: true
   # verification:
@@ -38,29 +42,47 @@ spec:
           checkout:
           - branch: {{ .Values.git.main }}
             path: ./src
-          - branch: env/{{ .Values.projectName }}-dev
+          - branch: env/{{ .Values.application.name }}-dev
             create: true
             path: ./out
       - uses: git-clear
         config:
           path: ./out
+      {{if .Values.services.s3.enabled }}
+      - uses: tf-apply
+        config:
+          dir: ./chart/terraform
+          env:
+          - name: AWS_REGION
+            value: us-west-2
+          - key: TF_VAR_app_name
+            value: {{ .Values.application.name }}
+          - key: TF_VAR_stage
+            value: dev
+      {{ end }}
       - uses: helm-template
         config:
           releaseName: deploy
           path: ./chart/{{ .Values.chartPath}}
           valuesFiles:
-          - ./src/templated/{{ .Values.projectName }}/platform/app-values.yaml
+          - ./src/{{.Values.project.path}}/platform/app-values.yaml
           outPath: ./out/manifests.yaml
-          namespace: '{{ .Values.projectName }}-dev'
+          namespace: '{{ .Values.application.name }}-dev'
           setValues:
             - key: image.tag
-              value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}"
+              value: "\"{{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}\""
             - key: kargo.stage
               value: dev
             - key: ingress.root_domain
               value: akpdemoapps.link
-            - key: projectName
-              value: '{{ .Values.projectName }}'
+            - key: project.name
+              value: '{{ .Values.application.name }}'
+            - key: application.name
+              value: '{{ .Values.application.name }}'
+            {{if .Values.services.s3.enabled }}
+            - key: services.s3.bucketName
+              value: "{{ .Values.application.name }}-dev-bucket"
+            {{ end  }}
       - uses: git-commit
         as: commit
         config:
@@ -69,12 +91,12 @@ spec:
       - uses: git-push
         config:
           path: ./out
-          targetBranch: env/{{ .Values.projectName }}-dev
+          targetBranch: env/{{ .Values.application.name }}-dev
       - uses: argocd-update
         continueOnError: true
         config:
           apps:
-          - name: {{ .Values.projectName }}-dev
+          - name: {{ .Values.application.name }}-dev
             namespace: argocd
 {{ if .Values.environments.staging }}
 ---
@@ -82,20 +104,20 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: staging
-  namespace: {{ .Values.projectName }}
+  namespace: {{ .Values.application.name }}
   annotations:
     kargo.akuity.io/color: amber
 spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: {{ .Values.projectName }}
+      name: {{ .Values.application.name }}
     sources:
       stages:
       - dev
   - origin:
       kind: Warehouse
-      name: '{{ .Values.projectName }}-chart'
+      name: '{{ .Values.application.name }}-chart'
     sources:
       stages:
       - dev
@@ -115,7 +137,7 @@ spec:
           checkout:
           - branch: {{ .Values.git.main }}
             path: ./src
-          - branch: env/{{ .Values.projectName }}-staging
+          - branch: env/{{ .Values.application.name }}-staging
             create: true
             path: ./out
       - uses: git-clear
@@ -126,18 +148,20 @@ spec:
           releaseName: deploy
           path: ./chart/{{ .Values.chartPath}}
           valuesFiles:
-          - ./src/templated/{{ .Values.projectName }}/platform/app-values.yaml
+          - ./src/{{.Values.project.path}}/platform/app-values.yaml
           outPath: ./out/manifests.yaml
-          namespace: '{{ .Values.projectName }}-staging'
+          namespace: '{{ .Values.application.name }}-staging'
           setValues:
             - key: image.tag
-              value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}"
+              value: "\"{{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}\""
             - key: kargo.stage
               value: staging
             - key: ingress.root_domain
               value: akpdemoapps.link
-            - key: projectName
-              value: '{{ .Values.projectName }}'
+            - key: project.name
+              value: '{{ .Values.application.name }}'
+            - key: application.name
+              value: '{{ .Values.application.name }}'
       - uses: git-commit
         as: commit
         config:
@@ -146,12 +170,12 @@ spec:
       - uses: git-push
         config:
           path: ./out
-          targetBranch: env/{{ .Values.projectName }}-staging
+          targetBranch: env/{{ .Values.application.name }}-staging
       - uses: argocd-update
         continueOnError: true
         config:
           apps:
-          - name: '{{ .Values.projectName }}-staging'
+          - name: '{{ .Values.application.name }}-staging'
             namespace: argocd
 {{ end }}
 ---
@@ -159,14 +183,14 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: prod
-  namespace: {{ .Values.projectName }}
+  namespace: {{ .Values.application.name }}
   annotations:
     kargo.akuity.io/color: violet
 spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: {{ .Values.projectName }}
+      name: {{ .Values.application.name }}
     sources:
       stages:
       {{- if .Values.environments.staging }}
@@ -176,7 +200,7 @@ spec:
       {{- end }}
   - origin:
       kind: Warehouse
-      name: '{{ .Values.projectName }}-chart'
+      name: '{{ .Values.application.name }}-chart'
     sources:
       stages:
       {{- if .Values.environments.staging }}
@@ -200,7 +224,7 @@ spec:
           checkout:
           - branch: {{ .Values.git.main }}
             path: ./src
-          - branch: env/{{ .Values.projectName }}-prod
+          - branch: env/{{ .Values.application.name }}-prod
             create: true
             path: ./out
       - uses: git-clear
@@ -211,23 +235,25 @@ spec:
           releaseName: deploy
           path: ./chart/{{ .Values.chartPath}}
           valuesFiles:
-          - ./src/templated/{{ .Values.projectName }}/platform/app-values.yaml
+          - ./src/{{.Values.project.path}}/platform/app-values.yaml
           outPath: ./out/manifests.yaml
-          namespace: '{{ .Values.projectName }}-prod'
+          namespace: '{{ .Values.application.name }}-prod'
           setValues:
             - key: image.tag
-              value: "{{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}"
+              value: "\"{{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}\""
             - key: kargo.stage
               value: prod
             - key: ingress.root_domain
               value: akpdemoapps.link
-            - key: projectName
-              value: '{{ .Values.projectName }}'
+            - key: project.name
+              value: '{{ .Values.application.name }}'
+            - key: application.name
+              value: '{{ .Values.application.name }}'
       - uses: git-commit
         as: commit
         config:
           path: ./out
-          message: "Promote {{ printf "%s ${{ imageFrom('%s').Tag }}" .Values.projectName .Values.image.repository }} to prod [skip ci]"
+          message: "Promote {{ printf "%s ${{ imageFrom('%s').Tag }}" .Values.application.name .Values.image.repository }} to prod [skip ci]"
       - uses: git-push
         as: push
         config:
@@ -239,7 +265,28 @@ spec:
           repoURL: {{ .Values.repoUrl }}
           createTargetBranch: true
           sourceBranch: {{`${{ outputs['push'].branch }}`}}
-          targetBranch: env/{{ .Values.projectName }}-prod
+          targetBranch: env/{{ .Values.application.name }}-prod
+      - uses: send-message
+        config:
+          channel:
+            kind: ClusterMessageChannel
+            name: kargo-notifications
+          message: |
+            blocks:
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: "*Kargo Approval Needed* :eyes:"
+              - type: section
+                fields:
+                  - type: mrkdwn
+                    text: "*Stage:* {{`${{ ctx.stage }}`}}"
+                  - type: mrkdwn
+                    text: "*Version:* {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}"
+                  - type: mrkdwn
+                    text: "*Pull Request:* <{{`${{ outputs['open-pr'].pr.url }}`}}|#{{`${{ outputs['open-pr'].pr.id }}`}}>"
+            icon_emoji: ":rocket:"
+          encodingType: yaml
       - uses: git-wait-for-pr
         as: wait-for-pr
         config:
@@ -248,5 +295,5 @@ spec:
       - uses: argocd-update
         config:
           apps:
-          - name: '{{ .Values.projectName }}-prod'
+          - name: '{{ .Values.application.name }}-prod'
             namespace: argocd

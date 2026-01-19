@@ -1,20 +1,35 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: '{{ .Values.projectName }}'
+  name: '{{ .Values.project.name }}'
   namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
   annotations:
     argocd.argoproj.io/sync-wave: "-1" #create project before apps
 spec:
   sourceRepos:
   - '*'
   destinations: 
-  - namespace: '{{ .Values.projectName }}-*'
+  - namespace: '{{ .Values.application.name }}-*'
     name: 'sedemo-primary'
-  - namespace: '{{ .Values.projectName }}'
+  - namespace: 'kargo-sync-jobs'
+    name: 'sedemo-primary'
+  - namespace: '{{ .Values.application.name }}'
     name: 'kargo'
   - namespace: ''
     name: 'kargo'
   clusterResourceWhitelist:
   - group: '*'
     kind: '*'
+  roles:
+  - name: 'app-team'
+    description: 'Role for application team members'
+    policies:
+    - 'p, proj:{{ .Values.project.name }}:app-team, applications, *, {{ .Values.project.name }}/*, allow'
+    - 'p, proj:{{ .Values.project.name }}:app-team, projects, get, {{ .Values.project.name }}, allow'
+    - 'p, proj:{{ .Values.project.name }}:app-team, clusters, get, *, allow'
+    - 'p, proj:{{ .Values.project.name }}:app-team, repositories, get, *, allow'
+    - 'p, proj:{{ .Values.project.name }}:app-team, logs, get, {{ .Values.project.name }}/*, allow'
+    groups:
+    - '{{ .Values.project.group }}'

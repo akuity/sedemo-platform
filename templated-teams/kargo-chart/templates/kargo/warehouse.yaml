@@ -1,25 +1,29 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
-  name: {{ .Values.projectName }}
-  namespace: {{ .Values.projectName }}
+  name: {{ .Values.application.name }}
+  namespace: {{ .Values.application.name }}
 spec:
   subscriptions:
   - image:
       repoURL: {{ .Values.image.repository }}
       discoveryLimit: 5
-      imageSelectionStrategy: NewestBuild
-      allowTags: ^\d*-[a-z]*$
+      imageSelectionStrategy: {{ .Values.image.selectionStrategy }}
+      {{ if eq .Values.image.selectionStrategy "Digest" }}
+      constraint: {{ .Values.image.tag }} 
+      {{ else }}
+      allowTags: {{.Values.image.tagRegex}}
+      {{ end }}
   - git:
       repoURL: {{ .Values.repoUrl }}
       includePaths:
-      - {{ .Values.projectPath }}
+      - {{ .Values.project.path }}
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
-  name: '{{ .Values.projectName }}-chart'
-  namespace: {{ .Values.projectName }}
+  name: '{{ .Values.application.name }}-chart'
+  namespace: {{ .Values.application.name }}
 spec:
   subscriptions:
   - git:

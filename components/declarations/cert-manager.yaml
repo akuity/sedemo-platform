@@ -16,14 +16,6 @@ spec:
     targetRevision: v1.19.1
     helm:
       releaseName: cert-manager
-      # valuesObject:
-      #   server:
-      #     ingress:
-      #       enabled: true
-      #       ingressClassName: nginx
-      #       path: /
-      #       hosts:
-      #       - prometheus.prometheus.k8s.orb.local
       valueFiles:
       - $localValues/components/value-overrides/cert-manager-values.yaml
   destination:

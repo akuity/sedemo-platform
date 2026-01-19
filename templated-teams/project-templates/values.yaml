@@ -4,8 +4,13 @@
 replicaCount: 2
 
 # this will be used to template namespaced resources, matches the path within monorepo. 
-projectName: template
+application:
+  name: template
 
+project:
+  name: templated-name
+  group: sedemo-team-open
+  path: templated/name
 
 
 kargo:
@@ -20,7 +25,7 @@ git:
 # Some level of control exposed to app teams on how they want apps exposed to internet
 ingress:
   root_domain: akpdemoapps.link
-  custom_prefix: eddie
+  custom_prefix: example
 
 
 rollouts:
@@ -30,3 +35,4 @@ environments:
   dev: true
   staging: true
   prod: true
+

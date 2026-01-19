@@ -3,16 +3,16 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: app-developer
-  namespace: {{ .Values.projectName }}
+  namespace: {{ .Values.application.name }}
   annotations:
     kargo.akuity.io/description: Permissions to promote into dev.
-    rbac.kargo.akuity.io/claims: '{"groups":["developer"]}'
+    rbac.kargo.akuity.io/claims: '{"groups":["{{.Values.project.group}}"]}'
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: app-developer
-  namespace: {{ .Values.projectName }}
+  namespace: {{ .Values.application.name }}
 rules:
 - apiGroups:
   - kargo.akuity.io
@@ -22,6 +22,13 @@ rules:
   - create
   - patch
   - update
+- apiGroups:
+  - kargo.akuity.io
+  resources:
+  - projects
+  verbs:
+  - list
+  - get
 - apiGroups:
   - kargo.akuity.io
   resources:
@@ -36,7 +43,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: app-developer
-  namespace: {{ .Values.projectName }}
+  namespace: {{ .Values.application.name }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -44,7 +51,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: app-developer
-  namespace: {{ .Values.projectName }}
+  namespace: {{ .Values.application.name }}
 ---
 # This RoleBinding allows the app-developer ServiceAccount to view project
 # resources (without redefining read rules), by binding it to the
@@ -53,7 +60,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: app-developer-viewer
-  namespace: {{ .Values.projectName }}
+  namespace: {{ .Values.application.name }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -61,4 +68,4 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: app-developer
-  namespace: {{ .Values.projectName }}
+  namespace: {{ .Values.application.name }}

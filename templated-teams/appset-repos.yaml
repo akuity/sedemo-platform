@@ -1,29 +1,33 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: templated-team-projects
+  name: templated-repo-projects
   namespace: argocd
 spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:
-    - git:
-        repoURL: https://github.com/akuity/sedemo-monorepo
-        revision: main
-        directories:
-        - path: templated/*
+    - scmProvider:
+        github:
+          organization: akuity
+          tokenRef:
+            secretName: application-set-secret
+            key: token
+        filters:
+        - repositoryMatch: ^sedemo-app-
+          pathsExist: [platform/app-values.yaml]
   template:
     metadata:
-      name: '{{.path.basename}}-appsets'
+      name: '{{.repository}}-appsets'
       namespace: argocd
       finalizers:
       - resources-finalizer.argocd.argoproj.io
     spec:
-      #project: '{{.path.basename}}'
+      #project: '{{.repository}}'
       project: templated-apps
       sources:
       #pull custom values from team managed monorepo folder
-      - repoURL: https://github.com/akuity/sedemo-monorepo.git
+      - repoURL: https://github.com/{{.organization}}/{{.repository}}.git
         targetRevision: main
         ref: appValues 
       # create underlying appsets for Kargo and Argo in the Argo Control plane
@@ -33,15 +37,15 @@ spec:
         path: templated-teams/project-templates/
         helm:
           valueFiles:
-          - '$appValues/templated/{{.path.basename}}/platform/app-values.yaml'
+          - '$appValues/platform/app-values.yaml'
           valuesObject:
-            repoUrl: https://github.com/akuity/sedemo-monorepo.git
+            repoUrl: https://github.com/{{.organization}}/{{.repository}}
             project:
-              path: templated/{{.path.basename}}
-              name: 'templated-{{.path.basename}}'
+              path: '.'
+              name: 'templated-{{.repository}}'
             application:
-              name: '{{.path.basename}}'
-            isStandalone: false
+              name: '{{.repository}}'
+            isStandalone: true
       destination:
         name: in-cluster
       syncPolicy:

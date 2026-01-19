@@ -1,36 +1,17 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Project
 metadata:
-  name: {{ .Values.projectName }}
+  name: {{ .Values.application.name }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: ProjectConfig
 metadata:
-  name: {{ .Values.projectName }}
-  namespace: {{ .Values.projectName }}
+  name: {{ .Values.application.name }}
+  namespace: {{ .Values.application.name }}
 spec:
   promotionPolicies:
   - stageSelector:
       name: dev
     autoPromotionEnabled: true
-  - stageSelector:
-      name: "regex:prod.*"
-    autoPromotionEnabled: true
-  webhookReceivers: 
-    - name: gh-wh-receiver
-      github:
-        secretRef:
-          name: gh-wh-secret
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: gh-wh-secret
-  namespace: {{ .Values.projectName }}
-  labels:
-    kargo.akuity.io/cred-type: generic
-data:
-  # thisisverysecret
-  secret: dGhpc2lzdmVyeXNlY3JldA==

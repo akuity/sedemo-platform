@@ -1,4 +1,3 @@
-{{ if or ( .Values.environments.staging) (ne .Values.kargo.stage "staging") }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -8,9 +7,9 @@ metadata:
 spec:
   ports:
   - port: 80
-    targetPort: 8080
+    targetPort: {{ .Values.image.containerPort }}
   selector:
-    app: '{{ .Values.projectName }}-app'
+    app: '{{ .Values.application.name }}-app'
 {{- if .Values.rollouts.enabled }}
 ---
 apiVersion: v1
@@ -22,8 +21,7 @@ metadata:
 spec:
   ports:
   - port: 80
-    targetPort: 8080
+    targetPort: {{ .Values.image.containerPort }}
   selector:
-    app: '{{ .Values.projectName }}-app'
+    app: '{{ .Values.application.name }}-app'
 {{- end }}
-{{ end }}

@@ -1,4 +1,3 @@
-{{ if or ( .Values.environments.staging) (ne .Values.kargo.stage "staging") }}
 {{- if .Values.rollouts.enabled }}
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
@@ -15,8 +14,7 @@ spec:
               containers:
               - name: loadgen
                 image: jordi/ab
-                command: [ab,"-n20","http://{{ .Values.kargo.stage }}.{{ .Values.ingress.custom_prefix }}.{{ .Values.ingress.root_domain }}/"]
+                command: [ab,"-n20","https://{{ .Values.kargo.stage }}.{{ .Values.ingress.custom_prefix }}.{{ .Values.ingress.root_domain }}/"]
               restartPolicy: Never
           backoffLimit: 1
 {{- end }}
-{{ end }}

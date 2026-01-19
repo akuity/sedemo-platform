@@ -1,35 +1,24 @@
 {{ range $key, $val := .Values.environments }}
+{{ if or ( $.Values.environments.staging) (ne $key "staging") }}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: '{{$.Values.projectName}}-{{$key}}'
+  name: '{{$.Values.application.name}}-{{$key}}'
   namespace: argocd
-
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
   annotations:
-    kargo.akuity.io/authorized-stage: '{{$.Values.projectName}}:{{$key}}'
+    kargo.akuity.io/authorized-stage: '{{$.Values.application.name}}:{{$key}}'
 spec:
-  project: '{{$.Values.projectName}}'
-  sources:
-  #pull custom values from team managed monorepo folder
-  - repoURL: https://github.com/akuity/sedemo-monorepo.git
-    targetRevision: main
-    ref: appValues 
-  # apply to platform team managed kargo templates
-  - targetRevision: HEAD
-    repoURL: https://github.com/akuity/sedemo-platform
-    path: templated-teams/apps-chart/
-    helm:
-      valueFiles:
-      - '$appValues/templated/{{ $.Values.projectName }}/platform/app-values.yaml'
-      valuesObject:
-        repoUrl: https://github.com/akuity/sedemo-monorepo.git
-        projectPath: templated/{{ $.Values.projectName }}
-        projectName: '{{ $.Values.projectName }}'
-        kargo:
-          stage: '{{ $key }}'
+  project: '{{$.Values.project.name}}'
+  source:
+  #pull custom values from team managed monorepo folder (rendered by Kargo)
+    repoURL: '{{$.Values.repoUrl}}'
+    targetRevision: env/{{ $.Values.application.name }}-{{$key}}
+    path: .
   destination:
     name: sedemo-primary
-    namespace: {{ $.Values.projectName }}-{{$key}}
+    namespace: {{ $.Values.application.name }}-{{$key}}
   syncPolicy:
     automated:
       prune: true
@@ -37,5 +26,8 @@ spec:
       selfHeal: true
     syncOptions:
     - CreateNamespace=true
+    retry:
+      limit: 2
 ---
+{{ end }}
 {{ end }}
