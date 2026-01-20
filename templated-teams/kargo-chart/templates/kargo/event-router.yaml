@@ -9,6 +9,7 @@ spec:
     - PromotionErrored
     - PromotionSucceeded
     - PromotionCreated
+    - FreightVerificationSucceeded
   channels:
     - name: kargo-notifications
       kind: ClusterMessageChannel
