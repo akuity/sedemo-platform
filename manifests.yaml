@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: team-daniel-app
 spec:
-  progressDeadlineSeconds: 60
+  progressDeadlineSeconds: 8
   replicas: 1
   revisionHistoryLimit: 1
   selector:
@@ -15,7 +15,7 @@ spec:
         app: team-daniel-app
     spec:
       containers:
-      - image: ghcr.io/dhpup/guestbook:0.1.40
+      - image: ghcr.io/dhpup/guestbook:0.1.39
         name: guestbook
         ports:
         - containerPort: 80
