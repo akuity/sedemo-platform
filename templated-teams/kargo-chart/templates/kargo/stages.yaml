@@ -266,6 +266,7 @@ spec:
           createTargetBranch: true
           sourceBranch: {{`${{ outputs['push'].branch }}`}}
           targetBranch: env/{{ .Values.application.name }}-prod
+      {{ if .Values.notifications.slack.enabled }}
       - uses: send-message
         config:
           channel:
@@ -287,6 +288,7 @@ spec:
                     text: "*Pull Request:* <{{`${{ outputs['open-pr'].pr.url }}`}}|#{{`${{ outputs['open-pr'].pr.id }}`}}>"
             icon_emoji: ":rocket:"
           encodingType: yaml
+      {{ end }}
       - uses: git-wait-for-pr
         as: wait-for-pr
         config:
