@@ -35,3 +35,7 @@ environments:
 services:
   s3: 
     enabled: false
+
+notifications:
+  slack:
+    enabled: false
