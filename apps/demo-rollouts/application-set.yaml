@@ -17,6 +17,7 @@ spec:
       name: demo-rollouts-{{stage}}
       annotations:
         kargo.akuity.io/authorized-stage: demo-rollouts:{{stage}}
+        notifications.argoproj.io/subscribe.on-sync-succeeded.slack: argo-notifications
     spec:
       project: rollouts
       source:
