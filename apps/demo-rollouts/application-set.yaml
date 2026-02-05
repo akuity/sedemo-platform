@@ -17,11 +17,11 @@ spec:
       name: demo-rollouts-{{stage}}
       annotations:
         kargo.akuity.io/authorized-stage: demo-rollouts:{{stage}}
-        notifications.argoproj.io/subscribe.on-sync-succeeded.sedemo: argo-notifications
+        notifications.argoproj.io/subscribe.on-sync-succeeded.slack.sedemo: argo-notifications
         notifications.argoproj.io/subscriptions: |
           - trigger: [on-sync-succeeded, on-rollout-updated, on-rollout-step-completed]
             destinations:
-              - service: sedemo
+              - service: slack.sedemo
                 recipients: [argo-notifications]
     spec:
       project: rollouts
