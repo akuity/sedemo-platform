@@ -21,7 +21,7 @@ spec:
         notifications.argoproj.io/subscriptions: |
           - trigger: [on-sync-succeeded, on-rollout-updated, on-rollout-step-completed]
             destinations:
-              - service: slack
+              - service: slack.sedemo
                 recipients: [argo-notifications]
     spec:
       project: rollouts
