@@ -20,7 +20,7 @@ spec:
         notifications.argoproj.io/subscriptions: |
           - trigger: [on-sync-succeeded, on-sync-running]
             destinations:
-              - service: slack.sedemo
+              - service: sedemo
                 recipients: [argo-notifications]
     spec:
       project: rollouts
