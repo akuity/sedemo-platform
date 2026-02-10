@@ -67,6 +67,12 @@ spec:
       config:
         path: ${{ vars.path_out }}
         generateTargetBranch: true
+    - uses: compose-output
+      as: output
+      config:
+        commit: ${{ task.outputs['push'].commit }}
+        branch: ${{ task.outputs['push'].branch }}
+        url: ${{ task.outputs['push'].commitURL }}
     - uses: git-open-pr
       as: open-pr
       if: ${{ vars.asPR == "true" }}
@@ -75,26 +81,32 @@ spec:
         createTargetBranch: true
         sourceBranch: ${{ task.outputs['push'].branch }}
         targetBranch: ${{ vars.targetBranch }}
-    # - uses: send-message
-    #   if: ${{ vars.asPR == "true" }}
-    #   config:
-    #     channel:
-    #       kind: ClusterMessageChannel
-    #       name: kargo-notifications
-    #     message: |
-    #       blocks:
-    #         - type: section
-    #           text:
-    #             type: mrkdwn
-    #             text: "*Kargo Approval Needed* :eyes:"
-    #         - type: section
-    #           fields:
-    #             - type: mrkdwn
-    #               text: "*Stage:* ${{ ctx.stage }}"
-    #             - type: mrkdwn
-    #               text: "*Version:* ${{ imageFrom(vars.imageRepo).Tag }}"
-    #             - type: mrkdwn
-    #               text: "*Pull Request:* <${{ task.outputs['open-pr'].pr.url }}|#${{ task.outputs['open-pr'].pr.id }}>"
-    #       icon_emoji: ":rocket:"
-    #       title: "Kargo Promotion Approval Needed"
-    #     encodingType: yaml
+    - uses: send-message
+      if: ${{ vars.asPR == "true" }}
+      config:
+        channel:
+          kind: ClusterMessageChannel
+          name: kargo-notifications
+        message: |
+          blocks:
+            - type: section
+              text:
+                type: mrkdwn
+                text: "*Kargo Approval Needed* :eyes:"
+            - type: section
+              fields:
+                - type: mrkdwn
+                  text: "*Stage:* ${{ ctx.stage }}"
+                - type: mrkdwn
+                  text: "*Version:* ${{ imageFrom(vars.imageRepo).Tag }}"
+                - type: mrkdwn
+                  text: "*Pull Request:* <${{ task.outputs['open-pr'].pr.url }}|#${{ task.outputs['open-pr'].pr.id }}>"
+          icon_emoji: ":rocket:"
+          title: "Kargo Promotion Approval Needed"
+        encodingType: yaml
+    - uses: git-wait-for-pr
+      as: wait-for-pr
+      if: ${{ vars.asPR == "true" }}
+      config:
+        repoURL: ${{ vars.gitRepo }}
+        prNumber: ${{ task.outputs['open-pr'].pr.id }}
