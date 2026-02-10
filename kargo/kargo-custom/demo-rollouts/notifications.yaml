@@ -1,5 +1,5 @@
 apiVersion: ee.kargo.akuity.io/v1alpha1
-kind: ClusterMessageChannel
+kind: MessageChannel
 metadata:
   name: kargo-notifications
 spec:
@@ -7,9 +7,24 @@ spec:
   # contain the following key:
   # - `apiKey`: The Slack token with permissions to post messages to the desired channel
   secretRef:
-    # The name of the Secret in the cluster secrets namespace
+    # The name of the Secret in the _shared_ namespace
     name: slack-token
   # Configuration specific to Slack
   slack:
     # kargo-notifications in Demo org
     channelID: C0A8YDED6BU
+---
+kind: EventRouter
+apiVersion: ee.kargo.akuity.io/v1alpha1
+metadata:
+  name: promotion-status
+  namespace: demo-rollouts
+spec:
+  types:
+    - PromotionFailed
+    - PromotionErrored
+    - PromotionSucceeded
+    - PromotionCreated
+  channels:
+    - name: kargo-notifications
+      kind: MessageChannel
