@@ -20,6 +20,8 @@ apiVersion: ee.kargo.akuity.io/v1alpha1
 metadata:
   name: promotion-status
   namespace: demo-rollouts
+  annotations:
+    argocd.argoproj.io/sync-wave: "1" #after channel
 spec:
   types:
     - PromotionFailed
