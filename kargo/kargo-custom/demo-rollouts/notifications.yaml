@@ -1,7 +1,7 @@
 apiVersion: ee.kargo.akuity.io/v1alpha1
 kind: MessageChannel
 metadata:
-  name: kargo-notifications
+  name: kargo-notification
   namespace: demo-rollouts
 spec:
   # A reference to a Secret containing the Slack token. This is required for Slack. The Secret must
@@ -29,5 +29,5 @@ spec:
     - PromotionSucceeded
     - PromotionCreated
   channels:
-    - name: kargo-notifications
+    - name: kargo-notification
       kind: MessageChannel
