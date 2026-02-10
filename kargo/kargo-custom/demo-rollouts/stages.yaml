@@ -341,6 +341,65 @@ spec:
         config:
           inPath: ./src/manifests-${{ vars.region }}.yaml
           outPath: ./out/manifests.yaml
+
+      - uses: jira
+        as: create-change-ticket
+        config:
+          credentials:
+            secretName: jira-access-secret
+          createIssue:
+            projectKey: CHANGE
+            summary: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }}"
+            adfDescription:
+              type: doc
+              version: 1
+              content:
+              - type: heading
+                attrs:
+                  level: 3
+                content:
+                - type: text
+                  text: "Promotion: ${{ ctx.stage }},  "
+                - type: text
+                  text: "${{ imageFrom(vars.imageRepo).Tag }}"
+                  marks:
+                  - type: code
+              - type: paragraph
+                content:
+                - type: text
+                  text: "Promotion ID: "
+                  marks:
+                  - type: strong
+                - type: text
+                  text: ${{ ctx.promotion }}
+                  marks:
+                  - type: link
+                    attrs:
+                      href: "https://kargo.akpdemoapps.link/project/demo-rollouts/promotion/${{ ctx.promotion }}"
+              - type: paragraph
+                content:
+                - type: text
+                  text: "Freight ID: "
+                  marks:
+                  - type: strong
+                - type: text
+                  text: ${{ ctx.targetFreight.name }}
+                  marks:
+                  - type: link
+                    attrs:
+                      href: "https://kargo.akpdemoapps.link/project/demo-rollouts/freight/${{ ctx.targetFreight.name }}"
+            issueType: task
+            #customFields:
+              #customfield_11301: Standard
+              #customfield_10800: Request a change
+            labels:
+            - promotion
+            - "${{ ctx.stage }}"
+            - "release-${{ imageFrom(vars.imageRepo).Tag }}"
+      - uses: compose-output
+        as: jira-link
+        config:
+          url: https://eddiewebb.atlassian.net/jira/servicedesk/projects/CM/queues/custom/21/${{ outputs['create-change-ticket'].key }}
       - task:
           name: push-manifests
         vars:
@@ -348,6 +407,18 @@ spec:
           value: env-rollouts/prod
         - name: targetBranch
           value: env-rollouts/prod-${{ vars.region }}
+      - uses: jira
+        as: wait-for-approval
+        config:
+          credentials:
+            secretName: jira-access-secret
+          waitForStatus:
+            issueKey: "${{ outputs['create-change-ticket'].key }}"
+            expectedStatus: "APPROVED"
+      - uses: git-wait-for-pr
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          prNumber: ${{ task.outputs['open-pr'].pr.id }}
       - uses: argocd-update
         continueOnError: true
         config:

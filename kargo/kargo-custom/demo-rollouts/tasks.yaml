@@ -98,9 +98,3 @@ spec:
     #       icon_emoji: ":rocket:"
     #       title: "Kargo Promotion Approval Needed"
     #     encodingType: yaml
-    - uses: git-wait-for-pr
-      as: wait-for-pr
-      if: ${{ vars.asPR == "true" }}
-      config:
-        repoURL: ${{ vars.gitRepo }}
-        prNumber: ${{ task.outputs['open-pr'].pr.id }}
