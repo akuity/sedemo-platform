@@ -283,7 +283,7 @@ spec:
         as: wait-for-approval
         config:
           credentials:
-            secretName: jira-access-secret
+            sharedSecretName: jira-access-secret
           waitForStatus:
             issueKey: "${{ outputs['create-change-ticket'].key }}"
             expectedStatus: "APPROVED"
