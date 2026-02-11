@@ -205,7 +205,7 @@ spec:
       # Since JIRA gates downstream stages, commit directly to prod branch.
       - task:
           name: push-manifests
-          as: push-manifests
+        as: push-manifests
 
       - uses: jira
         as: create-change-ticket
