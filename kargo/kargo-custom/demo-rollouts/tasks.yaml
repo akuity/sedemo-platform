@@ -86,7 +86,7 @@ spec:
       config:
         channel:
           kind: MessageChannel
-          name: kargo-notifications
+          name: kargo-notification
         message: |
           blocks:
             - type: section
