@@ -276,7 +276,7 @@ spec:
       - uses: compose-output
         as: jira-link
         config:
-          url: https://eddiewebb.atlassian.net/jira/servicedesk/projects/CM/queues/custom/21/${{ outputs['create-change-ticket'].key }}
+          url: https://eddiewebb.atlassian.net/jira/servicedesk/projects/CHANGE/queues/custom/21/${{ outputs['create-change-ticket'].key }}
       
     
       - uses: jira
@@ -287,14 +287,7 @@ spec:
           waitForStatus:
             issueKey: "${{ outputs['create-change-ticket'].key }}"
             expectedStatus: "APPROVED"
-      - uses: git-merge-pr
-        config:
-          repoURL: ${{ vars.gitRepo }}
-          prNumber: ${{ outputs['open-pr'].pr.id }}
-      - uses: git-wait-for-pr
-        config:
-          repoURL: ${{ vars.gitRepo }}
-          prNumber: ${{ task.outputs['open-pr'].pr.id }}
+    
 
 ---
 apiVersion: kargo.akuity.io/v1alpha1
