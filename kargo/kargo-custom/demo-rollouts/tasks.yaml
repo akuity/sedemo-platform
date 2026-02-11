@@ -68,7 +68,6 @@ spec:
         path: ${{ vars.path_out }}
         generateTargetBranch: true
     - uses: compose-output
-      if: ${{ vars.asPR == "true" }}
       as: output
       config:
         commit: ${{ task.outputs['push'].commit }}
@@ -86,7 +85,7 @@ spec:
       if: ${{ vars.asPR == "true" }}
       config:
         channel:
-          kind: ClusterMessageChannel
+          kind: MessageChannel
           name: kargo-notifications
         message: |
           blocks:
