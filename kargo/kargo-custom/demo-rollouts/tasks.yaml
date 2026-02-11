@@ -63,13 +63,14 @@ spec:
         path: ${{ vars.path_out }}
         targetBranch: ${{ vars.targetBranch }}
     - uses: git-push
-      as: push
+      as: pr-push
       if: ${{ vars.asPR == "true" }}
       config:
         path: ${{ vars.path_out }}
         generateTargetBranch: true
     - uses: compose-output
       as: output
+      if: ${{ vars.asPR != "true" }}
       config:
         commit: ${{ task.outputs['push'].commit }}
         branch: ${{ task.outputs['push'].branch }}
@@ -80,7 +81,7 @@ spec:
       config:
         repoURL: ${{ vars.gitRepo }}
         createTargetBranch: true
-        sourceBranch: ${{ task.outputs['push'].branch }}
+        sourceBranch: ${{ task.outputs['pr-push'].branch }}
         targetBranch: ${{ vars.targetBranch }}
     - uses: send-message
       if: ${{ vars.asPR == "true" }}
