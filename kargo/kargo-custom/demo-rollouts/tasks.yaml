@@ -57,6 +57,7 @@ spec:
         path: ${{ vars.path_out }}
         message: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
     - uses: git-push
+      as: push
       if: ${{ vars.asPR != "true" }}
       config:
         path: ${{ vars.path_out }}
