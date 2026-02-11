@@ -211,7 +211,7 @@ spec:
         as: create-change-ticket
         config:
           credentials:
-            secretName: jira-access-secret
+            sharedSecretName: jira-access-secret
           createIssue:
             projectKey: CHANGE
             summary: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }}"
