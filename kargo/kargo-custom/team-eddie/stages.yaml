@@ -25,7 +25,7 @@ spec:
         # push it
         # http get tree - https://api.github.com/repos/eddiewebb/circleci-samples/commits/47d3bb412470df0d3782c0456aba5dae658a0f67
         # http make commit from tree - gh api -X POST repos/<team>/<repo>/git/commits -f "message=Verified commit with large files!" \
-          -f "tree=$TREE_SHA" -f "parents[]=<parent commit hash>"
+        #  -f "tree=$TREE_SHA" -f "parents[]=<parent commit hash>"
         # http update reference - -X PATCH repos/<team>/<repo>/git/refs/heads/<branch> -f "sha=<new commit hash>"
         # delete temp commit
         - uses: git-commit
