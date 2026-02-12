@@ -31,7 +31,7 @@ spec:
               name: akuity-signing-demo[bot]
               #your-app's USER -id+your-app-name[bot]@users.noreply.github.com
               #JSON Schema email format does not support the brackets [] used by Github :(
-              email: "261204081+akuity-signing-demo%5B[bot]%5B@users.noreply.github.com"
+              email: "261204081+akuity-signing-demo%5Bbot%5B@users.noreply.github.com"
         - uses: git-push
           as: push
           config:
