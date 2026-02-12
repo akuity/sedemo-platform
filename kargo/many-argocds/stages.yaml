@@ -19,7 +19,7 @@ spec:
           config:
             path: ./src/akuity.yaml
             updates:
-            - key: values
+            - key: value
               value: ${{ ctx.promotion }}
         - uses: git-commit
           as: commit
