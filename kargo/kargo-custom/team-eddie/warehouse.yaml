@@ -1,8 +1,8 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
-  name: many-argocds
-  namespace: many-argocds
+  name: team-eddie
+  namespace: team-eddie
 spec:
   subscriptions:
   - git:

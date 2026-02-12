@@ -4,7 +4,7 @@ metadata:
   annotations:
     kargo.akuity.io/color: red
   name: dev
-  namespace: many-argocds
+  namespace: team-eddie
 spec:
   promotionTemplate:
     spec:
@@ -21,6 +21,26 @@ spec:
             updates:
             - key: value
               value: ${{ ctx.promotion }}
+        # - uses: http
+        #   config:
+        #     method: POST
+        #     url: https://api.github.com/repos/eddiewebb/circleci-samples/git/trees
+        #     headers:
+        #     - name: Authorization
+        #       value: Bearer ${{ secret('app-jwt').jwt }}
+        #     - name: Accept
+        #       value: "application/vnd.github+json"
+        #     - name: X-GitHub-Api-Version
+        #       value: "2022-11-28"
+        #     body: |
+        #       ${{ quote({
+        #         "base_tree":"9fb037999f264ba9a7fc6274d15fa3ae2ab98312"
+        #         "tree":[
+        #           {"path":"file.rb",
+        #           "type":"blob",
+        #           "sha":"44b4fc6d56897b048c772eb4087f854f46256132"}
+        #           ]
+        #         }) }}
         - uses: git-commit
           as: commit
           config:
@@ -46,7 +66,7 @@ spec:
   requestedFreight:
     - origin:
         kind: Warehouse
-        name: many-argocds
+        name: team-eddie
       sources:
         direct: true
 
