@@ -54,15 +54,20 @@ spec:
                 value: ${{ outputs['push'].commit }}
         - uses: http
           config:
-            method: GET
             url: "https://api.github.com/repos/eddiewebb/circleci-samples/commits/${{ outputs['push'].commit }}"
             headers:
             - name: Authorization
-              value: Bearer ${{ secret('app-jwt').jwt }}
+              value: "Bearer ${{ secret('app-jwt').jwt }}"
             - name: Accept
               value: "application/vnd.github+json"
             - name: X-GitHub-Api-Version
               value: "2022-11-28"
+            timeout: 10s
+            outputs:
+              - name: tree
+                fromExpression: body.commit.tree.sha
+              - name: parent
+                fromExpression: body.parents[0].sha
         #-f "message=Verified commit with large files!"     -f "tree=$TREE_SHA" -f "parents[]=<parent commit hash>"
         - uses: http
           config:
@@ -78,8 +83,8 @@ spec:
             body: |
               ${{ quote({
                 "message":"signing commit"
-                "tree": ${{ outputs['get-commit'].body.commit.tree.sha }},
-                "parents":[${{ outputs['get-commit'].body.parents[0].sha }}]
+                "tree": ${{ outputs['get-commit'].tree }},
+                "parents":[${{ outputs['get-commit'].parent }}]
                 }) 
               }}
         # http update reference - -X PATCH repos/<team>/<repo>/git/refs/heads/<branch> -f "sha=<new commit hash>"
