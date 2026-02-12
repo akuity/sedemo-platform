@@ -21,26 +21,75 @@ spec:
             updates:
             - key: value
               value: ${{ ctx.promotion }}
-        # - uses: http
-        #   config:
-        #     method: POST
-        #     url: https://api.github.com/repos/eddiewebb/circleci-samples/git/trees
-        #     headers:
-        #     - name: Authorization
-        #       value: Bearer ${{ secret('app-jwt').jwt }}
-        #     - name: Accept
-        #       value: "application/vnd.github+json"
-        #     - name: X-GitHub-Api-Version
-        #       value: "2022-11-28"
-        #     body: |
-        #       ${{ quote({
-        #         "base_tree":"9fb037999f264ba9a7fc6274d15fa3ae2ab98312"
-        #         "tree":[
-        #           {"path":"file.rb",
-        #           "type":"blob",
-        #           "sha":"44b4fc6d56897b048c772eb4087f854f46256132"}
-        #           ]
-        #         }) }}
+        # make temp commit
+        # push it
+        # http get tree - https://api.github.com/repos/eddiewebb/circleci-samples/commits/47d3bb412470df0d3782c0456aba5dae658a0f67
+        # http make commit from tree - gh api -X POST repos/<team>/<repo>/git/commits -f "message=Verified commit with large files!" \
+          -f "tree=$TREE_SHA" -f "parents[]=<parent commit hash>"
+        # http update reference - -X PATCH repos/<team>/<repo>/git/refs/heads/<branch> -f "sha=<new commit hash>"
+        # delete temp commit
+        - uses: git-commit
+          as: commit
+          config:
+            path: ${{ vars.path_src }}
+            message: "Writecommitfor ${{ ctx.promotion }}"
+            author:
+              #your-app-name[bot]
+              name: akuity-signing-demo[bot]
+              #app-user-id+your-app-name[bot]@users.noreply.github.com
+              #JSON Schema email format does not support the brackets [] used by Github :(
+              email: "261204081+akuity-signing-demo@users.noreply.github.com"
+        - uses: git-push
+          as: push
+          config:
+            path: ${{ vars.path_src }}
+            targetBranch: temp-${{ ctx.promotion }}
+        - uses: http
+          config:
+            method: GET
+            url: https://api.github.com/repos/eddiewebb/circleci-samples/git/commits/${{ task.outputs['push'].commit }}
+            headers:
+            - name: Authorization
+              value: Bearer ${{ secret('app-jwt').jwt }}
+            - name: Accept
+              value: "application/vnd.github+json"
+            - name: X-GitHub-Api-Version
+              value: "2022-11-28"
+        #-f "message=Verified commit with large files!"     -f "tree=$TREE_SHA" -f "parents[]=<parent commit hash>"
+        - uses: http
+          config:
+            method: POST
+            url: https://api.github.com/repos/eddiewebb/circleci-samples/git/trees
+            headers:
+            - name: Authorization
+              value: Bearer ${{ secret('app-jwt').jwt }}
+            - name: Accept
+              value: "application/vnd.github+json"
+            - name: X-GitHub-Api-Version
+              value: "2022-11-28"
+            body: |
+              ${{ quote({
+                "message":"signing commit"
+                "tree": ${ task.outputs['get-commit'].body.commit.tree.sha },
+                "parents":[${ task.outputs['get-commit'].body.parents[0].sha }]
+                }) 
+              }}
+        # http update reference - -X PATCH repos/<team>/<repo>/git/refs/heads/<branch> -f "sha=<new commit hash>"
+        - uses: http
+          config:
+            method: PATCH
+            url: https://api.github.com/repos/eddiewebb/circleci-samples/git/refs/heads/main
+            headers:
+            - name: Authorization
+              value: Bearer ${{ secret('app-jwt').jwt }}
+            - name: Accept
+              value: "application/vnd.github+json"
+            - name: X-GitHub-Api-Version
+              value: "2022-11-28"
+            body: |
+              ${{ quote({
+                "sha": ${task.outputs['create-tree'].body.sha},
+                }) }}
         - uses: git-commit
           as: commit
           config:
