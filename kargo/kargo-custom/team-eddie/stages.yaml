@@ -50,6 +50,8 @@ spec:
             outputs:
               - name: jwt
                 value: ${{ secret('app-jwt').jwt }}
+              - name: commit
+                value: ${{ outputs['push'].commit }}
         - uses: http
           config:
             method: GET
