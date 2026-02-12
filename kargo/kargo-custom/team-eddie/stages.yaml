@@ -44,7 +44,7 @@ spec:
           config:
             path: ${{ vars.path_src }}
             generateTargetBranch: true
-        - compose-output:
+        - uses: compose-output
           as: vars
           config:
             outputs:
