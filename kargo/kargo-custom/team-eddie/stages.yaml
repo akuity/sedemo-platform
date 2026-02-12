@@ -47,7 +47,7 @@ spec:
         - uses: http
           config:
             method: GET
-            url: https://api.github.com/repos/eddiewebb/circleci-samples/git/commits/${{ outputs['push'].commit }}
+            url: "https://api.github.com/repos/eddiewebb/circleci-samples/git/commits/${{ outputs['push'].commit }}"
             headers:
             - name: Authorization
               value: Bearer ${{ secret('app-jwt').jwt }}
@@ -70,8 +70,8 @@ spec:
             body: |
               ${{ quote({
                 "message":"signing commit"
-                "tree": ${ outputs['get-commit'].body.commit.tree.sha },
-                "parents":[${ outputs['get-commit'].body.parents[0].sha }]
+                "tree": ${{ outputs['get-commit'].body.commit.tree.sha }},
+                "parents":[${{ outputs['get-commit'].body.parents[0].sha }}]
                 }) 
               }}
         # http update reference - -X PATCH repos/<team>/<repo>/git/refs/heads/<branch> -f "sha=<new commit hash>"
