@@ -73,13 +73,6 @@ spec:
           config:
             method: POST
             url: https://api.github.com/repos/eddiewebb/circleci-samples/git/trees
-            headers:
-            - name: Authorization
-              value: Bearer ${{ secret('app-jwt').jwt }}
-            - name: Accept
-              value: "application/vnd.github+json"
-            - name: X-GitHub-Api-Version
-              value: "2022-11-28"
             body: |
               ${{ quote({
                 "message":"signing commit"
