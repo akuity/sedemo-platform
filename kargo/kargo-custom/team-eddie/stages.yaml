@@ -47,7 +47,7 @@ spec:
         - uses: http
           config:
             method: GET
-            url: "https://api.github.com/repos/eddiewebb/circleci-samples/git/commits/${{ outputs['push'].commit }}"
+            url: "https://api.github.com/repos/eddiewebb/circleci-samples/commits/${{ outputs['push'].commit }}"
             headers:
             - name: Authorization
               value: Bearer ${{ secret('app-jwt').jwt }}
