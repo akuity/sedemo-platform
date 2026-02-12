@@ -52,16 +52,11 @@ spec:
                 value: ${{ secret('app-jwt').jwt }}
               - name: commit
                 value: ${{ outputs['push'].commit }}
+              - name: commitUrl
+                value: ${{ outputs['push'].commit }}
         - uses: http
           config:
-            url: "https://google.com" 
-            headers:
-            - name: Authorization
-              value: "Bearer ${{ secret('app-jwt').jwt }}"
-            - name: Accept
-              value: "application/vnd.github+json"
-            - name: X-GitHub-Api-Version
-              value: "2022-11-28"
+            url: "${{ outputs['push'].commitUrl }}"
             timeout: 10s
             outputs:
               - name: tree
