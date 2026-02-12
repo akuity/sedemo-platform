@@ -44,6 +44,12 @@ spec:
           config:
             path: ${{ vars.path_src }}
             generateTargetBranch: true
+        - compose-output:
+          as: vars
+          config:
+            outputs:
+              - name: jwt
+                value: ${{ secret('app-jwt').jwt }}
         - uses: http
           config:
             method: GET
