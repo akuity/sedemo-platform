@@ -4,15 +4,6 @@ metadata:
   name: many-argocds
   namespace: many-argocds
 spec:
-  shard: sedemo-primary
   subscriptions:
-  - image:
-      repoURL: ghcr.io/akuity/sedemo-rollouts-app
-      discoveryLimit: 5
-      imageSelectionStrategy: NewestBuild
-      allowTags: ^\d*-[a-z]*$
   - git:
-      repoURL: https://github.com/akuity/sedemo-rollouts-app
-      includePaths:
-      - deploy
-      - Dockerfile
+      repoURL: https://github.com/eddiewebb/circleci-samples

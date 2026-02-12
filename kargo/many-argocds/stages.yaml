@@ -1,337 +1,46 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: dev
-  namespace: many-argocds
   annotations:
     kargo.akuity.io/color: red
-spec:
-  shard: sedemo-primary
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: many-argocds
-    sources:
-      direct: true
-  promotionTemplate:
-    spec:
-      vars:
-      - name: gitRepo
-        value: https://github.com/akuity/sedemo-rollouts-app
-      - name: imageRepo
-        value: ghcr.io/akuity/sedemo-rollouts-app
-      - name: sourceBranch
-        value: main
-      - name: targetBranch
-        value: env/${{ ctx.stage }}
-      - name: path_src
-        value: ./src
-      - name: path_out
-        value: ./out
-      steps:
-      - uses: git-clone
-        config:
-          repoURL: ${{ vars.gitRepo }}
-          checkout:
-          - branch: ${{ vars.sourceBranch }}
-            path: ${{ vars.path_src }}
-          - branch: ${{ vars.targetBranch }}
-            create: true
-            path: ${{ vars.path_out }}
-      - uses: git-clear
-        config:
-          path: ${{ vars.path_out }}
-      # - uses: helm-template
-      #   config:
-      #     releaseName: deploy
-      #     path: ${{ vars.path_src }}/deploy/chart
-      #     valuesFiles:
-      #     - ${{ vars.path_src }}/deploy/chart/values.yaml
-      #     outPath: ${{ vars.path_out }}/manifests.yaml
-      #     namespace: many-argocds-dev
-      #     setValues:
-      #       - key: image.tag
-      #         value: ${{ imageFrom(vars.imageRepo).Tag }}
-      #       - key: kargo.stage
-      #         value: ${{ ctx.stage }}
-      #       - key: ingress.root_domain
-      #         value: akpdemoapps.link
-      # - uses: git-commit
-      #   as: commit
-      #   config:
-      #     path: ${{ vars.path_out }}
-      #     message: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
-      # - uses: git-push
-      #   config:
-      #     path: ${{ vars.path_out }}
-      #     targetBranch: ${{ vars.targetBranch }}
-      # - uses: argocd-update
-      #   config:
-      #     apps:
-      #     - labels:
-      #       - kargo.akuity.io/authorized-stage: "athena-dev"
-      #     - name: many-argocds-dev
-      #       namespace: argocd
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: staging
+  name: dev
   namespace: many-argocds
-  annotations:
-    kargo.akuity.io/color: amber
 spec:
-  shard: sedemo-primary
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: many-argocds
-    sources:
-      stages:
-      - dev
   promotionTemplate:
     spec:
-      vars:
-      - name: gitRepo
-        value: https://github.com/akuity/sedemo-rollouts-app
-      - name: imageRepo
-        value: ghcr.io/akuity/sedemo-rollouts-app
-      - name: sourceBranch
-        value: main
-      - name: targetBranch
-        value: env/${{ ctx.stage }}
-      - name: path_src
-        value: ./src
-      - name: path_out
-        value: ./out
       steps:
-      - uses: git-clone
-        config:
-          repoURL: ${{ vars.gitRepo }}
-          checkout:
-          - branch: ${{ vars.sourceBranch }}
+        - config:
+            checkout:
+              - branch: ${{ vars.sourceBranch }}
+                path: ${{ vars.path_src }}
+            repoURL: ${{ vars.gitRepo }}
+          uses: git-clone
+        - uses: yaml-update
+          config:
+            path: ./src/akuity.yaml
+            updates:
+            - key: values
+              value: ${{ ctx.promotion }}
+        - uses: git-commit
+          as: commit
+          config:
             path: ${{ vars.path_src }}
-          - branch: ${{ vars.targetBranch }}
-            create: true
-            path: ${{ vars.path_out }}
-      - uses: git-clear
-        config:
-          path: ${{ vars.path_out }}
-      # - uses: helm-template
-      #   config:
-      #     releaseName: deploy
-      #     path: ${{ vars.path_src }}/deploy/chart
-      #     valuesFiles:
-      #     - ${{ vars.path_src }}/deploy/chart/values.yaml
-      #     outPath: ${{ vars.path_out }}/manifests.yaml
-      #     namespace: many-argocds-dev
-      #     setValues:
-      #       - key: image.tag
-      #         value: ${{ imageFrom(vars.imageRepo).Tag }}
-      #       - key: kargo.stage
-      #         value: ${{ ctx.stage }}
-      #       - key: ingress.root_domain
-      #         value: akpdemoapps.link
-      # - uses: git-commit
-      #   as: commit
-      #   config:
-      #     path: ${{ vars.path_out }}
-      #     message: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
-      # - uses: git-push
-      #   config:
-      #     path: ${{ vars.path_out }}
-      #     targetBranch: ${{ vars.targetBranch }}
-      # - uses: argocd-update
-      #   config:
-      #     apps:
-      #     - labels:
-      #       - kargo.akuity.io/authorized-stage: "athena-dev"
-      #     - name: many-argocds-dev
-      #       namespace: argocd
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: prod-internal-clusters
-  namespace: many-argocds
-  annotations:
-    kargo.akuity.io/color: blue
-spec:
-  shard: sedemo-primary
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: many-argocds
-    sources:
-      stages:
-      - staging
-  promotionTemplate:
-    spec:
-      vars:
-      - name: gitRepo
-        value: https://github.com/akuity/sedemo-rollouts-app
-      - name: imageRepo
-        value: ghcr.io/akuity/sedemo-rollouts-app
-      - name: sourceBranch
-        value: main
-      - name: targetBranch
-        value: env/${{ ctx.stage }}
-      - name: path_src
-        value: ./src
-      - name: path_out
-        value: ./out
-      steps:
-      - uses: git-clone
-        config:
-          repoURL: ${{ vars.gitRepo }}
-          checkout:
-          - branch: ${{ vars.sourceBranch }}
+            message: "Writecommitfor ${{ ctx.promotion }}"
+        - uses: git-push
+          as: push
+          config:
             path: ${{ vars.path_src }}
-          - branch: ${{ vars.targetBranch }}
-            create: true
-            path: ${{ vars.path_out }}
-      - uses: git-clear
-        config:
-          path: ${{ vars.path_out }}
-      # - uses: argocd-update
-      #   config:
-      #     apps:
-      #     # This is an example of what future filtering might look like. Subject to change
-      #     - labels:
-      #       - our-custom-labe: "clients-realm-prod-2"
-      #       - kargo.akuity.io/authorized-stage: "many-argocds:prod-internal-clusters"
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: prod-clients-wave-a
-  namespace: many-argocds
-  annotations:
-    kargo.akuity.io/color: blue
-spec:
-  shard: sedemo-primary
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: many-argocds
-    sources:
-      stages:
-      - staging
-  promotionTemplate:
-    spec:
       vars:
-      - name: gitRepo
-        value: https://github.com/akuity/sedemo-rollouts-app
-      - name: imageRepo
-        value: ghcr.io/akuity/sedemo-rollouts-app
-      - name: sourceBranch
-        value: main
-      - name: targetBranch
-        value: env/${{ ctx.stage }}
-      - name: path_src
-        value: ./src
-      - name: path_out
-        value: ./out
-      steps:
-      - uses: git-clone
-        config:
-          repoURL: ${{ vars.gitRepo }}
-          checkout:
-          - branch: ${{ vars.sourceBranch }}
-            path: ${{ vars.path_src }}
-          - branch: ${{ vars.targetBranch }}
-            create: true
-            path: ${{ vars.path_out }}
-      - uses: git-clear
-        config:
-          path: ${{ vars.path_out }}
-      - uses: argocd-update
-        config:
-          apps:
-          # Pending spec for filtering. Subject to change
-          - selectors:
-              matchExpressions:
-                - key: "applicationSet-Foo"
-                  operator: exists
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: prod-clients-wave-b
-  namespace: many-argocds
-  annotations:
-    kargo.akuity.io/color: blue
-spec:
-  shard: sedemo-primary
+        - name: gitRepo
+          value: https://github.com/eddiewebb/circleci-samples
+        - name: sourceBranch
+          value: main
+        - name: path_src
+          value: ./src
   requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: many-argocds
-    sources:
-      stages:
-      - prod-clients-wave-a
-  promotionTemplate:
-    spec:
-      steps:
-      - uses: git-clone
-      - uses: argocd-update
-        config:
-          apps:
-          # Pending spec for filtering. Subject to change
-          - selectors:
-              matchLabels:
-              - our-custom-label: "client-app"
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: prod-clients-wave-c
-  namespace: many-argocds
-  annotations:
-    kargo.akuity.io/color: blue
-spec:
-  shard: sedemo-primary
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: many-argocds
-    sources:
-      stages:
-      - prod-clients-wave-b
-  promotionTemplate:
-    spec:
-      vars:
-      - name: gitRepo
-        value: https://github.com/akuity/sedemo-rollouts-app
-      - name: imageRepo
-        value: ghcr.io/akuity/sedemo-rollouts-app
-      - name: sourceBranch
-        value: main
-      - name: targetBranch
-        value: env/${{ ctx.stage }}
-      - name: path_src
-        value: ./src
-      - name: path_out
-        value: ./out
-      steps:
-      - uses: git-clone
-        config:
-          repoURL: ${{ vars.gitRepo }}
-          checkout:
-          - branch: ${{ vars.sourceBranch }}
-            path: ${{ vars.path_src }}
-          - branch: ${{ vars.targetBranch }}
-            create: true
-            path: ${{ vars.path_out }}
-      - uses: git-clear
-        config:
-          path: ${{ vars.path_out }}
-      - uses: argocd-update
-        config:
-          apps:
-          - selector:
-              matchExpressions:
-              - key: environment
-                operator: In
-                values:
-                - production
+    - origin:
+        kind: Warehouse
+        name: many-argocds
+      sources:
+        direct: true
+

@@ -270,7 +270,7 @@ spec:
       - uses: send-message
         config:
           channel:
-            kind: ClusterMessageChannel
+            kind: MessageChannel
             name: kargo-notifications
           message: |
             blocks:
