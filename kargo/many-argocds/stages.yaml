@@ -30,7 +30,7 @@ spec:
               #your-app-name[bot]
               name: Akuity Signing Demo[bot]
               #your-app-id+your-app-name[bot]@users.noreply.github.com
-              email: "2850653+akuity-signing-demo[bot]@users.noreply.github.com"
+              email: "2850653+akuity-signing-demo@users.noreply.github.com"
         - uses: git-push
           as: push
           config:
