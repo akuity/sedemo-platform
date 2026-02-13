@@ -74,6 +74,7 @@ spec:
             - name: Authorization
               value: "Bearer ${{ secret('app-jwt').jwt }}"
             failureExpression: response.status != 201
+            successExpression: response.status == 201
             outputs:
               - name: token
                 fromExpression: response.body.token
