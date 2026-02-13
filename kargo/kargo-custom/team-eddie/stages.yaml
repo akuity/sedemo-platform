@@ -56,7 +56,7 @@ spec:
                 value: ${{ outputs['push'].commit }}
         - uses: http
           config:
-            url: "${{ outputs['push'].commit }}"
+            url: "https://api.github.com/repos/eddiewebb/circleci-samples/commits/${{ outputs['push'].commit }}"
             timeout: 10s
             outputs:
               - name: tree
