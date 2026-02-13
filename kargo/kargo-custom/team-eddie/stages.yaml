@@ -112,12 +112,26 @@ spec:
               value: "application/vnd.github+json"
             - name: X-GitHub-Api-Version
               value: "2022-11-28"
-            failureExpression: response.status != 201
-            successExpression: response.status == 201
+            failureExpression: response.status != 200
+            successExpression: response.status == 200
             body: |
               ${{ quote({
                 "sha": outputs['create-commit'].sha
                 }) }}
+        - uses: http
+          as: delete-temp-branch
+          config:
+            method: DELETE
+            url: https://api.github.com/repos/eddiewebb/circleci-samples/git/refs/${{ outputs['push'].commit }}
+            headers:
+            - name: Authorization
+              value: "Bearer ${{ outputs['get-token'].token }}"
+            - name: Accept
+              value: "application/vnd.github+json"
+            - name: X-GitHub-Api-Version
+              value: "2022-11-28"
+            failureExpression: response.status != 204
+            successExpression: response.status == 204
         
       vars:
         - name: gitRepo
