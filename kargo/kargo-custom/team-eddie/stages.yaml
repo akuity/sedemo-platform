@@ -116,7 +116,7 @@ spec:
             successExpression: response.status == 201
             body: |
               ${{ quote({
-                "sha": ${outputs['create-commit'].commit-sha}
+                "sha": outputs['create-commit'].commit-sha
                 }) }}
         
       vars:
