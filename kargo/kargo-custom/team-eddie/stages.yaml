@@ -62,8 +62,7 @@ spec:
                 fromExpression: response.body.commit.tree.sha
               - name: parent
                 fromExpression: response.body.parents[0].sha
-        #-f "message=Verified commit with large files!"     -f "tree=$TREE_SHA" -f "parents[]=<parent commit hash>"
-        # installation ID 109677952
+        # TODO: unfortunately exposes access token in the Kargo UI.  Even though it's short term,its a risk.
         - uses: http
           as: get-token
           config:
@@ -74,6 +73,9 @@ spec:
               value: "Bearer ${{ secret('app-jwt').jwt }}"
             failureExpression: response.status != 201
             successExpression: response.status == 201
+            outputs:
+              - name: token
+                fromExpression: response.body.token
         # the 2nd create-commit is needed because the first commit is unverified and thus cannot be the parent of the signed commit. 
         - uses: http
           as: create-commit
@@ -82,7 +84,7 @@ spec:
             url: https://api.github.com/repos/eddiewebb/circleci-samples/git/commits
             headers:
             - name: Authorization
-              value: "Bearer ${{ outputs['get-token'].response.body.token }}"
+              value: "Bearer ${{ outputs['get-token'].token }}"
             failureExpression: response.status != 201
             successExpression: response.status == 201
             body: |
@@ -103,7 +105,7 @@ spec:
             url: https://api.github.com/repos/eddiewebb/circleci-samples/git/refs/heads/main
             headers:
             - name: Authorization
-              value: "Bearer ${{ outputs['get-token'].response.body.token }}"
+              value: "Bearer ${{ outputs['get-token'].token }}"
             - name: Accept
               value: "application/vnd.github+json"
             - name: X-GitHub-Api-Version
@@ -121,7 +123,7 @@ spec:
             url: https://api.github.com/repos/eddiewebb/circleci-samples/git/refs/heads/temp-${{ ctx.promotion }}
             headers:
             - name: Authorization
-              value: "Bearer ${{ outputs['get-token'].response.body.token }}"
+              value: "Bearer ${{ outputs['get-token'].token }}"
             - name: Accept
               value: "application/vnd.github+json"
             - name: X-GitHub-Api-Version
