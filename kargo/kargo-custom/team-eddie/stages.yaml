@@ -80,10 +80,10 @@ spec:
               - name: token
                 fromExpression: response.body.token
         - uses: http
-          as: create-tree
+          as: create-commit
           config:
             method: POST
-            url: https://api.github.com/repos/eddiewebb/circleci-samples/git/trees
+            url: https://api.github.com/repos/eddiewebb/circleci-samples/git/commits
             headers:
             - name: Authorization
               value: "Bearer ${{ outputs['get-token'].token }}"
@@ -95,6 +95,9 @@ spec:
                 "parents":[ outputs['get-commit'].parent ]
                 }) 
               }}
+            outputs:
+              - name: commit-sha
+                fromExpression: response.body.sha
         # http update reference - -X PATCH repos/<team>/<repo>/git/refs/heads/<branch> -f "sha=<new commit hash>"
         - uses: http
           as: update-ref
@@ -111,7 +114,7 @@ spec:
             failureExpression: response.status != 200
             body: |
               ${{ quote({
-                "sha": ${outputs['create-tree'].body.sha},
+                "sha": ${outputs['create-commit'].commit-sha},
                 }) }}
         
       vars:
