@@ -65,14 +65,26 @@ spec:
               - name: parent
                 fromExpression: response.body.parents[0].sha
         #-f "message=Verified commit with large files!"     -f "tree=$TREE_SHA" -f "parents[]=<parent commit hash>"
+        # installation ID 109677952
+        - uses: http
+          config:
+            method: POST
+            url: https://api.github.com/app/installations/109677952/access_tokens
+            headers:
+            - name: Authorization
+              value: "Bearer ${{ secret('app-jwt').jwt }}"
+            failureExpression: response.status != 200
+            outputs:
+              - name: token
+                fromExpression: response.body.token
         - uses: http
           config:
             method: POST
             url: https://api.github.com/repos/eddiewebb/circleci-samples/git/trees
             headers:
             - name: Authorization
-              value: "Bearer ${{ secret('app-jwt').jwt }}"
-            failureExpression: response.status != 404
+              value: "Bearer ${{ outputs['get-token'].token }}"
+            failureExpression: response.status != 200
             body: |
               ${{ quote({
                 "message":"signing commit",
@@ -87,11 +99,12 @@ spec:
             url: https://api.github.com/repos/eddiewebb/circleci-samples/git/refs/heads/main
             headers:
             - name: Authorization
-              value: Bearer ${{ secret('app-jwt').jwt }}
+              value: "Bearer ${{ outputs['get-token'].token }}"
             - name: Accept
               value: "application/vnd.github+json"
             - name: X-GitHub-Api-Version
               value: "2022-11-28"
+            failureExpression: response.status != 200
             body: |
               ${{ quote({
                 "sha": ${outputs['create-tree'].body.sha},
