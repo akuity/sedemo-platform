@@ -71,7 +71,8 @@ spec:
             url: https://api.github.com/repos/eddiewebb/circleci-samples/git/trees
             headers:
             - name: Authorization
-              value: Bearer ${{ secret('app-jwt').jwt }}
+              value: "Bearer ${{ secret('app-jwt').jwt }}"
+            successExpression: response.status == 200
             body: |
               ${{ quote({
                 "message":"signing commit",
