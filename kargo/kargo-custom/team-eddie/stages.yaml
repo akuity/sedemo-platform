@@ -74,7 +74,7 @@ spec:
               value: Bearer ${{ secret('app-jwt').jwt }}
             body: |
               ${{ quote({
-                "message":"signing commit"
+                "message":"signing commit",
                 "tree": ${{ outputs['get-commit'].tree }},
                 "parents":[${{ outputs['get-commit'].parent }}]
                 }) 
