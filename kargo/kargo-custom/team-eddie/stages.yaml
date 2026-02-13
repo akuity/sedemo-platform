@@ -60,9 +60,9 @@ spec:
             timeout: 10s
             outputs:
               - name: tree
-                fromExpression: body.commit.tree.sha
+                fromExpression: response.body.commit.tree.sha
               - name: parent
-                fromExpression: body.parents[0].sha
+                fromExpression: response.body.parents[0].sha
         #-f "message=Verified commit with large files!"     -f "tree=$TREE_SHA" -f "parents[]=<parent commit hash>"
         - uses: http
           config:
