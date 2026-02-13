@@ -75,8 +75,8 @@ spec:
             body: |
               ${{ quote({
                 "message":"signing commit",
-                "tree": ${{ outputs['get-commit'].tree }},
-                "parents":[${{ outputs['get-commit'].parent }}]
+                "tree": outputs['get-commit'].tree ,
+                "parents":[ outputs['get-commit'].parent ]
                 }) 
               }}
         # http update reference - -X PATCH repos/<team>/<repo>/git/refs/heads/<branch> -f "sha=<new commit hash>"
