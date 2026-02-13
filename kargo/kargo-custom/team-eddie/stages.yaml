@@ -48,8 +48,6 @@ spec:
           as: vars
           config:
             outputs:
-              - name: jwt
-                value: ${{ secret('app-jwt').jwt }}
               - name: commit
                 value: ${{ outputs['push'].commit }}
               - name: commitUrl
@@ -76,9 +74,7 @@ spec:
               value: "Bearer ${{ secret('app-jwt').jwt }}"
             failureExpression: response.status != 201
             successExpression: response.status == 201
-            outputs:
-              - name: token
-                fromExpression: response.body.token
+        # the 2nd create-commit is needed because the first commit is unverified and thus cannot be the parent of the signed commit. 
         - uses: http
           as: create-commit
           config:
@@ -86,7 +82,7 @@ spec:
             url: https://api.github.com/repos/eddiewebb/circleci-samples/git/commits
             headers:
             - name: Authorization
-              value: "Bearer ${{ outputs['get-token'].token }}"
+              value: "Bearer ${{ outputs['get-token'].response.body.token }}"
             failureExpression: response.status != 201
             successExpression: response.status == 201
             body: |
@@ -107,7 +103,7 @@ spec:
             url: https://api.github.com/repos/eddiewebb/circleci-samples/git/refs/heads/main
             headers:
             - name: Authorization
-              value: "Bearer ${{ outputs['get-token'].token }}"
+              value: "Bearer ${{ outputs['get-token'].response.body.token }}"
             - name: Accept
               value: "application/vnd.github+json"
             - name: X-GitHub-Api-Version
@@ -125,7 +121,7 @@ spec:
             url: https://api.github.com/repos/eddiewebb/circleci-samples/git/refs/heads/temp-${{ ctx.promotion }}
             headers:
             - name: Authorization
-              value: "Bearer ${{ outputs['get-token'].token }}"
+              value: "Bearer ${{ outputs['get-token'].response.body.token }}"
             - name: Accept
               value: "application/vnd.github+json"
             - name: X-GitHub-Api-Version
