@@ -55,6 +55,7 @@ spec:
               - name: commitUrl
                 value: ${{ outputs['push'].commit }}
         - uses: http
+          as: get-commit
           config:
             url: "https://api.github.com/repos/eddiewebb/circleci-samples/commits/${{ outputs['push'].commit }}"
             timeout: 10s
@@ -71,10 +72,6 @@ spec:
             headers:
             - name: Authorization
               value: Bearer ${{ secret('app-jwt').jwt }}
-            - name: Accept
-              value: "application/vnd.github+json"
-            - name: X-GitHub-Api-Version
-              value: "2022-11-28"
             body: |
               ${{ quote({
                 "message":"signing commit"
