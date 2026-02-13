@@ -97,7 +97,7 @@ spec:
                 }) 
               }}
             outputs:
-              - name: commit-sha
+              - name: sha
                 fromExpression: response.body.sha
         # http update reference - -X PATCH repos/<team>/<repo>/git/refs/heads/<branch> -f "sha=<new commit hash>"
         - uses: http
@@ -116,7 +116,7 @@ spec:
             successExpression: response.status == 201
             body: |
               ${{ quote({
-                "sha": outputs['create-commit'].commit-sha
+                "sha": outputs['create-commit'].sha
                 }) }}
         
       vars:
