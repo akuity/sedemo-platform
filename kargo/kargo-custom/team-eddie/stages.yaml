@@ -29,7 +29,7 @@ spec:
         # http update reference - -X PATCH repos/<team>/<repo>/git/refs/heads/<branch> -f "sha=<new commit hash>"
         # delete temp commit
         - uses: git-commit
-          as: commit
+          as: temp-commit
           config:
             path: ${{ vars.path_src }}
             message: "Writecommitfor ${{ ctx.promotion }}"
