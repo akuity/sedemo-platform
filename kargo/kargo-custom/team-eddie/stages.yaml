@@ -87,7 +87,8 @@ spec:
             headers:
             - name: Authorization
               value: "Bearer ${{ outputs['get-token'].token }}"
-            failureExpression: response.status != 200
+            failureExpression: response.status != 201
+            successExpression: response.status == 201
             body: |
               ${{ quote({
                 "message":"signing commit",
@@ -111,7 +112,8 @@ spec:
               value: "application/vnd.github+json"
             - name: X-GitHub-Api-Version
               value: "2022-11-28"
-            failureExpression: response.status != 200
+            failureExpression: response.status != 201
+            successExpression: response.status == 201
             body: |
               ${{ quote({
                 "sha": ${outputs['create-commit'].commit-sha},
