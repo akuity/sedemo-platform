@@ -72,7 +72,7 @@ spec:
             headers:
             - name: Authorization
               value: "Bearer ${{ secret('app-jwt').jwt }}"
-            successExpression: response.status == 200
+            failureExpression: response.status != 404
             body: |
               ${{ quote({
                 "message":"signing commit",
