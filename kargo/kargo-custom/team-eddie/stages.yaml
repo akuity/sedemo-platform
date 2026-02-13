@@ -56,7 +56,7 @@ spec:
                 value: ${{ outputs['push'].commit }}
         - uses: http
           config:
-            url: "${{ outputs['vars'].commitUrl }}"
+            url: "${{ outputs['push'].commit }}"
             timeout: 10s
             outputs:
               - name: tree
