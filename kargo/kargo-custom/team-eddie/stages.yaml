@@ -122,7 +122,7 @@ spec:
           as: delete-temp-branch
           config:
             method: DELETE
-            url: https://api.github.com/repos/eddiewebb/circleci-samples/git/refs/head/temp-${{ ctx.promotion }}
+            url: https://api.github.com/repos/eddiewebb/circleci-samples/git/refs/heads/temp-${{ ctx.promotion }}
             headers:
             - name: Authorization
               value: "Bearer ${{ outputs['get-token'].token }}"
