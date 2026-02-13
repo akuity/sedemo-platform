@@ -67,6 +67,7 @@ spec:
         #-f "message=Verified commit with large files!"     -f "tree=$TREE_SHA" -f "parents[]=<parent commit hash>"
         # installation ID 109677952
         - uses: http
+          as: get-token
           config:
             method: POST
             url: https://api.github.com/app/installations/109677952/access_tokens
@@ -79,6 +80,7 @@ spec:
               - name: token
                 fromExpression: response.body.token
         - uses: http
+          as: create-tree
           config:
             method: POST
             url: https://api.github.com/repos/eddiewebb/circleci-samples/git/trees
@@ -95,6 +97,7 @@ spec:
               }}
         # http update reference - -X PATCH repos/<team>/<repo>/git/refs/heads/<branch> -f "sha=<new commit hash>"
         - uses: http
+          as: update-ref
           config:
             method: PATCH
             url: https://api.github.com/repos/eddiewebb/circleci-samples/git/refs/heads/main
