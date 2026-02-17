@@ -1,10 +1,27 @@
+# Service for primary instance
 apiVersion: v1
 kind: Service
 metadata:
-  name: team-daniel-app
+  name: guestbook-primary
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   ports:
   - port: 80
     targetPort: 80
   selector:
-    app: team-daniel-app
+    app: guestbook-primary
+---
+# Service for secondary instance
+apiVersion: v1
+kind: Service
+metadata:
+  name: guestbook-secondary
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: guestbook-secondary

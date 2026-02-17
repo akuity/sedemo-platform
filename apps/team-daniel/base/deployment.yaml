@@ -1,21 +1,57 @@
+# Primary instance - deploys first (sync-wave 1)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: team-daniel-app
+  name: guestbook-primary
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   replicas: 1
   progressDeadlineSeconds: 8
   revisionHistoryLimit: 1
   selector:
     matchLabels:
-      app: team-daniel-app
+      app: guestbook-primary
   template:
     metadata:
       labels:
-        app: team-daniel-app
+        app: guestbook-primary
+        tier: primary
     spec:
       containers:
       - image: ghcr.io/dhpup/guestbook
         name: guestbook
         ports:
         - containerPort: 80
+        env:
+        - name: INSTANCE
+          value: "primary"
+---
+# Secondary instance - deploys after primary (sync-wave 2)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guestbook-secondary
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  replicas: 1
+  progressDeadlineSeconds: 8
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app: guestbook-secondary
+  template:
+    metadata:
+      labels:
+        app: guestbook-secondary
+        tier: secondary
+    spec:
+      containers:
+      - image: ghcr.io/dhpup/guestbook
+        name: guestbook
+        ports:
+        - containerPort: 80
+        env:
+        - name: INSTANCE
+          value: "secondary"
