@@ -2,6 +2,6 @@ $patch: merge
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: prod-kubernetes-dashboard
+  name: prod-kubernetes-dashboard-web
   annotations:
     argocd.argoproj.io/sync-wave: "2"

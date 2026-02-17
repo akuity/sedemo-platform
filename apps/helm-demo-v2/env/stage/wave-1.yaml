@@ -2,6 +2,6 @@ $patch: merge
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: stage-metrics-server
+  name: stage-kubernetes-dashboard-api
   annotations:
     argocd.argoproj.io/sync-wave: "1"

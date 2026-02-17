@@ -2,30 +2,25 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 helmCharts:
   - name: kubernetes-dashboard
-    repo: https://kubernetes.github.io/dashboard/
+    repo: https://wenerme.github.io/charts
     includeCRDs: true
     valuesFile: values.yaml
-    version: 6.0.7
+    version: 7.14.0
     releaseName: prod
     namespace: kd-prod
 patches:
-  - target:
-      kind: Deployment
-      name: prod-kubernetes-dashboard
-    patch: |
-      $patch: delete
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: DOES NOT MATTER
+  # Sync wave 1: API component deploys first
   - path: wave-1.yaml
     target:
-      name: prod-metrics-server
+      kind: Deployment
+      name: prod-kubernetes-dashboard-api
+  # Sync wave 2: Web UI deploys after API
   - path: wave-2.yaml
     target:
-      name: prod-kubernetes-dashboard
+      kind: Deployment
+      name: prod-kubernetes-dashboard-web
+  # Sync wave 3: Kong gateway deploys last
   - path: wave-3.yaml
     target:
-      name: v1beta1.metrics.k8s.io
-resources:
-  - rollout.yaml
+      kind: Deployment
+      name: prod-kong

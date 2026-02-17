@@ -1,9 +1,10 @@
-metrics-server:
+# Kubernetes Dashboard v7.x values
+app:
+  mode: dashboard
+  security:
+    networkPolicy:
+      enabled: false
+kong:
   enabled: true
-rbac:
-  create: true
-#  clusterReadOnlyRole: false
-extraArgs:
-  - --enable-skip-login
-  - --enable-insecure-login
-  - --namespace=kd-stage
+metrics-scraper:
+  enabled: true
