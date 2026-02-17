@@ -1,0 +1,7 @@
+$patch: merge
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stage-kubernetes-dashboard
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"

@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+helmCharts:
+  - name: kubernetes-dashboard
+    repo: https://kubernetes.github.io/dashboard/
+    includeCRDs: true
+    valuesFile: values.yaml
+    version: 6.0.7
+    releaseName: stage
+    namespace: kd-stage
+patches:
+  - path: wave-1.yaml
+    target:
+      name: stage-metrics-server
+  - path: wave-2.yaml
+    target:
+      name: stage-kubernetes-dashboard
+  - path: wave-3.yaml
+    target:
+      name: v1beta1.metrics.k8s.io

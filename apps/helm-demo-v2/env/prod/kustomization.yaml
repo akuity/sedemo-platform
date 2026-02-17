@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+helmCharts:
+  - name: kubernetes-dashboard
+    repo: https://kubernetes.github.io/dashboard/
+    includeCRDs: true
+    valuesFile: values.yaml
+    version: 6.0.7
+    releaseName: prod
+    namespace: kd-prod
+patches:
+  - target:
+      kind: Deployment
+      name: prod-kubernetes-dashboard
+    patch: |
+      $patch: delete
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: DOES NOT MATTER
+  - path: wave-1.yaml
+    target:
+      name: prod-metrics-server
+  - path: wave-2.yaml
+    target:
+      name: prod-kubernetes-dashboard
+  - path: wave-3.yaml
+    target:
+      name: v1beta1.metrics.k8s.io
+resources:
+  - rollout.yaml

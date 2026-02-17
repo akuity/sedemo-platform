@@ -1,0 +1,91 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: prod-kubernetes-dashboard
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: kubernetes-dashboard
+      app.kubernetes.io/instance: prod
+      app.kubernetes.io/name: kubernetes-dashboard
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: kubernetes-dashboard
+        app.kubernetes.io/instance: prod
+        app.kubernetes.io/name: kubernetes-dashboard
+        app.kubernetes.io/version: v2.7.0
+    spec:
+      containers:
+        - args:
+            - '--namespace=kd-prod'
+            - '--auto-generate-certificates'
+            - '--metrics-provider=none'
+            - '--enable-skip-login'
+            - '--enable-insecure-login'
+            - '--namespace=kd-prod'
+          image: 'kubernetesui/dashboard:v2.6.1'
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8443
+              scheme: HTTPS
+            initialDelaySeconds: 30
+            timeoutSeconds: 30
+          name: kubernetes-dashboard
+          ports:
+            - containerPort: 8443
+              name: https
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 2
+              memory: 200Mi
+            requests:
+              cpu: 100m
+              memory: 200Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsGroup: 2001
+            runAsUser: 1001
+          volumeMounts:
+            - mountPath: /certs
+              name: kubernetes-dashboard-certs
+            - mountPath: /tmp
+              name: tmp-volume
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: prod-kubernetes-dashboard
+      volumes:
+        - name: kubernetes-dashboard-certs
+          secret:
+            secretName: prod-kubernetes-dashboard-certs
+        - emptyDir: {}
+          name: tmp-volume
+  strategy:
+    canary:
+      canaryService: preview-kubernetes-dashboard
+      steps:
+      - setWeight: 50
+      - pause: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: preview-kubernetes-dashboard
+spec:
+  ports:
+    - name: https
+      port: 443
+      targetPort: https
+  selector:
+    app.kubernetes.io/component: kubernetes-dashboard
+    app.kubernetes.io/instance: prod
+    app.kubernetes.io/name: kubernetes-dashboard
+  type: ClusterIP

@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: helm-demo
+  namespace: argocd
+spec:
+  description: Helm Demo V2 - Kubernetes Dashboard deployments
+  sourceRepos:
+  - https://github.com/akuity/sedemo-platform.git
+  - https://kubernetes.github.io/dashboard/
+  destinations:
+  - namespace: kd-*
+    server: '*'
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'

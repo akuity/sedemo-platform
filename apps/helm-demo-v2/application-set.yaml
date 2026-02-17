@@ -1,0 +1,44 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: helm-demo-environments
+  namespace: argocd
+spec:
+  generators:
+  - clusters:
+      selector:
+        matchLabels:
+          dev: 'true'
+      values:
+        path: dev
+  - clusters:
+      selector:
+        matchLabels:
+          stage: 'true'
+      values:
+        path: stage
+  - clusters:
+      selector:
+        matchLabels:
+          prod: 'true'
+      values:
+        path: prod
+  template:
+    metadata:
+      name: 'kd-{{values.path}}-{{name}}'
+      annotations:
+        ad.datadoghq.com/kubernetes-dashboard.logs: '[{"source":"kubernetes-dashboard","service":"kubernetes-dashboard"}]'
+    spec:
+      project: helm-demo
+      source:
+        repoURL: https://github.com/akuity/sedemo-platform.git
+        targetRevision: HEAD
+        path: 'apps/helm-demo-v2/env/{{values.path}}'
+      destination:
+        name: '{{name}}'
+        namespace: 'kd-{{values.path}}'
+      syncPolicy:
+        # automated:
+        #   prune: true
+        syncOptions:
+        - CreateNamespace=true

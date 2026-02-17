@@ -1,0 +1,9 @@
+metrics-server:
+  enabled: true
+rbac:
+  create: true
+#  clusterReadOnlyRole: false
+extraArgs:
+  - --enable-skip-login
+  - --enable-insecure-login
+  - --namespace=kd-dev
