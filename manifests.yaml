@@ -21,7 +21,7 @@ spec:
       - env:
         - name: INSTANCE
           value: primary
-        image: ghcr.io/dhpup/guestbook:0.1.33
+        image: ghcr.io/dhpup/guestbook:0.1.40
         name: guestbook
         ports:
         - containerPort: 80
@@ -49,7 +49,7 @@ spec:
       - env:
         - name: INSTANCE
           value: secondary
-        image: ghcr.io/dhpup/guestbook:0.1.33
+        image: ghcr.io/dhpup/guestbook:0.1.40
         name: guestbook
         ports:
         - containerPort: 80
