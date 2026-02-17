@@ -1,11 +1,29 @@
+# =============================================================================
+# RINGED DEPLOYMENT STRATEGY - team-daniel
+# =============================================================================
+# Pipeline visualization:
+#
+#                                         ┌─→ ring-2-useast ─┐
+#   Warehouse → ring-0-canary → ring-1-early                  ├→ ring-3-global
+#                                         └─→ ring-2-euwest ─┘
+#
+# Ring 0: Canary/Internal - immediate feedback, auto-promoted
+# Ring 1: Early Adopters - ~5% traffic, auto-promoted after verification
+# Ring 2: Regional Expansion - parallel regional rollout, manual approval
+# Ring 3: Global Production - full rollout after all regions verified
+# =============================================================================
+
+---
+# RING 0 - CANARY
+# First line of defense, internal testing, immediate feedback loop
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: test
+  name: ring-0-canary
   namespace: team-daniel
   annotations:
     argocd.argoproj.io/sync-wave: "2"
-    kargo.akuity.io/color: red
+    kargo.akuity.io/color: gray
 spec:
   requestedFreight:
   - origin:
@@ -18,11 +36,22 @@ spec:
       steps:
       - task:
           name: promote-standard
+  verification:
+    analysisTemplates:
+    - name: ring-health-check
+    args:
+    - name: ring
+      value: "0"
+    - name: threshold
+      value: "95"
+
 ---
+# RING 1 - EARLY ADOPTERS
+# Small percentage of production traffic, validates with real users
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: uat
+  name: ring-1-early
   namespace: team-daniel
   annotations:
     argocd.argoproj.io/sync-wave: "2"
@@ -34,7 +63,7 @@ spec:
       name: team-daniel
     sources:
       stages:
-      - test
+      - ring-0-canary
   promotionTemplate:
     spec:
       steps:
@@ -42,19 +71,24 @@ spec:
           name: promote-standard
   verification:
     analysisTemplates:
-    - name: pokemon-xp
+    - name: ring-success-rate
     args:
-    - name: pokemon
-      value: pikachu
+    - name: ring
+      value: "1"
+    - name: min-success-rate
+      value: "99"
+
 ---
+# RING 2 - REGIONAL EXPANSION (US EAST)
+# First regional production deployment
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: prod-useast
+  name: ring-2-useast
   namespace: team-daniel
   annotations:
     argocd.argoproj.io/sync-wave: "2"
-    kargo.akuity.io/color: violet
+    kargo.akuity.io/color: cyan
 spec:
   requestedFreight:
   - origin:
@@ -62,21 +96,30 @@ spec:
       name: team-daniel
     sources:
       stages:
-      - uat
+      - ring-1-early
   promotionTemplate:
     spec:
       steps:
       - task:
-          name: promote-with-pr
+          name: promote-standard
+  verification:
+    analysisTemplates:
+    - name: ring-regional-health
+    args:
+    - name: region
+      value: "us-east"
+
 ---
+# RING 2 - REGIONAL EXPANSION (EU WEST)
+# Parallel regional deployment with US East
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: prod-uswest
+  name: ring-2-euwest
   namespace: team-daniel
   annotations:
     argocd.argoproj.io/sync-wave: "2"
-    kargo.akuity.io/color: violet
+    kargo.akuity.io/color: cyan
 spec:
   requestedFreight:
   - origin:
@@ -84,7 +127,39 @@ spec:
       name: team-daniel
     sources:
       stages:
-      - uat
+      - ring-1-early
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: promote-standard
+  verification:
+    analysisTemplates:
+    - name: ring-regional-health
+    args:
+    - name: region
+      value: "eu-west"
+
+---
+# RING 3 - GLOBAL PRODUCTION
+# Final stage - requires both Ring 2 regions to be verified
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: ring-3-global
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    kargo.akuity.io/color: green
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: team-daniel
+    sources:
+      stages:
+      - ring-2-useast
+      - ring-2-euwest
   promotionTemplate:
     spec:
       steps:

@@ -12,12 +12,20 @@ metadata:
   namespace: team-daniel
 spec:
   promotionPolicies:
+  # Ring 0 & 1: Auto-promote for fast feedback in early rings
   - stageSelector:
-      name: test
+      name: ring-0-canary
     autoPromotionEnabled: true
   - stageSelector:
-      name: uat
+      name: ring-1-early
     autoPromotionEnabled: true
+  # Ring 2+: Manual approval required for production rings
   - stageSelector:
-      name: prod-uswest
-    autoPromotionEnabled: true
+      name: ring-2-useast
+    autoPromotionEnabled: false
+  - stageSelector:
+      name: ring-2-euwest
+    autoPromotionEnabled: false
+  - stageSelector:
+      name: ring-3-global
+    autoPromotionEnabled: false

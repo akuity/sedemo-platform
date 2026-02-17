@@ -1,43 +1,130 @@
-apiVersion: argoproj.io/v1alpha1
-kind: AnalysisTemplate
-metadata:
-  name: team-daniel-verification
-  namespace: team-daniel
-spec:
-  metrics:
-    - name: test
-      provider:
-        job:
-          spec:
-            backoffLimit: 1
-            template:
-              spec:
-                containers:
-                  - command:
-                      - /bin/sh
-                      - -c
-                      - sleep 10 && exit 0
-                    image: alpine:latest
-                    name: test
-                restartPolicy: Never
+# =============================================================================
+# RINGED DEPLOYMENT VERIFICATION TEMPLATES
+# =============================================================================
+# Dummy analysis templates for demonstrating verification gates
+# between deployment rings. In production, these would integrate
+# with real monitoring systems (Prometheus, Datadog, etc.)
+# =============================================================================
+
 ---
-# This is a sample analysis template that uses the PokeAPI to
-# check the base experience of a Pokemon is under threshold.
+# RING 0 - Basic Health Check
+# Verifies the canary deployment is healthy before expanding
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
-  name: pokemon-xp
+  name: ring-health-check
   namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   args:
-  - name: pokemon
+  - name: ring
+  - name: threshold
   metrics:
-  - name: pokemon-xp
+  - name: ring-health
     interval: 5s
-    count: 5
-    successCondition: result < 200
-    failureLimit: 3
+    count: 3
+    successCondition: result >= asInt(args.threshold)
+    failureLimit: 1
     provider:
-      web:
-        url: https://pokeapi.co/api/v2/pokemon/{{args.pokemon}}
-        jsonPath: "{$.base_experience}"
+      job:
+        spec:
+          backoffLimit: 0
+          template:
+            spec:
+              containers:
+              - name: health-check
+                image: alpine:latest
+                command:
+                - /bin/sh
+                - -c
+                - |
+                  echo "Ring {{args.ring}} health check..."
+                  echo "Threshold: {{args.threshold}}%"
+                  sleep 5
+                  # Simulate health score (always passes for demo)
+                  echo "100"
+              restartPolicy: Never
+
+---
+# RING 1 - Success Rate Analysis
+# Validates that early adopter traffic has acceptable success rate
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: ring-success-rate
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  args:
+  - name: ring
+  - name: min-success-rate
+  metrics:
+  - name: success-rate
+    interval: 10s
+    count: 3
+    successCondition: result == "pass"
+    failureLimit: 1
+    provider:
+      job:
+        spec:
+          backoffLimit: 0
+          template:
+            spec:
+              containers:
+              - name: success-rate-check
+                image: alpine:latest
+                command:
+                - /bin/sh
+                - -c
+                - |
+                  echo "Checking success rate for Ring {{args.ring}}..."
+                  echo "Minimum required: {{args.min-success-rate}}%"
+                  sleep 8
+                  # In production: query Prometheus/Datadog for real metrics
+                  # Example: sum(rate(http_requests_total{status=~"2.."}[5m])) / sum(rate(http_requests_total[5m])) * 100
+                  echo "pass"
+              restartPolicy: Never
+
+---
+# RING 2 - Regional Health Verification
+# Ensures regional deployments are stable before global rollout
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: ring-regional-health
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  args:
+  - name: region
+  metrics:
+  - name: regional-health
+    interval: 10s
+    count: 2
+    successCondition: result == "healthy"
+    failureLimit: 1
+    provider:
+      job:
+        spec:
+          backoffLimit: 0
+          template:
+            spec:
+              containers:
+              - name: regional-check
+                image: alpine:latest
+                command:
+                - /bin/sh
+                - -c
+                - |
+                  echo "Verifying regional health for: {{args.region}}"
+                  echo "Checking latency, error rates, and saturation..."
+                  sleep 10
+                  # In production: query region-specific metrics
+                  # - P99 latency < threshold
+                  # - Error rate < 0.1%
+                  # - Pod saturation healthy
+                  echo "healthy"
+              restartPolicy: Never
