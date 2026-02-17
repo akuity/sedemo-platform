@@ -1,21 +1,55 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: team-daniel-app
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  name: guestbook-primary
 spec:
   progressDeadlineSeconds: 8
   replicas: 1
   revisionHistoryLimit: 1
   selector:
     matchLabels:
-      app: team-daniel-app
+      app: guestbook-primary
   template:
     metadata:
       labels:
-        app: team-daniel-app
+        app: guestbook-primary
+        tier: primary
     spec:
       containers:
-      - image: ghcr.io/dhpup/guestbook:0.1.40
+      - env:
+        - name: INSTANCE
+          value: primary
+        image: ghcr.io/dhpup/guestbook:0.1.40
+        name: guestbook
+        ports:
+        - containerPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  name: guestbook-secondary
+spec:
+  progressDeadlineSeconds: 8
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app: guestbook-secondary
+  template:
+    metadata:
+      labels:
+        app: guestbook-secondary
+        tier: secondary
+    spec:
+      containers:
+      - env:
+        - name: INSTANCE
+          value: secondary
+        image: ghcr.io/dhpup/guestbook:0.1.40
         name: guestbook
         ports:
         - containerPort: 80
@@ -23,10 +57,25 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: team-daniel-app
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  name: guestbook-primary
 spec:
   ports:
   - port: 80
     targetPort: 80
   selector:
-    app: team-daniel-app
+    app: guestbook-primary
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  name: guestbook-secondary
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: guestbook-secondary
