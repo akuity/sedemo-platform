@@ -1,14 +1,13 @@
 # =============================================================================
 # RINGED DEPLOYMENT VERIFICATION TEMPLATES
 # =============================================================================
-# Dummy analysis templates for demonstrating verification gates
-# between deployment rings. In production, these would integrate
-# with real monitoring systems (Prometheus, Datadog, etc.)
+# Analysis templates using the PokeAPI for demonstrating verification gates
+# between deployment rings. Each ring uses a different Pokemon to verify.
 # =============================================================================
 
 ---
-# RING 0 - Basic Health Check
-# Verifies the canary deployment is healthy before expanding
+# RING 0 - Canary Health Check (Pikachu)
+# Fast validation for canary deployments
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
@@ -21,34 +20,19 @@ spec:
   - name: ring
   - name: threshold
   metrics:
-  - name: ring-health
+  - name: pokemon-health
     interval: 5s
     count: 3
-    successCondition: result >= asInt(args.threshold)
+    successCondition: result < 120
     failureLimit: 1
     provider:
-      job:
-        spec:
-          backoffLimit: 0
-          template:
-            spec:
-              containers:
-              - name: health-check
-                image: alpine:latest
-                command:
-                - /bin/sh
-                - -c
-                - |
-                  echo "Ring {{args.ring}} health check..."
-                  echo "Threshold: {{args.threshold}}%"
-                  sleep 5
-                  # Simulate health score (always passes for demo)
-                  echo "100"
-              restartPolicy: Never
+      web:
+        url: https://pokeapi.co/api/v2/pokemon/pikachu
+        jsonPath: "{$.base_experience}"
 
 ---
-# RING 1 - Success Rate Analysis
-# Validates that early adopter traffic has acceptable success rate
+# RING 1 - Early Adopter Success Rate (Charizard)
+# Validates early adopter ring is healthy
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
@@ -61,35 +45,19 @@ spec:
   - name: ring
   - name: min-success-rate
   metrics:
-  - name: success-rate
-    interval: 10s
+  - name: pokemon-success
+    interval: 5s
     count: 3
-    successCondition: result == "pass"
+    successCondition: result < 300
     failureLimit: 1
     provider:
-      job:
-        spec:
-          backoffLimit: 0
-          template:
-            spec:
-              containers:
-              - name: success-rate-check
-                image: alpine:latest
-                command:
-                - /bin/sh
-                - -c
-                - |
-                  echo "Checking success rate for Ring {{args.ring}}..."
-                  echo "Minimum required: {{args.min-success-rate}}%"
-                  sleep 8
-                  # In production: query Prometheus/Datadog for real metrics
-                  # Example: sum(rate(http_requests_total{status=~"2.."}[5m])) / sum(rate(http_requests_total[5m])) * 100
-                  echo "pass"
-              restartPolicy: Never
+      web:
+        url: https://pokeapi.co/api/v2/pokemon/charizard
+        jsonPath: "{$.base_experience}"
 
 ---
-# RING 2 - Regional Health Verification
-# Ensures regional deployments are stable before global rollout
+# RING 2 - Regional Health (Bulbasaur)
+# Validates regional deployments before global rollout
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
@@ -101,30 +69,12 @@ spec:
   args:
   - name: region
   metrics:
-  - name: regional-health
-    interval: 10s
-    count: 2
-    successCondition: result == "healthy"
+  - name: pokemon-regional
+    interval: 5s
+    count: 3
+    successCondition: result < 100
     failureLimit: 1
     provider:
-      job:
-        spec:
-          backoffLimit: 0
-          template:
-            spec:
-              containers:
-              - name: regional-check
-                image: alpine:latest
-                command:
-                - /bin/sh
-                - -c
-                - |
-                  echo "Verifying regional health for: {{args.region}}"
-                  echo "Checking latency, error rates, and saturation..."
-                  sleep 10
-                  # In production: query region-specific metrics
-                  # - P99 latency < threshold
-                  # - Error rate < 0.1%
-                  # - Pod saturation healthy
-                  echo "healthy"
-              restartPolicy: Never
+      web:
+        url: https://pokeapi.co/api/v2/pokemon/bulbasaur
+        jsonPath: "{$.base_experience}"
