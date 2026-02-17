@@ -7,10 +7,11 @@ spec:
   generators:
   - list:
       elements:
-      - stage: test
-      - stage: uat
-      - stage: prod-useast
-      - stage: prod-uswest
+      - stage: ring-0-canary
+      - stage: ring-1-early
+      - stage: ring-2-useast
+      - stage: ring-2-euwest
+      - stage: ring-3-global
   template:
     metadata:
       name: team-daniel-{{stage}}
