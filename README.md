@@ -1,16 +1,31 @@
-# Argo Demo - Platform Setup
+# Akuity Demo - Platform Setup
 
 This repo respresents the typical objects under control of a central platform team for organizations using Argo CD and Kargo on the Akuity Platform.
 
+## Just want to run demos?
+
+- [argo.akpdemolinks.app](//argo.akpdemolinks.app)
+- [kargo.akpdemolinks.app](//argo.akpdemolinks.app)
+
+Use SSO sign-in, and if you dont have access, bug [@eddiewebb](//github.com/eddiewebb)
+
+
+
 ## General Access and Change Mangement
+
+This repo contains 3 layers of IaC
+
+- AWS Infrastructure via Terraform
+- K8s Platform Config via Terraform
+- Application Layer Config via Argo CD
 
 ### Access to EKS Cluster
 
-To use this repo, first ensure you have access to AWS Account and roles as described in [Infra Demo - AWS Readme](https://github.com/akuity/sedemo-infra-iac/blob/main/core-env/aws/README.md)
+To make any AWS or EKS level changes you will need access to AWS Account and roles as described in [Infra Demo - AWS Readme](https://github.com/akuity/sedemo-infra-iac/blob/main/core-env/aws/README.md)
 
-### Making changes
+### Making Argo or Kargo demo app changes
 
-Because the new demo environment if fully defined as IaC, you can open pull requests on this repo or infra repo to add or change demos.
+Because this demo environment if fully defined as IaC, you can open pull requests on this repo or infra repo to add or change demos.
 
 ## Directory Structure
 
