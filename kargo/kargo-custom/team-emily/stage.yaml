@@ -149,10 +149,11 @@ spec:
       - uses: gha-dispatch-workflow
         as: dispatch-deployment
         config:
-          credentials:
-            secretName: github-credentials
-          owner: akuity
-          repo: sedemo-platform
+          # credentials:
+          #   secretName: github-credentials
+          # owner: akuity
+          # repo: sedemo-platform
+          repoURL: ${{ vars.gitRepo }}
           workflowFile: delete-branch.yaml
           ref: main
           inputs:
