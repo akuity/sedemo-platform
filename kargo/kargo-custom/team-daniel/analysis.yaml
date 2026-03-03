@@ -48,7 +48,7 @@ spec:
   - name: pokemon-success
     interval: 5s
     count: 3
-    successCondition: result < 300
+    successCondition: result < 200
     failureLimit: 1
     provider:
       web:
