@@ -4,8 +4,8 @@ This repo respresents the typical objects under control of a central platform te
 
 ## Just want to run demos?
 
-- [argo.akpdemolinks.app](//argo.akpdemolinks.app)
-- [kargo.akpdemolinks.app](//argo.akpdemolinks.app)
+- [argo.akpdemoapps.link](//argo.akpdemoapps.link)
+- [kargo.akpdemoapps.link](//kargo.akpdemoapps.link)
 
 Use SSO sign-in, and if you dont have access, bug [@eddiewebb](//github.com/eddiewebb)
 
