@@ -3,7 +3,7 @@ apiVersion: ee.kargo.akuity.io/v1alpha1
 kind: MessageChannel
 metadata:
   name: kargo-notification
-  namespace: demo-rollouts
+  namespace: {{ .Values.application.name }}
 spec:
   # A reference to a Secret containing the Slack token. This is required for Slack. The Secret must
   # contain the following key:
@@ -20,7 +20,7 @@ kind: EventRouter
 apiVersion: ee.kargo.akuity.io/v1alpha1
 metadata:
   name: promotion-status
-  namespace: demo-rollouts
+  namespace: {{ .Values.application.name }}
   annotations:
     argocd.argoproj.io/sync-wave: "1" #after channel
 spec:
