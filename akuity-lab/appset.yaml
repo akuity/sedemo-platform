@@ -35,7 +35,7 @@ spec:
           valueFiles:
           - '$appValues/{{.path.basename}}/platform/values.yaml'
           valuesObject:
-            repoUrl: https://github.com/akuity/sedemo-monorepo.git
+            repoUrl: https://github.com/akuity/sedemo-app-monorepo.git
             project:
               path: '{{.path.basename}}'
               name: 'lab-{{.path.basename}}'
