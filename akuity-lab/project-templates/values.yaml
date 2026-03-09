@@ -8,9 +8,9 @@ application:
   name: template
 
 project:
-  name: templated-name
+  name: akuity-lab
   group: sedemo-team-open
-  path: templated/name
+  path: name
 
 
 kargo:

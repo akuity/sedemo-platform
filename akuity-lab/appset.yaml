@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: templated-team-projects
+  name: akuity-lab-projects
   namespace: argocd
 spec:
   goTemplate: true
@@ -18,7 +18,7 @@ spec:
       - resources-finalizer.argocd.argoproj.io
     spec:
       #project: '{{.path.basename}}'
-      project: templated-apps
+      project: akuity-lab
       sources:
       #pull custom values from team managed monorepo folder
       - repoURL: https://github.com/akuity/sedemo-app-monorepo.git
@@ -31,12 +31,12 @@ spec:
         path: akuity-lab/project-templates/
         helm:
           valueFiles:
-          - '$appValues/templated/{{.path.basename}}/platform/app-values.yaml'
+          - '$appValues/{{.path.basename}}/platform/app-values.yaml'
           valuesObject:
             repoUrl: https://github.com/akuity/sedemo-monorepo.git
             project:
-              path: templated/{{.path.basename}}
-              name: 'templated-{{.path.basename}}'
+              path: {{.path.basename}}
+              name: 'lab-{{.path.basename}}'
             application:
               name: '{{.path.basename}}'
             isStandalone: false
