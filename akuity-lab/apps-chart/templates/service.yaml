@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-stable
+  annotations:
+    prometheus.io/fastscrape: 'true'
+spec:
+  ports:
+  - port: 80
+    targetPort: {{ .Values.image.containerPort }}
+  selector:
+    app: '{{ .Values.application.name }}-app'
+{{- if .Values.rollouts.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-canary
+  annotations:
+    prometheus.io/fastscrape: 'true'
+spec:
+  ports:
+  - port: 80
+    targetPort: {{ .Values.image.containerPort }}
+  selector:
+    app: '{{ .Values.application.name }}-app'
+{{- end }}
