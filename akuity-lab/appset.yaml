@@ -35,7 +35,7 @@ spec:
           valuesObject:
             repoUrl: https://github.com/akuity/sedemo-monorepo.git
             project:
-              path: {{.path.basename}}
+              path: '{{.path.basename}}'
               name: 'lab-{{.path.basename}}'
             application:
               name: '{{.path.basename}}'
