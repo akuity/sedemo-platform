@@ -10,6 +10,8 @@ spec:
     - git:
         repoURL: https://github.com/akuity/sedemo-app-monorepo
         revision: main
+        directories:
+        - path: '*'
   template:
     metadata:
       name: '{{.path.basename}}-appsets'
