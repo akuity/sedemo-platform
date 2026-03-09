@@ -31,7 +31,7 @@ spec:
         path: akuity-lab/project-templates/
         helm:
           valueFiles:
-          - '$appValues/{{.path.basename}}/platform/app-values.yaml'
+          - '$appValues/{{.path.basename}}/platform/values.yaml'
           valuesObject:
             repoUrl: https://github.com/akuity/sedemo-monorepo.git
             project:
