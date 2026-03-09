@@ -40,7 +40,7 @@ spec:
               path: '{{.path.basename}}'
               name: 'lab-{{.path.basename}}'
             application:
-              name: '{{.path.basename}}'
+              name: 'lab-{{.path.basename}}'
             isStandalone: false
       destination:
         name: in-cluster
