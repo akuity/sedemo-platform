@@ -161,10 +161,11 @@ spec:
           timeout: 120
       - uses: gha-wait-for-workflow
         config:
-          credentials:
-            secretName: github-credentials
-          owner: akuity
-          repo: sedemo-platform
+          # credentials:
+          #   secretName: github-credentials
+          # owner: akuity
+          # repo: sedemo-platform
+          repoURL: ${{ vars.gitRepo }}
           runID: "${{ outputs['dispatch-deployment'].runID }}"
           expectedConclusion: success
       - uses: jira
