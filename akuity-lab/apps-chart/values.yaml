@@ -1,0 +1,34 @@
+
+
+replicaCount: 2
+
+# This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
+image:
+  repository: ghcr.io/akuity/sedemo-app-monorepo
+  # This sets the pull policy for images.
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: 14-blue
+  containerPort: 8080
+  memoryLimit: 28Mi
+  cpuLimit: 1m
+
+kargo:
+  stage: dev
+
+ingress:
+  root_domain: akpdemoapps.link
+  custom_prefix: eddie
+
+
+rollouts:
+  enabled: true
+
+environments:
+  staging: true
+
+
+services:
+  s3: 
+    enabled: false
+    bucketName: template-dev-bucket

@@ -1,0 +1,38 @@
+
+
+
+replicaCount: 2
+
+# this will be used to template namespaced resources, matches the path within monorepo. 
+application:
+  name: template
+
+project:
+  name: akuity-lab
+  group: sedemo-team-open
+  path: name
+
+
+kargo:
+  # this will be overridden per environment by kargo promo steps.
+  stage: dev
+
+git:
+    main: main
+    outPath: out
+    srcPth: src
+
+# Some level of control exposed to app teams on how they want apps exposed to internet
+ingress:
+  root_domain: akpdemoapps.link
+  custom_prefix: example
+
+
+rollouts:
+  enabled: true
+
+environments:
+  dev: true
+  staging: true
+  prod: true
+
