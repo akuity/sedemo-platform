@@ -18,7 +18,7 @@ spec:
     path: akuity-lab/kargo-chart/
     helm:
       valueFiles:
-      - '$appValues/{{.Values.project.path}}/platform/app-values.yaml'
+      - '$appValues/{{.Values.project.path}}/platform/values.yaml'
       valuesObject:
         chartUrl: https://github.com/akuity/sedemo-platform
         chartPath: akuity-lab/apps-chart/

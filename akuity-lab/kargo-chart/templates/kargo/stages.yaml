@@ -65,7 +65,7 @@ spec:
           releaseName: deploy
           path: ./chart/{{ .Values.chartPath}}
           valuesFiles:
-          - ./src/{{.Values.project.path}}/platform/app-values.yaml
+          - ./src/{{.Values.project.path}}/platform/values.yaml
           outPath: ./out/manifests.yaml
           namespace: '{{ .Values.application.name }}-dev'
           setValues:
@@ -148,7 +148,7 @@ spec:
           releaseName: deploy
           path: ./chart/{{ .Values.chartPath}}
           valuesFiles:
-          - ./src/{{.Values.project.path}}/platform/app-values.yaml
+          - ./src/{{.Values.project.path}}/platform/values.yaml
           outPath: ./out/manifests.yaml
           namespace: '{{ .Values.application.name }}-staging'
           setValues:
@@ -235,7 +235,7 @@ spec:
           releaseName: deploy
           path: ./chart/{{ .Values.chartPath}}
           valuesFiles:
-          - ./src/{{.Values.project.path}}/platform/app-values.yaml
+          - ./src/{{.Values.project.path}}/platform/values.yaml
           outPath: ./out/manifests.yaml
           namespace: '{{ .Values.application.name }}-prod'
           setValues:
