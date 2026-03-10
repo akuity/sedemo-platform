@@ -135,7 +135,7 @@ spec:
         config:
           repoURL: {{ .Values.repoUrl }}
           checkout:
-          - branch: {{ .Values.application.name }}-dev
+          - branch: env/{{ .Values.application.name }}-dev
             path: ./manifests
       - uses: yaml-update
         config:
