@@ -2,8 +2,6 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: '{{.Values.application.name}}-kargo'
-  labels:
-    akuity-lab: "true"
   namespace: argocd
   finalizers:
   - resources-finalizer.argocd.argoproj.io
