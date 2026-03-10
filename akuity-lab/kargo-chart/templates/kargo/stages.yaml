@@ -163,6 +163,7 @@ spec:
             - key: application.name
               value: '{{ .Values.application.name }}'
       - uses: jira
+        continueOnError: true
         as: find-open-promotions
         config:
           credentials:
@@ -189,7 +190,7 @@ spec:
             - "release-{{ .Values.application.name }}-${% imageFrom(vars.imageRepo).Tag %}"
       - uses: jira
         as: create-change-ticket
-        if: '${% status("find-open-promotions") == "Failed" %}'
+        if: '${% status("find-open-promotions") == "Errored" %}'
         config:
           credentials:
             sharedSecretName: jira-access-secret
@@ -223,7 +224,7 @@ spec:
             - "${% ctx.stage %}-promotion"
             - "release-{{ .Values.application.name }}-${% imageFrom(vars.imageRepo).Tag %}"
       - uses: compose-output
-        if: '${% status("find-open-promotions") == "Failed" %}'
+        if: '${% status("find-open-promotions") == "Errored" %}'
         config:
           url: https://eddiewebb.atlassian.net/jira/servicedesk/projects/CHANGE/queues/custom/21/${% outputs['create-change-ticket'].key %}
       - uses: compose-output
