@@ -224,22 +224,16 @@ spec:
             - "${% ctx.stage %}-promotion"
             - "release-{{ .Values.application.name }}-${% imageFrom('{{.Values.image.repository }}').Tag %}"
       - uses: compose-output
-        if: '${% status("find-open-promotions") == "Errored" %}'
         config:
-          url: https://eddiewebb.atlassian.net/jira/servicedesk/projects/CHANGE/queues/custom/21/${% outputs['create-change-ticket'].key %}
-      - uses: compose-output
-        if: '${% status("find-open-promotions") == "Succeeded" %}'
-        config:
-          url: https://eddiewebb.atlassian.net/jira/servicedesk/projects/CHANGE/queues/custom/21/${% outputs['find-open-promotions'].key %}
-      
-    
+          url: https://eddiewebb.atlassian.net/jira/servicedesk/projects/CHANGE/queues/custom/21/${% outputs['create-change-ticket'] != nil ? outputs['create-change-ticket'].key : outputs['find-open-promotions'].key %}
+     
       - uses: jira
         as: wait-for-approval
         config:
           credentials:
             sharedSecretName: jira-access-secret
           waitForStatus:
-            issueKey: "${% outputs['create-change-ticket']  ? outputs['create-change-ticket'].key : outputs['find-open-promotions'].key %}"
+            issueKey: "${% outputs['create-change-ticket'] != nil ? outputs['create-change-ticket'].key : outputs['find-open-promotions'].key %}"
             expectedStatus: "APPROVED"
     
       - uses: git-commit
