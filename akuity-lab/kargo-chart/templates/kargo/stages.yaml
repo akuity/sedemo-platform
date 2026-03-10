@@ -187,9 +187,6 @@ spec:
             sharedSecretName: jira-access-secret
           updateIssue:
             issueKey: "${% outputs['find-open-promotions'].key %}"
-            description: |
-              ${% outputs['find-open-promotions'].description %}
-              - Application: {{ .Values.application.name }} to ${% imageFrom('{{.Values.image.repository }}').Tag %}
             addLabels:
             - "release-{{ .Values.application.name }}-${% imageFrom('{{.Values.image.repository }}').Tag %}"
       - uses: jira
@@ -202,7 +199,7 @@ spec:
             projectKey: CHANGE
             summary: "Promote latest to ${% ctx.stage %}"
             description: |
-              - "Application: {{ .Values.application.name }} to ${% imageFrom('{{.Values.image.repository }}').Tag %} "
+              "See labels for all affected services."
             issueType: task
             #customFields:
               #customfield_11301: Standard
@@ -211,6 +208,14 @@ spec:
             - promotion
             - "${% ctx.stage %}-promotion"
             - "release-{{ .Values.application.name }}-${% imageFrom('{{.Values.image.repository }}').Tag %}"
+      - uses: jira
+        as: add-version-comment
+        config:
+          credentials:
+            sharedSecretName: jira-access-secret
+          commentOnIssue:
+            issueKey: "${% outputs['create-change-ticket'] != nil ? outputs['create-change-ticket'].key : outputs['find-open-promotions'].key %}"
+            body: "Include {{ .Values.application.name }} @ ${% imageFrom('{{.Values.image.repository }}').Tag %}"
       - uses: compose-output
         config:
           url: "https://eddiewebb.atlassian.net/jira/servicedesk/projects/CHANGE/queues/custom/21/${% outputs['create-change-ticket'] != nil ? outputs['create-change-ticket'].key : outputs['find-open-promotions'].key %}"
