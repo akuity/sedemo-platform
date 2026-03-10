@@ -95,7 +95,7 @@ spec:
       - uses: compose-output
         as: pr-link
         config:
-          url: ${% sharedSecret('gh-repo-creds').password %}
+          url: ${% sharedSecret('eddies-pat').pat %}
       - uses: http
         as: update-ref
         config:
@@ -103,7 +103,7 @@ spec:
           url: https://api.github.com/repos/akuity/sedemo-app-monorepo/git/refs
           headers:
           - name: Authorization
-            value: "Bearer ${% sharedSecret('gh-repo-creds').password %}"
+            value: "Bearer ${% sharedSecret('eddies-pat').pat %}"
           - name: Accept
             value: "application/vnd.github+json"
           - name: X-GitHub-Api-Version
