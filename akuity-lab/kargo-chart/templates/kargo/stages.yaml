@@ -173,6 +173,7 @@ spec:
             expectMultiple: false
             fields:
             - summary
+            - description
             - status
             - assignee
             - created
@@ -186,6 +187,9 @@ spec:
             sharedSecretName: jira-access-secret
           updateIssue:
             issueKey: "${% outputs['find-open-promotions'].key %}"
+            description: |
+              ${% outputs['find-open-promotions'].description %}
+              - Application: {{ .Values.application.name }} to ${% imageFrom('{{.Values.image.repository }}').Tag %}
             addLabels:
             - "release-{{ .Values.application.name }}-${% imageFrom('{{.Values.image.repository }}').Tag %}"
       - uses: jira
@@ -197,24 +201,8 @@ spec:
           createIssue:
             projectKey: CHANGE
             summary: "Promote ${% imageFrom('{{.Values.image.repository }}').Tag %} to ${% ctx.stage %}"
-            adfDescription:
-              type: doc
-              version: 1
-              content:
-              - type: heading
-                attrs:
-                  level: 3
-                content:
-                - type: text
-                  text: "Promotion: ${% ctx.stage %}"
-              - type: bulletList
-                content:
-                - type: listItem   
-                  content:
-                  - type: paragraph
-                    content:
-                    - type: text               
-                      text: "Application: {{ .Values.application.name }} to ${% imageFrom('{{.Values.image.repository }}').Tag %}"
+            description: |
+              - Application: {{ .Values.application.name }} to ${% imageFrom('{{.Values.image.repository }}').Tag %}
             issueType: task
             #customFields:
               #customfield_11301: Standard
