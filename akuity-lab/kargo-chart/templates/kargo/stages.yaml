@@ -200,7 +200,7 @@ spec:
             sharedSecretName: jira-access-secret
           createIssue:
             projectKey: CHANGE
-            summary: "Promote ${% imageFrom('{{.Values.image.repository }}').Tag %} to ${% ctx.stage %}"
+            summary: "Promote latest to ${% ctx.stage %}"
             adfDescription:
               type: doc
               version: 1
