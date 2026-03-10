@@ -201,8 +201,16 @@ spec:
           createIssue:
             projectKey: CHANGE
             summary: "Promote ${% imageFrom('{{.Values.image.repository }}').Tag %} to ${% ctx.stage %}"
-            description: |
-              - Application: {{ .Values.application.name }} to ${% imageFrom('{{.Values.image.repository }}').Tag %}
+            adfDescription:
+              type: doc
+              version: 1
+              content:
+              - type: bulletList
+                content:
+                - type: listItem
+                  content:
+                  - type: paragraph
+                    text: "Application: {{ .Values.application.name }} to ${% imageFrom('{{.Values.image.repository }}').Tag %} "
             issueType: task
             #customFields:
               #customfield_11301: Standard
