@@ -109,7 +109,7 @@ spec:
           body: |
             {{ quote({
               "ref": printf("refs/tags/%s-%s", .Values.application.name,  `imageFrom(.Values.image.repository).Tag` ),
-              "sha": ${% outputs['commit'].sha %}
+              "sha": outputs['commit'].sha 
             }) }}
       - uses: argocd-update
         continueOnError: true
