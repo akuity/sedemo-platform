@@ -97,7 +97,7 @@ spec:
         config:
           url: |
             ${% quote({
-              "ref": "refs/tags/{{.Values.application.name}}-" + imageFrom(.Values.image.repository).Tag,
+              "ref": "refs/tags/{{.Values.application.name}}-" ,
               "sha": outputs['commit'].sha 
             }) %}
       - uses: http
