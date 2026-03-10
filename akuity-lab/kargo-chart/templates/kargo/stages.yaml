@@ -209,8 +209,10 @@ spec:
                 content:
                 - type: listItem
                   content:
-                  - type: text
-                    text: "Application: {{ .Values.application.name }} to ${% imageFrom('{{.Values.image.repository }}').Tag %} "
+                  - type: paragraph
+                    content:
+                    - type: text
+                      text: "Application: {{ .Values.application.name }} to ${% imageFrom('{{.Values.image.repository }}').Tag %} "
             issueType: task
             #customFields:
               #customfield_11301: Standard
