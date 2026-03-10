@@ -95,7 +95,11 @@ spec:
       - uses: compose-output
         as: pr-link
         config:
-          url: ${% sharedSecret('eddies-pat').pat %}
+          url: |
+            quote({
+              "ref": "refs/tags/{{.Values.application.name}}-" + imageFrom(.Values.image.repository).Tag,
+              "sha": outputs['commit'].sha 
+            })
       - uses: http
         as: update-ref
         config:
