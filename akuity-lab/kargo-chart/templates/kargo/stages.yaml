@@ -169,7 +169,7 @@ spec:
           credentials:
             sharedSecretName: jira-access-secret
           searchIssue:
-            jql: 'project = CHANGE AND status != "Done" AND labels = "${% ctx.stage %}-promotion" AND created >= -7d'
+            jql: 'project = CHANGE AND status in ("Open") AND labels = "${% ctx.stage %}-promotion" AND created >= -7d'
             expectMultiple: false
             fields:
             - summary
