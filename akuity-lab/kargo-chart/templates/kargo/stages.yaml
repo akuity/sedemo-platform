@@ -98,7 +98,7 @@ spec:
           url: |
             ${% quote({
               "ref": "refs/tags/{{.Values.application.name}}-" + imageFrom('{{.Values.image.repository}}').Tag,
-              "sha": outputs['commit'].commit 
+              "sha": outputs['clone-app-team-values'].commits['./src']
             }) %}
       - uses: http
         as: create-tag
