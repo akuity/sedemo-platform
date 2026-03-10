@@ -70,7 +70,7 @@ spec:
           namespace: '{{ .Values.application.name }}-dev'
           setValues:
             - key: image.tag
-              value: "\"{{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}\""
+              value: "\"{{ printf "${% imageFrom('%s').Tag %}" .Values.image.repository }}\""
             - key: kargo.stage
               value: dev
             - key: ingress.root_domain
@@ -87,7 +87,7 @@ spec:
         as: commit
         config:
           path: ./out
-          message: "Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }} to dev [skip ci]"
+          message: "Promote {{ printf "${% imageFrom('%s').Tag %}" .Values.image.repository }} to dev [skip ci]"
       - uses: git-push
         config:
           path: ./out
@@ -153,7 +153,7 @@ spec:
           namespace: '{{ .Values.application.name }}-staging'
           setValues:
             - key: image.tag
-              value: "\"{{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}\""
+              value: "\"{{ printf "${% imageFrom('%s').Tag %}" .Values.image.repository }}\""
             - key: kargo.stage
               value: staging
             - key: ingress.root_domain
@@ -168,7 +168,7 @@ spec:
           credentials:
             sharedSecretName: jira-access-secret
           searchIssue:
-            jql: 'project = CHANGE AND status != "Done" AND labels = "{{`${{ ctx.stage }}`}}-promotion" AND created >= -7d'
+            jql: 'project = CHANGE AND status != "Done" AND labels = "${% ctx.stage %}-promotion" AND created >= -7d'
             expectMultiple: false
             fields:
             - summary
@@ -179,23 +179,23 @@ spec:
             - changelog 
       - uses: jira
         as: update-promotion-ticket
-        if: '{{`${{ if outputs["find-open-promotions"].issue }}`}}'
+        if: '${% if outputs["find-open-promotions"].issue %}'
         config:
           credentials:
             sharedSecretName: jira-access-secret
           updateIssue:
-            issueKey: "${{ outputs['find-open-promotions'].issue.key }}"
+            issueKey: "${% outputs['find-open-promotions'].issue.key }}"
             addLabels:
-            - "release-{{ .Values.application.name }}-${{ imageFrom(vars.imageRepo).Tag }}"
+            - "release-{{ .Values.application.name }}-${% imageFrom(vars.imageRepo).Tag %}"
       - uses: jira
         as: create-change-ticket
-        if: '{{ if outputs["find-open-promotions"].issue }}false{{ else }}true{{ end }}'
+        if: '${% if not outputs["find-open-promotions"].issue %}'
         config:
           credentials:
             sharedSecretName: jira-access-secret
           createIssue:
             projectKey: CHANGE
-            summary: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }}"
+            summary: "Promote ${% imageFrom(vars.imageRepo).Tag %} to ${% ctx.stage %}"
             adfDescription:
               type: doc
               version: 1
@@ -205,7 +205,7 @@ spec:
                   level: 3
                 content:
                 - type: text
-                  text: "Promotion: ${{ ctx.stage }}"
+                  text: "Promotion: ${% ctx.stage %}"
               - type: bulletList
                 content:
                 - type: listItem   
@@ -220,18 +220,18 @@ spec:
               #customfield_10800: Request a change
             labels:
             - promotion
-            - "${{ ctx.stage }}-promotion"
-            - "release-{{ .Values.application.name }}-${{ imageFrom(vars.imageRepo).Tag }}"
+            - "${% ctx.stage %}-promotion"
+            - "release-{{ .Values.application.name }}-${% imageFrom(vars.imageRepo).Tag %}"
       - uses: compose-output
         if: '${% if not outputs["find-open-promotions"].issue %}'
         as: jira-link
         config:
-          url: https://eddiewebb.atlassian.net/jira/servicedesk/projects/CHANGE/queues/custom/21/${{ outputs['create-change-ticket'].key }}
+          url: https://eddiewebb.atlassian.net/jira/servicedesk/projects/CHANGE/queues/custom/21/${% outputs['create-change-ticket'].key %}
       - uses: compose-output
         if: '${% if outputs["find-open-promotions"].issue %}'
         as: jira-link
         config:
-          url: https://eddiewebb.atlassian.net/jira/servicedesk/projects/CHANGE/queues/custom/21/${{ outputs['find-open-promotion'].issue.key }}
+          url: https://eddiewebb.atlassian.net/jira/servicedesk/projects/CHANGE/queues/custom/21/${% outputs['find-open-promotion'].issue.key %}
       
     
       - uses: jira
@@ -240,14 +240,14 @@ spec:
           credentials:
             sharedSecretName: jira-access-secret
           waitForStatus:
-            issueKey: "${{ outputs['create-change-ticket'].key }}"
+            issueKey: "${% outputs['create-change-ticket'].key %}"
             expectedStatus: "APPROVED"
     
       - uses: git-commit
         as: commit
         config:
           path: ./out
-          message: "Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }} to staging [skip ci]"
+          message: "Promote {{ printf "${% imageFrom('%s').Tag %}" .Values.image.repository }} to staging [skip ci]"
       - uses: git-push
         config:
           path: ./out
