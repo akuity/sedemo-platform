@@ -70,7 +70,7 @@ spec:
           namespace: '{{ .Values.application.name }}-dev'
           setValues:
             - key: image.tag
-              value: "\"{{ printf "${% imageFrom('%s').Tag %}" .Values.image.repository }}\""
+              value: "${% imageFrom('{{.Values.image.repository }}').Tag %}" 
             - key: kargo.stage
               value: dev
             - key: ingress.root_domain
