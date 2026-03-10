@@ -97,7 +97,7 @@ spec:
         config:
           url: |
             ${% quote({
-              "ref": "refs/tags/{{.Values.application.name}}-" + imageFrom({{.Values.image.repository}}).Tag,
+              "ref": "refs/tags/{{.Values.application.name}}-" + imageFrom('{{.Values.image.repository}}').Tag,
               "sha": outputs['commit'].commit 
             }) %}
       - uses: http
@@ -116,7 +116,7 @@ spec:
           successExpression: response.status == 200
           body: |
             ${% quote({
-              "ref": "refs/tags/{{.Values.application.name}}-" + imageFrom({{.Values.image.repository}}).Tag,
+              "ref": "refs/tags/{{.Values.application.name}}-" + imageFrom('{{.Values.image.repository}}').Tag,
               "sha": outputs['commit'].commit 
             }) %}
       - uses: argocd-update
