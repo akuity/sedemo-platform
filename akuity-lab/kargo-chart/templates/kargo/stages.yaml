@@ -187,7 +187,7 @@ spec:
           updateIssue:
             issueKey: "${% outputs['find-open-promotions'].issue.key }}"
             addLabels:
-            - "release-{{ .Values.application.name }}-${% imageFrom(vars.imageRepo).Tag %}"
+            - "release-{{ .Values.application.name }}-${% imageFrom('{{.Values.image.repository }}').Tag %}"
       - uses: jira
         as: create-change-ticket
         if: '${% status("find-open-promotions") == "Errored" %}'
@@ -196,7 +196,7 @@ spec:
             sharedSecretName: jira-access-secret
           createIssue:
             projectKey: CHANGE
-            summary: "Promote ${% imageFrom(vars.imageRepo).Tag %} to ${% ctx.stage %}"
+            summary: "Promote ${% imageFrom('{{.Values.image.repository }}').Tag %} to ${% ctx.stage %}"
             adfDescription:
               type: doc
               version: 1
@@ -214,7 +214,7 @@ spec:
                   - type: paragraph
                     content:
                     - type: text               
-                      text: "Application: {{ .Values.application.name }} to ${% imageFrom(vars.imageRepo).Tag %}"
+                      text: "Application: {{ .Values.application.name }} to ${% imageFrom('{{.Values.image.repository }}').Tag %}"
             issueType: task
             #customFields:
               #customfield_11301: Standard
@@ -222,7 +222,7 @@ spec:
             labels:
             - promotion
             - "${% ctx.stage %}-promotion"
-            - "release-{{ .Values.application.name }}-${% imageFrom(vars.imageRepo).Tag %}"
+            - "release-{{ .Values.application.name }}-${% imageFrom('{{.Values.image.repository }}').Tag %}"
       - uses: compose-output
         if: '${% status("find-open-promotions") == "Errored" %}'
         config:
