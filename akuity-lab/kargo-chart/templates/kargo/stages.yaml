@@ -126,14 +126,14 @@ spec:
       - uses: git-clone
         as: clone-combined-manifest
         config:
-          repoURL: {{ .Values.chartUrl }}
+          repoURL: {{ .Values.repoUrl }}
           checkout:
           - branch: combined-staging
             path: ./bom
       - uses: git-clone
         as: clone-app-manifests
         config:
-          repoURL: {{ .Values.chartUrl }}
+          repoURL: {{ .Values.repoUrl }}
           checkout:
           - branch: {{ .Values.application.name }}-dev
             path: ./manifests
