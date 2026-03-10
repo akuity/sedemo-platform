@@ -10,7 +10,13 @@ metadata:
   labels:
     akuity-labs: "true"
   annotations:
+
+  {{ if (eq $key "dev") }}
     kargo.akuity.io/authorized-stage: '{{$.Values.application.name}}:{{$key}}'
+  {{else}}
+    kargo.akuity.io/authorized-stage: 'release-manager:{{$key}}'
+  {{ end }}
+    
 spec:
   project: '{{$.Values.project.name}}'
   source:
