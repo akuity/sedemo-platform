@@ -179,7 +179,7 @@ spec:
             - changelog 
       - uses: jira
         as: update-promotion-ticket
-        if: '{{ if outputs["find-open-promotions"].issue }}true{{ else }}false{{ end }}'
+        if: '{{`${{ if outputs["find-open-promotions"].issue }}`}}'
         config:
           credentials:
             sharedSecretName: jira-access-secret
@@ -223,12 +223,12 @@ spec:
             - "${{ ctx.stage }}-promotion"
             - "release-{{ .Values.application.name }}-${{ imageFrom(vars.imageRepo).Tag }}"
       - uses: compose-output
-        if: '{{ if outputs["find-open-promotions"].issue }}false{{ else }}true{{ end }}'
+        if: '${% if not outputs["find-open-promotions"].issue %}'
         as: jira-link
         config:
           url: https://eddiewebb.atlassian.net/jira/servicedesk/projects/CHANGE/queues/custom/21/${{ outputs['create-change-ticket'].key }}
       - uses: compose-output
-        if: '{{ if outputs["find-open-promotions"].issue }}true{{ else }}false{{ end }}'
+        if: '${% if outputs["find-open-promotions"].issue %}'
         as: jira-link
         config:
           url: https://eddiewebb.atlassian.net/jira/servicedesk/projects/CHANGE/queues/custom/21/${{ outputs['find-open-promotion'].issue.key }}
