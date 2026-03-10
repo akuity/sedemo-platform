@@ -92,25 +92,6 @@ spec:
         config:
           path: ./out
           targetBranch: env/{{ .Values.application.name }}-dev
-      - uses: http
-        as: update-ref
-        config:
-          method: PATCH
-          url: https://api.github.com/repos/akuity/sedemo-app-monorepo/git/refs
-          headers:
-          - name: Authorization
-            value: "Bearer ${% sharedSecret('gh-repo-creds') %}"
-          - name: Accept
-            value: "application/vnd.github+json"
-          - name: X-GitHub-Api-Version
-            value: "2022-11-28"
-          failureExpression: response.status != 200
-          successExpression: response.status == 200
-          body: |
-            {
-              "ref": "refs/tags/{{ .Values.application.name }}-${% imageFrom('{{.Values.image.repository}}').Tag %}",
-              "sha": ${% outputs['create-commit'].sha %}
-            }
       - uses: argocd-update
         continueOnError: true
         config:
