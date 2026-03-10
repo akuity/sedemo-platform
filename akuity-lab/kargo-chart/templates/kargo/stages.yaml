@@ -96,10 +96,10 @@ spec:
         as: pr-link
         config:
           url: |
-            quote({
+            ${% quote({
               "ref": "refs/tags/{{.Values.application.name}}-" + imageFrom(.Values.image.repository).Tag,
               "sha": outputs['commit'].sha 
-            })
+            }) %}
       - uses: http
         as: update-ref
         config:
