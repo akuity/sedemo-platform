@@ -95,7 +95,7 @@ spec:
       - uses: http
         as: update-ref
         config:
-          method: PATCH
+          method: POST
           url: https://api.github.com/repos/akuity/sedemo-app-monorepo/git/refs
           headers:
           - name: Authorization
