@@ -153,7 +153,7 @@ spec:
           namespace: '{{ .Values.application.name }}-staging'
           setValues:
             - key: image.tag
-              value: "\"{{ printf "${% imageFrom('%s').Tag %}" .Values.image.repository }}\""
+              value: "${% imageFrom('{{.Values.image.repository}}').Tag %}"
             - key: kargo.stage
               value: staging
             - key: ingress.root_domain
