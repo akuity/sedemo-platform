@@ -185,7 +185,7 @@ spec:
           credentials:
             sharedSecretName: jira-access-secret
           updateIssue:
-            issueKey: "${% outputs['find-open-promotions'].issue.key %}"
+            issueKey: "${% outputs['find-open-promotions'].issues.key %}"
             addLabels:
             - "release-{{ .Values.application.name }}-${% imageFrom('{{.Values.image.repository }}').Tag %}"
       - uses: jira
