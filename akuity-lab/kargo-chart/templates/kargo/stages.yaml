@@ -213,7 +213,7 @@ spec:
                   - type: paragraph
                     content:
                     - type: text               
-                      text: "Application: {{ .Values.application.name }} to {{ imageFrom(vars.imageRepo).Tag }}"
+                      text: "Application: {{ .Values.application.name }} to ${% imageFrom(vars.imageRepo).Tag %}"
             issueType: task
             #customFields:
               #customfield_11301: Standard
