@@ -228,7 +228,7 @@ spec:
         as: commit
         config:
           path: ./out
-          message: "Promote {{ printf "${% imageFrom('%s').Tag %}" .Values.image.repository }} to staging [skip ci]"
+          message: "Promote ${% imageFrom('{{.Values.image.repository}}').Tag %} to staging for ${% outputs['create-change-ticket'] != nil ? outputs['create-change-ticket'].key : outputs['find-open-promotions'].key %} "
       - uses: git-push
         config:
           path: ./out
