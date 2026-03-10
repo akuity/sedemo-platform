@@ -109,7 +109,7 @@ spec:
           body: |
             {
               "ref": "refs/tags/{{ .Values.application.name }}-${% imageFrom('{{.Values.image.repository}}').Tag %}",
-              "sha": ${% outputs['create-commit'].sha %}
+              "sha": ${% outputs['commit'].sha %}
             }
       - uses: argocd-update
         continueOnError: true
