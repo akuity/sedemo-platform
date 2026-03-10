@@ -141,7 +141,7 @@ spec:
         config:
           path: ./bom/bom.yaml
           updates:
-          - key: {{ .Values.application.name }}
+          - key: images.{{ .Values.application.name }}
             value: {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}
       - uses: copy
         config:
