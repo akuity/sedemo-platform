@@ -239,7 +239,7 @@ spec:
           credentials:
             sharedSecretName: jira-access-secret
           waitForStatus:
-            issueKey: "${% outputs['create-change-ticket'].key %}"
+            issueKey: "${% outputs['create-change-ticket'].key || outputs['find-open-promotions'].key %}"
             expectedStatus: "APPROVED"
     
       - uses: git-commit
