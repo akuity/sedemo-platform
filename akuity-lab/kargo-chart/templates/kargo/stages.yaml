@@ -99,7 +99,7 @@ spec:
           url: https://api.github.com/repos/akuity/sedemo-app-monorepo/git/refs
           headers:
           - name: Authorization
-            value: "Bearer ${% sharedSecret('gh-repo-creds') %}"
+            value: "Bearer ${% sharedSecret('gh-repo-creds').password %}"
           - name: Accept
             value: "application/vnd.github+json"
           - name: X-GitHub-Api-Version
