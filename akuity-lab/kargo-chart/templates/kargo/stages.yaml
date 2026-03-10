@@ -201,7 +201,7 @@ spec:
           createIssue:
             projectKey: CHANGE
             summary: "Promote latest to ${% ctx.stage %}"
-            description:
+            description: |
               - "Application: {{ .Values.application.name }} to ${% imageFrom('{{.Values.image.repository }}').Tag %} "
             issueType: task
             #customFields:
