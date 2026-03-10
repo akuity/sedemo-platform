@@ -101,7 +101,7 @@ spec:
               "sha": outputs['commit'].commit 
             }) %}
       - uses: http
-        as: update-ref
+        as: create-tag
         continueOnError: true
         config:
           method: POST
