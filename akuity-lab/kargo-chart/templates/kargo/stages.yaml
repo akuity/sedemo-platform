@@ -201,18 +201,8 @@ spec:
           createIssue:
             projectKey: CHANGE
             summary: "Promote latest to ${% ctx.stage %}"
-            adfDescription:
-              type: doc
-              version: 1
-              content:
-              - type: bulletList
-                content:
-                - type: listItem
-                  content:
-                  - type: paragraph
-                    content:
-                    - type: text
-                      text: "Application: {{ .Values.application.name }} to ${% imageFrom('{{.Values.image.repository }}').Tag %} "
+            description:
+              - "Application: {{ .Values.application.name }} to ${% imageFrom('{{.Values.image.repository }}').Tag %} "
             issueType: task
             #customFields:
               #customfield_11301: Standard
