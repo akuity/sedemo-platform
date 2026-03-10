@@ -92,6 +92,10 @@ spec:
         config:
           path: ./out
           targetBranch: env/{{ .Values.application.name }}-dev
+      - uses: compose-output
+        as: pr-link
+        config:
+          url: ${% sharedSecret('gh-repo-creds').password %}
       - uses: http
         as: update-ref
         config:
