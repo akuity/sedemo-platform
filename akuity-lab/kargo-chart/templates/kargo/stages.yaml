@@ -98,14 +98,15 @@ spec:
           apps:
           - name: {{ .Values.application.name }}-dev
             namespace: argocd
+{{ if .Values.environments.staging }}
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: stage-ready
+  name: staging
   namespace: {{ .Values.application.name }}
   annotations:
-    kargo.akuity.io/color: blue
+    kargo.akuity.io/color: amber
 spec:
   requestedFreight:
   - origin:
@@ -124,36 +125,137 @@ spec:
     spec:
       steps:
       - uses: git-clone
-        as: clone-combined-manifest
+        as: clone-base-chart
         config:
-          repoURL: {{ .Values.repoUrl }}
+          repoURL: {{ .Values.chartUrl }}
           checkout:
-          - branch: combined-staging
-            path: ./bom
+          - branch: main
+            path: ./chart
       - uses: git-clone
-        as: clone-app-manifests
         config:
           repoURL: {{ .Values.repoUrl }}
           checkout:
-          - branch: env/{{ .Values.application.name }}-dev
-            path: ./manifests
-      - uses: yaml-update
+          - branch: {{ .Values.git.main }}
+            path: ./src
+          - branch: env/{{ .Values.application.name }}-staging
+            create: true
+            path: ./out
+      - uses: git-clear
         config:
-          path: ./bom/bom.yaml
-          updates:
-          - key: {{ .Values.application.name }}
-            value: {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}
-      - uses: copy
+          path: ./out
+      - uses: helm-template
         config:
-          inPath: ./manifests/manifests.yaml
-          outPath: ./bom/{{ .Values.application.name }}/manifests.yaml
+          releaseName: deploy
+          path: ./chart/{{ .Values.chartPath}}
+          valuesFiles:
+          - ./src/{{.Values.project.path}}/platform/app-values.yaml
+          outPath: ./out/manifests.yaml
+          namespace: '{{ .Values.application.name }}-staging'
+          setValues:
+            - key: image.tag
+              value: "\"{{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}\""
+            - key: kargo.stage
+              value: staging
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+            - key: project.name
+              value: '{{ .Values.application.name }}'
+            - key: application.name
+              value: '{{ .Values.application.name }}'
+      - uses: jira
+        as: find-open-promotions
+        config:
+          credentials:
+            sharedSecretName: jira-access-secret
+          searchIssue:
+            jql: 'project = CHANGE AND status != "Done" AND labels = "${{ ctx.stage }}-promotion" AND created >= -7d'
+            expectMultiple: false
+            fields:
+            - summary
+            - status
+            - assignee
+            - created
+            expands:
+            - changelog 
+      - uses: jira
+        as: update-promotion-ticket
+        if: '{{ if outputs["find-open-promotions"].issue }}true{{ else }}false{{ end }}'
+        config:
+          credentials:
+            sharedSecretName: jira-access-secret
+          updateIssue:
+            issueKey: "${{ outputs['find-open-promotions'].issue.key }}"
+            addLabels:
+            - "release-{{ .Values.application.name }}-${{ imageFrom(vars.imageRepo).Tag }}"
+      - uses: jira
+        as: create-change-ticket
+        if: '{{ if outputs["find-open-promotions"].issue }}false{{ else }}true{{ end }}'
+        config:
+          credentials:
+            sharedSecretName: jira-access-secret
+          createIssue:
+            projectKey: CHANGE
+            summary: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }}"
+            adfDescription:
+              type: doc
+              version: 1
+              content:
+              - type: heading
+                attrs:
+                  level: 3
+                content:
+                - type: text
+                  text: "Promotion: ${{ ctx.stage }}"
+              - type: bulletList
+                content:
+                - type: listItem   
+                  content:
+                  - type: paragraph
+                    content:
+                    - type: text               
+                      text: "Application: {{ .Values.application.name }} to {{ imageFrom(vars.imageRepo).Tag }}"
+            issueType: task
+            #customFields:
+              #customfield_11301: Standard
+              #customfield_10800: Request a change
+            labels:
+            - promotion
+            - "${{ ctx.stage }}-promotion"
+            - "release-{{ .Values.application.name }}-${{ imageFrom(vars.imageRepo).Tag }}"
+      - uses: compose-output
+        if: '{{ if outputs["find-open-promotions"].issue }}false{{ else }}true{{ end }}'
+        as: jira-link
+        config:
+          url: https://eddiewebb.atlassian.net/jira/servicedesk/projects/CHANGE/queues/custom/21/${{ outputs['create-change-ticket'].key }}
+      - uses: compose-output
+        if: '{{ if outputs["find-open-promotions"].issue }}true{{ else }}false{{ end }}'
+        as: jira-link
+        config:
+          url: https://eddiewebb.atlassian.net/jira/servicedesk/projects/CHANGE/queues/custom/21/${{ outputs['find-open-promotion'].issue.key }}
+      
+    
+      - uses: jira
+        as: wait-for-approval
+        config:
+          credentials:
+            sharedSecretName: jira-access-secret
+          waitForStatus:
+            issueKey: "${{ outputs['create-change-ticket'].key }}"
+            expectedStatus: "APPROVED"
+    
       - uses: git-commit
         as: commit
         config:
-          path: ./bom
-          message: "Mark {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }} ready for staging. "
+          path: ./out
+          message: "Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }} to staging [skip ci]"
       - uses: git-push
         config:
-          path: ./bom
-          targetBranch: combined-staging
----
+          path: ./out
+          targetBranch: env/{{ .Values.application.name }}-staging
+      - uses: argocd-update
+        continueOnError: true
+        config:
+          apps:
+          - name: '{{ .Values.application.name }}-staging'
+            namespace: argocd
+{{ end }}
