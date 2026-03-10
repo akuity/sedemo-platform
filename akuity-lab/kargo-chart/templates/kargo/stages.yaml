@@ -170,7 +170,7 @@ spec:
             sharedSecretName: jira-access-secret
           searchIssue:
             jql: 'project = CHANGE AND status != "Done" AND labels = "${% ctx.stage %}-promotion" AND created >= -7d'
-            expectMultiple: false
+            expectMultiple: true
             fields:
             - summary
             - status
@@ -185,7 +185,7 @@ spec:
           credentials:
             sharedSecretName: jira-access-secret
           updateIssue:
-            issueKey: "${% outputs['find-open-promotions'].issues.key %}"
+            issueKey: "${% outputs['find-open-promotions'].issue.key %}"
             addLabels:
             - "release-{{ .Values.application.name }}-${% imageFrom('{{.Values.image.repository }}').Tag %}"
       - uses: jira
@@ -230,7 +230,7 @@ spec:
       - uses: compose-output
         if: '${% status("find-open-promotions") == "Succeeded" %}'
         config:
-          url: https://eddiewebb.atlassian.net/jira/servicedesk/projects/CHANGE/queues/custom/21/${% outputs['find-open-promotion'].issue.key %}
+          url: https://eddiewebb.atlassian.net/jira/servicedesk/projects/CHANGE/queues/custom/21/${% outputs['find-open-promotions'].issue.key %}
       
     
       - uses: jira
