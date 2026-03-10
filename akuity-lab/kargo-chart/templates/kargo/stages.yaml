@@ -112,8 +112,8 @@ spec:
             value: "application/vnd.github+json"
           - name: X-GitHub-Api-Version
             value: "2022-11-28"
-          failureExpression: response.status != 200
-          successExpression: response.status == 200
+          failureExpression: response.status != 201
+          successExpression: response.status == 201
           body: |
             ${% quote({
               "ref": "refs/tags/{{.Values.application.name}}-" + imageFrom('{{.Values.image.repository}}').Tag,
