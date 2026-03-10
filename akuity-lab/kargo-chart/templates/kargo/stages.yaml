@@ -108,9 +108,10 @@ spec:
           successExpression: response.status == 200
           body: |
             ${{ quote({
-              "ref": "refs/tags/{{ .Values.application.name }}-" + imageFrom('{{.Values.image.repository}}').Tag ,
+              "ref": printf("refs/tags/%s/%s", .Values.application.name, 'imageFrom('{{.Values.image.repository}}').Tag'),
               "sha": outputs['create-commit'].sha
-              }) }}
+              }) 
+            }}
       - uses: argocd-update
         continueOnError: true
         config:
