@@ -92,6 +92,25 @@ spec:
         config:
           path: ./out
           targetBranch: env/{{ .Values.application.name }}-dev
+      - uses: http
+        as: update-ref
+        config:
+          method: PATCH
+          url: https://api.github.com/repos/akuity/sedemo-app-monorepo/git/refs
+          headers:
+          - name: Authorization
+            value: "Bearer ${{ sharedSecret('gh-repo-creds') }}"
+          - name: Accept
+            value: "application/vnd.github+json"
+          - name: X-GitHub-Api-Version
+            value: "2022-11-28"
+          failureExpression: response.status != 200
+          successExpression: response.status == 200
+          body: |
+            ${{ quote({
+              "ref": "refs/tags/{{ .Values.application.name }}-${% imageFrom('{{.Values.image.repository}}').Tag %}",
+              "sha": outputs['create-commit'].sha
+              }) }}
       - uses: argocd-update
         continueOnError: true
         config:
@@ -128,32 +147,30 @@ spec:
         config:
           repoURL: {{ .Values.repoUrl }}
           checkout:
-          - branch: combined-staging
+          - branch: gateway
             path: ./bom
-      - uses: git-clone
-        as: clone-app-manifests
-        config:
-          repoURL: {{ .Values.repoUrl }}
-          checkout:
-          - branch: env/{{ .Values.application.name }}-dev
-            path: ./manifests
       - uses: yaml-update
         config:
           path: ./bom/bom.yaml
           updates:
           - key: images.{{ .Values.application.name }}
             value: {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}
-      - uses: copy
-        config:
-          inPath: ./manifests/manifests.yaml
-          outPath: ./bom/{{ .Values.application.name }}/manifests.yaml
       - uses: git-commit
         as: commit
         config:
           path: ./bom
-          message: "Mark {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }} ready for staging. "
+          message: "Mark {{ .Values.application.name }}-{{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }} ready for staging. "
       - uses: git-push
         config:
           path: ./bom
-          targetBranch: combined-staging
+          targetBranch: gateway
+
+
+          curl -L \
+  -X POST \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer <YOUR-TOKEN>" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  https://api.github.com/repos/OWNER/REPO/git/refs \
+  -d '{"ref":"refs/heads/featureA","sha":"aa218f56b14c9653891f9e74264a383fa43fefbd"}'
 ---
