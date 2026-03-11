@@ -1,0 +1,337 @@
+
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: release-manager
+  namespace: release-manager
+spec:
+  promotionPolicies:
+  - stageSelector:
+      name: tag-freight
+    autoPromotionEnabled: true
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  creationTimestamp: 2026-03-10T16:52:21Z
+  generation: 1
+  name: gateway
+  namespace: release-manager
+spec:
+  freightCreationPolicy: Automatic
+  interval: 5m0s
+  subscriptions:
+    - git:
+        branch: gateway
+        commitSelectionStrategy: NewestFromBranch
+        discoveryLimit: 20
+        repoURL: https://github.com/akuity/sedemo-app-monorepo
+        strictSemvers: true
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: tag-freight
+  namespace: release-manager
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: gateway
+      sources:
+        direct: true
+  promotionTemplate:
+    spec:
+      steps:
+      - uses: git-clone
+        as: clone-combined-manifest
+        config:
+          repoURL: https://github.com/akuity/sedemo-app-monorepo
+          checkout:
+          - branch: gateway
+            path: ./bom
+      - uses: yaml-parse
+        as: values
+        config:
+          path: './bom/bom.yaml'
+          outputs:
+          - name: imageTag
+            fromExpression: images
+      - uses: set-metadata
+        config:
+          updates:
+            - kind: Freight
+              name: "${% ctx.targetFreight.name %}"
+              values:
+                lab-frontend: ${% outputs['values'].imageTag['lab-frontend'] %}
+                lab-backend: ${% outputs['values'].imageTag['lab-backend'] %}
+                lab-guestbook: ${% outputs['values'].imageTag['lab-guestbook'] %}
+---
+
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: staging
+  namespace: release-manager
+  annotations:
+    kargo.akuity.io/color: amber
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: gateway
+    sources:
+      stages:
+      - tag-freight
+  promotionTemplate:
+    spec:
+      steps:
+      - uses: git-clone
+        as: clone-base-chart
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          checkout:
+          - branch: main
+            path: ./chart
+      - uses: git-clone
+        config:
+          repoURL: https://github.com/akuity/sedemo-app-monorepo
+          checkout:
+          - branch: gateway
+            path: ./bom
+          - branch: env/staging
+            path: ./out
+            create: true
+      - uses: git-clear
+        config:
+          path: ./out
+      - uses: yaml-parse
+        as: values
+        config:
+          path: './bom/bom.yaml'
+          outputs:
+          - name: imageTag
+            fromExpression: images
+          
+      - uses: git-clone
+        config:
+          repoURL: https://github.com/akuity/sedemo-app-monorepo
+          checkout:
+          - tag: lab-frontend-${% outputs['values'].imageTag['lab-frontend'] %}
+            path: ./lab-frontend
+          - tag: lab-backend-${% outputs['values'].imageTag['lab-backend'] %}
+            path: ./lab-backend
+          - tag: lab-guestbook-${% outputs['values'].imageTag['lab-guestbook'] %}
+            path: ./lab-guestbook
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ./chart/akuity-lab/apps-chart
+          valuesFiles:
+          - ./lab-frontend/frontend/platform/values.yaml
+          outPath: ./out/lab-frontend/manifests.yaml
+          namespace: 'lab-frontend-staging'
+          setValues:
+            - key: image.tag
+              value: "${% outputs['values'].imageTag['lab-frontend'] %}"
+            - key: kargo.stage
+              value: staging
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+            - key: project.name
+              value: 'lab-frontend'
+            - key: application.name
+              value: 'lab-frontend'
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ./chart/akuity-lab/apps-chart
+          valuesFiles:
+          - ./lab-backend/backend/platform/values.yaml
+          outPath: ./out/lab-backend/manifests.yaml
+          namespace: 'lab-backend-staging'
+          setValues:
+            - key: image.tag
+              value: "${% outputs['values'].imageTag['lab-backend'] %}"
+            - key: kargo.stage
+              value: staging
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+            - key: project.name
+              value: 'lab-backend'
+            - key: application.name
+              value: 'lab-backend'
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ./chart/akuity-lab/apps-chart
+          valuesFiles:
+          - ./lab-guestbook/guestbook/platform/values.yaml
+          outPath: ./out/lab-guestbook/manifests.yaml
+          namespace: 'lab-guestbook-staging'
+          setValues:
+            - key: image.tag
+              value: "${% outputs['values'].imageTag['lab-guestbook'] %}"
+            - key: kargo.stage
+              value: staging
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+            - key: project.name
+              value: 'lab-guestbook'
+            - key: application.name
+              value: 'lab-guestbook'
+      
+      - uses: git-commit
+        as: commit
+        config:
+          path: ./out
+          message: "Promote to staging"
+      - uses: git-push
+        config:
+          path: ./out
+          targetBranch: env/staging
+      - uses: argocd-update
+        config:
+          apps:
+          - selector:
+              matchLabels:
+                akuity-labs: "true"
+
+
+
+
+
+---
+
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod
+  namespace: release-manager
+  annotations:
+    kargo.akuity.io/color: blue
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: gateway
+    sources:
+      stages:
+      - staging
+  promotionTemplate:
+    spec:
+      steps:
+      - uses: git-clone
+        as: clone-base-chart
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          checkout:
+          - branch: main
+            path: ./chart
+      - uses: git-clone
+        config:
+          repoURL: https://github.com/akuity/sedemo-app-monorepo
+          checkout:
+          - branch: gateway
+            path: ./bom
+          - branch: env/prod
+            path: ./out
+            create: true
+      - uses: git-clear
+        config:
+          path: ./out
+      - uses: yaml-parse
+        as: values
+        config:
+          path: './bom/bom.yaml'
+          outputs:
+          - name: imageTag
+            fromExpression: images
+          
+      - uses: git-clone
+        config:
+          repoURL: https://github.com/akuity/sedemo-app-monorepo
+          checkout:
+          - tag: lab-frontend-${% outputs['values'].imageTag['lab-frontend'] %}
+            path: ./lab-frontend
+          - tag: lab-backend-${% outputs['values'].imageTag['lab-backend'] %}
+            path: ./lab-backend
+          - tag: lab-guestbook-${% outputs['values'].imageTag['lab-guestbook'] %}
+            path: ./lab-guestbook
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ./chart/akuity-lab/apps-chart
+          valuesFiles:
+          - ./lab-frontend/frontend/platform/values.yaml
+          outPath: ./out/lab-frontend/manifests.yaml
+          namespace: 'lab-frontend-prod'
+          setValues:
+            - key: image.tag
+              value: "${% outputs['values'].imageTag['lab-frontend'] %}"
+            - key: kargo.stage
+              value: prod
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+            - key: project.name
+              value: 'lab-frontend'
+            - key: application.name
+              value: 'lab-frontend'
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ./chart/akuity-lab/apps-chart
+          valuesFiles:
+          - ./lab-backend/backend/platform/values.yaml
+          outPath: ./out/lab-backend/manifests.yaml
+          namespace: 'lab-backend-prod'
+          setValues:
+            - key: image.tag
+              value: "${% outputs['values'].imageTag['lab-backend'] %}"
+            - key: kargo.stage
+              value: prod
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+            - key: project.name
+              value: 'lab-backend'
+            - key: application.name
+              value: 'lab-backend'
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ./chart/akuity-lab/apps-chart
+          valuesFiles:
+          - ./lab-guestbook/guestbook/platform/values.yaml
+          outPath: ./out/lab-guestbook/manifests.yaml
+          namespace: 'lab-guestbook-prod'
+          setValues:
+            - key: image.tag
+              value: "${% outputs['values'].imageTag['lab-guestbook'] %}"
+            - key: kargo.stage
+              value: prod
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+            - key: project.name
+              value: 'lab-guestbook'
+            - key: application.name
+              value: 'lab-guestbook'
+      
+      - uses: git-commit
+        as: commit
+        config:
+          path: ./out
+          message: "Promote to prod"
+      - uses: git-push
+        config:
+          path: ./out
+          targetBranch: env/prod
+      - uses: argocd-update
+        config:
+          apps:
+          - selector:
+              matchLabels:
+                akuity-labs: "true"
+
+
+
+
