@@ -59,6 +59,10 @@ spec:
             value: "{{ .Values.application.name }}"
           - name: TF_VAR_stage
             value: dev
+          - name: AWS_ACCESS_KEY_ID
+            value: ${{ sharedSecret('kargo-terraform-steps').AWS_ACCESS_KEY_ID }}
+          - name: AWS_SECRET_ACCESS_KEY
+            value: ${{ sharedSecret('kargo-terraform-steps').AWS_SECRET_ACCESS_KEY }}
       {{ end }}
       - uses: helm-template
         config:
