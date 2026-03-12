@@ -55,9 +55,9 @@ spec:
           env:
           - name: AWS_REGION
             value: us-west-2
-          - key: TF_VAR_app_name
+          - name: TF_VAR_app_name
             value: {{ .Values.application.name }}
-          - key: TF_VAR_stage
+          - name: TF_VAR_stage
             value: dev
       {{ end }}
       - uses: helm-template
