@@ -39,7 +39,7 @@ spec:
           valuesFiles:
           - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests.yaml
-          namespace: demo-dev
+          namespace: snow-demo-dev
           setValues:
             - key: image.tag
               value: ${{ imageFrom(vars.imageRepo).Tag }}
@@ -94,7 +94,7 @@ spec:
           valuesFiles:
           - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests.yaml
-          namespace: demo-staging
+          namespace: snow-demo-staging
           setValues:
             - key: image.tag
               value: ${{ imageFrom(vars.imageRepo).Tag }}
@@ -152,7 +152,7 @@ spec:
           valuesFiles:
           - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
-          namespace: demo-prod-amer-east
+          namespace: snow-demo-prod-amer-east
           setValues:
             - key: image.tag
               value: ${{ imageFrom(vars.imageRepo).Tag }}
@@ -170,7 +170,7 @@ spec:
           valuesFiles:
           - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
-          namespace: demo-prod-amer-west
+          namespace: snow-demo-prod-amer-west
           setValues:
             - key: image.tag
               value: ${{ imageFrom(vars.imageRepo).Tag }}
@@ -188,7 +188,7 @@ spec:
           valuesFiles:
           - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
-          namespace: demo-prod-emea
+          namespace: snow-demo-prod-emea
           setValues:
             - key: image.tag
               value: ${{ imageFrom(vars.imageRepo).Tag }}
