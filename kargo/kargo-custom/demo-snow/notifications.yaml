@@ -19,7 +19,7 @@ kind: EventRouter
 apiVersion: ee.kargo.akuity.io/v1alpha1
 metadata:
   name: promotion-status
-  namespace: kargo-system-resources
+  namespace: demo-snow
   annotations:
     argocd.argoproj.io/sync-wave: "1" #after channel
 spec:
@@ -31,3 +31,4 @@ spec:
   channels:
     - name: kargo-notification
       kind: ClusterMessageChannel
+
