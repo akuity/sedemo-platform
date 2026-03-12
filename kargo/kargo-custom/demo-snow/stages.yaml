@@ -104,11 +104,6 @@ spec:
               value: akpdemoapps.link
       - task:
           name: push-manifests
-        vars:
-        - name: asPR
-          value: "true"
-        - name: targetBranch
-          value: env-snow-demo/staging
       - uses: argocd-update
         continueOnError: true
         config:
