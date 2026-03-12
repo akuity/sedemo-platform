@@ -1,8 +1,8 @@
 apiVersion: ee.kargo.akuity.io/v1alpha1
-kind: MessageChannel
+kind: ClusterMessageChannel
 metadata:
   name: kargo-notification
-  namespace: demo-snow
+  namespace: kargo-system-resources
 spec:
   # A reference to a Secret containing the Slack token. This is required for Slack. The Secret must
   # contain the following key:
@@ -19,7 +19,7 @@ kind: EventRouter
 apiVersion: ee.kargo.akuity.io/v1alpha1
 metadata:
   name: promotion-status
-  namespace: demo-snow
+  namespace: kargo-system-resources
   annotations:
     argocd.argoproj.io/sync-wave: "1" #after channel
 spec:
@@ -30,4 +30,4 @@ spec:
     - PromotionCreated
   channels:
     - name: kargo-notification
-      kind: MessageChannel
+      kind: ClusterMessageChannel
