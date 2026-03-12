@@ -63,6 +63,10 @@ spec:
             value: ${% sharedSecret('kargo-terraform-steps').AWS_ACCESS_KEY_ID %}
           - name: AWS_SECRET_ACCESS_KEY
             value: ${% sharedSecret('kargo-terraform-steps').AWS_SECRET_ACCESS_KEY %}
+      
+      - uses: git-clear
+        config:
+          path: ./chart/{{ .Values.chartPath}}/terraform/.terraform
       {{ end }}
       - uses: helm-template
         config:
