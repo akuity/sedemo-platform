@@ -51,12 +51,12 @@ spec:
       {{if .Values.services.s3.enabled }}
       - uses: tf-apply
         config:
-          dir: ./chart/terraform
+          dir: ./chart/{{ .Values.chartPath}}/terraform
           env:
           - name: AWS_REGION
             value: us-west-2
           - name: TF_VAR_app_name
-            value: {{ .Values.application.name }}
+            value: "{{ .Values.application.name }}"
           - name: TF_VAR_stage
             value: dev
       {{ end }}
