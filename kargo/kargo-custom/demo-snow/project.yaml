@@ -1,0 +1,17 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: demo-snow
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: demo-snow
+  namespace: demo-snow
+spec:
+  promotionPolicies:
+  - stageSelector:
+      name: "regex:prod.*"
+    autoPromotionEnabled: true

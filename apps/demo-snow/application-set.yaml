@@ -23,14 +23,13 @@ spec:
               - service: sedemo
                 recipients: [argo-notifications]
     spec:
-      project: rollouts
       source:
         repoURL: https://github.com/akuity/sedemo-monorepo
-        targetRevision: env-rollouts/{{stage}}
+        targetRevision: env-snow-demo/{{stage}}
         path: .
       destination:
         name: sedemo-primary
-        namespace: demo-{{stage}}
+        namespace: snow-demo-{{stage}}
       syncPolicy:
         automated:
           prune: true
