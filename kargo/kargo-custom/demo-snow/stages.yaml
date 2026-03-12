@@ -207,86 +207,39 @@ spec:
           name: push-manifests
         as: push-manifests
 
-      - uses: jira
-        as: create-change-ticket
+
+      - as: snowcreate
         config:
           credentials:
-            sharedSecretName: jira-access-secret
-          createIssue:
-            projectKey: CHANGE
-            summary: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }}"
-            adfDescription:
-              type: doc
-              version: 1
-              content:
-              - type: heading
-                attrs:
-                  level: 3
-                content:
-                - type: text
-                  text: "Promotion: ${{ ctx.stage }},  "
-                - type: text
-                  text: "${{ imageFrom(vars.imageRepo).Tag }}"
-                  marks:
-                  - type: code
-              - type: paragraph
-                content:
-                - type: text
-                  text: "Promotion ID: "
-                  marks:
-                  - type: strong
-                - type: text
-                  text: ${{ ctx.promotion }}
-                  marks:
-                  - type: link
-                    attrs:
-                      href: "https://kargo.akpdemoapps.link/project/demo-snow/promotion/${{ ctx.promotion }}"
-              - type: paragraph
-                content:
-                - type: text
-                  text: "Freight ID: "
-                  marks:
-                  - type: strong
-                - type: text
-                  text: ${{ ctx.targetFreight.name }}
-                  marks:
-                  - type: link
-                    attrs:
-                      href: "https://kargo.akpdemoapps.link/project/demo-snow/freight/${{ ctx.targetFreight.name }}"
-              - type: paragraph
-                content:
-                - type: text
-                  text: "Proposed Manifests Commit: "
-                  marks:
-                  - type: strong
-                - type: text
-                  text: "${{ outputs['push-manifests'].commit }}"
-                  marks:
-                  - type: link
-                    attrs:
-                      href: "${{ outputs['push-manifests'].url }}"
-            issueType: task
-            #customFields:
-              #customfield_11301: Standard
-              #customfield_10800: Request a change
-            labels:
-            - promotion
-            - "${{ ctx.stage }}"
-            - "release-${{ imageFrom(vars.imageRepo).Tag }}"
-      - uses: compose-output
-        as: jira-link
+            sharedSecretName: kargo-step-snow
+            type: api-token
+          parameters:
+            impact: "3"
+            short_description: Deploy to ${{ ctx.stage }} complete for ${{ vars.imageRepo
+              }}:${{ imageFrom(vars.imageRepo).Tag }}
+            urgency: "3"
+            implementaton_plan: "See https://kargo.akpdemoapps.link/project/demo-snow/promotion/${{ ctx.promotion }}"
+          tableName: change_request
+          template:
+            #templateId: 8d3380da83273210b6207e95eeaad33e # example
+            type: normal
+        uses: snow-create
+
+      - as: snow-wait-for-condition
         config:
-          url: https://eddiewebb.atlassian.net/jira/servicedesk/projects/CHANGE/queues/custom/21/${{ outputs['create-change-ticket'].key }}
-      
-    
-      - uses: jira
-        as: wait-for-approval
-        config:
+          condition: state=-1
           credentials:
-            sharedSecretName: jira-access-secret
-          waitForStatus:
-            issueKey: "${{ outputs['create-change-ticket'].key }}"
-            expectedStatus: "APPROVED"
+            sharedSecretName: kargo-step-snow
+            type: api-token
+          tableName: change_request
+          ticketId: ${% outputs['snowcreate'].sys_id %}
+        uses: snow-wait-for-condition
+
+
+
+
+
+
     
 
 ---
