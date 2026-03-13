@@ -23,7 +23,7 @@ spec:
         repoURL: https://github.com/akuity/sedemo-monorepo
         helm:
           valueFiles:
-          - "/beyond-k8s/env/{{path.basename}}/k8s/values.yaml"
+          - "/beyond-k8s/env/{{stage}}/k8s/values.yaml"
       destination:
         name: sedemo-primary
         namespace: beyond-k8s-{{stage}}
