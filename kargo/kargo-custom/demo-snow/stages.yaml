@@ -19,7 +19,7 @@ spec:
   #       kind: ClusterAnalysisTemplate
   verification:
     analysisTemplates:
-    - name: e2e-verification
+    - name: prometheus-verification
   promotionTemplate:
     spec:
       vars:
@@ -78,7 +78,7 @@ spec:
       - dev
   verification:
     analysisTemplates:
-    - name: prometheus-verification
+    - name: e2e-verification
   promotionTemplate:
     spec:
       vars:
