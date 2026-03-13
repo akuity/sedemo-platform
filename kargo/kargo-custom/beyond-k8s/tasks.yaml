@@ -1,0 +1,114 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: prepare-workdir
+  namespace: beyond-k8s
+spec:
+  # Task-wide input variables
+  vars:
+  - name: gitRepo
+  - name: sourceBranch
+    value: main
+  - name: targetBranch
+    value: env/${{ ctx.stage }}
+  - name: path_src
+    value: ./src
+  - name: path_out
+    value: ./out
+  # Sequence of promotion steps
+  steps:
+    - uses: git-clone
+      config:
+        repoURL: ${{ vars.gitRepo }}
+        checkout:
+        - branch: ${{ vars.sourceBranch }}
+          path: ${{ vars.path_src }}
+        - branch: ${{ vars.targetBranch }}
+          create: true
+          path: ${{ vars.path_out }}
+    - uses: git-clear
+      config:
+        path: ${{ vars.path_out }}
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: push-manifests
+  namespace: beyond-k8s
+spec:
+  # Task-wide input variables
+  vars:
+  - name: gitRepo
+  - name: sourceBranch
+    value: main
+  - name: targetBranch
+    value: env/${{ ctx.stage }}
+  - name: path_src
+    value: ./src
+  - name: path_out
+    value: ./out
+  - name: asPR
+    value: "false"
+  # Sequence of promotion steps
+  steps:
+    - uses: git-commit
+      as: commit
+      config:
+        path: ${{ vars.path_out }}
+        message: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
+    - uses: git-push
+      as: push
+      if: ${{ vars.asPR != "true" }}
+      config:
+        path: ${{ vars.path_out }}
+        targetBranch: ${{ vars.targetBranch }}
+    - uses: git-push
+      as: pr-push
+      if: ${{ vars.asPR == "true" }}
+      config:
+        path: ${{ vars.path_out }}
+        generateTargetBranch: true
+    - uses: compose-output
+      as: output
+      if: ${{ vars.asPR != "true" }}
+      config:
+        commit: ${{ task.outputs['push'].commit }}
+        branch: ${{ task.outputs['push'].branch }}
+        url: ${{ task.outputs['push'].commitURL }}
+    - uses: git-open-pr
+      as: open-pr
+      if: ${{ vars.asPR == "true" }}
+      config:
+        repoURL: ${{ vars.gitRepo }}
+        createTargetBranch: true
+        sourceBranch: ${{ task.outputs['pr-push'].branch }}
+        targetBranch: ${{ vars.targetBranch }}
+    - uses: send-message
+      if: ${{ vars.asPR == "true" }}
+      config:
+        channel:
+          kind: MessageChannel
+          name: kargo-notification
+        message: |
+          blocks:
+            - type: section
+              text:
+                type: mrkdwn
+                text: "*Kargo Approval Needed* :eyes:"
+            - type: section
+              fields:
+                - type: mrkdwn
+                  text: "*Stage:* ${{ ctx.stage }}"
+                - type: mrkdwn
+                  text: "*Version:* ${{ imageFrom(vars.imageRepo).Tag }}"
+                - type: mrkdwn
+                  text: "*Pull Request:* <${{ task.outputs['open-pr'].pr.url }}|#${{ task.outputs['open-pr'].pr.id }}>"
+          icon_emoji: ":rocket:"
+          title: "Kargo Promotion Approval Needed"
+        encodingType: yaml
+    - uses: git-wait-for-pr
+      as: wait-for-pr
+      if: ${{ vars.asPR == "true" }}
+      config:
+        repoURL: ${{ vars.gitRepo }}
+        prNumber: ${{ task.outputs['open-pr'].pr.id }}
