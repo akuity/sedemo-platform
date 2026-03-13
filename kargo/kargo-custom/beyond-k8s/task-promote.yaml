@@ -10,7 +10,7 @@ spec:
   - name: image
     value: ghcr.io/akuity/guestbook
   - name: lambda
-    value: 541216676946.dkr.ecr.us-west-2.amazonaws.com/kargo-dev/test-app
+    value: ghcr.io/akuity/sedemo-monorepo-beyond-k8s-lambda
 
   steps:
   - uses: git-clone
