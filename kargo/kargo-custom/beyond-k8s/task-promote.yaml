@@ -91,15 +91,4 @@ spec:
       apps:
       - name: ${{ vars.argocdApp }}
 
-  - if: ${{ always() }}
-    uses: send-message
-    config:
-      channel:
-        kind: MessageChannel
-        name: slack
-      message: |
-        Kargo promotion to ${{ ctx.stage }} ${{ success() ? 'succeeded' : 'failed' }}
-
-        Guestbook Image: ${{ vars.image }}:${{ imageFrom(vars.image).Tag }}
-        Lambda: ${{ vars.lambda }}:${{ imageFrom(vars.lambda).Tag }}
-        Policy.json: revision ${{ commitFrom( vars.repoURL ).ID }}
+ 
