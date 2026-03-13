@@ -5,111 +5,74 @@ metadata:
   namespace: beyond-k8s
   annotations:
     kargo.akuity.io/color: red
+    kargo.akuity.io/argocd-context: '[{"name":"beyond-k8s-dev","namespace":"argocd"}]'
 spec:
+  vars:
+  - name: argocdApp
+    value: beyond-k8s-dev
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: beyond-k8s
+      name: app
     sources:
       direct: true
-  # verification:
-  #   analysisTemplates:
-  #     - name: integration-test
-  #       kind: ClusterAnalysisTemplate
   promotionTemplate:
     spec:
-      vars:
-      - name: gitRepo
-        value: https://github.com/akuity/sedemo-monorepo
-      - name: imageRepo
-        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
-      - name: targetBranch
-        value: env-snow-demo/dev 
-      - name: path_src
-        value: ./src
-      - name: path_out
-        value: ./out
       steps:
       - task:
-          name: prepare-workdir 
-      - uses: helm-template
-        config:
-          releaseName: deploy
-          path: ${{ vars.path_src }}/rollouts-app/deploy/chart
-          valuesFiles:
-          - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
-          outPath: ${{ vars.path_out }}/manifests.yaml
-          namespace: snow-demo-dev
-          setValues:
-            - key: image.tag
-              value: ${{ imageFrom(vars.imageRepo).Tag }}
-            - key: kargo.stage
-              value: ${{ ctx.stage }}
-            - key: ingress.root_domain
-              value: akpdemoapps.link
-      - task:
-          name: push-manifests
-      - uses: argocd-update
-        continueOnError: true
-        config:
-          apps:
-          - name: beyond-k8s-dev
-            namespace: argocd
+          name: promote
+
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: staging
+  name: staging-b
   namespace: beyond-k8s
   annotations:
     kargo.akuity.io/color: amber
+    kargo.akuity.io/argocd-context: '[{"name":"beyond-k8s-staging-b","namespace":"argocd"}]'
 spec:
+  vars:
+  - name: argocdApp
+    value: beyond-k8s-staging-b
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: beyond-k8s
+      name: app
     sources:
       stages:
       - dev
   promotionTemplate:
     spec:
-      vars:
-      - name: gitRepo
-        value: https://github.com/akuity/sedemo-monorepo
-      - name: imageRepo
-        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
-      - name: targetBranch
-        value: env-snow-demo/staging
-      - name: path_src
-        value: ./src
-      - name: path_out
-        value: ./out
       steps:
       - task:
-          name: prepare-workdir 
-      - uses: helm-template
-        config:
-          releaseName: deploy
-          path: ${{ vars.path_src }}/rollouts-app/deploy/chart
-          valuesFiles:
-          - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
-          outPath: ${{ vars.path_out }}/manifests.yaml
-          namespace: snow-demo-staging
-          setValues:
-            - key: image.tag
-              value: ${{ imageFrom(vars.imageRepo).Tag }}
-            - key: kargo.stage
-              value: ${{ ctx.stage }}
-            - key: ingress.root_domain
-              value: akpdemoapps.link
+          name: promote
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: staging-a
+  namespace: beyond-k8s
+  annotations:
+    kargo.akuity.io/color: amber
+    kargo.akuity.io/argocd-context: '[{"name":"beyond-k8s-staging-a","namespace":"argocd"}]'
+spec:
+  vars:
+  - name: argocdApp
+    value: beyond-k8s-staging-a
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: app
+    sources:
+      stages:
+      - dev
+  promotionTemplate:
+    spec:
+      steps:
       - task:
-          name: push-manifests
-      - uses: argocd-update
-        continueOnError: true
-        config:
-          apps:
-          - name: beyond-k8s-staging
-            namespace: argocd
+          name: promote
+
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -118,290 +81,21 @@ metadata:
   namespace: beyond-k8s
   annotations:
     kargo.akuity.io/color: violet
+    kargo.akuity.io/argocd-context: '[{"name":"beyond-k8s-prod","namespace":"argocd"}]'
 spec:
+  vars:
+  - name: argocdApp
+    value: beyond-k8s-prod
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: beyond-k8s
+      name: app
     sources:
       stages:
-      - staging
+      - staging-a
+      - staging-b
   promotionTemplate:
     spec:
-      vars:
-      - name: gitRepo
-        value: https://github.com/akuity/sedemo-monorepo
-      - name: imageRepo
-        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
-      - name: targetBranch
-        value: env-snow-demo/prod
-      - name: path_src
-        value: ./src
-      - name: path_out
-        value: ./out
       steps:
       - task:
-          name: prepare-workdir 
-      - uses: helm-template
-        vars:
-        - name: region
-          value: amer-east
-        config:
-          releaseName: deploy
-          path: ${{ vars.path_src }}/rollouts-app/deploy/chart
-          valuesFiles:
-          - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
-          outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
-          namespace: snow-demo-prod-amer-east
-          setValues:
-            - key: image.tag
-              value: ${{ imageFrom(vars.imageRepo).Tag }}
-            - key: kargo.stage
-              value: ${{ ctx.stage }}-amer-east
-            - key: ingress.root_domain
-              value: akpdemoapps.link
-      - uses: helm-template
-        vars:
-        - name: region
-          value: amer-west
-        config:
-          releaseName: deploy
-          path: ${{ vars.path_src }}/rollouts-app/deploy/chart
-          valuesFiles:
-          - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
-          outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
-          namespace: snow-demo-prod-amer-west
-          setValues:
-            - key: image.tag
-              value: ${{ imageFrom(vars.imageRepo).Tag }}
-            - key: kargo.stage
-              value: ${{ ctx.stage }}-amer-west
-            - key: ingress.root_domain
-              value: akpdemoapps.link
-      - uses: helm-template
-        vars:
-        - name: region
-          value: emea
-        config:
-          releaseName: deploy
-          path: ${{ vars.path_src }}/rollouts-app/deploy/chart
-          valuesFiles:
-          - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
-          outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
-          namespace: snow-demo-prod-emea
-          setValues:
-            - key: image.tag
-              value: ${{ imageFrom(vars.imageRepo).Tag }}
-            - key: kargo.stage
-              value: ${{ ctx.stage }}-emea
-            - key: ingress.root_domain
-              value: akpdemoapps.link
-
-      # Since JIRA gates downstream stages, commit directly to prod branch.
-      - task:
-          name: push-manifests
-        as: push-manifests
-
-
-      - as: snowcreate
-        config:
-          credentials:
-            secretName: local-snow-secret
-            type: api-token
-          parameters:
-            impact: "3"
-            short_description: Deploy to ${{ ctx.stage }} complete for ${{ vars.imageRepo
-              }}:${{ imageFrom(vars.imageRepo).Tag }}
-            assignment_group: "Application Development"
-            urgency: "3"
-            implementation_plan: "See https://kargo.akpdemoapps.link/project/beyond-k8s/promotion/${{ ctx.promotion }}"
-          tableName: change_request
-          template:
-            #templateId: 8d3380da83273210b6207e95eeaad33e # example
-            type: normal
-        uses: snow-create
-
-      - as: snow-wait-for-condition
-        config:
-          # wait for "Implment" state
-          condition: state=-1
-          credentials:
-            sharedSecretName: kargo-step-snow
-            type: api-token
-          tableName: change_request
-          ticketId: ${% outputs['snowcreate'].sys_id %}
-        uses: snow-wait-for-condition
-
-      - as: snowupdate
-        config:
-          credentials:
-            sharedSecretName: kargo-step-snow
-            type: api-token
-          parameters:
-            state: "Review"
-            work_notes: "Promotion to prod successful, moving change request to Review state."
-          tableName: change_request
-          ticketId: ${% outputs['snowcreate'].sys_id %}
-        uses: snow-update
-
-
-
-
-    
-
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: prod-amer-east
-  namespace: beyond-k8s
-  annotations:
-    kargo.akuity.io/color: violet
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: beyond-k8s
-    sources:
-      stages:
-      - prod
-      autoPromotionOptions:
-        selectionPolicy: MatchUpstream
-  promotionTemplate:
-    spec:
-      vars:
-      - name: gitRepo
-        value: https://github.com/akuity/sedemo-monorepo
-      - name: imageRepo
-        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
-      - name: region
-        value: amer-east
-      steps:
-      - task:
-          name: prepare-workdir
-        vars  :
-        - name: sourceBranch
-          value: env-snow-demo/prod
-        - name: targetBranch
-          value: env-snow-demo/prod-${{ vars.region }}
-      - uses: copy
-        config:
-          inPath: ./src/manifests-${{ vars.region }}.yaml
-          outPath: ./out/manifests.yaml
-      - task:
-          name: push-manifests
-        vars:
-        - name: sourceBranch
-          value: env-snow-demo/prod
-        - name: targetBranch
-          value: env-snow-demo/prod-${{ vars.region }}
-      - uses: argocd-update
-        continueOnError: true
-        config:
-          apps:
-          - name: beyond-k8s-prod-${{ vars.region }}
-            namespace: argocd
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: prod-amer-west
-  namespace: beyond-k8s
-  annotations:
-    kargo.akuity.io/color: violet
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: beyond-k8s
-    sources:
-      stages:
-      - prod
-      autoPromotionOptions:
-        selectionPolicy: MatchUpstream
-  promotionTemplate:
-    spec:
-      vars:
-      - name: gitRepo
-        value: https://github.com/akuity/sedemo-monorepo
-      - name: imageRepo
-        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
-      - name: region
-        value: amer-west
-      steps:
-      - task:
-          name: prepare-workdir
-        vars:
-        - name: sourceBranch
-          value: env-snow-demo/prod
-        - name: targetBranch
-          value: env-snow-demo/prod-${{ vars.region }}
-      - uses: copy
-        config:
-          inPath: ./src/manifests-${{ vars.region }}.yaml
-          outPath: ./out/manifests.yaml
-      - task:
-          name: push-manifests
-        vars:
-        - name: sourceBranch
-          value: env-snow-demo/prod
-        - name: targetBranch
-          value: env-snow-demo/prod-${{ vars.region }}
-      - uses: argocd-update
-        continueOnError: true
-        config:
-          apps:
-          - name: beyond-k8s-prod-${{ vars.region }}
-            namespace: argocd
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: prod-emea
-  namespace: beyond-k8s
-  annotations:
-    kargo.akuity.io/color: violet
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: beyond-k8s
-    sources:
-      stages:
-      - prod
-      autoPromotionOptions:
-        selectionPolicy: MatchUpstream
-  promotionTemplate:
-    spec:
-      vars:
-      - name: gitRepo
-        value: https://github.com/akuity/sedemo-monorepo
-      - name: imageRepo
-        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
-      - name: region
-        value: emea
-      steps:
-      - task:
-          name: prepare-workdir
-        vars:
-        - name: sourceBranch
-          value: env-snow-demo/prod
-        - name: targetBranch
-          value: env-snow-demo/prod-${{ vars.region }}
-      - uses: copy
-        config:
-          inPath: ./src/manifests-${{ vars.region }}.yaml
-          outPath: ./out/manifests.yaml
-      - task:
-          name: push-manifests
-        vars:
-        - name: sourceBranch
-          value: env-snow-demo/prod
-        - name: targetBranch
-          value: env-snow-demo/prod-${{ vars.region }}
-      - uses: argocd-update
-        continueOnError: true
-        config:
-          apps:
-          - name: rollouts-app-prod-${{ vars.region }}
-            namespace: argocd
+          name: pr-promote

@@ -1,0 +1,174 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: pr-promote
+  namespace: beyond-k8s
+spec:
+  vars:
+  - name: repoURL
+    value: https://github.com/akuity/sedemo-monorepo
+  - name: image
+    value: ghcr.io/akuity/guestbook
+  - name: lambda
+    value: 541216676946.dkr.ecr.us-west-2.amazonaws.com/kargo-dev/test-app
+
+  steps:
+  - uses: git-clone
+    config:
+      repoURL: ${{ vars.repoURL }}
+      checkout:
+      - branch: main
+        path: ./src
+      - commit: ${{ commitFrom( vars.repoURL ).ID }}
+        path: ./cfg
+
+  # The following three steps perform the GitOps/IaC configuration
+  # promotion, including:
+  # 1. yaml-update of image tag Helm values.yaml
+  # 2. copying revision-specific policy.json to env specific terraform dir
+  # 3. hcl-update of lambda image URI in env specific env.auto.tfvars
+  - uses: yaml-update
+    as: update-image
+    config:
+      path: ./src/env/${{ ctx.stage }}/k8s/values.yaml
+      updates:
+      - key: image.tag
+        value: ${{ imageFrom( vars.image ).Tag }}
+  - uses: copy
+    config:
+      inPath: ./cfg/config/policy.json
+      outPath: ./src/env/${{ ctx.stage }}/terraform/policy.json
+  - uses: hcl-update
+    config:
+      path: ./src/env/${{ ctx.stage }}/terraform/env.auto.tfvars
+      updates:
+      - key: image_uri
+        value: ${{ vars.lambda }}:${{ imageFrom(vars.lambda).Tag }}
+
+  # If a PR promotion is desired, we:
+  # 1. Create a PR with tf-plan output
+  # 2. Wait for PR to be merged
+  - uses: tf-plan
+    as: tf-plan
+    config:
+      dir: ./src/env/${{ ctx.stage }}/terraform
+      # out: ./plan.tfplan
+      env:
+      - name: AWS_REGION
+        value: us-west-2
+      - name: AWS_ACCESS_KEY_ID
+        value: ${% sharedSecret('kargo-terraform-steps').AWS_ACCESS_KEY_ID %}
+      - name: AWS_SECRET_ACCESS_KEY
+        value: ${% sharedSecret('kargo-terraform-steps').AWS_SECRET_ACCESS_KEY %}
+  - uses: git-commit
+    as: commit
+    config:
+      path: ./src
+      message: | 
+        Update ${{ ctx.stage }} to ${{ ctx.targetFreight.name }}
+
+        Guestbook Image: ${{ vars.image }}:${{ imageFrom(vars.image).Tag }}
+        Lambda: ${{ vars.lambda }}:${{ imageFrom(vars.lambda).Tag }}
+        Policy.json: revision ${{ commitFrom( vars.repoURL ).ID }}
+
+  - if: ${{ status('commit') != 'Skipped' }}
+    uses: git-push
+    as: push
+    config:
+      generateTargetBranch: true
+      path: ./src
+  - if: ${{ status('commit') != 'Skipped' }}
+    uses: git-open-pr
+    as: open-pr
+    config:
+      createTargetBranch: true
+      repoURL: ${{ vars.repoURL }}
+      sourceBranch: ${{ task.outputs.push.branch }}
+      targetBranch: main
+      description: |-
+        Guestbook Image: ${{ vars.image }}:${{ imageFrom(vars.image).Tag }}
+        Lambda: ${{ vars.lambda }}:${{ imageFrom(vars.lambda).Tag }}
+        Policy.json: revision ${{ commitFrom( vars.repoURL ).ID }}
+
+        ```
+        ${{ task.outputs['tf-plan'].plan }}
+        ```
+  - if: ${{ status('open-pr') != 'Skipped' }}
+    uses: git-wait-for-pr
+    as: wait-for-pr
+    config:
+      prNumber: ${{ task.outputs['open-pr'].pr.id }}
+      repoURL: ${{ vars.repoURL }}
+  # If a PR was created/merged, we need to re-clone main with the new tfvars
+  # before running tf-apply
+  - if: ${{ status('open-pr') != 'Skipped' }}
+    uses: delete
+    config:
+      path: ./src
+  - if: ${{ status('open-pr') != 'Skipped' }}
+    uses: git-clone
+    config:
+      repoURL: ${{ vars.repoURL }}
+      checkout:
+      - branch: main
+        path: ./src
+
+  # Perform the actual deploy:
+  # 1. Run tf-apply
+  # 2. Update k8s manifests with tf-apply output (lambda URL)
+  # 3. Commit modified k8s manifests and tf state files to git
+  # 4. Sync the Argo CD application
+  - uses: tf-apply
+    as: tf-apply
+    config:
+      dir: ./src/env/${{ ctx.stage }}/terraform
+      # plan: ./plan.tfplan
+      env:
+      - name: AWS_REGION
+        value: us-west-2
+      - name: AWS_ACCESS_KEY_ID
+        value: ${% sharedSecret('kargo-terraform-steps').AWS_ACCESS_KEY_ID %}
+      - name: AWS_SECRET_ACCESS_KEY
+        value: ${% sharedSecret('kargo-terraform-steps').AWS_SECRET_ACCESS_KEY %}
+  - uses: tf-output
+    as: tf-output
+    config:
+      dir: ./src/env/${{ ctx.stage }}/terraform
+  - uses: yaml-update
+    config:
+      path: ./src/env/${{ ctx.stage }}/k8s/values.yaml
+      updates:
+      - key: env.LAMBDA_URL
+        value: ${{ task.outputs['tf-output'].lambda_url.value }}
+  - uses: git-commit
+    config:
+      path: ./src
+      message: |
+        ${{ status('open-pr') != 'Skipped' ? "State files for: ":"" }}Update ${{ ctx.stage }} to ${{ ctx.targetFreight.name }}
+
+        Guestbook Image: ${{ vars.image }}:${{ imageFrom(vars.image).Tag }}
+        Lambda: ${{ vars.lambda }}:${{ imageFrom(vars.lambda).Tag }}
+        Policy.json: revision ${{ commitFrom( vars.repoURL ).ID }}
+
+        Terraform Apply Result:
+        ${{ task.outputs['tf-apply'].result }}
+  - uses: git-push
+    config:
+      path: ./src
+  - uses: argocd-update
+    config:
+      apps:
+      - name: ${{ vars.argocdApp }}
+
+  - if: ${{ always() }}
+    uses: send-message
+    config:
+      channel:
+        kind: MessageChannel
+        name: slack
+      message: |
+        Kargo promotion to ${{ ctx.stage }} ${{ success() ? 'succeeded' : 'failed' }}
+
+        Guestbook Image: ${{ vars.image }}:${{ imageFrom(vars.image).Tag }}
+        Lambda: ${{ vars.lambda }}:${{ imageFrom(vars.lambda).Tag }}
+        Policy.json: revision ${{ commitFrom( vars.repoURL ).ID }}

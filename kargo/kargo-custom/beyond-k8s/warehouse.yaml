@@ -1,16 +1,17 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
-  name: beyond-k8s
+  name: app
   namespace: beyond-k8s
 spec:
   subscriptions:
   - image:
-      repoURL: ghcr.io/akuity/sedemo-monorepo-beyond-k8s
-      discoveryLimit: 5
-      imageSelectionStrategy: NewestBuild
-      allowTags: ^\d*-[a-z]*$
+      repoURL: ghcr.io/akuity/guestbook
+      imageSelectionStrategy: SemVer
   - git:
       repoURL: https://github.com/akuity/sedemo-monorepo
       includePaths:
       - beyond-k8s
+  - image:
+      repoURL: 541216676946.dkr.ecr.us-west-2.amazonaws.com/kargo-dev/test-app
+      imageSelectionStrategy: SemVer
