@@ -10,8 +10,13 @@ spec:
       imageSelectionStrategy: SemVer
   - git:
       repoURL: https://github.com/akuity/sedemo-monorepo
+      # we only care about beyond-k8s app
       includePaths:
-      - beyond-k8s/config
+      - beyond-k8s
+      # but not our own commits to env nor changes to lambda code
+      excludePaths:
+      - 'beyond-k8s/lambda'
+      - 'beyond-k8s/env'
   - image:
       repoURL: 218691292270.dkr.ecr.us-west-2.amazonaws.com/sedemo/beyond-k8s-lambda
       imageSelectionStrategy: SemVer
