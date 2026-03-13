@@ -9,7 +9,7 @@ spec:
       elements:
       - stage: dev
       - stage: staging-a
-      - stage: staing-b
+      - stage: staging-b
       - stage: prod
   template:
     metadata:
