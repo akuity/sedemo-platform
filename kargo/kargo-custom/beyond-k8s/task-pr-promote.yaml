@@ -10,7 +10,7 @@ spec:
   - name: image
     value: ghcr.io/akuity/guestbook
   - name: lambda
-    value: 541216676946.dkr.ecr.us-west-2.amazonaws.com/kargo-dev/test-app
+    value: ghcr.io/akuity/sedemo-monorepo-beyond-k8s-lambda
 
   steps:
   - uses: git-clone
@@ -30,17 +30,17 @@ spec:
   - uses: yaml-update
     as: update-image
     config:
-      path: ./src/env/${{ ctx.stage }}/k8s/values.yaml
+      path: ./src/beyond-k8s/env/${{ ctx.stage }}/k8s/values.yaml
       updates:
       - key: image.tag
         value: ${{ imageFrom( vars.image ).Tag }}
   - uses: copy
     config:
-      inPath: ./cfg/config/policy.json
-      outPath: ./src/env/${{ ctx.stage }}/terraform/policy.json
+      inPath: ./cfg/beyond-k8s/config/policy.json
+      outPath: ./src/beyond-k8s/env/${{ ctx.stage }}/terraform/policy.json
   - uses: hcl-update
     config:
-      path: ./src/env/${{ ctx.stage }}/terraform/env.auto.tfvars
+      path: ./src/beyond-k8s/env/${{ ctx.stage }}/terraform/env.auto.tfvars
       updates:
       - key: image_uri
         value: ${{ vars.lambda }}:${{ imageFrom(vars.lambda).Tag }}
@@ -51,7 +51,7 @@ spec:
   - uses: tf-plan
     as: tf-plan
     config:
-      dir: ./src/env/${{ ctx.stage }}/terraform
+      dir: ./src/beyond-k8s/env/${{ ctx.stage }}/terraform
       # out: ./plan.tfplan
       env:
       - name: AWS_REGION
@@ -121,7 +121,7 @@ spec:
   - uses: tf-apply
     as: tf-apply
     config:
-      dir: ./src/env/${{ ctx.stage }}/terraform
+      dir: ./src/beyond-k8s/env/${{ ctx.stage }}/terraform
       # plan: ./plan.tfplan
       env:
       - name: AWS_REGION
@@ -133,10 +133,10 @@ spec:
   - uses: tf-output
     as: tf-output
     config:
-      dir: ./src/env/${{ ctx.stage }}/terraform
+      dir: ./src/beyond-k8s/env/${{ ctx.stage }}/terraform
   - uses: yaml-update
     config:
-      path: ./src/env/${{ ctx.stage }}/k8s/values.yaml
+      path: ./src/beyond-k8s/env/${{ ctx.stage }}/k8s/values.yaml
       updates:
       - key: env.LAMBDA_URL
         value: ${{ task.outputs['tf-output'].lambda_url.value }}

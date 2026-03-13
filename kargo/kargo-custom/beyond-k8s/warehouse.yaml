@@ -11,7 +11,7 @@ spec:
   - git:
       repoURL: https://github.com/akuity/sedemo-monorepo
       includePaths:
-      - beyond-k8s
+      - beyond-k8s/config
   - image:
-      repoURL: 541216676946.dkr.ecr.us-west-2.amazonaws.com/kargo-dev/test-app
+      repoURL: ghcr.io/akuity/sedemo-monorepo-beyond-k8s-lambda
       imageSelectionStrategy: SemVer
