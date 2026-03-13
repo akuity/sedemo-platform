@@ -13,5 +13,5 @@ spec:
       includePaths:
       - beyond-k8s/config
   - image:
-      repoURL: ghcr.io/akuity/sedemo-monorepo-beyond-k8s-lambda
+      repoURL: 218691292270.dkr.ecr.us-west-2.amazonaws.com/sedemo/beyond-k8s-lambda
       imageSelectionStrategy: SemVer
