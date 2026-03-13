@@ -20,7 +20,7 @@ spec:
       - branch: main
         path: ./src
       - commit: ${{ commitFrom( vars.repoURL ).ID }}
-        path: ./cfg/beyond-k8s
+        path: ./cfg
 
   # The following three steps perform the GitOps/IaC configuration promotion:
   # 1. yaml-update of image tag Helm values.yaml
