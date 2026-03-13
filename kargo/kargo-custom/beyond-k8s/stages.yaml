@@ -7,6 +7,7 @@ metadata:
     kargo.akuity.io/color: red
     kargo.akuity.io/argocd-context: '[{"name":"beyond-k8s-dev","namespace":"argocd"}]'
 spec:
+  shard: sedemo-primary
   vars:
   - name: argocdApp
     value: beyond-k8s-dev
@@ -32,6 +33,7 @@ metadata:
     kargo.akuity.io/color: amber
     kargo.akuity.io/argocd-context: '[{"name":"beyond-k8s-staging-b","namespace":"argocd"}]'
 spec:
+  shard: sedemo-primary
   vars:
   - name: argocdApp
     value: beyond-k8s-staging-b
@@ -57,6 +59,7 @@ metadata:
     kargo.akuity.io/color: amber
     kargo.akuity.io/argocd-context: '[{"name":"beyond-k8s-staging-a","namespace":"argocd"}]'
 spec:
+  shard: sedemo-primary
   vars:
   - name: argocdApp
     value: beyond-k8s-staging-a
@@ -83,6 +86,7 @@ metadata:
     kargo.akuity.io/color: violet
     kargo.akuity.io/argocd-context: '[{"name":"beyond-k8s-prod","namespace":"argocd"}]'
 spec:
+  shard: sedemo-primary
   vars:
   - name: argocdApp
     value: beyond-k8s-prod
