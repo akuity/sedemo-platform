@@ -134,6 +134,13 @@ spec:
     as: tf-output
     config:
       dir: ./src/beyond-k8s/env/${{ ctx.stage }}/terraform
+      env:
+      - name: AWS_REGION
+        value: us-west-2
+      - name: AWS_ACCESS_KEY_ID
+        value: ${% sharedSecret('kargo-terraform-steps').AWS_ACCESS_KEY_ID %}
+      - name: AWS_SECRET_ACCESS_KEY
+        value: ${% sharedSecret('kargo-terraform-steps').AWS_SECRET_ACCESS_KEY %}
   - uses: yaml-update
     config:
       path: ./src/beyond-k8s/env/${{ ctx.stage }}/k8s/values.yaml
