@@ -212,6 +212,7 @@ spec:
             impact: "3"
             short_description: Deploy to ${{ ctx.stage }} complete for ${{ vars.imageRepo
               }}:${{ imageFrom(vars.imageRepo).Tag }}
+            assignment_group: "Application Development"
             urgency: "3"
             implementaton_plan: "See https://kargo.akpdemoapps.link/project/demo-snow/promotion/${{ ctx.promotion }}"
           tableName: change_request
@@ -231,7 +232,17 @@ spec:
           ticketId: ${% outputs['snowcreate'].sys_id %}
         uses: snow-wait-for-condition
 
-
+      - as: snowupdate
+        config:
+          credentials:
+            sharedSecretName: kargo-step-snow
+            type: api-token
+          parameters:
+            state: "Review"
+            work_notes: "Promotion to prod successful, moving change request to Review state."
+          tableName: change_request
+          ticketId: ${% outputs['snowcreate'].sys_id %}
+        uses: snow-update
 
 
 
