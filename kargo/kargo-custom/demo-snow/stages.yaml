@@ -6,6 +6,7 @@ metadata:
   annotations:
     kargo.akuity.io/color: red
 spec:
+  shard: sedemo-primary
   requestedFreight:
   - origin:
       kind: Warehouse
@@ -16,6 +17,9 @@ spec:
   #   analysisTemplates:
   #     - name: integration-test
   #       kind: ClusterAnalysisTemplate
+  verification:
+    analysisTemplates:
+    - name: e2e-verification
   promotionTemplate:
     spec:
       vars:
@@ -71,6 +75,9 @@ spec:
     sources:
       stages:
       - dev
+  verification:
+    analysisTemplates:
+    - name: prometheus-verification
   promotionTemplate:
     spec:
       vars:
