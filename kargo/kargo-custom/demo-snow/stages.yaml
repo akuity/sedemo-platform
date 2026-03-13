@@ -222,6 +222,7 @@ spec:
 
       - as: snow-wait-for-condition
         config:
+          # wait for "Implment" state
           condition: state=-1
           credentials:
             sharedSecretName: kargo-step-snow
