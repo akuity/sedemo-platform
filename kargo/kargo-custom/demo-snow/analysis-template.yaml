@@ -27,7 +27,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
   name: e2e-verification
-  namespace: team-emily-guestbook
+  namespace: demo-snow
 spec:
   metrics:
     - name: test
