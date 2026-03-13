@@ -214,7 +214,7 @@ spec:
               }}:${{ imageFrom(vars.imageRepo).Tag }}
             assignment_group: "Application Development"
             urgency: "3"
-            implementaton_plan: "See https://kargo.akpdemoapps.link/project/demo-snow/promotion/${{ ctx.promotion }}"
+            implementation_plan: "See https://kargo.akpdemoapps.link/project/demo-snow/promotion/${{ ctx.promotion }}"
           tableName: change_request
           template:
             #templateId: 8d3380da83273210b6207e95eeaad33e # example
