@@ -6,11 +6,11 @@ metadata:
 spec:
   subscriptions:
   - image:
-      repoURL: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+      repoURL: ghcr.io/akuity/sedemo-monorepo-snow-demo
       discoveryLimit: 5
       imageSelectionStrategy: NewestBuild
       allowTags: ^\d*-[a-z]*$
   - git:
       repoURL: https://github.com/akuity/sedemo-monorepo
       includePaths:
-      - rollouts-app
+      - verification-snow-demo

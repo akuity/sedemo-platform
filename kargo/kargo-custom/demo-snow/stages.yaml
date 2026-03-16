@@ -26,7 +26,7 @@ spec:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
       - name: imageRepo
-        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+        value: ghcr.io/akuity/sedemo-monorepo-snow-demo
       - name: targetBranch
         value: env-snow-demo/dev 
       - name: path_src
@@ -39,9 +39,9 @@ spec:
       - uses: helm-template
         config:
           releaseName: deploy
-          path: ${{ vars.path_src }}/rollouts-app/deploy/chart
+          path: ${{ vars.path_src }}/verification-snow-demo/deploy/chart
           valuesFiles:
-          - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
+          - ${{ vars.path_src }}/verification-snow-demo/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests.yaml
           namespace: snow-demo-dev
           setValues:
@@ -85,7 +85,7 @@ spec:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
       - name: imageRepo
-        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+        value: ghcr.io/akuity/sedemo-monorepo-snow-demo
       - name: targetBranch
         value: env-snow-demo/staging
       - name: path_src
@@ -98,9 +98,9 @@ spec:
       - uses: helm-template
         config:
           releaseName: deploy
-          path: ${{ vars.path_src }}/rollouts-app/deploy/chart
+          path: ${{ vars.path_src }}/verification-snow-demo/deploy/chart
           valuesFiles:
-          - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
+          - ${{ vars.path_src }}/verification-snow-demo/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests.yaml
           namespace: snow-demo-staging
           setValues:
@@ -140,7 +140,7 @@ spec:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
       - name: imageRepo
-        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+        value: ghcr.io/akuity/sedemo-monorepo-snow-demo
       - name: targetBranch
         value: env-snow-demo/prod
       - name: path_src
@@ -156,9 +156,9 @@ spec:
           value: amer-east
         config:
           releaseName: deploy
-          path: ${{ vars.path_src }}/rollouts-app/deploy/chart
+          path: ${{ vars.path_src }}/verification-snow-demo/deploy/chart
           valuesFiles:
-          - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
+          - ${{ vars.path_src }}/verification-snow-demo/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
           namespace: snow-demo-prod-amer-east
           setValues:
@@ -174,9 +174,9 @@ spec:
           value: amer-west
         config:
           releaseName: deploy
-          path: ${{ vars.path_src }}/rollouts-app/deploy/chart
+          path: ${{ vars.path_src }}/verification-snow-demo/deploy/chart
           valuesFiles:
-          - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
+          - ${{ vars.path_src }}/verification-snow-demo/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
           namespace: snow-demo-prod-amer-west
           setValues:
@@ -192,9 +192,9 @@ spec:
           value: emea
         config:
           releaseName: deploy
-          path: ${{ vars.path_src }}/rollouts-app/deploy/chart
+          path: ${{ vars.path_src }}/verification-snow-demo/deploy/chart
           valuesFiles:
-          - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
+          - ${{ vars.path_src }}/verification-snow-demo/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
           namespace: snow-demo-prod-emea
           setValues:
@@ -281,7 +281,7 @@ spec:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
       - name: imageRepo
-        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+        value: ghcr.io/akuity/sedemo-monorepo-snow-demo
       - name: region
         value: amer-east
       steps:
@@ -333,7 +333,7 @@ spec:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
       - name: imageRepo
-        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+        value: ghcr.io/akuity/sedemo-monorepo-snow-demo
       - name: region
         value: amer-west
       steps:
@@ -385,7 +385,7 @@ spec:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
       - name: imageRepo
-        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+        value: ghcr.io/akuity/sedemo-monorepo-snow-demo
       - name: region
         value: emea
       steps:
