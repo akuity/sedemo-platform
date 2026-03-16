@@ -17,7 +17,7 @@ spec:
                       - /bin/sh
                       - -c
                     args:
-                      - 'for i in $(seq 1 5); do echo "Verification Step $i of 5"; sleep 2; done'
+                      - 'for i in $(seq 1 5); do echo "Verification Step $i of 5"; sleep 2; echo -e "\tPASS"; done'
                     image: alpine:latest
                     name: test
                 restartPolicy: Never
