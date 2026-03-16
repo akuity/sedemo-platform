@@ -1,32 +1,6 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
-  name: prometheus-verification
-  namespace: demo-snow
-spec:
-  metrics:
-  - name: success-rate
-    interval: 15s
-    count: 5
-    successCondition: len(result) == 0 || result[0] >= 0.95
-    failureLimit: 3
-    provider:
-      prometheus:
-          address: http://prometheus-server.prometheus.svc.cluster.local
-          query: >
-            (
-            sum(rate(nginx_ingress_controller_requests{namespace="demo-dev",status="200",canary="demo-dev-rollouts-svc-canary-80"}[30s]))
-            + 1 )
-
-            /
-
-            (
-            sum(rate(nginx_ingress_controller_requests{namespace="demo-dev",canary="demo-dev-rollouts-svc-canary-80"}[30s]))
-            + 1 )
----
-apiVersion: argoproj.io/v1alpha1
-kind: AnalysisTemplate
-metadata:
   name: e2e-verification
   namespace: demo-snow
 spec:
@@ -42,7 +16,8 @@ spec:
                   - command:
                       - /bin/sh
                       - -c
-                      - exit 0
+                    args:
+                      - 'for i in $(seq 1 5); do echo "Verification Step $i of 5"; sleep 2; done'
                     image: alpine:latest
                     name: test
                 restartPolicy: Never
