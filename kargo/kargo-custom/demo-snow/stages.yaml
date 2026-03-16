@@ -20,9 +20,9 @@ spec:
   verification:
     analysisTemplates:
     - name: prometheus-verification
-      args:
-      - name: namespace
-        value: snow-demo-dev
+    args:
+    - name: namespace
+      value: snow-demo-dev
   promotionTemplate:
     spec:
       vars:
