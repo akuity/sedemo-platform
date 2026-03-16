@@ -38,8 +38,8 @@ spec:
     # So it is common to access the index 0 of the returned array to obtain the value
     # If there is no traffic to demo app during rollout we will have empty set.
     successCondition: len(result) == 0 || result[0] >= 0.95
-    failureLimit: 3
-    count: 3
+    failureLimit: 2
+    count: 5
     provider:
       prometheus:
         address: http://prometheus-server.prometheus.svc.cluster.local
