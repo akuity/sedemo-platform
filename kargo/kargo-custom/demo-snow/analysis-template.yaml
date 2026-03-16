@@ -44,6 +44,6 @@ spec:
       prometheus:
         address: http://prometheus-server.prometheus.svc.cluster.local
         query: |
-          ( sum(rate(nginx_ingress_controller_requests{namespace="{{`{{ args.namespace }}`}}",status="200",canary="{{`{{ args.namespace }}`}}-rollouts-svc-canary-80"}[30s])) + 1 )
+          ( sum(rate(nginx_ingress_controller_requests{namespace="{{ args.namespace }}",status="200",canary="{{ args.namespace }}-rollouts-svc-canary-80"}[30s])) + 1 )
           /
-          ( sum(rate(nginx_ingress_controller_requests{namespace="{{`{{ args.namespace }}`}}",canary="{{`{{ args.namespace }}`}}-rollouts-svc-canary-80"}[30s])) + 1 )
+          ( sum(rate(nginx_ingress_controller_requests{namespace="{{ args.namespace }}",canary="{{ args.namespace }}-rollouts-svc-canary-80"}[30s])) + 1 )
