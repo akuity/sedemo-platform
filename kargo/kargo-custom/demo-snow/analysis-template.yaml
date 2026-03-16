@@ -21,3 +21,29 @@ spec:
                     image: alpine:latest
                     name: test
                 restartPolicy: Never
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: prometheus-verification
+  namespace: demo-snow
+spec:
+  args:
+  - name: namespace
+    value: demo-snow-dev
+  metrics:
+  - name: success-rate
+    interval: 5s
+    # NOTE: prometheus queries return results in the form of a vector.
+    # So it is common to access the index 0 of the returned array to obtain the value
+    # If there is no traffic to demo app during rollout we will have empty set.
+    successCondition: len(result) == 0 || result[0] >= 0.95
+    failureLimit: 3
+    count: 3
+    provider:
+      prometheus:
+        address: http://prometheus-server.prometheus.svc.cluster.local
+        query: |
+          ( sum(rate(nginx_ingress_controller_requests{namespace="{{`{{ args.namespace }}`}}",status="200",canary="{{`{{ args.namespace }}`}}-rollouts-svc-canary-80"}[30s])) + 1 )
+          /
+          ( sum(rate(nginx_ingress_controller_requests{namespace="{{`{{ args.namespace }}`}}",canary="{{`{{ args.namespace }}`}}-rollouts-svc-canary-80"}[30s])) + 1 )
