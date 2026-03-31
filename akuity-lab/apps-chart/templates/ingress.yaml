@@ -4,6 +4,7 @@ metadata:
   name: stable-ingress
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    ingress.kubernetes.io/cache-enable: "false"
 spec:
   ingressClassName: nginx
   tls:
