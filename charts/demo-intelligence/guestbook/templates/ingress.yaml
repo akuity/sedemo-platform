@@ -8,8 +8,9 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     ingress.kubernetes.io/cache-enable: "false"
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      add_header Cache-Control no-cache;
+    #nginx.ingress.kubernetes.io/configuration-snippet: |
+    #  add_header Cache-Control no-cache;
+    nginx.ingress.kubernetes.io/add-headers: "Cache-Control: no-store, no-cache, must-revalidate"
 spec:
   ingressClassName: nginx
   tls:
