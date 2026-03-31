@@ -12,7 +12,7 @@ spec:
   tls:
     - hosts:
         - {{ .Values.ingress.host }}
-      secretName: tls-secret
+      secretName: tls-secret-{{.Release.Name}}
   rules:
     - host: {{ .Values.ingress.host }}
       http:
