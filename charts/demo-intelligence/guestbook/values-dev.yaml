@@ -1,3 +1,7 @@
 # Dev stage values
 service:
-  port: 8080
+  targetPort: 8080
+
+
+ingress:
+  host: dev.smart.akpdemoapps.link

@@ -1,1 +1,4 @@
 # Staging stage values
+
+ingress:
+  host: staging.smart.akpdemoapps.link

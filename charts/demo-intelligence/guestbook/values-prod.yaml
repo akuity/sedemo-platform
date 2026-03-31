@@ -1,1 +1,4 @@
 # Prod stage values
+
+ingress:
+  host: smart.akpdemoapps.link
