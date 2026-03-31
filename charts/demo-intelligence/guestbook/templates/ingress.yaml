@@ -7,6 +7,9 @@ metadata:
     {{- include "guestbook.labels" . | nindent 4 }}
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    ingress.kubernetes.io/cache-enable: "false"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header Cache-Control no-cache;
 spec:
   ingressClassName: nginx
   tls:
