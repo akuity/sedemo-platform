@@ -17,8 +17,7 @@
 apiVersion: ee.kargo.akuity.io/v1alpha1
 kind: CustomPromotionStep
 metadata:
-  name: oci-airgap-push
-  namespace: oci-airgap
+  name: oci-push
 spec:
   image: ghcr.io/oras-project/oras:v1.2.2
   # /bin/sh -c lets us chain login → push in one container invocation.
@@ -72,8 +71,7 @@ spec:
 apiVersion: ee.kargo.akuity.io/v1alpha1
 kind: CustomPromotionStep
 metadata:
-  name: oci-airgap-pull
-  namespace: oci-airgap
+  name: oci-pull
 spec:
   image: ghcr.io/oras-project/oras:v1.2.2
   command:

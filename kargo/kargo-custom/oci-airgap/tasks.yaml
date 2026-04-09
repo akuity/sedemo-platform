@@ -6,13 +6,13 @@
 #   1. Clone platform repo (main → ./src, rendered branch → ./out)
 #   2. kustomize-set-image on the shared base (updates all 4 overlays in one shot)
 #   3. kustomize-build each overlay to ./rendered/<env>.yaml
-#   4. oci-airgap-push  → ORAS pushes all 4 as named layers of one OCI artifact
+#   4. oci-push  → ORAS pushes all 4 as named layers of one OCI artifact
 #   5. Copy ./rendered/dev.yaml → ./out/manifests.yaml
 #   6. git-commit + git-push → rendered branch stage/oci-airgap/dev
 #   7. argocd-update  → sync the dev Argo CD Application
 #
 # The OCI artifact produced here is the authoritative airgap bundle.
-# Subsequent stages (test, stage, prod) consume from it via oci-airgap-pull.
+# Subsequent stages (test, stage, prod) consume from it via oci-pull.
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
@@ -87,7 +87,7 @@ spec:
   # Credentials come from a shared secret named `oci-airgap-registry`.
   # The `workspace` config must match the path where Kargo mounts the
   # promotion workspace inside the CustomPromotionStep container (/workspace).
-  - uses: oci-airgap-push
+  - uses: oci-push
     as: push-oci
     config:
       registry: ${{ vars.bundleRegistry }}
@@ -132,7 +132,7 @@ spec:
 # Pipeline:
 #   1. Clone platform repo (rendered branch → ./out)
 #   2. git-clear the rendered branch
-#   3. oci-airgap-pull  → ORAS fetches the env-specific layer by media type
+#   3. oci-pull  → ORAS fetches the env-specific layer by media type
 #      and writes it to /workspace/out/manifests.yaml
 #   4. git-commit + git-push → rendered branch stage/oci-airgap/<stage>
 #   5. argocd-update  → sync the stage's Argo CD Application
@@ -169,10 +169,10 @@ spec:
       path: ./out
 
   # ── Pull the environment-specific layer from the OCI artifact ─────────────────
-  # oci-airgap-pull resolves the layer digest by matching config.mediaType,
+  # oci-pull resolves the layer digest by matching config.mediaType,
   # then fetches the blob and writes it to config.outPath/manifests.yaml.
   # /workspace/out is the same directory as ./out seen by built-in steps.
-  - uses: oci-airgap-pull
+  - uses: oci-pull
     as: pull-oci
     config:
       registry: ${{ vars.bundleRegistry }}
