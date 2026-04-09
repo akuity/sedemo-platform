@@ -1,0 +1,114 @@
+# CustomPromotionStep: oci-airgap-push
+#
+# Runs ORAS to render and push four environment-specific manifest layers into a
+# single OCI artifact. Each layer carries a distinct media type so downstream
+# stages can fetch only the overlay they need.
+#
+# Called during the `dev` stage AFTER kustomize-build has written:
+#   ./rendered/dev.yaml   ./rendered/test.yaml
+#   ./rendered/stage.yaml ./rendered/prod.yaml
+#
+# The promotion workspace is mounted at /workspace inside the container.
+# If your Kargo deployment uses a different mount path, update config.workspace
+# in tasks.yaml accordingly.
+#
+# Required shared secret: oci-airgap-registry
+#   keys: username, password  (e.g. a GHCR PAT with write:packages scope)
+apiVersion: ee.kargo.akuity.io/v1alpha1
+kind: CustomPromotionStep
+metadata:
+  name: oci-airgap-push
+  namespace: oci-airgap
+spec:
+  image: ghcr.io/oras-project/oras:v1.2.2
+  # /bin/sh -c lets us chain login → push in one container invocation.
+  # config.* values are templated by Kargo before the container starts.
+  command:
+    - /bin/sh
+    - -c
+    - |
+      set -eu
+      # Authenticate to the OCI registry.
+      # In production, prefer a mounted Docker config secret over inline creds.
+      echo "${{ config.orasPassword }}" | oras login "${{ config.registry }}" \
+        --username "${{ config.orasUsername }}" \
+        --password-stdin
+
+      # Push all four rendered overlays as separate layers of one OCI artifact.
+      # Each file is tagged with a typed media type so per-environment pulls are
+      # deterministic: oras blob fetch ... --format go-template selects by mediaType.
+      oras push \
+        "${{ config.registry }}/${{ config.repository }}:${{ config.tag }}" \
+        --artifact-type "application/vnd.kargo.airgap.bundle.v1" \
+        "${{ config.workspace }}/rendered/dev.yaml:application/vnd.kargo.manifests.dev+yaml" \
+        "${{ config.workspace }}/rendered/test.yaml:application/vnd.kargo.manifests.test+yaml" \
+        "${{ config.workspace }}/rendered/stage.yaml:application/vnd.kargo.manifests.stage+yaml" \
+        "${{ config.workspace }}/rendered/prod.yaml:application/vnd.kargo.manifests.prod+yaml"
+
+      echo "Pushed OCI bundle: ${{ config.registry }}/${{ config.repository }}:${{ config.tag }}"
+  output:
+    source:
+      format: Text
+      type: Stdout
+    transform:
+      # Expose the artifact reference so downstream steps / metadata can record it.
+      artifactRef: >-
+        trim(output)
+---
+# CustomPromotionStep: oci-airgap-pull
+#
+# Pulls a single environment's rendered manifests from the OCI artifact by
+# targeting the layer whose mediaType matches config.mediaType.
+#
+# Flow:
+#   1. oras manifest fetch  → JSON manifest → extract digest of the target layer
+#   2. oras blob fetch @digest → write raw YAML to config.outPath/manifests.yaml
+#
+# Called during test and stage promotions. The output file is then committed to
+# the rendered git branch by the built-in git-commit / git-push steps that follow.
+#
+# Required shared secret: oci-airgap-registry
+#   keys: username, password
+apiVersion: ee.kargo.akuity.io/v1alpha1
+kind: CustomPromotionStep
+metadata:
+  name: oci-airgap-pull
+  namespace: oci-airgap
+spec:
+  image: ghcr.io/oras-project/oras:v1.2.2
+  command:
+    - /bin/sh
+    - -c
+    - |
+      set -eu
+      echo "${{ config.orasPassword }}" | oras login "${{ config.registry }}" \
+        --username "${{ config.orasUsername }}" \
+        --password-stdin
+
+      ARTIFACT_REF="${{ config.registry }}/${{ config.repository }}:${{ config.tag }}"
+
+      # Fetch the OCI manifest and extract the digest for the target media type.
+      # go-template iterates .layers and prints the digest of the matching entry.
+      LAYER_DIGEST=$(oras manifest fetch "${ARTIFACT_REF}" \
+        --format 'go-template={{range .layers}}{{if eq .mediaType "${{ config.mediaType }}"}}{{.digest}}{{end}}{{end}}')
+
+      if [ -z "${LAYER_DIGEST}" ]; then
+        echo "ERROR: no layer found with mediaType=${{ config.mediaType }}" >&2
+        exit 1
+      fi
+
+      # Fetch the blob and write it to the output path.
+      mkdir -p "${{ config.outPath }}"
+      oras blob fetch \
+        "${{ config.registry }}/${{ config.repository }}@${LAYER_DIGEST}" \
+        --output "${{ config.outPath }}/manifests.yaml"
+
+      echo "Pulled layer ${{ config.mediaType }} → ${{ config.outPath }}/manifests.yaml"
+  output:
+    source:
+      format: Text
+      type: Stdout
+    transform:
+      # Surface the full path of the written manifest file for downstream steps.
+      manifestPath: >-
+        trim(output)

@@ -1,0 +1,31 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: oci-airgap
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: oci-airgap
+  namespace: oci-airgap
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  promotionPolicies:
+  # Dev auto-promotes on every new freight so the OCI bundle is always current.
+  - stageSelector:
+      name: dev
+    autoPromotionEnabled: true
+  # Test and stage require manual approval — a human verifies the OCI pull worked.
+  - stageSelector:
+      name: test
+    autoPromotionEnabled: false
+  - stageSelector:
+      name: stage
+    autoPromotionEnabled: false
+  # Prod is airgapped; promotion only advances after a ServiceNow ticket closes.
+  - stageSelector:
+      name: prod
+    autoPromotionEnabled: false

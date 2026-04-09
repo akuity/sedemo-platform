@@ -1,0 +1,165 @@
+# Stage: dev
+#
+# Entry point of the pipeline. On every new Freight (new image tag or overlay
+# change), Kargo:
+#   • Renders all four environment overlays via kustomize-build
+#   • Pushes the rendered YAML files as separate layers of one OCI artifact
+#   • Deploys the dev overlay to the dev cluster via a rendered git branch
+#
+# Auto-promotion is enabled (see project.yaml) so the OCI bundle stays current
+# without manual intervention in the lower environment.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev
+  namespace: oci-airgap
+  annotations:
+    kargo.akuity.io/color: red
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: oci-airgap
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-platform
+      - name: imageRepo
+        value: ghcr.io/akuity/guestbook
+      # OCI bundle registry — update to your org's registry / repository.
+      - name: bundleRegistry
+        value: ghcr.io
+      - name: bundleRepo
+        value: akuity/oci-airgap-bundles
+      steps:
+      - task:
+          name: render-and-push-oci
+---
+# Stage: test
+#
+# Pulls the `test` layer from the OCI artifact produced by dev and deploys it
+# to the test cluster via a rendered git branch + Argo CD.
+#
+# This stage intentionally does NOT re-render from source: the manifests are
+# taken verbatim from the OCI bundle, ensuring test runs exactly what was
+# packaged at dev time.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: test
+  namespace: oci-airgap
+  annotations:
+    kargo.akuity.io/color: amber
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: oci-airgap
+    sources:
+      stages:
+      - dev
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-platform
+      - name: imageRepo
+        value: ghcr.io/akuity/guestbook
+      - name: bundleRegistry
+        value: ghcr.io
+      - name: bundleRepo
+        value: akuity/oci-airgap-bundles
+      # Media type that identifies the test layer in the OCI artifact.
+      - name: mediaType
+        value: application/vnd.kargo.manifests.test+yaml
+      steps:
+      - task:
+          name: pull-and-apply-oci
+---
+# Stage: stage
+#
+# Pulls the `stage` layer from the OCI artifact and deploys it.
+# Same pull-and-apply pattern as test, but targets the staging cluster.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: stage
+  namespace: oci-airgap
+  annotations:
+    kargo.akuity.io/color: violet
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: oci-airgap
+    sources:
+      stages:
+      - test
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-platform
+      - name: imageRepo
+        value: ghcr.io/akuity/guestbook
+      - name: bundleRegistry
+        value: ghcr.io
+      - name: bundleRepo
+        value: akuity/oci-airgap-bundles
+      - name: mediaType
+        value: application/vnd.kargo.manifests.stage+yaml
+      steps:
+      - task:
+          name: pull-and-apply-oci
+---
+# Stage: prod  (AIRGAPPED)
+#
+# Prod has no external network access — no Argo CD sync, no outbound registry
+# pull. The OCI artifact was already pushed during the dev stage and is assumed
+# to have been mirrored into the airgapped registry (or transferred via physical
+# media) by the ops team as part of the change management process.
+#
+# This stage only:
+#   1. Creates a ServiceNow change request with exact pull instructions
+#   2. Waits for the ticket to be closed (proof of manual deployment)
+#   3. Marks the freight as promoted in Kargo for audit trail purposes
+#
+# There is intentionally no Argo CD Application for prod in applicationset.yaml.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod
+  namespace: oci-airgap
+  annotations:
+    kargo.akuity.io/color: green
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  # No shard — prod cluster is airgapped and not registered with the Kargo controller.
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: oci-airgap
+    sources:
+      stages:
+      - stage
+  promotionTemplate:
+    spec:
+      vars:
+      - name: imageRepo
+        value: ghcr.io/akuity/guestbook
+      - name: bundleRegistry
+        value: ghcr.io
+      - name: bundleRepo
+        value: akuity/oci-airgap-bundles
+      steps:
+      - task:
+          name: airgap-prod-gate

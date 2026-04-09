@@ -1,0 +1,45 @@
+# ApplicationSet for the oci-airgap demo — dev, test, and stage only.
+#
+# Each Application syncs from the rendered git branch that Kargo writes to
+# during promotion (stage/oci-airgap/<stage>). The manifests on that branch
+# were pulled from the OCI artifact, guaranteeing bit-for-bit identical content
+# across environments.
+#
+# Prod is intentionally EXCLUDED: it is airgapped and deployed manually.
+# Kargo tracks prod completion via a ServiceNow ticket (see stages.yaml).
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: oci-airgap
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - stage: dev
+      - stage: test
+      - stage: stage
+  template:
+    metadata:
+      name: oci-airgap-{{stage}}
+      annotations:
+        # Allow Kargo to trigger a refresh/sync for this Application.
+        kargo.akuity.io/authorized-stage: oci-airgap:{{stage}}
+    spec:
+      project: oci-airgap
+      source:
+        # Kargo writes rendered manifests to stage/oci-airgap/<stage> during
+        # promotion. The branch is created automatically on first promotion.
+        repoURL: https://github.com/akuity/sedemo-platform
+        targetRevision: stage/oci-airgap/{{stage}}
+        # The rendered branch contains a single manifests.yaml at its root.
+        path: .
+      destination:
+        name: sedemo-primary
+        namespace: oci-airgap-{{stage}}
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true

@@ -1,0 +1,320 @@
+# PromotionTask: render-and-push-oci
+#
+# Used by the `dev` stage only.
+#
+# Pipeline:
+#   1. Clone platform repo (main → ./src, rendered branch → ./out)
+#   2. kustomize-set-image on the shared base (updates all 4 overlays in one shot)
+#   3. kustomize-build each overlay to ./rendered/<env>.yaml
+#   4. oci-airgap-push  → ORAS pushes all 4 as named layers of one OCI artifact
+#   5. Copy ./rendered/dev.yaml → ./out/manifests.yaml
+#   6. git-commit + git-push → rendered branch stage/oci-airgap/dev
+#   7. argocd-update  → sync the dev Argo CD Application
+#
+# The OCI artifact produced here is the authoritative airgap bundle.
+# Subsequent stages (test, stage, prod) consume from it via oci-airgap-pull.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: render-and-push-oci
+  namespace: oci-airgap
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  vars:
+  - name: gitRepo
+  - name: imageRepo
+  - name: bundleRegistry
+  - name: bundleRepo
+  steps:
+  # ── Git checkout ────────────────────────────────────────────────────────────
+  - uses: git-clone
+    config:
+      repoURL: ${{ vars.gitRepo }}
+      checkout:
+      - branch: main
+        path: ./src
+      - branch: stage/oci-airgap/dev
+        create: true
+        path: ./out
+
+  - uses: git-clear
+    config:
+      path: ./out
+
+  # ── Stamp image tag into the shared base kustomization ──────────────────────
+  # Running kustomize-set-image once on the base means all four overlays
+  # (which reference ../../base) pick up the new tag automatically.
+  - uses: kustomize-set-image
+    as: update-image
+    config:
+      path: ./src/apps/oci-airgap/base
+      images:
+      - image: ${{ vars.imageRepo }}
+        tag: ${{ imageFrom(vars.imageRepo).Tag }}
+
+  # ── Render every overlay ─────────────────────────────────────────────────────
+  # Each kustomize-build output becomes one layer in the OCI artifact.
+  - uses: kustomize-build
+    as: build-dev
+    config:
+      path: ./src/apps/oci-airgap/overlays/dev
+      outPath: ./rendered/dev.yaml
+
+  - uses: kustomize-build
+    as: build-test
+    config:
+      path: ./src/apps/oci-airgap/overlays/test
+      outPath: ./rendered/test.yaml
+
+  - uses: kustomize-build
+    as: build-stage
+    config:
+      path: ./src/apps/oci-airgap/overlays/stage
+      outPath: ./rendered/stage.yaml
+
+  - uses: kustomize-build
+    as: build-prod
+    config:
+      path: ./src/apps/oci-airgap/overlays/prod
+      outPath: ./rendered/prod.yaml
+
+  # ── Push all four rendered overlays as a single OCI artifact ─────────────────
+  # Each overlay becomes a distinct layer identified by its media type:
+  #   application/vnd.kargo.manifests.<env>+yaml
+  # Downstream stages select their layer by matching that media type.
+  #
+  # Credentials come from a shared secret named `oci-airgap-registry`.
+  # The `workspace` config must match the path where Kargo mounts the
+  # promotion workspace inside the CustomPromotionStep container (/workspace).
+  - uses: oci-airgap-push
+    as: push-oci
+    config:
+      registry: ${{ vars.bundleRegistry }}
+      repository: ${{ vars.bundleRepo }}
+      tag: ${{ imageFrom(vars.imageRepo).Tag }}
+      workspace: /workspace
+      orasUsername: ${% sharedSecret('oci-airgap-registry').username %}
+      orasPassword: ${% sharedSecret('oci-airgap-registry').password %}
+
+  # ── Deploy dev via rendered git branch + Argo CD ─────────────────────────────
+  - uses: copy
+    config:
+      inPath: ./rendered/dev.yaml
+      outPath: ./out/manifests.yaml
+
+  - uses: git-commit
+    as: commit
+    config:
+      path: ./out
+      message: |
+        oci-airgap dev: ${{ imageFrom(vars.imageRepo).Tag }}
+
+        OCI bundle: ${{ vars.bundleRegistry }}/${{ vars.bundleRepo }}:${{ imageFrom(vars.imageRepo).Tag }}
+        Promotion: ${{ ctx.promotion }}
+
+  - uses: git-push
+    config:
+      path: ./out
+      targetBranch: stage/oci-airgap/dev
+
+  - uses: argocd-update
+    config:
+      apps:
+      - name: oci-airgap-dev
+        sources:
+        - repoURL: ${{ vars.gitRepo }}
+---
+# PromotionTask: pull-and-apply-oci
+#
+# Used by the `test` and `stage` stages.
+#
+# Pipeline:
+#   1. Clone platform repo (rendered branch → ./out)
+#   2. git-clear the rendered branch
+#   3. oci-airgap-pull  → ORAS fetches the env-specific layer by media type
+#      and writes it to /workspace/out/manifests.yaml
+#   4. git-commit + git-push → rendered branch stage/oci-airgap/<stage>
+#   5. argocd-update  → sync the stage's Argo CD Application
+#
+# The media type passed in vars.mediaType selects which layer to pull:
+#   test  → application/vnd.kargo.manifests.test+yaml
+#   stage → application/vnd.kargo.manifests.stage+yaml
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: pull-and-apply-oci
+  namespace: oci-airgap
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  vars:
+  - name: gitRepo
+  - name: imageRepo
+  - name: bundleRegistry
+  - name: bundleRepo
+  - name: mediaType
+  steps:
+  # ── Checkout the rendered branch for this stage ──────────────────────────────
+  - uses: git-clone
+    config:
+      repoURL: ${{ vars.gitRepo }}
+      checkout:
+      - branch: stage/oci-airgap/${{ ctx.stage }}
+        create: true
+        path: ./out
+
+  - uses: git-clear
+    config:
+      path: ./out
+
+  # ── Pull the environment-specific layer from the OCI artifact ─────────────────
+  # oci-airgap-pull resolves the layer digest by matching config.mediaType,
+  # then fetches the blob and writes it to config.outPath/manifests.yaml.
+  # /workspace/out is the same directory as ./out seen by built-in steps.
+  - uses: oci-airgap-pull
+    as: pull-oci
+    config:
+      registry: ${{ vars.bundleRegistry }}
+      repository: ${{ vars.bundleRepo }}
+      tag: ${{ imageFrom(vars.imageRepo).Tag }}
+      mediaType: ${{ vars.mediaType }}
+      outPath: /workspace/out
+      orasUsername: ${% sharedSecret('oci-airgap-registry').username %}
+      orasPassword: ${% sharedSecret('oci-airgap-registry').password %}
+
+  # ── Commit and push the pulled manifests ─────────────────────────────────────
+  - uses: git-commit
+    as: commit
+    config:
+      path: ./out
+      message: |
+        oci-airgap ${{ ctx.stage }}: ${{ imageFrom(vars.imageRepo).Tag }}
+
+        OCI bundle: ${{ vars.bundleRegistry }}/${{ vars.bundleRepo }}:${{ imageFrom(vars.imageRepo).Tag }}
+        Layer: ${{ vars.mediaType }}
+        Promotion: ${{ ctx.promotion }}
+
+  - uses: git-push
+    config:
+      path: ./out
+      targetBranch: stage/oci-airgap/${{ ctx.stage }}
+
+  # ── Trigger Argo CD sync ──────────────────────────────────────────────────────
+  - uses: argocd-update
+    config:
+      apps:
+      - name: oci-airgap-${{ ctx.stage }}
+        sources:
+        - repoURL: ${{ vars.gitRepo }}
+---
+# PromotionTask: airgap-prod-gate
+#
+# Used by the `prod` stage.
+#
+# Prod has NO external network access — Argo CD cannot reach it and there is no
+# automated sync. Instead this task:
+#   1. Creates a ServiceNow change request that includes the OCI bundle reference
+#      so the ops team knows exactly what to pull, transfer, and apply.
+#   2. Waits for the ticket to reach state=3 (Closed) — the signal that the team
+#      has completed the manual deployment.
+#   3. Updates the ticket with a closing note.
+#
+# The ops team's workflow (out of band):
+#   a. Pull bundle:  oras pull <registry>/<repo>:<tag>
+#                      --media-type application/vnd.kargo.manifests.prod+yaml
+#   b. Transfer to airgapped env via approved data-diode / physical media
+#   c. Apply:        kubectl apply -f manifests.yaml -n oci-airgap-prod
+#   d. Verify and close the ServiceNow ticket → Kargo marks stage Succeeded
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: airgap-prod-gate
+  namespace: oci-airgap
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  vars:
+  - name: imageRepo
+  - name: bundleRegistry
+  - name: bundleRepo
+  steps:
+  # ── Open a change request in ServiceNow ──────────────────────────────────────
+  - as: snow-create
+    uses: snow-create
+    config:
+      credentials:
+        sharedSecretName: kargo-step-snow
+        type: api-token
+      tableName: change_request
+      template:
+        type: normal
+      parameters:
+        short_description: >-
+          Airgap Prod Deployment — oci-airgap ${{ imageFrom(vars.imageRepo).Tag }}
+        description: |
+          Manual airgapped deployment required. No automated sync.
+
+          ── OCI Bundle ──────────────────────────────────────────────────────────
+          Registry:  ${{ vars.bundleRegistry }}/${{ vars.bundleRepo }}
+          Tag:       ${{ imageFrom(vars.imageRepo).Tag }}
+          Layer:     application/vnd.kargo.manifests.prod+yaml
+
+          ── Operator Steps ──────────────────────────────────────────────────────
+          1. On a network-connected machine, pull the prod layer:
+               oras pull ${{ vars.bundleRegistry }}/${{ vars.bundleRepo }}:${{ imageFrom(vars.imageRepo).Tag }} \
+                 --media-type application/vnd.kargo.manifests.prod+yaml \
+                 --output ./airgap-bundle/
+
+          2. Transfer ./airgap-bundle/manifests.yaml to the airgapped environment
+             via the approved data-diode or physical media procedure.
+
+          3. In the airgapped environment, apply the manifests:
+               kubectl apply -f manifests.yaml -n oci-airgap-prod
+               kubectl rollout status deployment/oci-airgap -n oci-airgap-prod
+
+          4. Verify the deployment is healthy and matches the expected image tag:
+               kubectl get deployment oci-airgap -n oci-airgap-prod \
+                 -o jsonpath='{.spec.template.spec.containers[0].image}'
+
+          5. Close this ticket — Kargo will then mark the prod stage as Succeeded.
+
+          ── Kargo Context ────────────────────────────────────────────────────────
+          Promotion:  ${{ ctx.promotion }}
+          Freight:    ${{ ctx.targetFreight.name }}
+          Image:      ${{ imageFrom(vars.imageRepo).RepoURL }}:${{ imageFrom(vars.imageRepo).Tag }}
+        assignment_group: "Platform Operations"
+        impact: "2"
+        urgency: "3"
+        implementation_plan: >-
+          See Kargo promotion at
+          https://kargo.akpdemoapps.link/project/oci-airgap/promotion/${{ ctx.promotion }}
+
+  # ── Wait for the ticket to be closed by the ops team ─────────────────────────
+  # state=3 is "Closed" in the default ServiceNow ITSM workflow.
+  # Kargo polls on the configured interval until the condition is met.
+  - as: snow-wait-for-closed
+    uses: snow-wait-for-condition
+    config:
+      credentials:
+        sharedSecretName: kargo-step-snow
+        type: api-token
+      tableName: change_request
+      ticketId: ${% outputs['snow-create'].sys_id %}
+      condition: state=3
+
+  # ── Record completion on the ticket ──────────────────────────────────────────
+  - as: snow-update
+    uses: snow-update
+    config:
+      credentials:
+        sharedSecretName: kargo-step-snow
+        type: api-token
+      tableName: change_request
+      ticketId: ${% outputs['snow-create'].sys_id %}
+      parameters:
+        work_notes: >-
+          Airgapped deployment confirmed by ops team.
+          Kargo has marked the prod stage as Succeeded for freight
+          ${{ ctx.targetFreight.name }} (image ${{ imageFrom(vars.imageRepo).Tag }}).
+        state: "Closed Complete"

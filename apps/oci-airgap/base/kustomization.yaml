@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- deployment.yaml
+- service.yaml
+
+# kustomize-set-image (run once at dev promotion time) updates this tag
+# for all four overlays simultaneously before kustomize-build is called.
+images:
+- name: ghcr.io/akuity/guestbook
+  newTag: latest

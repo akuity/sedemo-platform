@@ -1,0 +1,20 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: oci-airgap
+  namespace: oci-airgap
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  subscriptions:
+  # Track the application image. A new tag triggers a new Freight and starts
+  # the pipeline: dev renders all overlays → pushes OCI bundle → test/stage pull.
+  - image:
+      repoURL: ghcr.io/akuity/guestbook
+  # Track the platform repo so overlay changes (e.g. replica counts, config)
+  # also generate new Freight and flow through the pipeline.
+  - git:
+      repoURL: https://github.com/akuity/sedemo-platform
+      branch: main
+      includePaths:
+      - apps/oci-airgap
