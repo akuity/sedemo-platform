@@ -91,15 +91,10 @@ spec:
 
       ARTIFACT_REF="${{ config.registry }}/${{ config.repository }}:${{ config.tag }}"
 
-      # Diagnostic — print raw manifest so we can verify the JSON structure.
-      echo "=== RAW MANIFEST ==="
-      oras manifest fetch "${ARTIFACT_REF}"
-      echo "=== END MANIFEST ==="
-
       # Fetch the OCI manifest and extract the digest for the target media type.
       # go-template iterates .layers and prints the digest of the matching entry.
       LAYER_DIGEST=$(oras manifest fetch "${ARTIFACT_REF}" \
-        --format 'go-template={{range .layers}}{{if eq .mediaType "${{ config.mediaType }}"}}{{.digest}}{{end}}{{end}}')
+        --format 'go-template={{range .Layers}}{{if eq .MediaType "${{ config.mediaType }}"}}{{.Digest}}{{end}}{{end}}')
 
       if [ -z "${LAYER_DIGEST}" ]; then
         echo "ERROR: no layer found with mediaType=${{ config.mediaType }}" >&2
