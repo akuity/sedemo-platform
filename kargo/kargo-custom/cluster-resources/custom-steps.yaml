@@ -27,8 +27,11 @@ spec:
     - -c
     - |
       set -eu
+      # Point Docker config to a writable temp dir — the container runs non-root
+      # and cannot write to /.docker.
+      export DOCKER_CONFIG=/tmp/.docker
+      mkdir -p /tmp/.docker
       # Authenticate to the OCI registry.
-      # In production, prefer a mounted Docker config secret over inline creds.
       echo "${{ config.orasPassword }}" | oras login "${{ config.registry }}" \
         --username "${{ config.orasUsername }}" \
         --password-stdin
@@ -79,6 +82,8 @@ spec:
     - -c
     - |
       set -eu
+      export DOCKER_CONFIG=/tmp/.docker
+      mkdir -p /tmp/.docker
       echo "${{ config.orasPassword }}" | oras login "${{ config.registry }}" \
         --username "${{ config.orasUsername }}" \
         --password-stdin
