@@ -13,6 +13,12 @@ metadata:
   name: oci-airgap
   namespace: argocd
 spec:
+  # Prevent the ApplicationSet controller from overwriting targetRevision after
+  # Kargo sets it during promotion. Without this, the controller resets it back
+  # to "latest" on every reconcile loop.
+  ignoreApplicationDifferences:
+  - jsonPointers:
+    - /spec/source/targetRevision
   generators:
   - list:
       elements:
