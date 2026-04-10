@@ -299,7 +299,7 @@ spec:
         sharedSecretName: kargo-step-snow
         type: api-token
       tableName: change_request
-      ticketId: ${% outputs['snowcreate'].sys_id %}
+      ticketId: ${% task.outputs['snowcreate'].sys_id %}
       condition: state=3
 
   # ── Record completion on the ticket ──────────────────────────────────────────
@@ -310,7 +310,7 @@ spec:
         sharedSecretName: kargo-step-snow
         type: api-token
       tableName: change_request
-      ticketId: ${% outputs['snowcreate'].sys_id %}
+      ticketId: ${% task.outputs['snowcreate'].sys_id %}
       parameters:
         work_notes: >-
           Airgapped deployment confirmed by ops team.
