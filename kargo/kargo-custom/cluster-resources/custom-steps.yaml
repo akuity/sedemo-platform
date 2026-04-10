@@ -50,7 +50,7 @@ spec:
       oras push \
         "${{ config.registry }}/${{ config.repository }}:${{ config.tag }}" \
         --artifact-type "application/vnd.cncf.argoproj.argocd.config.v1+json" \
-        "bundle.tar.gz:${{ config.mediaType }}"
+        "bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip"
 
       echo "Pushed OCI bundle: ${{ config.registry }}/${{ config.repository }}:${{ config.tag }}"
   output:

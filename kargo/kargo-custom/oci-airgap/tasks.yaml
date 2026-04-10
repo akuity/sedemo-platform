@@ -84,7 +84,7 @@ spec:
       repository: ${{ vars.bundleRepo }}
       tag: ${{ imageFrom(vars.imageRepo).Tag }}
       path: ./bundle
-      mediaType: application/vnd.cncf.argoproj.argocd.content.v1.tar+gzip
+      mediaType: application/vnd.oci.image.layer.v1.tar+gzip
       orasUsername: ${% sharedSecret('oci-airgap-registry').username %}
       orasPassword: ${% sharedSecret('oci-airgap-registry').password %}
 
