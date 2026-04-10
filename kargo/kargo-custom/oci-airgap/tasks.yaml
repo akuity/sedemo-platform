@@ -88,6 +88,19 @@ spec:
       orasUsername: ${% sharedSecret('oci-airgap-registry').username %}
       orasPassword: ${% sharedSecret('oci-airgap-registry').password %}
 
+  # ── Resolve digest from the just-pushed tag ───────────────────────────────────
+  # ArgoCD stores the digest (not the tag) in sync status for OCI sources.
+  # Kargo's argocd-update health check must use the digest as desiredRevision
+  # or it will wait forever for a revision match that never comes.
+  - as: resolve-digest
+    uses: oras-resolve
+    config:
+      registry: ${{ vars.bundleRegistry }}
+      repository: ${{ vars.bundleRepo }}
+      tag: ${{ imageFrom(vars.imageRepo).Tag }}
+      orasUsername: ${% sharedSecret('oci-airgap-registry').username %}
+      orasPassword: ${% sharedSecret('oci-airgap-registry').password %}
+
   # ── Trigger Argo CD sync from OCI ────────────────────────────────────────────
   - uses: argocd-update
     config:
@@ -95,7 +108,7 @@ spec:
       - name: oci-airgap-dev
         sources:
         - repoURL: oci://${{ vars.bundleRegistry }}/${{ vars.bundleRepo }}
-          desiredRevision: ${{ outputs['push-oci'].digest }}
+          desiredRevision: ${{ outputs['resolve-digest'].digest }}
           updateTargetRevision: true
 ---
 # PromotionTask: pull-and-apply-oci

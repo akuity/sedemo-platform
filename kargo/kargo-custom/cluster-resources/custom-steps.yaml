@@ -47,20 +47,12 @@ spec:
 
       # Push as a single OCI layer. ORAS rejects absolute paths, so cd to /tmp first.
       cd /tmp
-      DIGEST=$(oras push \
+      oras push \
         "${{ config.registry }}/${{ config.repository }}:${{ config.tag }}" \
         --artifact-type "application/vnd.cncf.argoproj.argocd.config.v1+json" \
-        "bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip" \
-        2>&1 | grep -o 'sha256:[a-f0-9]*' | tail -1)
+        "bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip"
 
-      echo "${DIGEST}"
-  output:
-    source:
-      format: Text
-      type: Stdout
-    transform:
-      digest: >-
-        trim(output)
+      echo "Pushed OCI bundle: ${{ config.registry }}/${{ config.repository }}:${{ config.tag }}"
 ---
 # CustomPromotionStep: oras-resolve
 #
