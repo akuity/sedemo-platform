@@ -84,11 +84,11 @@ spec:
 
       DIGEST=$(oras manifest fetch \
         "${{ config.registry }}/${{ config.repository }}:${{ config.tag }}" \
-        --descriptor \
+        --descriptor 2>/dev/null \
         | grep -o '"digest":"sha256:[a-f0-9]*"' \
         | sed 's/"digest":"//;s/"//')
 
-      echo "${DIGEST}"
+      printf '%s' "${DIGEST}"
   output:
     source:
       format: Text
