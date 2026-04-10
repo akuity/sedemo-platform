@@ -37,15 +37,15 @@ spec:
         --password-stdin
 
       # Push all four rendered overlays as separate layers of one OCI artifact.
-      # Each file is tagged with a typed media type so per-environment pulls are
-      # deterministic: oras blob fetch ... --format go-template selects by mediaType.
+      # ORAS rejects absolute paths, so cd into the rendered dir first.
+      cd "${{ config.workspace }}/rendered"
       oras push \
         "${{ config.registry }}/${{ config.repository }}:${{ config.tag }}" \
         --artifact-type "application/vnd.kargo.airgap.bundle.v1" \
-        "${{ config.workspace }}/rendered/dev.yaml:application/vnd.kargo.manifests.dev+yaml" \
-        "${{ config.workspace }}/rendered/test.yaml:application/vnd.kargo.manifests.test+yaml" \
-        "${{ config.workspace }}/rendered/stage.yaml:application/vnd.kargo.manifests.stage+yaml" \
-        "${{ config.workspace }}/rendered/prod.yaml:application/vnd.kargo.manifests.prod+yaml"
+        "dev.yaml:application/vnd.kargo.manifests.dev+yaml" \
+        "test.yaml:application/vnd.kargo.manifests.test+yaml" \
+        "stage.yaml:application/vnd.kargo.manifests.stage+yaml" \
+        "prod.yaml:application/vnd.kargo.manifests.prod+yaml"
 
       echo "Pushed OCI bundle: ${{ config.registry }}/${{ config.repository }}:${{ config.tag }}"
   output:
