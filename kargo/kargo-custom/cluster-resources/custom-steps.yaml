@@ -37,7 +37,7 @@ spec:
       # Authenticate to the OCI registry.
       echo "${{ config.orasPassword }}" | oras login "${{ config.registry }}" \
         --username "${{ config.orasUsername }}" \
-        --password-stdin
+        --password-stdin >/dev/null 2>&1
 
       # Package the bundle directory as a single tar+gzip archive.
       # -C changes into the directory so paths inside the archive are relative
@@ -80,11 +80,11 @@ spec:
       mkdir -p /tmp/.docker
       echo "${{ config.orasPassword }}" | oras login "${{ config.registry }}" \
         --username "${{ config.orasUsername }}" \
-        --password-stdin
+        --password-stdin >/dev/null 2>&1
 
       DIGEST=$(oras manifest fetch \
         "${{ config.registry }}/${{ config.repository }}:${{ config.tag }}" \
-        --descriptor 2>/dev/null \
+        --descriptor \
         | grep -o '"digest":"sha256:[a-f0-9]*"' \
         | sed 's/"digest":"//;s/"//')
 
