@@ -36,17 +36,10 @@ spec:
         --username "${{ config.orasUsername }}" \
         --password-stdin
 
-      # Diagnostic — find where (if anywhere) the rendered files landed.
-      echo "=== / ==="
-      ls /
-      echo "=== /workspace (if exists) ==="
-      ls /workspace 2>/dev/null || echo "NOT MOUNTED"
-      echo "=== locate dev.yaml ==="
-      find / -name "dev.yaml" -not -path "/proc/*" 2>/dev/null | head -10
-
       # Push all four rendered overlays as separate layers of one OCI artifact.
-      # ORAS rejects absolute paths, so cd into the rendered dir first.
-      cd "${{ config.workspace }}/rendered"
+      # Kargo mounts the promotion workspace at /workdir inside CustomPromotionStep containers.
+      # ORAS rejects absolute paths so cd into the rendered dir first.
+      cd /workdir/rendered
       oras push \
         "${{ config.registry }}/${{ config.repository }}:${{ config.tag }}" \
         --artifact-type "application/vnd.kargo.airgap.bundle.v1" \
@@ -109,10 +102,11 @@ spec:
       fi
 
       # Fetch the blob and write it to the output path.
-      mkdir -p "${{ config.outPath }}"
+      # outPath is relative to /workdir — the Kargo promotion workspace mount.
+      mkdir -p "/workdir/${{ config.outPath }}"
       oras blob fetch \
         "${{ config.registry }}/${{ config.repository }}@${LAYER_DIGEST}" \
-        --output "${{ config.outPath }}/manifests.yaml"
+        --output "/workdir/${{ config.outPath }}/manifests.yaml"
 
       echo "Pulled layer ${{ config.mediaType }} → ${{ config.outPath }}/manifests.yaml"
   output:

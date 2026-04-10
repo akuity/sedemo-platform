@@ -93,7 +93,6 @@ spec:
       registry: ${{ vars.bundleRegistry }}
       repository: ${{ vars.bundleRepo }}
       tag: ${{ imageFrom(vars.imageRepo).Tag }}
-      workspace: /workspace
       orasUsername: ${% sharedSecret('oci-airgap-registry').username %}
       orasPassword: ${% sharedSecret('oci-airgap-registry').password %}
 
@@ -171,7 +170,7 @@ spec:
   # ── Pull the environment-specific layer from the OCI artifact ─────────────────
   # oras-pull resolves the layer digest by matching config.mediaType,
   # then fetches the blob and writes it to config.outPath/manifests.yaml.
-  # /workspace/out is the same directory as ./out seen by built-in steps.
+  # outPath is relative to /workdir — the Kargo promotion workspace mount inside CustomPromotionStep containers.
   - uses: oras-pull
     as: pull-oci
     config:
@@ -179,7 +178,7 @@ spec:
       repository: ${{ vars.bundleRepo }}
       tag: ${{ imageFrom(vars.imageRepo).Tag }}
       mediaType: ${{ vars.mediaType }}
-      outPath: /workspace/out
+      outPath: out
       orasUsername: ${% sharedSecret('oci-airgap-registry').username %}
       orasPassword: ${% sharedSecret('oci-airgap-registry').password %}
 
