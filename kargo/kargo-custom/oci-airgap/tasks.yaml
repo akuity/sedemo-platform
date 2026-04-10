@@ -97,6 +97,7 @@ spec:
         - repoURL: oci://${{ vars.bundleRegistry }}/${{ vars.bundleRepo }}
           desiredRevision: ${{ imageFrom(vars.imageRepo).Tag }}
           updateTargetRevision: true
+        healthChecks: []
 ---
 # PromotionTask: pull-and-apply-oci
 #
@@ -128,6 +129,7 @@ spec:
         - repoURL: oci://${{ vars.bundleRegistry }}/${{ vars.bundleRepo }}
           desiredRevision: ${{ imageFrom(vars.imageRepo).Tag }}
           updateTargetRevision: true
+        healthChecks: []
 ---
 # PromotionTask: airgap-prod-gate
 #
