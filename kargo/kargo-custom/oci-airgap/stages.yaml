@@ -42,12 +42,11 @@ spec:
 ---
 # Stage: test
 #
-# Pulls the `test` layer from the OCI artifact produced by dev and deploys it
-# to the test cluster via a rendered git branch + Argo CD.
+# Promotes the OCI artifact from dev to test by updating the Argo CD Application
+# to sync from the new tag at path `test` — no oras-pull, no git round-trip.
 #
-# This stage intentionally does NOT re-render from source: the manifests are
-# taken verbatim from the OCI bundle, ensuring test runs exactly what was
-# packaged at dev time.
+# The manifests are taken verbatim from the OCI bundle (rendered at dev time),
+# ensuring test runs exactly what was packaged.
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
@@ -68,25 +67,19 @@ spec:
   promotionTemplate:
     spec:
       vars:
-      - name: gitRepo
-        value: https://github.com/akuity/sedemo-platform
       - name: imageRepo
         value: ghcr.io/akuity/guestbook
       - name: bundleRegistry
         value: ghcr.io
       - name: bundleRepo
         value: akuity/oci-airgap-bundles
-      # Media type that identifies the test layer in the OCI artifact.
-      - name: mediaType
-        value: application/vnd.kargo.manifests.test+yaml
       steps:
       - task:
           name: pull-and-apply-oci
 ---
 # Stage: stage
 #
-# Pulls the `stage` layer from the OCI artifact and deploys it.
-# Same pull-and-apply pattern as test, but targets the staging cluster.
+# Same argocd-update-from-OCI pattern as test, but targets the staging cluster.
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
@@ -107,33 +100,29 @@ spec:
   promotionTemplate:
     spec:
       vars:
-      - name: gitRepo
-        value: https://github.com/akuity/sedemo-platform
       - name: imageRepo
         value: ghcr.io/akuity/guestbook
       - name: bundleRegistry
         value: ghcr.io
       - name: bundleRepo
         value: akuity/oci-airgap-bundles
-      - name: mediaType
-        value: application/vnd.kargo.manifests.stage+yaml
       steps:
       - task:
           name: pull-and-apply-oci
 ---
 # Stage: prod  (AIRGAPPED)
 #
-# Prod has no external network access — no Argo CD sync, no outbound registry
-# pull. The OCI artifact was already pushed during the dev stage and is assumed
-# to have been mirrored into the airgapped registry (or transferred via physical
-# media) by the ops team as part of the change management process.
+# Prod has no external network access. The OCI artifact must be mirrored into
+# the airgapped registry by the ops team; the in-cluster Argo CD then syncs
+# automatically from the internal registry — no manual kubectl apply.
 #
-# This stage only:
-#   1. Creates a ServiceNow change request with exact pull instructions
-#   2. Waits for the ticket to be closed (proof of manual deployment)
+# This stage:
+#   1. Creates a ServiceNow change request with exact skopeo mirror instructions
+#   2. Waits for the ticket to be closed (proof of transfer + Argo CD sync)
 #   3. Marks the freight as promoted in Kargo for audit trail purposes
 #
-# There is intentionally no Argo CD Application for prod in applicationset.yaml.
+# The prod Argo CD Application lives in the airgapped cluster and is managed
+# separately — it is not in applicationset.yaml (which runs on the connected cluster).
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:

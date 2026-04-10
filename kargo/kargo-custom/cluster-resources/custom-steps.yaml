@@ -1,16 +1,21 @@
-# CustomPromotionStep: oci-airgap-push
+# CustomPromotionStep: oras-push
 #
-# Runs ORAS to render and push four environment-specific manifest layers into a
-# single OCI artifact. Each layer carries a distinct media type so downstream
-# stages can fetch only the overlay they need.
+# Packages a directory as a tar+gzip archive and pushes it as a single OCI layer
+# using the Argo CD native content media type, so Argo CD can sync directly from
+# the registry without a CMP plugin.
 #
 # Called during the `dev` stage AFTER kustomize-build has written:
-#   ./rendered/dev.yaml   ./rendered/test.yaml
-#   ./rendered/stage.yaml ./rendered/prod.yaml
+#   ./bundle/dev/manifests.yaml   ./bundle/test/manifests.yaml
+#   ./bundle/stage/manifests.yaml ./bundle/prod/manifests.yaml
 #
-# The promotion workspace is mounted at /workspace inside the container.
-# If your Kargo deployment uses a different mount path, update config.workspace
-# in tasks.yaml accordingly.
+# Argo CD Applications select their env via `source.path: <env>`.
+#
+# Required config keys:
+#   registry, repository, tag  — OCI coordinates
+#   path                       — workspace-relative dir to package (e.g. ./bundle)
+#   mediaType                  — layer media type
+#                                (application/vnd.cncf.argoproj.argocd.content.v1.tar+gzip)
+#   orasUsername, orasPassword — registry credentials
 #
 # Required shared secret: oci-airgap-registry
 #   keys: username, password  (e.g. a GHCR PAT with write:packages scope)
@@ -20,8 +25,6 @@ metadata:
   name: oras-push
 spec:
   image: ghcr.io/oras-project/oras:v1.2.2
-  # /bin/sh -c lets us chain login → push in one container invocation.
-  # config.* values are templated by Kargo before the container starts.
   command:
     - /bin/sh
     - -c
@@ -36,17 +39,18 @@ spec:
         --username "${{ config.orasUsername }}" \
         --password-stdin
 
-      # Push all four rendered overlays as separate layers of one OCI artifact.
-      # Kargo mounts the promotion workspace at /workdir inside CustomPromotionStep containers.
-      # ORAS rejects absolute paths so cd into the rendered dir first.
-      cd /workdir/rendered
+      # Package the bundle directory as a single tar+gzip archive.
+      # -C changes into the directory so paths inside the archive are relative
+      # (dev/manifests.yaml, test/manifests.yaml, ...) — matching Argo CD's
+      # path-based source selection.
+      tar -czf /tmp/bundle.tar.gz -C "/workdir/${{ config.path }}" .
+
+      # Push as a single OCI layer. ORAS rejects absolute paths, so cd to /tmp first.
+      cd /tmp
       oras push \
         "${{ config.registry }}/${{ config.repository }}:${{ config.tag }}" \
-        --artifact-type "application/vnd.kargo.airgap.bundle.v1" \
-        "dev.yaml:application/vnd.kargo.manifests.dev+yaml" \
-        "test.yaml:application/vnd.kargo.manifests.test+yaml" \
-        "stage.yaml:application/vnd.kargo.manifests.stage+yaml" \
-        "prod.yaml:application/vnd.kargo.manifests.prod+yaml"
+        --artifact-type "application/vnd.cncf.argoproj.argocd.config.v1+json" \
+        "bundle.tar.gz:${{ config.mediaType }}"
 
       echo "Pushed OCI bundle: ${{ config.registry }}/${{ config.repository }}:${{ config.tag }}"
   output:
@@ -54,69 +58,5 @@ spec:
       format: Text
       type: Stdout
     transform:
-      # Expose the artifact reference so downstream steps / metadata can record it.
       artifactRef: >-
-        trim(output)
----
-# CustomPromotionStep: oci-airgap-pull
-#
-# Pulls a single environment's rendered manifests from the OCI artifact by
-# targeting the layer whose mediaType matches config.mediaType.
-#
-# Flow:
-#   1. oras manifest fetch → split on } → grep mediaType → sed extract digest
-#   2. oras blob fetch @<digest> → write to config.outPath/manifests.yaml
-#
-# Called during test and stage promotions. The output file is then committed to
-# the rendered git branch by the built-in git-commit / git-push steps that follow.
-#
-# Required shared secret: oci-airgap-registry
-#   keys: username, password
-apiVersion: ee.kargo.akuity.io/v1alpha1
-kind: CustomPromotionStep
-metadata:
-  name: oras-pull
-spec:
-  image: ghcr.io/oras-project/oras:v1.2.2
-  command:
-    - /bin/sh
-    - -c
-    - |
-      set -eu
-      export DOCKER_CONFIG=/tmp/.docker
-      mkdir -p /tmp/.docker
-      echo "${{ config.orasPassword }}" | oras login "${{ config.registry }}" \
-        --username "${{ config.orasUsername }}" \
-        --password-stdin
-
-      ARTIFACT_REF="${{ config.registry }}/${{ config.repository }}:${{ config.tag }}"
-
-      # Parse the manifest with POSIX tools — no jq in the ORAS image.
-      # tr splits at } so each layer object lands on its own line, then
-      # grep finds the target mediaType, and sed strips the JSON wrapper.
-      LAYER_DIGEST=$(oras manifest fetch "${ARTIFACT_REF}" \
-        | tr '}' '\n' \
-        | grep '"${{ config.mediaType }}"' \
-        | grep -o '"digest":"[^"]*"' \
-        | sed 's/"digest":"//;s/"//')
-
-      if [ -z "${LAYER_DIGEST}" ]; then
-        echo "ERROR: no layer found with mediaType=${{ config.mediaType }}" >&2
-        exit 1
-      fi
-
-      echo "Found digest: ${LAYER_DIGEST}"
-      mkdir -p "/workdir/${{ config.outPath }}"
-      oras blob fetch \
-        "${{ config.registry }}/${{ config.repository }}@${LAYER_DIGEST}" \
-        --output "/workdir/${{ config.outPath }}/manifests.yaml"
-
-      echo "Pulled ${{ config.mediaType }} → ${{ config.outPath }}/manifests.yaml"
-  output:
-    source:
-      format: Text
-      type: Stdout
-    transform:
-      # Surface the full path of the written manifest file for downstream steps.
-      manifestPath: >-
         trim(output)
