@@ -17,7 +17,7 @@
 apiVersion: ee.kargo.akuity.io/v1alpha1
 kind: CustomPromotionStep
 metadata:
-  name: oci-push
+  name: oras-push
 spec:
   image: ghcr.io/oras-project/oras:v1.2.2
   # /bin/sh -c lets us chain login → push in one container invocation.
@@ -71,7 +71,7 @@ spec:
 apiVersion: ee.kargo.akuity.io/v1alpha1
 kind: CustomPromotionStep
 metadata:
-  name: oci-pull
+  name: oras-pull
 spec:
   image: ghcr.io/oras-project/oras:v1.2.2
   command:
