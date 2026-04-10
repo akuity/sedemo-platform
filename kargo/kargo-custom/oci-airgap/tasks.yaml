@@ -95,8 +95,7 @@ spec:
       - name: oci-airgap-dev
         sources:
         - repoURL: oci://${{ vars.bundleRegistry }}/${{ vars.bundleRepo }}
-          targetRevision: ${{ imageFrom(vars.imageRepo).Tag }}
-          path: dev
+          desiredRevision: ${{ imageFrom(vars.imageRepo).Tag }}
 ---
 # PromotionTask: pull-and-apply-oci
 #
@@ -126,8 +125,7 @@ spec:
       - name: oci-airgap-${{ ctx.stage }}
         sources:
         - repoURL: oci://${{ vars.bundleRegistry }}/${{ vars.bundleRepo }}
-          targetRevision: ${{ imageFrom(vars.imageRepo).Tag }}
-          path: ${{ ctx.stage }}
+          desiredRevision: ${{ imageFrom(vars.imageRepo).Tag }}
 ---
 # PromotionTask: airgap-prod-gate
 #
