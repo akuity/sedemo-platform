@@ -95,7 +95,7 @@ spec:
       - name: oci-airgap-dev
         sources:
         - repoURL: oci://${{ vars.bundleRegistry }}/${{ vars.bundleRepo }}
-          desiredRevision: ${{ imageFrom(vars.imageRepo).Tag }}
+          desiredRevision: ${{ outputs['push-oci'].digest }}
           updateTargetRevision: true
 ---
 # PromotionTask: pull-and-apply-oci
@@ -120,13 +120,24 @@ spec:
   steps:
   # ── Point Argo CD at the promoted tag and trigger sync ────────────────────────
   # path: <stage> selects the env-specific subdirectory inside the OCI artifact.
+  # Resolve the digest for the promoted tag so Kargo can match against ArgoCD's
+  # digest-based sync status. ORAS image stores digest in stdout after manifest fetch.
+  - as: resolve-digest
+    uses: oras-resolve
+    config:
+      registry: ${{ vars.bundleRegistry }}
+      repository: ${{ vars.bundleRepo }}
+      tag: ${{ imageFrom(vars.imageRepo).Tag }}
+      orasUsername: ${% sharedSecret('oci-airgap-registry').username %}
+      orasPassword: ${% sharedSecret('oci-airgap-registry').password %}
+
   - uses: argocd-update
     config:
       apps:
       - name: oci-airgap-${{ ctx.stage }}
         sources:
         - repoURL: oci://${{ vars.bundleRegistry }}/${{ vars.bundleRepo }}
-          desiredRevision: ${{ imageFrom(vars.imageRepo).Tag }}
+          desiredRevision: ${{ outputs['resolve-digest'].digest }}
           updateTargetRevision: true
 ---
 # PromotionTask: airgap-prod-gate

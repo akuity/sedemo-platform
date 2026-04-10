@@ -47,16 +47,60 @@ spec:
 
       # Push as a single OCI layer. ORAS rejects absolute paths, so cd to /tmp first.
       cd /tmp
-      oras push \
+      DIGEST=$(oras push \
         "${{ config.registry }}/${{ config.repository }}:${{ config.tag }}" \
         --artifact-type "application/vnd.cncf.argoproj.argocd.config.v1+json" \
-        "bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip"
+        "bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip" \
+        2>&1 | grep -o 'sha256:[a-f0-9]*' | tail -1)
 
-      echo "Pushed OCI bundle: ${{ config.registry }}/${{ config.repository }}:${{ config.tag }}"
+      echo "${DIGEST}"
   output:
     source:
       format: Text
       type: Stdout
     transform:
-      artifactRef: >-
+      digest: >-
+        trim(output)
+---
+# CustomPromotionStep: oras-resolve
+#
+# Resolves an OCI tag to its manifest digest so that the argocd-update step
+# can use the digest as desiredRevision — ArgoCD stores digests (not tags) in
+# its sync status for OCI sources, so Kargo's revision health check requires
+# the digest to avoid hanging indefinitely.
+#
+# Used by the test and stage pull-and-apply-oci task, which has no oras-push
+# step to capture the digest from.
+#
+# Required config keys: registry, repository, tag, orasUsername, orasPassword
+apiVersion: ee.kargo.akuity.io/v1alpha1
+kind: CustomPromotionStep
+metadata:
+  name: oras-resolve
+spec:
+  image: ghcr.io/oras-project/oras:v1.2.2
+  command:
+    - /bin/sh
+    - -c
+    - |
+      set -eu
+      export DOCKER_CONFIG=/tmp/.docker
+      mkdir -p /tmp/.docker
+      echo "${{ config.orasPassword }}" | oras login "${{ config.registry }}" \
+        --username "${{ config.orasUsername }}" \
+        --password-stdin
+
+      DIGEST=$(oras manifest fetch \
+        "${{ config.registry }}/${{ config.repository }}:${{ config.tag }}" \
+        --descriptor \
+        | grep -o '"digest":"sha256:[a-f0-9]*"' \
+        | sed 's/"digest":"//;s/"//')
+
+      echo "${DIGEST}"
+  output:
+    source:
+      format: Text
+      type: Stdout
+    transform:
+      digest: >-
         trim(output)
