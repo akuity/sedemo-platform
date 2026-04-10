@@ -64,8 +64,9 @@ spec:
 # targeting the layer whose mediaType matches config.mediaType.
 #
 # Flow:
-#   1. oras manifest fetch  → JSON manifest → extract digest of the target layer
-#   2. oras blob fetch @digest → write raw YAML to config.outPath/manifests.yaml
+#   1. Derive filename from config.mediaType  (e.g. test+yaml → test.yaml)
+#   2. oras pull <ref> <env>.yaml  → fetches only that layer by annotation title
+#   3. Move to config.outPath/manifests.yaml
 #
 # Called during test and stage promotions. The output file is then committed to
 # the rendered git branch by the built-in git-commit / git-push steps that follow.
@@ -91,24 +92,21 @@ spec:
 
       ARTIFACT_REF="${{ config.registry }}/${{ config.repository }}:${{ config.tag }}"
 
-      # Fetch the OCI manifest and extract the digest for the target media type.
-      # go-template iterates .layers and prints the digest of the matching entry.
-      LAYER_DIGEST=$(oras manifest fetch "${ARTIFACT_REF}" \
-        --format 'go-template={{range .Layers}}{{if eq .MediaType "${{ config.mediaType }}"}}{{.Digest}}{{end}}{{end}}')
+      # Derive the filename from the mediaType — the push step set
+      # org.opencontainers.image.title to "<env>.yaml" (e.g. test.yaml).
+      # mediaType format: application/vnd.kargo.manifests.<env>+yaml
+      ENV_NAME=$(printf '%s' "${{ config.mediaType }}" | sed 's/.*\.\([a-z]*\)+yaml/\1/')
 
-      if [ -z "${LAYER_DIGEST}" ]; then
-        echo "ERROR: no layer found with mediaType=${{ config.mediaType }}" >&2
-        exit 1
-      fi
+      # Pull only the layer whose annotation title matches <env>.yaml.
+      # This avoids any JSON/digest parsing and pulls a single layer.
+      mkdir -p /tmp/oras-work
+      cd /tmp/oras-work
+      oras pull "${ARTIFACT_REF}" "${ENV_NAME}.yaml"
 
-      # Fetch the blob and write it to the output path.
-      # outPath is relative to /workdir — the Kargo promotion workspace mount.
       mkdir -p "/workdir/${{ config.outPath }}"
-      oras blob fetch \
-        "${{ config.registry }}/${{ config.repository }}@${LAYER_DIGEST}" \
-        --output "/workdir/${{ config.outPath }}/manifests.yaml"
+      mv "/tmp/oras-work/${ENV_NAME}.yaml" "/workdir/${{ config.outPath }}/manifests.yaml"
 
-      echo "Pulled layer ${{ config.mediaType }} → ${{ config.outPath }}/manifests.yaml"
+      echo "Pulled ${ENV_NAME}.yaml → ${{ config.outPath }}/manifests.yaml"
   output:
     source:
       format: Text
