@@ -108,7 +108,7 @@ spec:
       - name: oci-airgap-dev
         sources:
         - repoURL: oci://${{ vars.bundleRegistry }}/${{ vars.bundleRepo }}
-          desiredRevision: ${{ outputs['resolve-digest'].digest }}
+          desiredRevision: ${{ task.outputs['resolve-digest'].digest }}
           updateTargetRevision: true
 ---
 # PromotionTask: pull-and-apply-oci
@@ -150,7 +150,7 @@ spec:
       - name: oci-airgap-${{ ctx.stage }}
         sources:
         - repoURL: oci://${{ vars.bundleRegistry }}/${{ vars.bundleRepo }}
-          desiredRevision: ${{ outputs['resolve-digest'].digest }}
+          desiredRevision: ${{ task.outputs['resolve-digest'].digest }}
           updateTargetRevision: true
 ---
 # PromotionTask: airgap-prod-gate
