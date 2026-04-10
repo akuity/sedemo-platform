@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oci-airgap
+  namespace: oci-airgap-dev
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: oci-airgap
+  template:
+    metadata:
+      labels:
+        app: oci-airgap
+    spec:
+      containers:
+      - env:
+        - name: ENV
+          value: dev
+        image: ghcr.io/akuity/guestbook:v0.0.2
+        name: guestbook
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oci-airgap
+  namespace: oci-airgap-dev
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: oci-airgap
