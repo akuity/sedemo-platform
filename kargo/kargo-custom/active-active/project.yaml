@@ -13,8 +13,11 @@ metadata:
 spec:
   promotionPolicies:
   - stageSelector:
-      name: "regex:approve.*"
+      name: "regex:dev.*"
     autoPromotionEnabled: true
   - stageSelector:
-      name: "regex:dev.*"
+      name: "regex:staging.*"
+    autoPromotionEnabled: true
+  - stageSelector:
+      name: "regex:approve.*"
     autoPromotionEnabled: true
