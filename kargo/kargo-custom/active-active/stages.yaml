@@ -497,6 +497,8 @@ spec:
           parameters:
             state: "Close"
             work_notes: "Promotion to prod successful, moving change request to Close state."
+            close_notes: "Promotion to prod successful, moving change request to Close state."
+            close_code: "Successful"
           tableName: change_request
           ticketId: ${{ stageMetadata('approve')['snow-id'] }}
         uses: snow-update
