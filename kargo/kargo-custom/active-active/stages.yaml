@@ -162,6 +162,8 @@ spec:
       stages: 
         - dev-east
         - dev-west
+      autoPromotionOptions:
+        selectionPolicy: MatchUpstream
   verification:
     analysisTemplates:
     - name: smoke-test
@@ -262,6 +264,8 @@ spec:
       stages: 
         - staging
       requiredSoakTime: 1m0s
+      autoPromotionOptions:
+        selectionPolicy: MatchUpstream
   promotionTemplate:
     spec:
       vars:
@@ -325,6 +329,8 @@ spec:
     sources:
       stages: 
         - approve
+      autoPromotionOptions:
+        selectionPolicy: MatchUpstream
   verification:
     analysisTemplates:
     - name: smoke-test
@@ -395,10 +401,11 @@ spec:
       kind: Warehouse
       name: active-active
     sources:
-    sources:
       stages: 
         - prod-east
       requiredSoakTime: 2m0s
+      autoPromotionOptions:
+        selectionPolicy: MatchUpstream
   verification:
     analysisTemplates:
     - name: smoke-test
@@ -477,6 +484,8 @@ spec:
       stages: 
         - prod-west
       requiredSoakTime: 1m0s
+      autoPromotionOptions:
+        selectionPolicy: MatchUpstream
   promotionTemplate:
     spec:
       steps:
