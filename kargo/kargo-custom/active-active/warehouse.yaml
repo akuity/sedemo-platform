@@ -12,7 +12,8 @@ spec:
       allowTags: ^\d*-[a-z]*$
   - git:
       repoURL: https://github.com/akuity/sedemo-monorepo
+      branch: main
       includePaths:
-      - active-active/*
+      - active-active
       excludePaths:
-      - active-active/targets/*
+      - active-active/targets
