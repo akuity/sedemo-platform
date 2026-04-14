@@ -335,6 +335,7 @@ spec:
     args:
     - name: environment
       value: ${{ ctx.stage }}
+      requiredSoakTime: 1m
   promotionTemplate:
     spec:
       vars:
