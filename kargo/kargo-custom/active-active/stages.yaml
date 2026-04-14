@@ -506,9 +506,9 @@ spec:
             sharedSecretName: kargo-step-snow
             type: api-token
           parameters:
-            state: "Close"
+            state: "Closed"
             close_notes: "Promotion to prod successful, moving change request to Close state."
-            close_code: "1"
+            close_code: "Successful"
           tableName: change_request
           ticketId: ${{ freightMetadata(ctx.targetFreight.name)['snow-id']}}
         uses: snow-update
