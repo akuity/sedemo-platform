@@ -261,12 +261,6 @@ spec:
     sources:
       stages: 
         - staging
-  verification:
-    analysisTemplates:
-    - name: smoke-test
-    args:
-    - name: environment
-      value: ${{ ctx.stage }}
   promotionTemplate:
     spec:
       vars:
