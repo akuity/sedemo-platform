@@ -16,4 +16,4 @@ spec:
       includePaths:
       - active-active
       excludePaths:
-      - active-active/targets
+      - active-active/deploys/targets
