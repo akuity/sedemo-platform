@@ -261,7 +261,7 @@ spec:
     sources:
       stages: 
         - staging
-      requiredSoakTime: 1m
+      requiredSoakTime: 1m0s
   promotionTemplate:
     spec:
       vars:
@@ -398,7 +398,7 @@ spec:
     sources:
       stages: 
         - prod-east
-      requiredSoakTime: 2m
+      requiredSoakTime: 2m0s
   verification:
     analysisTemplates:
     - name: smoke-test
@@ -476,7 +476,7 @@ spec:
     sources:
       stages: 
         - prod-west
-      requiredSoakTime: 1m
+      requiredSoakTime: 1m0s
   promotionTemplate:
     spec:
       steps:
