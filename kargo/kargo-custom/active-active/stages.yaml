@@ -151,7 +151,7 @@ metadata:
   name: staging
   namespace: active-active
   annotations:
-    kargo.akuity.io/color: red
+    kargo.akuity.io/color: purple
 spec:
   shard: sedemo-primary
   requestedFreight:
@@ -252,7 +252,7 @@ metadata:
   name: approve
   namespace: active-active
   annotations:
-    kargo.akuity.io/color: red
+    kargo.akuity.io/color: green
 spec:
   requestedFreight:
   - origin:
@@ -261,6 +261,7 @@ spec:
     sources:
       stages: 
         - staging
+      requiredSoakTime: 1m
   promotionTemplate:
     spec:
       vars:
@@ -319,7 +320,7 @@ metadata:
   name: prod-east
   namespace: active-active
   annotations:
-    kargo.akuity.io/color: red
+    kargo.akuity.io/color: green
 spec:
   shard: sedemo-primary
   requestedFreight:
@@ -335,7 +336,6 @@ spec:
     args:
     - name: environment
       value: ${{ ctx.stage }}
-      requiredSoakTime: 1m
   promotionTemplate:
     spec:
       vars:
@@ -392,7 +392,7 @@ metadata:
   name: prod-west
   namespace: active-active
   annotations:
-    kargo.akuity.io/color: red
+    kargo.akuity.io/color: green
 spec:
   shard: sedemo-primary
   requestedFreight:
@@ -403,6 +403,7 @@ spec:
     sources:
       stages: 
         - prod-east
+      requiredSoakTime: 2m
   verification:
     analysisTemplates:
     - name: smoke-test
