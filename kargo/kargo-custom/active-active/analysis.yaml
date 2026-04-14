@@ -20,7 +20,7 @@ spec:
                       - /bin/sh
                       - -c
                     args:
-                      - 'echo "Running verification tests for {{args.environment}}.."; for i in $(seq 1 5); do echo -e "\nVerification Step $i of 5"; sleep 2; echo -e "\tPASS"; done'
+                      - 'echo "Running verification tests for {{args.environment}}.."; for i in $(seq 1 5); do echo -e "\nVerification Step $i of 5"; sleep 2; echo -e "\tPASS"; done;echo "Verification tests for {{args.environment}} completed."'
                     image: alpine:latest
                     name: test
                 restartPolicy: Never
