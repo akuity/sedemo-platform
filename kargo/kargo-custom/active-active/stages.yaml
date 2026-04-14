@@ -137,3 +137,147 @@ spec:
           apps:
           - name: active-active-${{ ctx.stage }}
             namespace: argocd
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: staging-east
+  namespace: active-active
+  annotations:
+    kargo.akuity.io/color: red
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: active-active
+    sources:
+      stages: 
+        - dev-east
+        - dev-west
+  verification:
+    analysisTemplates:
+    - name: smoke-test
+    args:
+    - name: environment
+      value: ${{ ctx.stage }}
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-monorepo
+      - name: imageRepo
+        value: ghcr.io/akuity/sedemo-monorepo-active-active
+      - name: path_src
+        value: ./src
+      - name: sourceBranch
+        value: main
+      steps:
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: ${{ vars.sourceBranch }}
+            path: ${{ vars.path_src }}
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ${{ vars.path_src }}/active-active/deploy/chart
+          valuesFiles:
+          - ${{ vars.path_src }}/active-active/deploy/chart/values.yaml
+          outPath: ${{ vars.path_src }}/active-active/deploy/targets/${{ ctx.stage }}/manifests.yaml
+          namespace: active-active-dev
+          setValues:
+            - key: image.tag
+              value: ${{ imageFrom(vars.imageRepo).Tag }}
+            - key: kargo.stage
+              value: ${{ ctx.stage }}
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+            - key: ingress.sub_domain
+              value: ${{ ctx.stage }}.ha
+      - uses: git-commit
+        as: commit  
+        config:
+          path: ${{ vars.path_src }}
+          message: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
+      - uses: git-push
+        as: push
+        config:
+          path: ${{ vars.path_src }}
+      - uses: argocd-update
+        config:
+          apps:
+          - name: active-active-${{ ctx.stage }}
+            namespace: argocd
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: staging-west
+  namespace: active-active
+  annotations:
+    kargo.akuity.io/color: red
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: active-active
+    sources:
+    sources:
+      stages: 
+        - staging-east
+  verification:
+    analysisTemplates:
+    - name: smoke-test
+    args:
+    - name: environment
+      value: ${{ ctx.stage }}
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-monorepo
+      - name: imageRepo
+        value: ghcr.io/akuity/sedemo-monorepo-active-active
+      - name: path_src
+        value: ./src
+      - name: sourceBranch
+        value: main
+      steps:
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: ${{ vars.sourceBranch }}
+            path: ${{ vars.path_src }}
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ${{ vars.path_src }}/active-active/deploy/chart
+          valuesFiles:
+          - ${{ vars.path_src }}/active-active/deploy/chart/values.yaml
+          outPath: ${{ vars.path_src }}/active-active/deploy/targets/${{ ctx.stage }}/manifests.yaml
+          namespace: active-active-dev
+          setValues:
+            - key: image.tag
+              value: ${{ imageFrom(vars.imageRepo).Tag }}
+            - key: kargo.stage
+              value: ${{ ctx.stage }}
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+            - key: ingress.sub_domain
+              value: ${{ ctx.stage }}.ha
+      - uses: git-commit
+        as: commit  
+        config:
+          path: ${{ vars.path_src }}
+          message: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
+      - uses: git-push
+        as: push
+        config:
+          path: ${{ vars.path_src }}
+      - uses: argocd-update
+        config:
+          apps:
+          - name: active-active-${{ ctx.stage }}
+            namespace: argocd
