@@ -21,7 +21,7 @@ spec:
         env: prod-west
   template:
     metadata:
-      name: active-active-{{stage}}
+      name: active-active-{{env}}
       annotations:
         kargo.akuity.io/authorized-stage: active-active:{{stage}}
         notifications.argoproj.io/subscriptions: |
@@ -33,10 +33,10 @@ spec:
       project: rollouts
       source:
         repoURL: https://github.com/akuity/sedemo-monorepo
-        path: active-active/deploy/targets/{{stage}}
+        path: active-active/deploy/targets/{{env}}
       destination:
         name: sedemo-primary
-        namespace: active-active-{{stage}}
+        namespace: active-active-{{env}}
       syncPolicy:
         automated:
           prune: true
