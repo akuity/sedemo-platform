@@ -93,6 +93,8 @@ spec:
         value: ghcr.io/akuity/sedemo-monorepo-active-active
       - name: path_src
         value: ./src
+      - name: sourceBranch
+        value: main
       steps:
       - uses: git-clone
         config:
