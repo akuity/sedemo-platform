@@ -275,8 +275,7 @@ spec:
             type: api-token
           parameters:
             impact: "3"
-            short_description: Deploy to Prod complete for ${{ vars.imageRepo
-              }}:${{ imageFrom(vars.imageRepo).Tag }}
+            short_description: 'AA: Deploy ${{ imageFrom(vars.imageRepo).Tag }} to Prod'
             assignment_group: "Application Development"
             urgency: "3"
             implementation_plan: "See https://kargo.akpdemoapps.link/project/active-active/promotion/${{ ctx.promotion }}"
@@ -296,19 +295,15 @@ spec:
           tableName: change_request
           ticketId: ${% outputs['snowcreate'].sys_id %}
         uses: snow-wait-for-condition
-
-      - as: snowupdate
+      
+      - uses: set-metadata
         config:
-          credentials:
-            sharedSecretName: kargo-step-snow
-            type: api-token
-          parameters:
-            state: "Review"
-            work_notes: "Promotion to prod successful, moving change request to Review state."
-          tableName: change_request
-          ticketId: ${% outputs['snowcreate'].sys_id %}
-        uses: snow-update
-
+          updates:
+            - kind: Stage
+              name: approve
+              values:
+                snow-id: "${{ outputs['snowcreate'].sys_id }}"
+                
 
 
 
@@ -459,3 +454,41 @@ spec:
           apps:
           - name: active-active-${{ ctx.stage }}
             namespace: argocd
+
+
+
+
+
+---
+
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: close
+  namespace: active-active
+  annotations:
+    kargo.akuity.io/color: green
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: active-active
+    sources:
+      stages: 
+        - prod-west
+      requiredSoakTime: 1m
+  promotionTemplate:
+    spec:
+      steps:
+      - as: snowupdate
+        config:
+          credentials:
+            sharedSecretName: kargo-step-snow
+            type: api-token
+          parameters:
+            state: "Review"
+            work_notes: "Promotion to prod successful, moving change request to Review state."
+          tableName: change_request
+          ticketId: ${{ stageMetadata('approve')['snow-id'] }}
+        uses: snow-update
+
