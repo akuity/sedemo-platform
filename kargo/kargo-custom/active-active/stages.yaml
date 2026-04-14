@@ -270,6 +270,9 @@ spec:
       value: ${{ ctx.stage }}
   promotionTemplate:
     spec:
+      vars:
+      - name: imageRepo
+        value: ghcr.io/akuity/sedemo-monorepo-active-active
       steps:
       - as: snowcreate
         config:
