@@ -7,12 +7,18 @@ spec:
   generators:
   - list:
       elements:
-      - stage: dev-east
-      - stage: dev-west
-      - stage: staging-east
-      - stage: staging-west
-      - stage: prod-east
-      - stage: prod-west
+      - stage: dev-east 
+        env: dev-east
+      - stage: dev-west 
+        env: dev-west
+      - stage: staging 
+        env: staging-east
+      - stage: staging 
+        env: staging-west
+      - stage: prod-east 
+        env: prod-east
+      - stage: prod-west 
+        env: prod-west
   template:
     metadata:
       name: active-active-{{stage}}

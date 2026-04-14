@@ -202,7 +202,7 @@ spec:
             - key: image.tag
               value: ${{ imageFrom(vars.imageRepo).Tag }}
             - key: kargo.stage
-              value: ${{ ctx.stage }}
+              value: ${{ ctx.stage }}-east
             - key: ingress.root_domain
               value: akpdemoapps.link
             - key: ingress.sub_domain
@@ -219,7 +219,7 @@ spec:
             - key: image.tag
               value: ${{ imageFrom(vars.imageRepo).Tag }}
             - key: kargo.stage
-              value: ${{ ctx.stage }}
+              value: ${{ ctx.stage }}-west
             - key: ingress.root_domain
               value: akpdemoapps.link
             - key: ingress.sub_domain
