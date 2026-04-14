@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
-  name: e2e-verification
+  name: smoke-test
   namespace: active-active
 spec:
   args:
