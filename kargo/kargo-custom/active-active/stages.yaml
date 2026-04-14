@@ -1,0 +1,131 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev-east
+  namespace: active-active
+  annotations:
+    kargo.akuity.io/color: red
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: active-active
+    sources:
+      direct: true
+  verification:
+    analysisTemplates:
+    - name: smoke-test
+    args:
+    - name: environment
+      value: dev-east
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-monorepo
+      - name: imageRepo
+        value: ghcr.io/akuity/sedemo-monorepo-active-active
+      - name: path_src
+        value: ./src
+      steps:
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: ${{ vars.sourceBranch }}
+            path: ${{ vars.path_src }}
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ${{ vars.path_src }}/active-active/deploy/chart
+          valuesFiles:
+          - ${{ vars.path_src }}/active-active/deploy/chart/values.yaml
+          outPath: ${{ vars.path_src }}/active-active/deploy/targets/dev-east/manifests.yaml
+          namespace: active-active-dev
+          setValues:
+            - key: image.tag
+              value: ${{ imageFrom(vars.imageRepo).Tag }}
+            - key: kargo.stage
+              value: ${{ ctx.stage }}
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+      - uses: git-commit
+        as: commit  
+        config:
+          path: ${{ vars.path_src }}
+          message: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
+      - uses: git-push
+        as: push
+        config:
+          path: ${{ vars.path_src }}
+      - uses: argocd-update
+        config:
+          apps:
+          - name: active-active-dev
+            namespace: argocd
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev-west
+  namespace: active-active
+  annotations:
+    kargo.akuity.io/color: red
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: active-active
+    sources:
+      direct: true
+  verification:
+    analysisTemplates:
+    - name: smoke-test
+    args:
+    - name: environment
+      value: dev-west
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-monorepo
+      - name: imageRepo
+        value: ghcr.io/akuity/sedemo-monorepo-active-active
+      - name: path_src
+        value: ./src
+      steps:
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: ${{ vars.sourceBranch }}
+            path: ${{ vars.path_src }}
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ${{ vars.path_src }}/active-active/deploy/chart
+          valuesFiles:
+          - ${{ vars.path_src }}/active-active/deploy/chart/values.yaml
+          outPath: ${{ vars.path_src }}/active-active/deploy/targets/dev-west/manifests.yaml
+          namespace: active-active-dev
+          setValues:
+            - key: image.tag
+              value: ${{ imageFrom(vars.imageRepo).Tag }}
+            - key: kargo.stage
+              value: ${{ ctx.stage }}
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+      - uses: git-commit
+        as: commit  
+        config:
+          path: ${{ vars.path_src }}
+          message: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
+      - uses: git-push
+        as: push
+        config:
+          path: ${{ vars.path_src }}
+      - uses: argocd-update
+        config:
+          apps:
+          - name: active-active-dev
+            namespace: argocd

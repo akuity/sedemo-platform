@@ -1,0 +1,17 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: active-active
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: active-active
+  namespace: active-active
+spec:
+  promotionPolicies:
+  - stageSelector:
+      name: "regex:approve.*"
+    autoPromotionEnabled: true
