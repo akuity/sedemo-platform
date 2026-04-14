@@ -42,7 +42,7 @@ spec:
           path: ${{ vars.path_src }}/active-active/deploy/chart
           valuesFiles:
           - ${{ vars.path_src }}/active-active/deploy/chart/values.yaml
-          outPath: ${{ vars.path_src }}/active-active/deploy/targets/dev-east/manifests.yaml
+          outPath: ${{ vars.path_src }}/active-active/deploy/targets/${{ ctx.stage }}/manifests.yaml
           namespace: active-active-dev
           setValues:
             - key: image.tag
@@ -51,6 +51,8 @@ spec:
               value: ${{ ctx.stage }}
             - key: ingress.root_domain
               value: akpdemoapps.link
+            - key: ingress.sub_domain
+              value: ${{ ctx.stage }}.ha
       - uses: git-commit
         as: commit  
         config:
@@ -63,7 +65,7 @@ spec:
       - uses: argocd-update
         config:
           apps:
-          - name: active-active-dev-east
+          - name: active-active-${{ ctx.stage }}
             namespace: argocd
 ---
 apiVersion: kargo.akuity.io/v1alpha1
@@ -110,7 +112,7 @@ spec:
           path: ${{ vars.path_src }}/active-active/deploy/chart
           valuesFiles:
           - ${{ vars.path_src }}/active-active/deploy/chart/values.yaml
-          outPath: ${{ vars.path_src }}/active-active/deploy/targets/dev-west/manifests.yaml
+          outPath: ${{ vars.path_src }}/active-active/deploy/targets/${{ ctx.stage }}/manifests.yaml
           namespace: active-active-dev
           setValues:
             - key: image.tag
@@ -119,6 +121,8 @@ spec:
               value: ${{ ctx.stage }}
             - key: ingress.root_domain
               value: akpdemoapps.link
+            - key: ingress.sub_domain
+              value: ${{ ctx.stage }}.ha
       - uses: git-commit
         as: commit  
         config:
@@ -131,5 +135,5 @@ spec:
       - uses: argocd-update
         config:
           apps:
-          - name: active-active-dev-west
+          - name: active-active-${{ ctx.stage }}
             namespace: argocd
