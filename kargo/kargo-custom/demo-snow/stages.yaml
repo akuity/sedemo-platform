@@ -217,7 +217,7 @@ spec:
       - as: snowcreate
         config:
           credentials:
-            secretName: local-snow-secret
+            secretName: kargo-step-snow
             type: api-token
           parameters:
             impact: "3"
