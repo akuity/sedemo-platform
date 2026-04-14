@@ -16,9 +16,6 @@ spec:
       name: "regex:dev.*"
     autoPromotionEnabled: true
   - stageSelector:
-      name: "regex:staging.*"
-    autoPromotionEnabled: true
-  - stageSelector:
       name: "regex:approve.*"
     autoPromotionEnabled: true
   - stageSelector:
