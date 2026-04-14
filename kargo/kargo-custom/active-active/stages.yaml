@@ -302,7 +302,7 @@ spec:
       - uses: set-metadata
         config:
           updates:
-            - kind: Frieght
+            - kind: Freight
               name: ${{ ctx.targetFreight.name }}
               values:
                 snow-id: "${{ outputs['snowcreate'].sys_id }}"
