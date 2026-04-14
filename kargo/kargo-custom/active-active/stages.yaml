@@ -302,8 +302,8 @@ spec:
       - uses: set-metadata
         config:
           updates:
-            - kind: Stage
-              name: approve
+            - kind: Frieght
+              name: ${{ ctx.targetFreight.name }}
               values:
                 snow-id: "${{ outputs['snowcreate'].sys_id }}"
                 
@@ -497,7 +497,7 @@ spec:
             state: "Review"
             work_notes: "Promotion to prod successful, moving change request to Close state."
           tableName: change_request
-          ticketId: ${{ stageMetadata('approve')['snow-id'] }}
+          ticketId: ${{ freightMetadata(ctx.targetFreight.name)['snow-id'] }}
         uses: snow-update
 
       - as: close
@@ -511,7 +511,7 @@ spec:
             close_notes: "Promotion to prod successful, moving change request to Close state."
             close_code: "Successful"
           tableName: change_request
-          ticketId: ${{ stageMetadata('approve')['snow-id'] }}
+          ticketId: ${{ freightMetadata(ctx.targetFreight.name)['snow-id']}}
         uses: snow-update
 
 
