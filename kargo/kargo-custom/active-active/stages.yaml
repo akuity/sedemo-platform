@@ -163,8 +163,6 @@ spec:
         - dev-east
         - dev-west
       availabilityStrategy: All
-      autoPromotionOptions:
-        selectionPolicy: MatchUpstream
   verification:
     analysisTemplates:
     - name: smoke-test
