@@ -162,6 +162,7 @@ spec:
       stages: 
         - dev-east
         - dev-west
+      availabilityStrategy: All
       autoPromotionOptions:
         selectionPolicy: MatchUpstream
   verification:
