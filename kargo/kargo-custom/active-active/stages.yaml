@@ -495,7 +495,7 @@ spec:
             type: api-token
           parameters:
             state: "Review"
-            work_notes: "Promotion to prod successful, moving change request to Close state."
+            work_notes: "Promotion to prod successful, moving change request to Review state."
           tableName: change_request
           ticketId: ${{ freightMetadata(ctx.targetFreight.name)['snow-id'] }}
         uses: snow-update
@@ -507,9 +507,8 @@ spec:
             type: api-token
           parameters:
             state: "Close"
-            work_notes: "Promotion to prod successful, moving change request to Close state."
             close_notes: "Promotion to prod successful, moving change request to Close state."
-            close_code: "Successful"
+            close_code: "1"
           tableName: change_request
           ticketId: ${{ freightMetadata(ctx.targetFreight.name)['snow-id']}}
         uses: snow-update

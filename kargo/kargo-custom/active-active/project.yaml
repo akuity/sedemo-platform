@@ -24,3 +24,6 @@ spec:
   - stageSelector:
       name: "regex:prod.*"
     autoPromotionEnabled: true
+  - stageSelector:
+      name: "regex:close.*"
+    autoPromotionEnabled: true
