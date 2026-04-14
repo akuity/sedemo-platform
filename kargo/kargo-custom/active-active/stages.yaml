@@ -139,11 +139,16 @@ spec:
           apps:
           - name: active-active-${{ ctx.stage }}
             namespace: argocd
+
+
+
+
+
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: staging-east
+  name: staging
   namespace: active-active
   annotations:
     kargo.akuity.io/color: red
@@ -157,6 +162,177 @@ spec:
       stages: 
         - dev-east
         - dev-west
+  verification:
+    analysisTemplates:
+    - name: smoke-test
+    args:
+    - name: environment
+      value: ${{ ctx.stage }}-east
+    - name: smoke-test
+    args:
+    - name: environment
+      value: ${{ ctx.stage }}-west
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-monorepo
+      - name: imageRepo
+        value: ghcr.io/akuity/sedemo-monorepo-active-active
+      - name: path_src
+        value: ./src
+      - name: sourceBranch
+        value: main
+      steps:
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: ${{ vars.sourceBranch }}
+            path: ${{ vars.path_src }}
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ${{ vars.path_src }}/active-active/deploy/chart
+          valuesFiles:
+          - ${{ vars.path_src }}/active-active/deploy/chart/values.yaml
+          outPath: ${{ vars.path_src }}/active-active/deploy/targets/${{ ctx.stage }}-east/manifests.yaml
+          namespace: active-active-dev
+          setValues:
+            - key: image.tag
+              value: ${{ imageFrom(vars.imageRepo).Tag }}
+            - key: kargo.stage
+              value: ${{ ctx.stage }}
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+            - key: ingress.sub_domain
+              value: ${{ ctx.stage }}-east.ha
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ${{ vars.path_src }}/active-active/deploy/chart
+          valuesFiles:
+          - ${{ vars.path_src }}/active-active/deploy/chart/values.yaml
+          outPath: ${{ vars.path_src }}/active-active/deploy/targets/${{ ctx.stage }}-west/manifests.yaml
+          namespace: active-active-dev
+          setValues:
+            - key: image.tag
+              value: ${{ imageFrom(vars.imageRepo).Tag }}
+            - key: kargo.stage
+              value: ${{ ctx.stage }}
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+            - key: ingress.sub_domain
+              value: ${{ ctx.stage }}-west.ha
+      - uses: git-commit
+        as: commit  
+        config:
+          path: ${{ vars.path_src }}
+          message: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
+      - uses: git-push
+        as: push
+        config:
+          path: ${{ vars.path_src }}
+      - uses: argocd-update
+        config:
+          apps:
+          - name: active-active-${{ ctx.stage }}-east
+            namespace: argocd
+      - uses: argocd-update
+        config:
+          apps:
+          - name: active-active-${{ ctx.stage }}-west
+            namespace: argocd
+
+
+
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: approve
+  namespace: active-active
+  annotations:
+    kargo.akuity.io/color: red
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: active-active
+    sources:
+      stages: 
+        - staging
+  verification:
+    analysisTemplates:
+    - name: smoke-test
+    args:
+    - name: environment
+      value: ${{ ctx.stage }}
+  promotionTemplate:
+    spec:
+      steps:
+      - as: snowcreate
+        config:
+          credentials:
+            secretName: local-snow-secret
+            type: api-token
+          parameters:
+            impact: "3"
+            short_description: Deploy to Prod complete for ${{ vars.imageRepo
+              }}:${{ imageFrom(vars.imageRepo).Tag }}
+            assignment_group: "Application Development"
+            urgency: "3"
+            implementation_plan: "See https://kargo.akpdemoapps.link/project/active-active/promotion/${{ ctx.promotion }}"
+          tableName: change_request
+          template:
+            #templateId: 8d3380da83273210b6207e95eeaad33e # example
+            type: normal
+        uses: snow-create
+
+      - as: snow-wait-for-condition
+        config:
+          # wait for "Implment" state
+          condition: state=-1
+          credentials:
+            sharedSecretName: kargo-step-snow
+            type: api-token
+          tableName: change_request
+          ticketId: ${% outputs['snowcreate'].sys_id %}
+        uses: snow-wait-for-condition
+
+      - as: snowupdate
+        config:
+          credentials:
+            sharedSecretName: kargo-step-snow
+            type: api-token
+          parameters:
+            state: "Review"
+            work_notes: "Promotion to prod successful, moving change request to Review state."
+          tableName: change_request
+          ticketId: ${% outputs['snowcreate'].sys_id %}
+        uses: snow-update
+
+
+
+
+
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod-east
+  namespace: active-active
+  annotations:
+    kargo.akuity.io/color: red
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: active-active
+    sources:
+      stages: 
+        - approve
   verification:
     analysisTemplates:
     - name: smoke-test
@@ -216,7 +392,7 @@ spec:
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: staging-west
+  name: prod-west
   namespace: active-active
   annotations:
     kargo.akuity.io/color: red
@@ -229,7 +405,7 @@ spec:
     sources:
     sources:
       stages: 
-        - staging-east
+        - prod-east
   verification:
     analysisTemplates:
     - name: smoke-test
