@@ -488,7 +488,19 @@ spec:
   promotionTemplate:
     spec:
       steps:
-      - as: snowupdate
+      - as: review
+        config:
+          credentials:
+            sharedSecretName: kargo-step-snow
+            type: api-token
+          parameters:
+            state: "Review"
+            work_notes: "Promotion to prod successful, moving change request to Close state."
+          tableName: change_request
+          ticketId: ${{ stageMetadata('approve')['snow-id'] }}
+        uses: snow-update
+
+      - as: close
         config:
           credentials:
             sharedSecretName: kargo-step-snow
