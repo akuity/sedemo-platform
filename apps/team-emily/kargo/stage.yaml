@@ -18,7 +18,7 @@ spec:
     spec:
       vars:
       - name: app
-        value: team-emily-guestbook
+        value: team-emily
       - name: imageRepo 
         value: ghcr.io/emilyxinyi/guestbook
       - name: gitRepo
@@ -179,7 +179,7 @@ spec:
       - uses: argocd-update
         config:
           apps:
-          - name: team-emily-guestbook-${{ ctx.stage }}
+          - name: team-emily-${{ ctx.stage }}
             sources:
             - repoURL: ${{ vars.gitRepo }}
       - uses: jira
@@ -302,7 +302,7 @@ spec:
       - uses: argocd-update
         config:
           apps:
-          - name: team-emily-guestbook-prod-useast
+          - name: team-emily-prod-useast
             sources:
             - repoURL: ${{ vars.gitRepo }}
               desiredRevision: ${{ outputs['wait-for-pr'].commit }}
@@ -328,7 +328,7 @@ spec:
     spec:
       vars:
       - name: app
-        value: team-emily-guestbook
+        value: team-emily
       - name: imageRepo 
         value: ghcr.io/emilyxinyi/guestbook
       - name: gitRepo
