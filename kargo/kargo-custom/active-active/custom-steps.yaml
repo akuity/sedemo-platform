@@ -3,8 +3,14 @@ kind: CustomPromotionStep
 metadata:
   name: kyverno-policy-check
 spec:
-  image: dhi.io/kyverno-clii:1.16
+  image: ghcr.io/kyverno/kyverno-cli:66a2ff7afd893222113f938252dfbcf1b5eb2397
   command:
-    - /usr/bin/kyverno-cli 
+    - /ko-app/kubectl-kyverno
     - version
   # kyverno apply /path/to/policy.yaml --resource /path/to/resource.yaml
+  output:
+    source:
+      format: Text
+      type: Stdout
+    transform:
+      version: 'trim(output) == "" ? [] : split(trim(output), "\n")'
