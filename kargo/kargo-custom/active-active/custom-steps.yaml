@@ -5,5 +5,5 @@ metadata:
 spec:
   image: ghcr.io/kyverno/kyverno-cli:66a2ff7afd893222113f938252dfbcf1b5eb2397
   command:
-    - kyverno version
+    - /ko-app/kyverno version
   # kyverno apply /path/to/policy.yaml --resource /path/to/resource.yaml
