@@ -23,7 +23,7 @@ spec:
               - service: sedemo
                 recipients: [argo-notifications]
     spec:
-      project: default
+      project: demo-snow
       source:
         repoURL: https://github.com/akuity/sedemo-monorepo
         targetRevision: env-snow-demo/{{stage}}

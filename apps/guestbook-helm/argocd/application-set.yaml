@@ -1,32 +1,29 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: beyond-k8s
+  name: guestbook
   namespace: argocd
 spec:
   generators:
   - list:
       elements:
       - stage: dev
-      - stage: staging-a
-      - stage: staging-b
       - stage: prod
+      - stage: prod2
   template:
     metadata:
-      name: beyond-k8s-{{stage}}
+      name: guestbook-{{stage}}
       annotations:
-        kargo.akuity.io/authorized-stage: beyond-k8s:{{stage}}
+        kargo.akuity.io/authorized-stage: guestbook-helm:{{stage}}
     spec:
-      project: default
+      project: guestbook-helm
       source:
-        path: beyond-k8s/charts/guestbook
-        repoURL: https://github.com/akuity/sedemo-monorepo
-        helm:
-          valueFiles:
-          - "/beyond-k8s/env/{{stage}}/k8s/values.yaml"
+        repoURL: https://github.com/argoproj/argocd-example-apps
+        path: helm-guestbook
+        targetRevision: HEAD
       destination:
         name: sedemo-primary
-        namespace: beyond-k8s-{{stage}}
+        namespace: guestbook-{{stage}}
       syncPolicy:
         automated:
           prune: true

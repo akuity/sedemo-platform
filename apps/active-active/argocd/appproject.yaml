@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: active-active
+  namespace: argocd
+spec:
+  description: Active-active multi-region deployment demo
+  sourceRepos:
+    - '*'
+  destinations:
+    - server: '*'
+      name: '*'
+      namespace: '*'
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'

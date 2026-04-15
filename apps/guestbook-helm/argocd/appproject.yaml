@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: guestbook-helm
+  namespace: argocd
+spec:
+  description: Helm guestbook demo with Kargo promotion pipeline
+  sourceRepos:
+    - '*'
+  destinations:
+    - server: '*'
+      name: '*'
+      namespace: '*'
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'

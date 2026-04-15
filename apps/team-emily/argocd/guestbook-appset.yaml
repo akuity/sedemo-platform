@@ -17,7 +17,7 @@ spec:
       annotations:
         kargo.akuity.io/authorized-stage: team-emily-guestbook:{{stage}}
     spec:
-      project: team-emily-guestbook
+      project: team-emily
       source:
         repoURL: https://github.com/akuity/sedemo-platform
         targetRevision: stage/team-emily/{{stage}}

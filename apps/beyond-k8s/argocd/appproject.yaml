@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: beyond-k8s
+  namespace: argocd
+spec:
+  description: Beyond Kubernetes demo — GitOps promotion with custom steps
+  sourceRepos:
+    - '*'
+  destinations:
+    - server: '*'
+      name: '*'
+      namespace: '*'
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'

@@ -1,10 +1,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: team-emily-guestbook
+  name: demo-snow
   namespace: argocd
 spec:
-  description: Team Emily's ArgoCD project
+  description: ServiceNow change management integration demo
   sourceRepos:
     - '*'
   destinations:

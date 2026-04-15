@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: team-eddie
+  namespace: argocd
+spec:
+  description: Team Eddie's demo application
+  sourceRepos:
+    - '*'
+  destinations:
+    - server: '*'
+      name: '*'
+      namespace: '*'
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'

@@ -1,36 +1,42 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: demo-rollouts
+  name: active-active
   namespace: argocd
 spec:
   generators:
   - list:
       elements:
-      - stage: dev
+      - stage: dev-east 
+        env: dev-east
+      - stage: dev-west 
+        env: dev-west
       - stage: staging 
-      - stage: prod-amer-east
-      - stage: prod-amer-west
-      - stage: prod-emea
+        env: staging-east
+      - stage: staging 
+        env: staging-west
+      - stage: prod-east 
+        env: prod-east
+      - stage: prod-west 
+        env: prod-west
   template:
     metadata:
-      name: demo-rollouts-{{stage}}
+      name: active-active-{{env}}
       annotations:
-        kargo.akuity.io/authorized-stage: demo-rollouts:{{stage}}
+        kargo.akuity.io/authorized-stage: active-active:{{stage}}
         notifications.argoproj.io/subscriptions: |
           - trigger: [on-sync-succeeded, on-sync-running]
             destinations:
               - service: sedemo
                 recipients: [argo-notifications]
     spec:
-      project: rollouts
+      project: active-active
       source:
         repoURL: https://github.com/akuity/sedemo-monorepo
-        targetRevision: env-rollouts/{{stage}}
-        path: .
+        path: active-active/deploy/targets/{{env}}
       destination:
         name: sedemo-primary
-        namespace: demo-{{stage}}
+        namespace: active-active-{{env}}
       syncPolicy:
         automated:
           prune: true

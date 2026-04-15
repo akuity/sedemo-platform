@@ -20,7 +20,7 @@ spec:
       source:
         repoURL: https://github.com/akuity/sedemo-platform
         targetRevision: main
-        path: charts/demo-intelligence/guestbook
+        path: apps/demo-intelligence/chart
         helm:
           releaseName: "{{stage}}"
           valueFiles:
