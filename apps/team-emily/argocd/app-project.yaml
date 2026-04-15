@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: team-emily
+  name: team-emily-guestbook
   namespace: argocd
 spec:
   description: Team Emily's ArgoCD project
