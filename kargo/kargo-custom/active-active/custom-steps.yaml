@@ -1,9 +1,9 @@
 apiVersion: ee.kargo.akuity.io/v1alpha1
 kind: CustomPromotionStep
 metadata:
-  name: dhi.io/kyverno-cli
+  name: kyverno-policy-check
 spec:
-  image: ghcr.io/kyverno/kyverno-cli:1.16
+  image: dhi.io/kyverno-clii:1.16
   command:
     - /usr/bin/kyverno-cli version
   # kyverno apply /path/to/policy.yaml --resource /path/to/resource.yaml
