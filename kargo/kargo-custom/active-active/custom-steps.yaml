@@ -4,6 +4,6 @@ metadata:
   name: kyverno-policy-check
 spec:
   image: ghcr.io/kyverno/kyverno-cli:66a2ff7afd893222113f938252dfbcf1b5eb2397
-  command:
+  args:
     - version
   # kyverno apply /path/to/policy.yaml --resource /path/to/resource.yaml
