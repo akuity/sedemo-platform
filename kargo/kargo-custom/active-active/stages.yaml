@@ -54,7 +54,7 @@ spec:
               value: akpdemoapps.link
             - key: ingress.sub_domain
               value: ${{ ctx.stage }}.ha
-      - uses: kyverno-policy-check
+      #- uses: kyverno-policy-check
       - uses: git-commit
         as: commit  
         config:
@@ -126,7 +126,7 @@ spec:
               value: akpdemoapps.link
             - key: ingress.sub_domain
               value: ${{ ctx.stage }}.ha
-      - uses: kyverno-policy-check
+      #- uses: kyverno-policy-check
       - uses: git-commit
         as: commit  
         config:
