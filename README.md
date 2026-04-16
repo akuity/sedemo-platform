@@ -36,6 +36,7 @@ Because this demo environment is fully defined as IaC, you can open pull request
 │       ├── argocd/     # AppProject + ApplicationSet for this app
 │       ├── kargo/      # Kargo Project, Warehouse, Stages, and Tasks
 │       └── ...         # App-specific manifests (base, stages, chart, etc.)
+├── kargo-shared/       # Shared Kargo platform resources (CustomPromotionSteps, etc.)
 ├── components/         # Cluster add-ons (Argo Rollouts, Prometheus, ESO, cert-manager)
 ├── secrets/            # ExternalSecret and SecretStore resources (backed by AWS Secrets Manager)
 └── templated-teams/    # Helm-templated "golden path" projects for app teams
