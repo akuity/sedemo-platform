@@ -1,17 +1,16 @@
 # Akuity Demo - Platform Setup
 
-This repo respresents the typical objects under control of a central platform team for organizations using Argo CD and Kargo on the Akuity Platform.
+This repo represents the typical objects under control of a central platform team for organizations using Argo CD and Kargo on the Akuity Platform.
 
 ## Just want to run demos?
 
 - [argo.akpdemoapps.link](//argo.akpdemoapps.link)
 - [kargo.akpdemoapps.link](//kargo.akpdemoapps.link)
 
-Use SSO sign-in, and if you dont have access, bug [@eddiewebb](//github.com/eddiewebb)
+Use SSO sign-in. If you don't have access, bug [@eddiewebb](//github.com/eddiewebb)
 
 
-
-## General Access and Change Mangement
+## General Access and Change Management
 
 This repo contains 3 layers of IaC
 
@@ -21,88 +20,90 @@ This repo contains 3 layers of IaC
 
 ### Access to EKS Cluster
 
-To make any AWS or EKS level changes you will need access to AWS Account and roles as described in [Infra Demo - AWS Readme](https://github.com/akuity/sedemo-infra-iac/blob/main/core-env/aws/README.md)
+To make any AWS or EKS level changes you will need access to the AWS Account and roles as described in [Infra Demo - AWS Readme](https://github.com/akuity/sedemo-infra-iac/blob/main/core-env/aws/README.md)
 
 ### Making Argo or Kargo demo app changes
 
-Because this demo environment if fully defined as IaC, you can open pull requests on this repo or infra repo to add or change demos.
+Because this demo environment is fully defined as IaC, you can open pull requests on this repo or the infra repo to add or change demos.
 
 ## Directory Structure
 
-This repo contains ArgoCD `application` manifests that control all apps, components, and Kargo workflows used in our demo clusters.
+```
+.
+├── bootstrap/          # ApplicationSets that bootstrap all ArgoCD and Kargo apps
+├── apps/               # One directory per demo app
+│   └── <app-name>/
+│       ├── argocd/     # AppProject + ApplicationSet for this app
+│       ├── kargo/      # Kargo Project, Warehouse, Stages, and Tasks
+│       └── ...         # App-specific manifests (base, stages, chart, etc.)
+├── components/         # Cluster add-ons (Argo Rollouts, Prometheus, ESO, cert-manager)
+├── secrets/            # ExternalSecret and SecretStore resources (backed by AWS Secrets Manager)
+└── templated-teams/    # Helm-templated "golden path" projects for app teams
+```
 
-- [Demo Apps `apps`](/apps/)  is most of the argo Applications. If adding your own app, add it here. 
-- [Component Management `components`](/components/) is for cluster components.
-- [Kargo Projects `kargo`](/kargo/) defines the workflows that deploy apps in the first directory.  If creating custom kargo workflows, add it here.
-- [External Secrets `secrets`](/secrets/) defines the secrets on our EKS cluster, setup by ESO or cert-manager.
-- [Templated Projects](/value-overrides) defines "platform owned" projects where kargo and k8s resources are locked down from application teams. Actual deployable binaries are defined in [app monorepo](https://github.com/akuity/sedemo-monorepo/tree/main/templated)
+### Bootstrap
+
+`bootstrap/` contains two ApplicationSets managed by the top-level `app-of-apps` ArgoCD Application (defined in [`sedemo-infra-iac`](https://github.com/akuity/sedemo-infra-iac)):
+
+- **`argocd-apps.yaml`** — discovers `apps/*/argocd/` and creates one ArgoCD Application per app using `project: default` (avoids chicken-and-egg with AppProjects living inside the synced path)
+- **`kargo-apps.yaml`** — discovers `apps/*/kargo/` and creates one ArgoCD Application per app targeting the `kargo` cluster
+
+### Apps
+
+Each app under `apps/` is self-contained:
+
+- `argocd/` holds the `AppProject` and an `ApplicationSet` (or individual `Application` manifests) for that app's stages
+- `kargo/` holds all Kargo resources: `Project`, `Warehouse`, `Stage`, `PromotionTask`, etc.
+- Additional directories (e.g. `base/`, `stages/`, `chart/`) hold the actual Kubernetes manifests promoted by Kargo
+
+### Components
+
+Cluster add-ons installed via ArgoCD, including:
+- Argo Rollouts (with `ServerSideApply=true` due to CRD size)
+- Prometheus
+- External Secrets Operator
+- cert-manager
 
 
 ## Use Cases Demonstrated
 
 ### Progressive Delivery with Argo Rollouts
 
-Several apps make use of Argo-Rollouts in their delivery, but the primary one is [rollouts-app](apps/rollouts-app/) which also uses a `control-flow` and `fan-out` pattern in Kargo to deploy to several prod stages concurrently.
+[`apps/demo-rollouts`](/apps/demo-rollouts/) demonstrates blue/green and canary delivery using Argo Rollouts with a `fan-out` pattern in Kargo to deploy to multiple prod stages concurrently.
 
-#### Rollouts analysis
+Prometheus monitors traffic for non-200 response codes (triggerable from the rollouts app UI) and feeds Rollouts analysis results.
 
-To enable realistic demo of rollouts, the cluster includes a deployment of Prometheus which monitors traffic for non-200 response codes (which can be triggered from rollouts app UI).  You can see analysis results in Argo's Rollouts tab.
+**URLs:**
+- `demo-{stage}.akpdemoapps.link`
+- `prometheus.akpdemoapps.link`
 
-#### App URLS
+### Templatized Projects with Helm
 
-- [demo-{stage}.akpdemoapps.link](demo-dev.akpdemoapps.link)
-- [prometheus.akpdemoapps.link](prometheus.akpdemoapps.link)
+[`templated-teams/`](/templated-teams/) provides a "golden path" — a single Kargo project definition templated with Helm. The platform team controls the k8s rollout and ingress; app teams only supply a Docker image and a few parameters.
 
-### Templatized Projects w/ Helm
+### Vendor Helm Charts with Custom Values
 
-The idea of a "golden path" or "standard pipeline" was manifested as a single Kargo project definition templatized w/ Helm. The k8s rollout and ingress is all controlled by central team.  Application teams just build a docker image and have a few parameters they can play with. 
-[Templated Projects](/templated-teams)
+[`components/`](/components/) uses multi-source ArgoCD Applications that pull vendor Helm charts and apply custom value files from `components/value-overrides/`.
 
+### External Secrets
 
-### Vendor Helm Charts with custom values
-
-Most external helm charts will need some level of internal customizations. For that we make use of multi-source applications from [components](/components/) which reference value files in [value-overrides](/components/value-overrides/)
-
-#### Prometheus 
-
-For instance, our [prometheus](/components/) install pulls vendor provided helm chart, and customizes the use of custom url and scrap jobs via our own [values file](/components/value-overrides/prometheus-values.yaml)
-
-#### Cert Manager
-
-**Not Currently Implemented**
-
-#### External Secrets Operator
-
-Connects to AWS Secrets Manager to pull secrets used in [Local SHard demo](/kargo/kargo-simple/local_shard_eso/).   See Also [secrets](/secrets/)
-
-### Missing / Needed Use Cases
-
-Please note any use cases we should expand, add, or refine.
+[`secrets/`](/secrets/) defines `ExternalSecret` and `SecretStore` resources connecting to AWS Secrets Manager via the External Secrets Operator.
 
 
+## Kargo + ArgoCD Connection
 
-## Contributing & Dev Notes
+This demo assumes Kargo and ArgoCD are connected bidirectionally via the Akuity Platform.
 
-### TODOS
+### Kargo has access to ArgoCD
 
+Configured when registering the Kargo agent — select the ArgoCD instance under `Akuity Managed Argo CD Instance`.
 
-- [ ] Push analysisTemplate for use in verifications
-- [ ] Source annotations - https://docs.kargo.io/user-guide/how-to-guides/working-with-freight#adding-annotations-with-docker-buildx
+1. Akuity UI → Kargo → `<Instance>` → Agents → Register Agent
+2. Select your ArgoCD instance
 
-## Considerations
+### ArgoCD can manage the Kargo cluster
 
-### Kargo and ArgoCD Connection
+The Kargo cluster must be registered in ArgoCD as a cluster named `kargo` (this is what `kargo-apps.yaml` targets).
 
-This demo assumes that Kargo and Argo CD are connected with a bi-directional relationship.
-
-#### Kargo has access to Argo CD 
-Must be connected when setting up Kargo Agent. If you already have an agent you may add a 2nd, mark it as default, and delete the original.
-
-1) Akuity UI -> Kargo -> <Instance> -> Agents 
-2) Register Agent
-3) Select Argo CD instance under `Akuity Managed Argo CD Instance`
-
-#### Argo CD can manage Kargo Cluster
-1) Akuity UI -> Argo CD -> <Instance> -> Clusters
-2) Add Integration
-3) Select your Kargo cluster to connect to, and name `kargo` (or upgate kargo app in this repo)
+1. Akuity UI → ArgoCD → `<Instance>` → Clusters → Add Integration
+2. Select your Kargo cluster and name it `kargo`
