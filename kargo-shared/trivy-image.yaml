@@ -1,0 +1,17 @@
+apiVersion: ee.kargo.akuity.io/v1alpha1
+kind: CustomPromotionStep
+metadata:
+  name: trivy-image
+spec:
+  command:
+    - trivy
+    - image
+    - --severity=CRITICAL
+    - ${{ config.image }}
+  image: ghcr.io/jessesuen/trivy:0.69.3
+  output:
+    source:
+      format: Text
+      type: Stdout
+    transform:
+      vulnerabilities: 'trim(output) == "" ? [] : split(trim(output), "\n")'

@@ -1,13 +1,13 @@
 # =============================================================================
-# RINGED DEPLOYMENT VERIFICATION TEMPLATES
+# AnalysisTemplates — team-daniel
 # =============================================================================
-# Analysis templates using the PokeAPI for demonstrating verification gates
-# between deployment rings. Each ring uses a different Pokemon to verify.
+# Uses the PokeAPI as a simple external HTTP health check between stages.
+# Each stage hits a different Pokemon endpoint to demonstrate per-stage
+# verification with different thresholds.
 # =============================================================================
 
 ---
-# RING 0 - Canary Health Check (Pikachu)
-# Fast validation for canary deployments
+# dev: fast canary health check (Pikachu — base_experience < 120)
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
@@ -31,8 +31,7 @@ spec:
         jsonPath: "{$.base_experience}"
 
 ---
-# RING 1 - Early Adopter Success Rate (Charizard)
-# Validates early adopter ring is healthy
+# staging: higher bar — success rate check (Charizard — base_experience < 200)
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
@@ -56,8 +55,7 @@ spec:
         jsonPath: "{$.base_experience}"
 
 ---
-# RING 2 - Regional Health (Bulbasaur)
-# Validates regional deployments before global rollout
+# prod-us / prod-eu: regional health check (Bulbasaur — base_experience < 100)
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:

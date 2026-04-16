@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# All three services — dev is the shared integration sandbox for both teams.
+resources:
+- ../../services/frontend
+- ../../services/api
+- ../../services/worker
+
+images:
+- name: ghcr.io/dhpup/guestbook
+  newTag: latest
+- name: ghcr.io/dhpup/guestbook-api
+  newTag: latest
+- name: ghcr.io/dhpup/guestbook-worker
+  newTag: latest

@@ -1,0 +1,34 @@
+# CustomPromotionStep: teams-notify
+#
+# Posts a MessageCard to a Microsoft Teams channel via an incoming webhook.
+#
+# Required config keys:
+#   webhookURL — Teams incoming webhook URL (reference via secrets)
+#   message    — Summary/title text for the card
+#
+# Example invocation:
+#   - uses: teams-notify
+#     config:
+#       webhookURL: ${{ secrets.teams-webhook.url }}
+#       message: "team-daniel/integration promoted to latest"
+apiVersion: ee.kargo.akuity.io/v1alpha1
+kind: CustomPromotionStep
+metadata:
+  name: teams-notify
+spec:
+  image: curlimages/curl:8.11.0
+  command:
+  - sh
+  - -c
+  - |
+    curl -sf -X POST "${{ config.webhookURL }}" \
+      -H 'Content-Type: application/json' \
+      -d "{
+        \"@type\": \"MessageCard\",
+        \"@context\": \"http://schema.org/extensions\",
+        \"themeColor\": \"0076D7\",
+        \"summary\": \"Kargo Promotion\",
+        \"sections\": [{
+          \"activityTitle\": \"${{ config.message }}\"
+        }]
+      }"

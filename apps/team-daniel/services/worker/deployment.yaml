@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+        service: worker
+    spec:
+      containers:
+      - name: worker
+        image: ghcr.io/dhpup/guestbook-worker
+        env:
+        - name: SERVICE
+          value: worker
+        - name: API_URL
+          value: http://api:8080

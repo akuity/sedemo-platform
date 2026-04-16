@@ -1,0 +1,15 @@
+apiVersion: ee.kargo.akuity.io/v1alpha1
+kind: CustomPromotionStep
+metadata:
+  name: grype
+spec:
+  command:
+    - grype
+    - ${{ config.image }}
+  image: ghcr.io/jessesuen/grype:0.110.0
+  output:
+    source:
+      format: Text
+      type: Stdout
+    transform:
+      vulnerabilities: 'trim(output) == "" ? [] : split(trim(output), "\n")'

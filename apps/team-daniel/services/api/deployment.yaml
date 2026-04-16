@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+        service: api
+    spec:
+      containers:
+      - name: api
+        image: ghcr.io/dhpup/guestbook-api
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SERVICE
+          value: api
+        - name: FRONTEND_URL
+          value: http://frontend:80

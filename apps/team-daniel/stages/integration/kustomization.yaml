@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# All three services — integration carries freight from both warehouses
+# after they've converged through their respective staging lanes.
+resources:
+- ../../services/frontend
+- ../../services/api
+- ../../services/worker
+
+images:
+- name: ghcr.io/dhpup/guestbook
+  newTag: latest
+- name: ghcr.io/dhpup/guestbook-api
+  newTag: latest
+- name: ghcr.io/dhpup/guestbook-worker
+  newTag: latest

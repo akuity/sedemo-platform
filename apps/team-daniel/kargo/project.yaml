@@ -12,20 +12,28 @@ metadata:
   namespace: team-daniel
 spec:
   promotionPolicies:
-  # Ring 0 & 1: Auto-promote for fast feedback in early rings
+  # dev, staging lanes, and integration all auto-promote.
+  # Soak times on staging-frontend and staging-backend enforce
+  # a stabilization window before the team lanes advance.
   - stageSelector:
-      name: ring-0-canary
+      name: dev
     autoPromotionEnabled: true
   - stageSelector:
-      name: ring-1-early
+      name: staging-frontend
     autoPromotionEnabled: true
-  # Ring 2+: Manual approval required for production rings
   - stageSelector:
-      name: ring-2-useast
+      name: staging-backend
+    autoPromotionEnabled: true
+  - stageSelector:
+      name: integration
+    autoPromotionEnabled: true
+  # Production requires manual promotion.
+  - stageSelector:
+      name: prod-us
     autoPromotionEnabled: false
   - stageSelector:
-      name: ring-2-euwest
+      name: prod-eu
     autoPromotionEnabled: false
   - stageSelector:
-      name: ring-3-global
+      name: prod-global
     autoPromotionEnabled: false

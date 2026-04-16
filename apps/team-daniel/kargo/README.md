@@ -1,55 +1,47 @@
-# Team Daniel Kargo Pipeline - Ringed Deployment Strategy
+# team-daniel — Kargo Pipeline
 
-This directory demonstrates a **ringed deployment strategy** using Kargo, showcasing progressive rollout patterns commonly used in enterprise environments.
+Multi-warehouse, multi-microservice progressive delivery pipeline.
 
-## Ringed Deployment Overview
-
-Ringed deployments (also known as progressive rollout or ring-based deployments) minimize risk by gradually expanding the blast radius of changes:
+## Topology
 
 ```
-                                        ┌─→ ring-2-useast ─┐
-Warehouse → ring-0-canary → ring-1-early┤                  ├→ ring-3-global  
-                                        └─→ ring-2-euwest ─┘
+warehouse-frontend ─────────────────────────► staging-frontend ─┐
+                   ╲                                               ├──► integration ──► prod-us ─┐
+                    ╲──► dev (both) ────────► staging-backend  ─┘                    prod-eu ─┴─► prod-global
+                   ╱
+warehouse-backend ─
 ```
 
-### Ring Definitions
+## Stages
 
-| Ring | Stage | Purpose | Blast Radius | Auto-Promote |
-|------|-------|---------|--------------|--------------|
-| **0** | `ring-0-canary` | Internal/canary testing | <1% | ✅ Yes |
-| **1** | `ring-1-early` | Early adopters | ~5% | ✅ Yes |
-| **2** | `ring-2-useast` | Regional (US East) | ~30% | ❌ No |
-| **2** | `ring-2-euwest` | Regional (EU West) | ~30% | ❌ No |
-| **3** | `ring-3-global` | Full production | 100% | ❌ No |
+| Stage | Task | Auto? | Pattern |
+|-------|------|-------|---------|
+| `dev` | `promote-all` | ✅ | Both warehouses, kyverno policy gate |
+| `staging-frontend` | `promote-frontend` | ✅ | Frontend only, 5 min soak from dev |
+| `staging-backend` | `promote-backend` | ✅ | API + worker only, 5 min soak from dev |
+| `integration` | `promote-all` + `slack-notify` | ✅ | Fan-in: both staging lanes must converge |
+| `prod-us` | `promote-with-pr` | ❌ | PR gate, fan-out from integration |
+| `prod-eu` | `promote-with-pr` | ❌ | PR gate, fan-out from integration |
+| `prod-global` | `promote-with-github-action` | ❌ | GHA dispatch, fan-in: both prod regions |
 
-## Verification Gates
+## Warehouses
 
-Each ring has verification analysis to validate health before proceeding:
-
-| Template | Used By | Purpose |
-|----------|---------|---------|
-| `ring-health-check` | Ring 0 | Basic health validation |
-| `ring-success-rate` | Ring 1 | Success rate meets threshold |
-| `ring-regional-health` | Ring 2 | Regional latency & error rates |
-
-## Promotion Flow
-
-1. **Ring 0 (Canary)**: New freight auto-promotes immediately for fast feedback
-2. **Ring 1 (Early)**: Auto-promotes after Ring 0 verification passes
-3. **Ring 2 (Regional)**: Manual approval required; US East and EU West deploy in parallel
-4. **Ring 3 (Global)**: Requires BOTH Ring 2 stages to be verified before promotion
-
-## Key Features Demonstrated
-
-- **Parallel stages**: Ring 2 regions deploy simultaneously
-- **Convergent promotion**: Ring 3 requires multiple upstream stages
-- **Graduated auto-promotion**: Fast iteration in early rings, controlled rollout in production
-- **Verification gates**: Analysis templates between rings
+| Warehouse | Subscriptions | Triggers |
+|-----------|--------------|---------|
+| `warehouse-frontend` | `ghcr.io/dhpup/guestbook` image + git `services/frontend/` | New frontend tag or config change |
+| `warehouse-backend` | `guestbook-api` image + `guestbook-worker` image + git `services/api/` + `services/worker/` | New API or worker tag, or backend config change |
 
 ## Files
 
-- [project.yaml](project.yaml) - Project + promotion policies (auto-promote config per ring)
-- [warehouse.yaml](warehouse.yaml) - Subscribes to Git repo and container image
-- [stages.yaml](stages.yaml) - 5-stage ringed pipeline definition
-- [tasks.yaml](tasks.yaml) - PromotionTasks for promotion strategies
-- [analysis.yaml](analysis.yaml) - Dummy verification templates for demo
+- [warehouse.yaml](warehouse.yaml) — 2 warehouses with multiple subscriptions
+- [stages.yaml](stages.yaml) — 7-stage pipeline
+- [tasks.yaml](tasks.yaml) — 5 promotion tasks (per service tier + prod gates)
+- [project.yaml](project.yaml) — Auto-promotion policies
+- [analysis.yaml](analysis.yaml) — PokeAPI verification gates
+
+## Shared Custom Steps
+
+- `kyverno-policy-check` — Policy gate before any deployment (from `kargo-shared/`)
+- `trivy-image` — Vulnerability scan on each image; blocks promotion if critical CVEs found (runs at `dev` for all 3 images)
+- `teams-notify` — Posts a MessageCard to Microsoft Teams when integration promotes (from `kargo-shared/`)
+  - Requires Kargo project secret `teams-webhook` with key `url`

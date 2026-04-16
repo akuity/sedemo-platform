@@ -1,16 +1,46 @@
+---
+# warehouse-frontend
+# Produces freight when the frontend image gets a new tag, or when
+# frontend service config changes on main. Each warehouse tracks its
+# own team's release cadence independently.
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
-  name: team-daniel
+  name: warehouse-frontend
   namespace: team-daniel
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
   subscriptions:
+  - image:
+      repoURL: ghcr.io/dhpup/guestbook
   - git:
       repoURL: https://github.com/akuity/sedemo-platform
       branch: main
       includePaths:
-      - apps/team-daniel
+      - apps/team-daniel/services/frontend
+
+---
+# warehouse-backend
+# Subscribes to TWO container images in a single warehouse — api and worker
+# are released and versioned together as a backend bundle. A new tag on
+# either image, or a config change in either service directory, produces freight.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: warehouse-backend
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  subscriptions:
   - image:
-      repoURL: ghcr.io/dhpup/guestbook
+      repoURL: ghcr.io/dhpup/guestbook-api
+  - image:
+      repoURL: ghcr.io/dhpup/guestbook-worker
+  - git:
+      repoURL: https://github.com/akuity/sedemo-platform
+      branch: main
+      includePaths:
+      - apps/team-daniel/services/api
+      - apps/team-daniel/services/worker

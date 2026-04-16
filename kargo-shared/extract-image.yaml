@@ -1,0 +1,18 @@
+apiVersion: ee.kargo.akuity.io/v1alpha1
+kind: CustomPromotionStep
+metadata:
+  name: extract-images
+spec:
+  command:
+    - sh
+    - -c
+    - |
+      find ./${{ config.path }} \( -name "*.yaml" -o -name "*.yml" \) -print0 \
+      | xargs -0 yq -N e '.. | select(has("image")) | .image' \
+      | sort -u \
+      | while IFS= read -r line; do echo "- $line"; done
+  image: mikefarah/yq:4.52.4
+  output:
+    source:
+      format: YAML
+      type: Stdout
