@@ -1,0 +1,45 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: promote-fargate
+  namespace: beyond-k8s
+spec:
+  vars:
+  - name: repoURL
+    value: https://github.com/akuity/sedemo-monorepo
+  - name: fargate
+    value: ghcr.io/akuity/sedemo-monorepo-fargate-app
+
+  steps:
+  - uses: git-clone
+    config:
+      repoURL: ${{ vars.repoURL }}
+      checkout:
+      - branch: main
+        path: ./truth
+      - commit: ${{ commitFrom( vars.repoURL ).ID }}
+        path: ./task
+  - uses: copy
+    config:
+      inPath: ./task/beyond-k8s/fargate/task.json
+      outPath: ./truth/beyond-k8s/env/${{ ctx.stage }}/fargate/task.json
+  - uses: json-update
+    as: update-fargate-tag
+    config:
+      path: ./truth/beyond-k8s/env/${{ ctx.stage }}/k8s/values.yaml
+      updates:
+      - key: containerDefinitions[0].image
+        value: ${{ vars.fargate }}:${{ imageFrom(vars.fargate).Tag }}
+  - uses: fargate-promote
+  - uses: git-commit
+    config:
+      path: ./truth
+      message: |
+        Update ${{ ctx.stage }} to ${{ ctx.targetFreight.name }}
+
+        Fargate: ${{ vars.fargate }}:${{ imageFrom(vars.fargate).Tag }}
+  - uses: git-push
+    config:
+      path: ./truth
+
+ 

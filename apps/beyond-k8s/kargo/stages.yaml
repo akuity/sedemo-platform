@@ -22,6 +22,8 @@ spec:
       steps:
       - task:
           name: promote
+      - task:
+          name: promote-fargate
 
 ---
 apiVersion: kargo.akuity.io/v1alpha1

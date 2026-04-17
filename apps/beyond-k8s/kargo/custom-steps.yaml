@@ -1,0 +1,19 @@
+apiVersion: ee.kargo.akuity.io/v1alpha1
+kind: CustomPromotionStep
+metadata:
+  name: fargate-promote
+spec:
+  image: amazon/aws-cli:2.34.31
+  command: ['echo', 'Fargate promote step - placeholder for AWS CLI command to update service with new task definition','cat', './truth/beyond-k8s/env/${{ ctx.stage }}/fargate/task.json']
+    # - aws
+    # - ecs
+    # - register-task-definition 
+    # - '--cli-input-json' 
+    # - 'file://truth/beyond-k8s/env/${{ ctx.stage }}/fargate/task.json'
+  # kyverno apply /path/to/policy.yaml --resource /path/to/resource.yaml
+  output:
+    source:
+      format: Text
+      type: Stdout
+    transform:
+      version: 'trim(output) == "" ? [] : split(trim(output), "\n")'
