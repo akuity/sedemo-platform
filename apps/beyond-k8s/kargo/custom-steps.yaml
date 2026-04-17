@@ -15,5 +15,3 @@ spec:
     source:
       format: Text
       type: Stdout
-    transform:
-      version: 'trim(output) == "" ? [] : split(trim(output), "\n")'
