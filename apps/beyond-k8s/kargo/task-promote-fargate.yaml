@@ -1,3 +1,11 @@
+#
+# This file defines a PromotionTask that promotes a new Fargate task definition to AWS.
+# THe idea is that when a new image is published to the container registry, this task will be triggered to update 
+# the Fargate task definition with the new image and then subsequent stages will deploy it to specific ECS services in each environment.
+#
+#
+
+
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
