@@ -9,37 +9,52 @@ spec:
     value: https://github.com/akuity/sedemo-monorepo
   - name: fargate
     value: ghcr.io/akuity/sedemo-monorepo-fargate-app
-
   steps:
   - uses: git-clone
     config:
       repoURL: ${{ vars.repoURL }}
       checkout:
       - branch: main
-        path: ./truth
+        path: ./tasks
       - commit: ${{ commitFrom( vars.repoURL ).ID }}
-        path: ./task
+        path: ./template
   - uses: copy
     config:
-      inPath: ./task/beyond-k8s/fargate/task.json
-      outPath: ./truth/beyond-k8s/env/${{ ctx.stage }}/fargate/task.json
+      inPath: ./template/beyond-k8s/fargate/task.json
+      outPath: ./tasks/beyond-k8s/env/fargate-tasks/task-${{ imageFrom(vars.fargate).Tag }}.json
   - uses: json-update
     as: update-fargate-tag
     config:
-      path: ./truth/beyond-k8s/env/${{ ctx.stage }}/fargate/task.json
+      path: ./tasks/beyond-k8s/env/fargate-tasks/task-${{ imageFrom(vars.fargate).Tag }}.json
       updates:
       - key: containerDefinitions.0.image
         value: ${{ vars.fargate }}:${{ imageFrom(vars.fargate).Tag }}
   - uses: fargate-promote
+    config:
+      env:
+      - name: AWS_REGION
+        value: us-west-2
+      - name: AWS_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: aws-creds
+            key: AWS_ACCESS_KEY_ID
+      - name: AWS_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: aws-creds
+            key: AWS_SECRET_ACCESS_KEY
+      - name: env
+        value: ${{ var.env }}
   - uses: git-commit
     config:
-      path: ./truth
+      path: ./tasks
       message: |
         Update ${{ ctx.stage }} to ${{ ctx.targetFreight.name }}
 
         Fargate: ${{ vars.fargate }}:${{ imageFrom(vars.fargate).Tag }}
   - uses: git-push
     config:
-      path: ./truth
+      path: ./tasks
 
  
