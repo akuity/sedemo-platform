@@ -1,7 +1,7 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: deploy-fargate-task-def
+  name: fargate-task-def
   namespace: beyond-k8s
   annotations:
     kargo.akuity.io/color: red
@@ -41,7 +41,7 @@ spec:
       name: app
     sources:
       stages:
-      - deploy-fargate-task
+      - fargate-task-def
   promotionTemplate:
     spec:
       steps:
