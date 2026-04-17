@@ -44,8 +44,6 @@ spec:
           secretKeyRef:
             name: aws-creds
             key: AWS_SECRET_ACCESS_KEY
-      - name: env
-        value: ${{ var.env }}
   - uses: git-commit
     config:
       path: ./tasks
