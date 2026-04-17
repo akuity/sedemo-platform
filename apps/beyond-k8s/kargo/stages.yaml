@@ -37,7 +37,7 @@ spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: app
+      name: fargate
     sources:
       direct: true
   promotionTemplate:
