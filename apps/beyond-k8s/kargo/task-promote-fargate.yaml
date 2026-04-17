@@ -28,7 +28,7 @@ spec:
     config:
       path: ./truth/beyond-k8s/env/${{ ctx.stage }}/fargate/task.json
       updates:
-      - key: containerDefinitions[0].image
+      - key: containerDefinitions.0.image
         value: ${{ vars.fargate }}:${{ imageFrom(vars.fargate).Tag }}
   - uses: fargate-promote
   - uses: git-commit
