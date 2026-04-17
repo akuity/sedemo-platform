@@ -26,7 +26,7 @@ spec:
   - uses: json-update
     as: update-fargate-tag
     config:
-      path: ./truth/beyond-k8s/env/${{ ctx.stage }}/k8s/values.yaml
+      path: ./truth/beyond-k8s/env/${{ ctx.stage }}/fargate/task.json
       updates:
       - key: containerDefinitions[0].image
         value: ${{ vars.fargate }}:${{ imageFrom(vars.fargate).Tag }}
