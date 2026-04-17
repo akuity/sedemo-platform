@@ -1,6 +1,30 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
+  name: deploy-fargate-task-def
+  namespace: beyond-k8s
+  annotations:
+    kargo.akuity.io/color: red
+    kargo.akuity.io/argocd-context: '[{"name":"beyond-k8s-dev","namespace":"argocd"}]'
+spec:
+  shard: sedemo-primary
+  vars:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: app
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: promote-fargate
+
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
   name: dev
   namespace: beyond-k8s
   annotations:
@@ -16,36 +40,13 @@ spec:
       kind: Warehouse
       name: app
     sources:
-      direct: true
+      stages:
+      - deploy-fargate-task
   promotionTemplate:
     spec:
       steps:
       - task:
           name: promote
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: deploy-fargate-task-def
-  namespace: beyond-k8s
-  annotations:
-    kargo.akuity.io/color: red
-    kargo.akuity.io/argocd-context: '[{"name":"beyond-k8s-dev","namespace":"argocd"}]'
-spec:
-  shard: sedemo-primary
-  vars:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: fargate
-    sources:
-      direct: true
-  promotionTemplate:
-    spec:
-      steps:
-      - task:
-          name: promote-fargate
-
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -67,7 +68,6 @@ spec:
     sources:
       stages:
       - dev
-      - deploy-fargate-task
   promotionTemplate:
     spec:
       steps:
@@ -94,7 +94,6 @@ spec:
     sources:
       stages:
       - dev
-      - deploy-fargate-task
   promotionTemplate:
     spec:
       steps:
