@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: utilities-appset
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/akuity/sedemo-monorepo
+        revision: main
+        directories:
+        - path: utilities/*
+  template:
+    metadata:
+      name: '{{.path.basename}}-app'
+      namespace: argocd
+      finalizers:
+      - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: utilities
+      source:
+      - repoURL: https://github.com/akuity/sedemo-monorepo.git
+        targetRevision: main
+        path: utilities/{{.path.basename}}/k8s
+      destination:
+        name: in-cluster
+      syncPolicy:
+        automated:
+          prune: true
+          enabled: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
