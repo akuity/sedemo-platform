@@ -25,7 +25,8 @@ spec:
         targetRevision: main
         path: utilities/{{.path.basename}}/k8s
       destination:
-        name: in-cluster
+        name: sedemo-primary
+        namespace: utilities
       syncPolicy:
         automated:
           prune: true
