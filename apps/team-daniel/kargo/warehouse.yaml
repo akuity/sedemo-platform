@@ -1,8 +1,7 @@
 ---
 # warehouse-frontend
-# Produces freight when the frontend image gets a new tag, or when
-# frontend service config changes on main. Each warehouse tracks its
-# own team's release cadence independently.
+# Tracks the user-facing frontend image independently so UI changes can
+# ship on their own cadence without waiting on backend service updates.
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
@@ -13,34 +12,71 @@ metadata:
 spec:
   subscriptions:
   - image:
-      repoURL: ghcr.io/dhpup/guestbook
+      repoURL: us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend
   - git:
       repoURL: https://github.com/akuity/sedemo-platform
       branch: main
       includePaths:
-      - apps/team-daniel/services/frontend
+      - apps/team-daniel/services/online-boutique
 
 ---
-# warehouse-backend
-# Subscribes to TWO container images in a single warehouse — api and worker
-# are released and versioned together as a backend bundle. A new tag on
-# either image, or a config change in either service directory, produces freight.
+# warehouse-checkout
+# Groups the checkout flow services together — checkout, payment, currency,
+# and email are co-released as a transactional bundle.
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
-  name: warehouse-backend
+  name: warehouse-checkout
   namespace: team-daniel
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
   subscriptions:
   - image:
-      repoURL: ghcr.io/dhpup/guestbook-api
+      repoURL: us-central1-docker.pkg.dev/google-samples/microservices-demo/checkoutservice
   - image:
-      repoURL: ghcr.io/dhpup/guestbook-worker
-  - git:
-      repoURL: https://github.com/akuity/sedemo-platform
-      branch: main
-      includePaths:
-      - apps/team-daniel/services/api
-      - apps/team-daniel/services/worker
+      repoURL: us-central1-docker.pkg.dev/google-samples/microservices-demo/paymentservice
+  - image:
+      repoURL: us-central1-docker.pkg.dev/google-samples/microservices-demo/currencyservice
+  - image:
+      repoURL: us-central1-docker.pkg.dev/google-samples/microservices-demo/emailservice
+
+---
+# warehouse-catalog
+# Product catalog, recommendations, and ads are versioned together —
+# catalog data schema changes must stay in sync with both consumers.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: warehouse-catalog
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  subscriptions:
+  - image:
+      repoURL: us-central1-docker.pkg.dev/google-samples/microservices-demo/productcatalogservice
+  - image:
+      repoURL: us-central1-docker.pkg.dev/google-samples/microservices-demo/recommendationservice
+  - image:
+      repoURL: us-central1-docker.pkg.dev/google-samples/microservices-demo/adservice
+
+---
+# warehouse-cart
+# Cart, shipping, and load generator are grouped — cart mutations
+# must be validated end-to-end with shipping calculations.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: warehouse-cart
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  subscriptions:
+  - image:
+      repoURL: us-central1-docker.pkg.dev/google-samples/microservices-demo/cartservice
+  - image:
+      repoURL: us-central1-docker.pkg.dev/google-samples/microservices-demo/shippingservice
+  - image:
+      repoURL: us-central1-docker.pkg.dev/google-samples/microservices-demo/loadgenerator

@@ -12,28 +12,9 @@ metadata:
   namespace: team-daniel
 spec:
   promotionPolicies:
-  # dev, staging lanes, and integration all auto-promote.
-  # Soak times on staging-frontend and staging-backend enforce
-  # a stabilization window before the team lanes advance.
   - stageSelector:
       name: dev
     autoPromotionEnabled: true
   - stageSelector:
-      name: staging-frontend
-    autoPromotionEnabled: true
-  - stageSelector:
-      name: staging-backend
-    autoPromotionEnabled: true
-  - stageSelector:
-      name: integration
-    autoPromotionEnabled: true
-  # Production requires manual promotion.
-  - stageSelector:
-      name: prod-us
-    autoPromotionEnabled: false
-  - stageSelector:
-      name: prod-eu
-    autoPromotionEnabled: false
-  - stageSelector:
-      name: prod-global
+      name: prod
     autoPromotionEnabled: false

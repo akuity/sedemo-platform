@@ -8,12 +8,7 @@ spec:
   - list:
       elements:
       - stage: dev
-      - stage: staging-frontend
-      - stage: staging-backend
-      - stage: integration
-      - stage: prod-us
-      - stage: prod-eu
-      - stage: prod-global
+      - stage: prod
   template:
     metadata:
       name: team-daniel-{{stage}}

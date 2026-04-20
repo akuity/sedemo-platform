@@ -1,26 +1,8 @@
-# =============================================================================
-# team-daniel — Kargo Pipeline
-# =============================================================================
-#
-#  warehouse-frontend ─────────────────────────► staging-frontend ─┐
-#                     ╲                                              ├──► integration ──► prod-us ─┐
-#                      ╲──► dev (both) ────────► staging-backend  ─┘               └── prod-eu ─┴─► prod-global
-#                     ╱
-#  warehouse-backend ─
-#
-#  dev              auto  both warehouses, kyverno policy gate
-#  staging-frontend auto  frontend only, 5 min soak from dev
-#  staging-backend  auto  api+worker only, 5 min soak from dev
-#  integration      auto  fan-in: requires BOTH staging lanes, Slack notify
-#  prod-us/prod-eu  manual PR-based promotion (fan-out from integration)
-#  prod-global      manual GHA dispatch, fan-in: BOTH prod regions required
-# =============================================================================
-
 ---
 # DEV — shared integration sandbox
-# Sources freight from both warehouses simultaneously. When either warehouse
-# publishes new freight, this stage is eligible for auto-promotion.
-# Pattern: multi-warehouse, policy gate (kyverno), rendered branch
+# Requests freight from all four warehouses simultaneously. Any warehouse
+# publishing new freight makes this stage eligible for auto-promotion.
+# Trivy scans the primary image from each warehouse before touching the cluster.
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
@@ -38,244 +20,49 @@ spec:
       direct: true
   - origin:
       kind: Warehouse
-      name: warehouse-backend
+      name: warehouse-checkout
+    sources:
+      direct: true
+  - origin:
+      kind: Warehouse
+      name: warehouse-catalog
+    sources:
+      direct: true
+  - origin:
+      kind: Warehouse
+      name: warehouse-cart
     sources:
       direct: true
   promotionTemplate:
     spec:
       steps:
-      # Policy gate: validate manifests against Kyverno policies.
-      - uses: kyverno-policy-check
-        as: policy-check
-
-      # Vulnerability scans: all three images are scanned before any cluster is touched.
-      # If any scan fails (critical CVEs found), the promotion is aborted here.
       - uses: trivy-image
         as: trivy-frontend
         config:
-          image: ghcr.io/dhpup/guestbook:${{ imageFrom("ghcr.io/dhpup/guestbook").Tag }}
+          image: us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend:${{ imageFrom("us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend").Tag }}
       - uses: trivy-image
-        as: trivy-api
+        as: trivy-checkoutservice
         config:
-          image: ghcr.io/dhpup/guestbook-api:${{ imageFrom("ghcr.io/dhpup/guestbook-api").Tag }}
+          image: us-central1-docker.pkg.dev/google-samples/microservices-demo/checkoutservice:${{ imageFrom("us-central1-docker.pkg.dev/google-samples/microservices-demo/checkoutservice").Tag }}
       - uses: trivy-image
-        as: trivy-worker
+        as: trivy-productcatalogservice
         config:
-          image: ghcr.io/dhpup/guestbook-worker:${{ imageFrom("ghcr.io/dhpup/guestbook-worker").Tag }}
-
-      - task:
-          name: promote-all
-  verification:
-    analysisTemplates:
-    - name: ring-health-check
-    args:
-    - name: ring
-      value: "dev"
-    - name: threshold
-      value: "95"
-
----
-# STAGING-FRONTEND — frontend team's independent staging lane
-# Sources only warehouse-frontend freight from dev. The backend team's
-# pipeline runs in parallel through staging-backend independently.
-# Pattern: requiredSoakTime, partial freight (one warehouse), rendered branch
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: staging-frontend
-  namespace: team-daniel
-  annotations:
-    argocd.argoproj.io/sync-wave: "2"
-    kargo.akuity.io/color: amber
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: warehouse-frontend
-    sources:
-      stages:
-      - dev
-      requiredSoakTime: 5m0s  # Frontend must soak in dev 5 min before promoting here
-  promotionTemplate:
-    spec:
-      steps:
-      - task:
-          name: promote-frontend
-  verification:
-    analysisTemplates:
-    - name: ring-health-check
-    args:
-    - name: ring
-      value: "staging-frontend"
-    - name: threshold
-      value: "95"
-
----
-# STAGING-BACKEND — backend team's independent staging lane
-# Sources only warehouse-backend freight (api + worker images) from dev.
-# Pattern: requiredSoakTime, partial freight (one warehouse, two images), rendered branch
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: staging-backend
-  namespace: team-daniel
-  annotations:
-    argocd.argoproj.io/sync-wave: "2"
-    kargo.akuity.io/color: amber
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: warehouse-backend
-    sources:
-      stages:
-      - dev
-      requiredSoakTime: 5m0s  # Backend must soak in dev 5 min before promoting here
-  promotionTemplate:
-    spec:
-      steps:
-      - task:
-          name: promote-backend
-  verification:
-    analysisTemplates:
-    - name: ring-health-check
-    args:
-    - name: ring
-      value: "staging-backend"
-    - name: threshold
-      value: "95"
-
----
-# INTEGRATION — cross-team fan-in
-# Kargo will not offer this stage for promotion until the SAME frontend freight
-# has passed through staging-frontend AND the SAME backend freight has passed
-# through staging-backend. Forces both teams' changes to converge before
-# proceeding to production.
-# Pattern: fan-in across multiple warehouses, Slack notification, auto-promote
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: integration
-  namespace: team-daniel
-  annotations:
-    argocd.argoproj.io/sync-wave: "2"
-    kargo.akuity.io/color: purple
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: warehouse-frontend
-    sources:
-      stages:
-      - staging-frontend
-  - origin:
-      kind: Warehouse
-      name: warehouse-backend
-    sources:
-      stages:
-      - staging-backend
-  promotionTemplate:
-    spec:
-      steps:
-      - task:
-          name: promote-all
-      # Ambient notification: surfaces the integrated build to the team.
-      - uses: teams-notify
-        as: notify
+          image: us-central1-docker.pkg.dev/google-samples/microservices-demo/productcatalogservice:${{ imageFrom("us-central1-docker.pkg.dev/google-samples/microservices-demo/productcatalogservice").Tag }}
+      - uses: trivy-image
+        as: trivy-cartservice
         config:
-          webhookURL: ${{ secrets.teams-webhook.url }}
-          message: "team-daniel/integration is live — frontend + backend validated and integrated"
-  verification:
-    analysisTemplates:
-    - name: ring-success-rate
-    args:
-    - name: ring
-      value: "integration"
-    - name: min-success-rate
-      value: "99"
-
----
-# PROD-US — US regional production (fan-out from integration)
-# Pattern: PR-based promotion, manual approval
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: prod-us
-  namespace: team-daniel
-  annotations:
-    argocd.argoproj.io/sync-wave: "2"
-    kargo.akuity.io/color: cyan
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: warehouse-frontend
-    sources:
-      stages:
-      - integration
-  - origin:
-      kind: Warehouse
-      name: warehouse-backend
-    sources:
-      stages:
-      - integration
-  promotionTemplate:
-    spec:
-      steps:
+          image: us-central1-docker.pkg.dev/google-samples/microservices-demo/cartservice:${{ imageFrom("us-central1-docker.pkg.dev/google-samples/microservices-demo/cartservice").Tag }}
       - task:
-          name: promote-with-pr
-  verification:
-    analysisTemplates:
-    - name: ring-regional-health
-    args:
-    - name: region
-      value: "us"
+          name: promote-online-boutique
 
 ---
-# PROD-EU — EU regional production (fan-out from integration, parallel with prod-us)
-# Pattern: PR-based promotion, manual approval
+# PROD — manual promotion gate
+# Requests the same freight from all four warehouses, sourced through dev.
+# Freight must have passed dev before it is eligible here.
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: prod-eu
-  namespace: team-daniel
-  annotations:
-    argocd.argoproj.io/sync-wave: "2"
-    kargo.akuity.io/color: cyan
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: warehouse-frontend
-    sources:
-      stages:
-      - integration
-  - origin:
-      kind: Warehouse
-      name: warehouse-backend
-    sources:
-      stages:
-      - integration
-  promotionTemplate:
-    spec:
-      steps:
-      - task:
-          name: promote-with-pr
-  verification:
-    analysisTemplates:
-    - name: ring-regional-health
-    args:
-    - name: region
-      value: "eu"
-
----
-# PROD-GLOBAL — global production
-# Pattern: fan-in (both prod-us AND prod-eu must carry the same freight),
-#          GHA dispatch as final external gate, manual
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: prod-global
+  name: prod
   namespace: team-daniel
   annotations:
     argocd.argoproj.io/sync-wave: "2"
@@ -287,17 +74,43 @@ spec:
       name: warehouse-frontend
     sources:
       stages:
-      - prod-us
-      - prod-eu
+      - dev
   - origin:
       kind: Warehouse
-      name: warehouse-backend
+      name: warehouse-checkout
     sources:
       stages:
-      - prod-us
-      - prod-eu
+      - dev
+  - origin:
+      kind: Warehouse
+      name: warehouse-catalog
+    sources:
+      stages:
+      - dev
+  - origin:
+      kind: Warehouse
+      name: warehouse-cart
+    sources:
+      stages:
+      - dev
   promotionTemplate:
     spec:
       steps:
+      - uses: trivy-image
+        as: trivy-frontend
+        config:
+          image: us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend:${{ imageFrom("us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend").Tag }}
+      - uses: trivy-image
+        as: trivy-checkoutservice
+        config:
+          image: us-central1-docker.pkg.dev/google-samples/microservices-demo/checkoutservice:${{ imageFrom("us-central1-docker.pkg.dev/google-samples/microservices-demo/checkoutservice").Tag }}
+      - uses: trivy-image
+        as: trivy-productcatalogservice
+        config:
+          image: us-central1-docker.pkg.dev/google-samples/microservices-demo/productcatalogservice:${{ imageFrom("us-central1-docker.pkg.dev/google-samples/microservices-demo/productcatalogservice").Tag }}
+      - uses: trivy-image
+        as: trivy-cartservice
+        config:
+          image: us-central1-docker.pkg.dev/google-samples/microservices-demo/cartservice:${{ imageFrom("us-central1-docker.pkg.dev/google-samples/microservices-demo/cartservice").Tag }}
       - task:
-          name: promote-with-github-action
+          name: promote-online-boutique
