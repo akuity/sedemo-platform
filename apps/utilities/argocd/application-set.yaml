@@ -21,7 +21,7 @@ spec:
     spec:
       project: utilities
       source:
-      - repoURL: https://github.com/akuity/sedemo-monorepo.git
+        repoURL: https://github.com/akuity/sedemo-monorepo.git
         targetRevision: main
         path: utilities/{{.path.basename}}/k8s
       destination:
