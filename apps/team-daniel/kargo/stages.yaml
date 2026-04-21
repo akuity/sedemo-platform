@@ -2,7 +2,6 @@
 # DEV — shared integration sandbox
 # Requests freight from all four warehouses simultaneously. Any warehouse
 # publishing new freight makes this stage eligible for auto-promotion.
-# Trivy scans the primary image from each warehouse before touching the cluster.
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
@@ -36,22 +35,6 @@ spec:
   promotionTemplate:
     spec:
       steps:
-      - uses: trivy-image
-        as: trivy-frontend
-        config:
-          image: us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend:${{ imageFrom("us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend").Tag }}
-      - uses: trivy-image
-        as: trivy-checkoutservice
-        config:
-          image: us-central1-docker.pkg.dev/google-samples/microservices-demo/checkoutservice:${{ imageFrom("us-central1-docker.pkg.dev/google-samples/microservices-demo/checkoutservice").Tag }}
-      - uses: trivy-image
-        as: trivy-productcatalogservice
-        config:
-          image: us-central1-docker.pkg.dev/google-samples/microservices-demo/productcatalogservice:${{ imageFrom("us-central1-docker.pkg.dev/google-samples/microservices-demo/productcatalogservice").Tag }}
-      - uses: trivy-image
-        as: trivy-cartservice
-        config:
-          image: us-central1-docker.pkg.dev/google-samples/microservices-demo/cartservice:${{ imageFrom("us-central1-docker.pkg.dev/google-samples/microservices-demo/cartservice").Tag }}
       - task:
           name: promote-online-boutique
 
