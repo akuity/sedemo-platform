@@ -35,13 +35,6 @@ spec:
             - name: S3_BUCKET_NAME
               value: "{{ .Values.services.s3.bucketName }}"
             {{ end }}
-          resources:
-            limits:
-              memory: {{ .Values.image.memoryLimit | default "28Mi" }}
-              cpu: {{ .Values.image.cpuLimit | default "50m" }}
-            requests:
-              memory: {{ .Values.image.memoryLimit | default "28Mi" }}
-              cpu: {{ .Values.image.cpuLimit | default "50m" }}
   minReadySeconds: 30
   revisionHistoryLimit: 3
   {{- if .Values.rollouts.enabled }}
