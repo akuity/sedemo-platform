@@ -32,7 +32,7 @@ spec:
     config:
       repoURL: ${{ vars.gitRepo }}
       checkout:
-      - commit: ${{ commitFrom(vars.gitRepo).ID }}
+      - commit: ${{ commitFrom(vars.gitRepo, {"kind": "Warehouse", "name": "features"}).ID }}
         path: ./features
   - if: ${{ ctx.targetFreight.origin.name == "features" }}
     uses: copy
@@ -46,14 +46,13 @@ spec:
       message: "${{
         ctx.targetFreight.origin.name == 'guestbook' ?
         ctx.stage + ': deploy guestbook ' + imageFrom(vars.imageRepo).Tag :
-        ctx.stage + ': update feature flags from ' + commitFrom(vars.gitRepo).ID
+        ctx.stage + ': update feature flags from ' + commitFrom(vars.gitRepo, {"kind": "Warehouse", "name": "features"}).ID
         }}"
   - if: ${{ ctx.targetFreight.origin.name != "config-dev" && ctx.targetFreight.origin.name != "config-prod" }}
     uses: git-push
     config:
       path: ./out
       targetBranch: main
-      pushPolicy: RebaseOrMerge
   - uses: argocd-update
     config:
       apps:
