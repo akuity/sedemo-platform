@@ -12,27 +12,48 @@ spec:
   - name: imageRepo
     value: ghcr.io/akuity/guestbook
   steps:
-  - uses: git-clone
+  - if: ${{ ctx.targetFreight.origin.name != "config" }}
+    uses: git-clone
     config:
       repoURL: ${{ vars.gitRepo }}
       checkout:
       - branch: main
         path: ./out
-  - uses: yaml-update
+  - if: ${{ ctx.targetFreight.origin.name == "guestbook" }}
+    uses: yaml-update
     as: update-image
     config:
-      path: ./out/apps/team-daniel/env/${{ ctx.stage }}/values.yaml
+      path: ./out/apps/team-daniel/env/${{ ctx.stage }}/image.yaml
       updates:
       - key: image.tag
         value: ${{ imageFrom(vars.imageRepo).Tag }}
-  - uses: git-commit
+  - if: ${{ ctx.targetFreight.origin.name == "features" }}
+    uses: git-clone
+    config:
+      repoURL: ${{ vars.gitRepo }}
+      checkout:
+      - commit: ${{ commitFrom(vars.gitRepo).ID }}
+        path: ./features
+  - if: ${{ ctx.targetFreight.origin.name == "features" }}
+    uses: copy
+    config:
+      inPath: ./features/apps/team-daniel/base/feature-flags.yaml
+      outPath: ./out/apps/team-daniel/env/${{ ctx.stage }}/feature-flags.yaml
+  - if: ${{ ctx.targetFreight.origin.name != "config" }}
+    uses: git-commit
     config:
       path: ./out
-      message: "${{ ctx.stage }}: deploy guestbook ${{ imageFrom(vars.imageRepo).Tag }}"
-  - uses: git-push
+      message: "${{
+        ctx.targetFreight.origin.name == 'guestbook' ?
+        ctx.stage + ': deploy guestbook ' + imageFrom(vars.imageRepo).Tag :
+        ctx.stage + ': update feature flags from ' + commitFrom(vars.gitRepo).ID
+        }}"
+  - if: ${{ ctx.targetFreight.origin.name != "config" }}
+    uses: git-push
     config:
       path: ./out
       targetBranch: main
+      pushPolicy: RebaseOrMerge
   - uses: argocd-update
     config:
       apps:

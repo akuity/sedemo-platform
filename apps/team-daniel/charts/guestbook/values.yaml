@@ -5,6 +5,9 @@ image:
 
 replicaCount: 1
 
+featureFlags: {}
+  # FEATURE_FOO: enabled
+
 service:
   type: ClusterIP
   port: 80

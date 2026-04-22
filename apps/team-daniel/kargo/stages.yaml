@@ -7,11 +7,22 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "2"
     kargo.akuity.io/color: gray
+    kargo.akuity.io/argocd-context: '[{"name":"team-daniel-dev","namespace":"argocd"}]'
 spec:
   requestedFreight:
   - origin:
       kind: Warehouse
       name: guestbook
+    sources:
+      direct: true
+  - origin:
+      kind: Warehouse
+      name: features
+    sources:
+      direct: true
+  - origin:
+      kind: Warehouse
+      name: config
     sources:
       direct: true
   promotionTemplate:
@@ -29,6 +40,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "2"
     kargo.akuity.io/color: green
+    kargo.akuity.io/argocd-context: '[{"name":"team-daniel-prod","namespace":"argocd"}]'
 spec:
   requestedFreight:
   - origin:
@@ -37,6 +49,17 @@ spec:
     sources:
       stages:
       - dev
+  - origin:
+      kind: Warehouse
+      name: features
+    sources:
+      stages:
+      - dev
+  - origin:
+      kind: Warehouse
+      name: config
+    sources:
+      direct: true
   promotionTemplate:
     spec:
       steps:

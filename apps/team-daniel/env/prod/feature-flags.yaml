@@ -1,0 +1,3 @@
+featureFlags:
+  FEATURE_AAA: enabled
+  FEATURE_BBB: enabled

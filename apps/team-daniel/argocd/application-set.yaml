@@ -22,7 +22,9 @@ spec:
         path: apps/team-daniel/charts/guestbook
         helm:
           valueFiles:
-          - /apps/team-daniel/env/{{stage}}/values.yaml
+          - /apps/team-daniel/env/{{stage}}/image.yaml
+          - /apps/team-daniel/env/{{stage}}/config.yaml
+          - /apps/team-daniel/env/{{stage}}/feature-flags.yaml
       destination:
         name: sedemo-primary
         namespace: team-daniel-{{stage}}

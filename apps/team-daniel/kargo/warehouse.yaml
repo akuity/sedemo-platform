@@ -9,5 +9,41 @@ spec:
   subscriptions:
   - image:
       repoURL: ghcr.io/akuity/guestbook
-      semverConstraint: ^0.0.0
-      discoveryLimit: 5
+      imageSelectionStrategy: SemVer
+
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: features
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  subscriptions:
+  - git:
+      repoURL: https://github.com/akuity/sedemo-platform
+      branch: main
+      commitSelectionStrategy: NewestFromBranch
+      discoveryLimit: 20
+      includePaths:
+      - apps/team-daniel/base/feature-flags.yaml
+
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: config
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  subscriptions:
+  - git:
+      repoURL: https://github.com/akuity/sedemo-platform
+      branch: main
+      commitSelectionStrategy: NewestFromBranch
+      discoveryLimit: 20
+      includePaths:
+      - apps/team-daniel/env/dev/config.yaml
+      - apps/team-daniel/env/prod/config.yaml
