@@ -1,4 +1,92 @@
 # Mock warehouses and stages for Kargo UI layout testing.
+# s-all: subscribed to every warehouse in the project
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: s-all
+  namespace: team-daniel
+  annotations:
+    kargo.akuity.io/color: pink
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: guestbook
+    sources:
+      direct: true
+  - origin:
+      kind: Warehouse
+      name: features
+    sources:
+      direct: true
+  - origin:
+      kind: Warehouse
+      name: config-dev
+    sources:
+      direct: true
+  - origin:
+      kind: Warehouse
+      name: config-prod
+    sources:
+      direct: true
+  - origin:
+      kind: Warehouse
+      name: w-alpha
+    sources:
+      direct: true
+  - origin:
+      kind: Warehouse
+      name: w-beta
+    sources:
+      direct: true
+  - origin:
+      kind: Warehouse
+      name: w-gamma
+    sources:
+      direct: true
+  - origin:
+      kind: Warehouse
+      name: w-delta
+    sources:
+      direct: true
+  - origin:
+      kind: Warehouse
+      name: w-epsilon
+    sources:
+      direct: true
+  - origin:
+      kind: Warehouse
+      name: w-zeta
+    sources:
+      direct: true
+  - origin:
+      kind: Warehouse
+      name: w-eta
+    sources:
+      direct: true
+  - origin:
+      kind: Warehouse
+      name: w-theta
+    sources:
+      direct: true
+  - origin:
+      kind: Warehouse
+      name: w-iota
+    sources:
+      direct: true
+  - origin:
+      kind: Warehouse
+      name: w-kappa
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      steps:
+      - uses: compose-output
+        config: {}
+
+
 # No ArgoCD applications back these — promotions are no-ops.
 
 ---
