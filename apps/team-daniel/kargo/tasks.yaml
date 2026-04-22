@@ -39,16 +39,17 @@ spec:
     config:
       inPath: ./features/apps/team-daniel/base/feature-flags.yaml
       outPath: ./out/apps/team-daniel/env/${{ ctx.stage }}/feature-flags.yaml
-  - if: ${{ ctx.targetFreight.origin.name != "config-dev" && ctx.targetFreight.origin.name != "config-prod" }}
+  - if: ${{ ctx.targetFreight.origin.name == "guestbook" }}
     uses: git-commit
     config:
       path: ./out
-      message: "${{
-        ctx.targetFreight.origin.name == 'guestbook' ?
-        ctx.stage + ': deploy guestbook ' + imageFrom(vars.imageRepo).Tag :
-        ctx.stage + ': update feature flags from ' + commitFrom(vars.gitRepo, {"kind": "Warehouse", "name": "features"}).ID
-        }}"
-  - if: ${{ ctx.targetFreight.origin.name != "config-dev" && ctx.targetFreight.origin.name != "config-prod" }}
+      message: "${{ ctx.stage }}: deploy guestbook ${{ imageFrom(vars.imageRepo).Tag }}"
+  - if: ${{ ctx.targetFreight.origin.name == "features" }}
+    uses: git-commit
+    config:
+      path: ./out
+      message: "${{ ctx.stage }}: update feature flags"
+  - if: ${{ ctx.targetFreight.origin.name == "guestbook" || ctx.targetFreight.origin.name == "features" }}
     uses: git-push
     config:
       path: ./out
