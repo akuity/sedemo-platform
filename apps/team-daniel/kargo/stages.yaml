@@ -20,11 +20,6 @@ spec:
       name: features
     sources:
       direct: true
-  - origin:
-      kind: Warehouse
-      name: config
-    sources:
-      direct: true
   promotionTemplate:
     spec:
       steps:
@@ -55,13 +50,60 @@ spec:
     sources:
       stages:
       - dev
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: promote-guestbook
+
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev-config
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    kargo.akuity.io/color: gray
+    kargo.akuity.io/argocd-context: '[{"name":"team-daniel-dev","namespace":"argocd"}]'
+spec:
+  requestedFreight:
   - origin:
       kind: Warehouse
-      name: config
+      name: config-dev
     sources:
       direct: true
   promotionTemplate:
     spec:
       steps:
       - task:
-          name: promote-guestbook
+          name: promote-config
+          vars:
+          - name: targetEnv
+            value: dev
+
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod-config
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    kargo.akuity.io/color: green
+    kargo.akuity.io/argocd-context: '[{"name":"team-daniel-prod","namespace":"argocd"}]'
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: config-prod
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: promote-config
+          vars:
+          - name: targetEnv
+            value: prod

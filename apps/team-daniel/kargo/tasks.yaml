@@ -1,3 +1,4 @@
+---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
@@ -12,8 +13,7 @@ spec:
   - name: imageRepo
     value: ghcr.io/akuity/guestbook
   steps:
-  - if: ${{ ctx.targetFreight.origin.name != "config" }}
-    uses: git-clone
+  - uses: git-clone
     config:
       repoURL: ${{ vars.gitRepo }}
       checkout:
@@ -39,8 +39,7 @@ spec:
     config:
       inPath: ./features/apps/team-daniel/base/feature-flags.yaml
       outPath: ./out/apps/team-daniel/env/${{ ctx.stage }}/feature-flags.yaml
-  - if: ${{ ctx.targetFreight.origin.name != "config" }}
-    uses: git-commit
+  - uses: git-commit
     config:
       path: ./out
       message: "${{
@@ -48,8 +47,7 @@ spec:
         ctx.stage + ': deploy guestbook ' + imageFrom(vars.imageRepo).Tag :
         ctx.stage + ': update feature flags from ' + commitFrom(vars.gitRepo).ID
         }}"
-  - if: ${{ ctx.targetFreight.origin.name != "config" }}
-    uses: git-push
+  - uses: git-push
     config:
       path: ./out
       targetBranch: main
@@ -58,5 +56,26 @@ spec:
     config:
       apps:
       - name: team-daniel-${{ ctx.stage }}
+        sources:
+        - repoURL: ${{ vars.gitRepo }}
+
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: promote-config
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  vars:
+  - name: gitRepo
+    value: https://github.com/akuity/sedemo-platform
+  - name: targetEnv
+  steps:
+  - uses: argocd-update
+    config:
+      apps:
+      - name: team-daniel-${{ vars.targetEnv }}
         sources:
         - repoURL: ${{ vars.gitRepo }}
