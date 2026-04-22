@@ -1,7 +1,4 @@
 ---
-# DEV — shared integration sandbox
-# Requests freight from all four warehouses simultaneously. Any warehouse
-# publishing new freight makes this stage eligible for auto-promotion.
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
@@ -14,34 +11,16 @@ spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: warehouse-frontend
-    sources:
-      direct: true
-  - origin:
-      kind: Warehouse
-      name: warehouse-checkout
-    sources:
-      direct: true
-  - origin:
-      kind: Warehouse
-      name: warehouse-catalog
-    sources:
-      direct: true
-  - origin:
-      kind: Warehouse
-      name: warehouse-cart
+      name: guestbook
     sources:
       direct: true
   promotionTemplate:
     spec:
       steps:
       - task:
-          name: promote-online-boutique
+          name: promote-guestbook
 
 ---
-# PROD — manual promotion gate
-# Requests the same freight from all four warehouses, sourced through dev.
-# Freight must have passed dev before it is eligible here.
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
@@ -54,46 +33,12 @@ spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: warehouse-frontend
-    sources:
-      stages:
-      - dev
-  - origin:
-      kind: Warehouse
-      name: warehouse-checkout
-    sources:
-      stages:
-      - dev
-  - origin:
-      kind: Warehouse
-      name: warehouse-catalog
-    sources:
-      stages:
-      - dev
-  - origin:
-      kind: Warehouse
-      name: warehouse-cart
+      name: guestbook
     sources:
       stages:
       - dev
   promotionTemplate:
     spec:
       steps:
-      - uses: trivy-image
-        as: trivy-frontend
-        config:
-          image: us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend:${{ imageFrom("us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend").Tag }}
-      - uses: trivy-image
-        as: trivy-checkoutservice
-        config:
-          image: us-central1-docker.pkg.dev/google-samples/microservices-demo/checkoutservice:${{ imageFrom("us-central1-docker.pkg.dev/google-samples/microservices-demo/checkoutservice").Tag }}
-      - uses: trivy-image
-        as: trivy-productcatalogservice
-        config:
-          image: us-central1-docker.pkg.dev/google-samples/microservices-demo/productcatalogservice:${{ imageFrom("us-central1-docker.pkg.dev/google-samples/microservices-demo/productcatalogservice").Tag }}
-      - uses: trivy-image
-        as: trivy-cartservice
-        config:
-          image: us-central1-docker.pkg.dev/google-samples/microservices-demo/cartservice:${{ imageFrom("us-central1-docker.pkg.dev/google-samples/microservices-demo/cartservice").Tag }}
       - task:
-          name: promote-online-boutique
+          name: promote-guestbook

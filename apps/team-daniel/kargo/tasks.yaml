@@ -1,7 +1,7 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
-  name: promote-online-boutique
+  name: promote-guestbook
   namespace: team-daniel
   annotations:
     argocd.argoproj.io/sync-wave: "2"
@@ -9,60 +9,33 @@ spec:
   vars:
   - name: gitRepo
     value: https://github.com/akuity/sedemo-platform
-  - name: imageBase
-    value: us-central1-docker.pkg.dev/google-samples/microservices-demo
+  - name: imageRepo
+    value: ghcr.io/akuity/guestbook
   steps:
   - uses: git-clone
     config:
       repoURL: ${{ vars.gitRepo }}
       checkout:
       - branch: main
-        path: ./src
-      - branch: stage/team-daniel/${{ ctx.stage }}
-        create: true
         path: ./out
-  - uses: git-clear
+  - uses: yaml-update
+    as: update-image
     config:
-      path: ./out
-  - uses: kustomize-set-image
-    config:
-      path: ./src/apps/team-daniel/stages/${{ ctx.stage }}
-      images:
-      - image: ${{ vars.imageBase }}/frontend
-        tag: ${{ imageFrom(vars.imageBase + "/frontend").Tag }}
-      - image: ${{ vars.imageBase }}/checkoutservice
-        tag: ${{ imageFrom(vars.imageBase + "/checkoutservice").Tag }}
-      - image: ${{ vars.imageBase }}/paymentservice
-        tag: ${{ imageFrom(vars.imageBase + "/paymentservice").Tag }}
-      - image: ${{ vars.imageBase }}/currencyservice
-        tag: ${{ imageFrom(vars.imageBase + "/currencyservice").Tag }}
-      - image: ${{ vars.imageBase }}/emailservice
-        tag: ${{ imageFrom(vars.imageBase + "/emailservice").Tag }}
-      - image: ${{ vars.imageBase }}/productcatalogservice
-        tag: ${{ imageFrom(vars.imageBase + "/productcatalogservice").Tag }}
-      - image: ${{ vars.imageBase }}/recommendationservice
-        tag: ${{ imageFrom(vars.imageBase + "/recommendationservice").Tag }}
-      - image: ${{ vars.imageBase }}/adservice
-        tag: ${{ imageFrom(vars.imageBase + "/adservice").Tag }}
-      - image: ${{ vars.imageBase }}/cartservice
-        tag: ${{ imageFrom(vars.imageBase + "/cartservice").Tag }}
-      - image: ${{ vars.imageBase }}/shippingservice
-        tag: ${{ imageFrom(vars.imageBase + "/shippingservice").Tag }}
-      - image: ${{ vars.imageBase }}/loadgenerator
-        tag: ${{ imageFrom(vars.imageBase + "/loadgenerator").Tag }}
-  - uses: kustomize-build
-    config:
-      path: ./src/apps/team-daniel/stages/${{ ctx.stage }}
-      outPath: ./out/manifests.yaml
+      path: ./out/apps/team-daniel/env/${{ ctx.stage }}/values.yaml
+      updates:
+      - key: image.tag
+        value: ${{ imageFrom(vars.imageRepo).Tag }}
   - uses: git-commit
     config:
       path: ./out
-      message: "chore(${{ ctx.stage }}): deploy online-boutique frontend=${{ imageFrom(vars.imageBase + \"/frontend\").Tag }}"
+      message: "${{ ctx.stage }}: deploy guestbook ${{ imageFrom(vars.imageRepo).Tag }}"
   - uses: git-push
     config:
       path: ./out
-      targetBranch: stage/team-daniel/${{ ctx.stage }}
+      targetBranch: main
   - uses: argocd-update
     config:
       apps:
       - name: team-daniel-${{ ctx.stage }}
+        sources:
+        - repoURL: ${{ vars.gitRepo }}

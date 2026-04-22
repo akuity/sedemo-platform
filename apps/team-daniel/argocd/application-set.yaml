@@ -18,8 +18,11 @@ spec:
       project: team-daniel
       source:
         repoURL: https://github.com/akuity/sedemo-platform
-        targetRevision: stage/team-daniel/{{stage}}
-        path: .
+        targetRevision: main
+        path: apps/team-daniel/charts/guestbook
+        helm:
+          valueFiles:
+          - /apps/team-daniel/env/{{stage}}/values.yaml
       destination:
         name: sedemo-primary
         namespace: team-daniel-{{stage}}

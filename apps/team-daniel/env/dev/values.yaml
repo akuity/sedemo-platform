@@ -1,0 +1,5 @@
+image:
+  repository: ghcr.io/akuity/guestbook
+  tag: v0.0.88
+
+replicaCount: 1
