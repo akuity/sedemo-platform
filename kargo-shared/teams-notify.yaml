@@ -1,16 +1,26 @@
 # CustomPromotionStep: teams-notify
 #
-# Posts a MessageCard to a Microsoft Teams channel via an incoming webhook.
+# Posts an Adaptive Card to Microsoft Teams via a Power Automate workflow webhook.
+# Create the webhook URL in Teams: Apps → Workflows → "Post to a channel when a
+# webhook request is received". No third-party services involved.
 #
 # Required config keys:
-#   webhookURL — Teams incoming webhook URL (reference via secrets)
-#   message    — Summary/title text for the card
+#   webhookURL — Power Automate workflow webhook URL (reference via secrets)
+#   message    — Body text shown in the card
+#
+# Optional config keys:
+#   title   — Card heading (default: "Kargo Promotion")
+#   stage   — Stage name to show as a fact row
+#   freight — Freight ID to show as a fact row
 #
 # Example invocation:
 #   - uses: teams-notify
 #     config:
 #       webhookURL: ${{ secrets.teams-webhook.url }}
-#       message: "team-daniel/integration promoted to latest"
+#       title: "Promoted to ${{ ctx.stage }}"
+#       message: "guestbook ${{ imageFrom('ghcr.io/akuity/guestbook').Tag }} is live"
+#       stage: ${{ ctx.stage }}
+#       freight: ${{ ctx.targetFreight.name }}
 apiVersion: ee.kargo.akuity.io/v1alpha1
 kind: CustomPromotionStep
 metadata:
@@ -21,14 +31,44 @@ spec:
   - sh
   - -c
   - |
-    curl -sf -X POST "${{ config.webhookURL }}" \
+    WEBHOOK="${{ config.webhookURL }}"
+    TITLE="${{ config.title }}"
+    MESSAGE="${{ config.message }}"
+    STAGE="${{ config.stage }}"
+    FREIGHT="${{ config.freight }}"
+
+    curl -sf -X POST "$WEBHOOK" \
       -H 'Content-Type: application/json' \
       -d "{
-        \"@type\": \"MessageCard\",
-        \"@context\": \"http://schema.org/extensions\",
-        \"themeColor\": \"0076D7\",
-        \"summary\": \"Kargo Promotion\",
-        \"sections\": [{
-          \"activityTitle\": \"${{ config.message }}\"
+        \"type\": \"message\",
+        \"attachments\": [{
+          \"contentType\": \"application/vnd.microsoft.card.adaptive\",
+          \"content\": {
+            \"\$schema\": \"http://adaptivecards.io/schemas/adaptive-card.json\",
+            \"type\": \"AdaptiveCard\",
+            \"version\": \"1.5\",
+            \"body\": [
+              {
+                \"type\": \"TextBlock\",
+                \"text\": \"${TITLE:-Kargo Promotion}\",
+                \"weight\": \"Bolder\",
+                \"size\": \"Large\",
+                \"color\": \"Accent\",
+                \"wrap\": true
+              },
+              {
+                \"type\": \"FactSet\",
+                \"facts\": [
+                  {\"title\": \"Stage\",   \"value\": \"$STAGE\"},
+                  {\"title\": \"Freight\", \"value\": \"$FREIGHT\"}
+                ]
+              },
+              {
+                \"type\": \"TextBlock\",
+                \"text\": \"$MESSAGE\",
+                \"wrap\": true
+              }
+            ]
+          }
         }]
       }"

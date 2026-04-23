@@ -30,6 +30,13 @@ spec:
       steps:
       - task:
           name: promote-guestbook
+      - uses: teams-notify
+        config:
+          webhookURL: ${{ secrets.teams-webhook.url }}
+          title: "Promoted to ${{ ctx.stage }}"
+          message: "guestbook ${{ imageFrom('ghcr.io/akuity/guestbook').Tag }} is live"
+          stage: ${{ ctx.stage }}
+          freight: ${{ ctx.targetFreight.name }}
 
 ---
 apiVersion: kargo.akuity.io/v1alpha1
