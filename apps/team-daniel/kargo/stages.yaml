@@ -70,5 +70,8 @@ spec:
   promotionTemplate:
     spec:
       steps:
+      - uses: trivy-image
+        config:
+          image: ghcr.io/akuity/guestbook:${{ imageFrom('ghcr.io/akuity/guestbook').Tag }}
       - task:
           name: promote-guestbook
