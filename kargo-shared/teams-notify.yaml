@@ -6,17 +6,15 @@
 #
 # Required config keys:
 #   webhookURL — Power Automate workflow webhook URL (reference via secrets)
+#   title      — Card heading
 #   message    — Body text shown in the card
-#
-# Optional config keys:
-#   title   — Card heading (default: "Kargo Promotion")
-#   stage   — Stage name to show as a fact row
-#   freight — Freight ID to show as a fact row
+#   stage      — Stage name shown as a fact row
+#   freight    — Freight ID shown as a fact row
 #
 # Example invocation:
 #   - uses: teams-notify
 #     config:
-#       webhookURL: ${{ secrets.teams-webhook.url }}
+#       webhookURL: ${{ secret("teams-webhook").url }}
 #       title: "Promoted to ${{ ctx.stage }}"
 #       message: "guestbook ${{ imageFrom('ghcr.io/akuity/guestbook').Tag }} is live"
 #       stage: ${{ ctx.stage }}
@@ -31,13 +29,7 @@ spec:
   - sh
   - -c
   - |
-    WEBHOOK="${{ config.webhookURL }}"
-    TITLE="${{ config.title }}"
-    MESSAGE="${{ config.message }}"
-    STAGE="${{ config.stage }}"
-    FREIGHT="${{ config.freight }}"
-
-    curl -sf -X POST "$WEBHOOK" \
+    curl -sf -X POST "${{ config.webhookURL }}" \
       -H 'Content-Type: application/json' \
       -d "{
         \"type\": \"message\",
@@ -49,7 +41,7 @@ spec:
             \"body\": [
               {
                 \"type\": \"TextBlock\",
-                \"text\": \"${TITLE:-Kargo Promotion}\",
+                \"text\": \"${{ config.title }}\",
                 \"weight\": \"Bolder\",
                 \"size\": \"Large\",
                 \"color\": \"Accent\",
@@ -58,13 +50,13 @@ spec:
               {
                 \"type\": \"FactSet\",
                 \"facts\": [
-                  {\"title\": \"Stage\",   \"value\": \"$STAGE\"},
-                  {\"title\": \"Freight\", \"value\": \"$FREIGHT\"}
+                  {\"title\": \"Stage\",   \"value\": \"${{ config.stage }}\"},
+                  {\"title\": \"Freight\", \"value\": \"${{ config.freight }}\"}
                 ]
               },
               {
                 \"type\": \"TextBlock\",
-                \"text\": \"$MESSAGE\",
+                \"text\": \"${{ config.message }}\",
                 \"wrap\": true
               }
             ]
