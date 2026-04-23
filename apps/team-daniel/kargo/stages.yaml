@@ -32,7 +32,7 @@ spec:
           name: promote-guestbook
       - uses: teams-notify
         config:
-          webhookURL: ${{ secrets.teams-webhook.url }}
+          webhookURL: ${{ secrets["teams-webhook"].url }}
           title: "Promoted to ${{ ctx.stage }}"
           message: "guestbook ${{ imageFrom('ghcr.io/akuity/guestbook').Tag }} is live"
           stage: ${{ ctx.stage }}
