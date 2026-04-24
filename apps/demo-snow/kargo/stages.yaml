@@ -414,5 +414,5 @@ spec:
         continueOnError: true
         config:
           apps:
-          - name: rollouts-app-prod-${{ vars.region }}
+          - name: demo-snow-prod-${{ vars.region }}
             namespace: argocd
