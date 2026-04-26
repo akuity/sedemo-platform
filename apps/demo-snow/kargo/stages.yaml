@@ -37,12 +37,12 @@ spec:
       - name: path_out
         value: ./out
       steps:
-      - task:
-          name: prepare-workdir 
       - uses: hello-world
         as: my-custom-step
         config: 
           message: "Hello, World! It's Kargo! "
+      - task:
+          name: prepare-workdir 
       - uses: helm-template
         config:
           releaseName: deploy
