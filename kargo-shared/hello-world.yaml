@@ -8,7 +8,8 @@ spec:
     - -c
     - |
       echo "This is a hello world custom promotion step with outputs"
-      echo '{"message":"${{config.message}}"}' > $KARGO_OUTPUT
+      echo "{\"message\":\"${{ config.message }}\"}"  > $KARGO_OUTPUT
+      echo '{"message":"${{config.message}}"}' > /tmp/output.json
   image: busybox:1.37.0
   # output:
   #   source:
