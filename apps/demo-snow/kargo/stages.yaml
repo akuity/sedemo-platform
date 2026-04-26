@@ -39,10 +39,6 @@ spec:
       steps:
       - task:
           name: prepare-workdir 
-      - uses: hello-world
-        as: my-custom-step
-        config: 
-          message: "Hello, World! It's Kargo! "
       - uses: helm-template
         config:
           releaseName: deploy
@@ -66,6 +62,10 @@ spec:
           apps:
           - name: demo-snow-dev
             namespace: argocd
+      - uses: hello-world
+        as: my-custom-step
+        config: 
+          message: "Hello, World! It's Kargo! "
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
