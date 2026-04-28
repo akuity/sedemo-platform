@@ -230,18 +230,21 @@ spec:
         config:
           path: ./out
           message: "prod-canary: update feature flags"
-      - uses: git-push
+      - if: ${{ ctx.targetFreight.origin.name == "guestbook" || ctx.targetFreight.origin.name == "features" }}
+        uses: git-push
         as: push
         config:
           path: ./out
           generateTargetBranch: true
-      - uses: git-open-pr
+      - if: ${{ ctx.targetFreight.origin.name == "guestbook" || ctx.targetFreight.origin.name == "features" }}
+        uses: git-open-pr
         as: open-pr
         config:
           repoURL: https://github.com/akuity/sedemo-platform
           sourceBranch: ${{ outputs.push.branch }}
           targetBranch: main
-      - uses: git-wait-for-pr
+      - if: ${{ ctx.targetFreight.origin.name == "guestbook" || ctx.targetFreight.origin.name == "features" }}
+        uses: git-wait-for-pr
         config:
           repoURL: https://github.com/akuity/sedemo-platform
           prNumber: ${{ outputs['open-pr'].pr.id }}
