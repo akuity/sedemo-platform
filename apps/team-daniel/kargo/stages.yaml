@@ -34,9 +34,17 @@ spec:
           checkout:
           - branch: main
             path: ./src
+      - uses: helm-template
+        config:
+          path: ./src/apps/team-daniel/charts/guestbook
+          releaseName: guestbook
+          valuesFiles:
+          - ./src/apps/team-daniel/env/${{ ctx.stage }}/config.yaml
+          - ./src/apps/team-daniel/env/${{ ctx.stage }}/image.yaml
+          outPath: ./rendered
       - uses: opa-test
         config:
-          path: ./src/apps/team-daniel/charts/guestbook/templates/deployment.yaml
+          path: ./rendered
       - task:
           name: promote-guestbook
       - uses: teams-notify
@@ -85,6 +93,14 @@ spec:
           checkout:
           - branch: main
             path: ./src
+      - uses: helm-template
+        config:
+          path: ./src/apps/team-daniel/charts/guestbook
+          releaseName: guestbook
+          valuesFiles:
+          - ./src/apps/team-daniel/env/${{ ctx.stage }}/config.yaml
+          - ./src/apps/team-daniel/env/${{ ctx.stage }}/image.yaml
+          outPath: ./rendered
       - uses: gha-dispatch-workflow
         as: gha-dispatch
         config:
@@ -101,7 +117,7 @@ spec:
           expectedConclusion: success
       - uses: opa-test
         config:
-          path: ./src/apps/team-daniel/charts/guestbook/templates/deployment.yaml
+          path: ./rendered
       - uses: trivy-image
         config:
           image: ghcr.io/akuity/guestbook:${{ imageFrom('ghcr.io/akuity/guestbook').Tag }}
