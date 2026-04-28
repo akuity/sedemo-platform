@@ -1,6 +1,6 @@
-{{- if not .Values.useRollout }}
-apiVersion: apps/v1
-kind: Deployment
+{{- if .Values.useRollout }}
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
 metadata:
   name: guestbook
 spec:
@@ -27,4 +27,11 @@ spec:
         envFrom:
         - configMapRef:
             name: feature-flags
+  strategy:
+    canary:
+      steps:
+      - setWeight: 20
+      - pause:
+          duration: 1m
+      - setWeight: 100
 {{- end }}

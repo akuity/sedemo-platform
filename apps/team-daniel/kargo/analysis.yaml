@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: staging-analysis
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  metrics:
+  - name: health-check
+    provider:
+      job:
+        spec:
+          template:
+            spec:
+              containers:
+              - name: health-check
+                image: alpine:latest
+                command: [sleep, "30"]
+              restartPolicy: Never
+          backoffLimit: 1

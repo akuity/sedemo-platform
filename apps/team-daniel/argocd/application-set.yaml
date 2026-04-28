@@ -8,7 +8,9 @@ spec:
   - list:
       elements:
       - stage: dev
-      - stage: prod
+      - stage: staging-security
+      - stage: staging
+      - stage: prod-canary
   template:
     metadata:
       name: team-daniel-{{stage}}

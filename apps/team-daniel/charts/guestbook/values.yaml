@@ -5,6 +5,8 @@ image:
 
 replicaCount: 1
 
+useRollout: false
+
 featureFlags: {}
   # FEATURE_FOO: enabled
 

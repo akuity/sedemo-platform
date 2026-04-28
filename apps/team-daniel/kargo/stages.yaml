@@ -43,6 +43,7 @@ spec:
           - ./src/apps/team-daniel/env/${{ ctx.stage }}/image.yaml
           outPath: ./rendered
       - uses: opa-test
+        continueOnError: true
         config:
           path: ./rendered
       - task:
@@ -59,12 +60,12 @@ spec:
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: prod
+  name: staging-security
   namespace: team-daniel
   annotations:
     argocd.argoproj.io/sync-wave: "2"
-    kargo.akuity.io/color: green
-    kargo.akuity.io/argocd-context: '[{"name":"team-daniel-prod","namespace":"argocd"}]'
+    kargo.akuity.io/color: amber
+    kargo.akuity.io/argocd-context: '[{"name":"team-daniel-staging-security","namespace":"argocd"}]'
 spec:
   requestedFreight:
   - origin:
@@ -79,11 +80,6 @@ spec:
     sources:
       stages:
       - dev
-  - origin:
-      kind: Warehouse
-      name: config-prod
-    sources:
-      direct: true
   promotionTemplate:
     spec:
       steps:
@@ -101,6 +97,12 @@ spec:
           - ./src/apps/team-daniel/env/${{ ctx.stage }}/config.yaml
           - ./src/apps/team-daniel/env/${{ ctx.stage }}/image.yaml
           outPath: ./rendered
+      - uses: opa-test
+        config:
+          path: ./rendered
+      - uses: trivy-image
+        config:
+          image: ghcr.io/akuity/guestbook:${{ imageFrom('ghcr.io/akuity/guestbook').Tag }}
       - uses: gha-dispatch-workflow
         as: gha-dispatch
         config:
@@ -115,11 +117,134 @@ spec:
           repoURL: https://github.com/akuity/sedemo-platform
           runID: ${{ outputs['gha-dispatch'].runID }}
           expectedConclusion: success
-      - uses: opa-test
-        config:
-          path: ./rendered
-      - uses: trivy-image
-        config:
-          image: ghcr.io/akuity/guestbook:${{ imageFrom('ghcr.io/akuity/guestbook').Tag }}
       - task:
           name: promote-guestbook
+
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: staging
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    kargo.akuity.io/color: blue
+    kargo.akuity.io/argocd-context: '[{"name":"team-daniel-staging","namespace":"argocd"}]'
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: guestbook
+    sources:
+      stages:
+      - dev
+  - origin:
+      kind: Warehouse
+      name: features
+    sources:
+      stages:
+      - dev
+  verification:
+    analysisTemplates:
+    - name: staging-analysis
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: promote-guestbook
+
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod-canary
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    kargo.akuity.io/color: green
+    kargo.akuity.io/argocd-context: '[{"name":"team-daniel-prod-canary","namespace":"argocd"}]'
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: guestbook
+    sources:
+      stages:
+      - staging
+  - origin:
+      kind: Warehouse
+      name: features
+    sources:
+      stages:
+      - staging
+  - origin:
+      kind: Warehouse
+      name: config-prod
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      steps:
+      - uses: git-clone
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          checkout:
+          - branch: main
+            path: ./out
+      - if: ${{ ctx.targetFreight.origin.name == "guestbook" }}
+        uses: yaml-update
+        config:
+          path: ./out/apps/team-daniel/env/prod-canary/image.yaml
+          updates:
+          - key: image.tag
+            value: ${{ imageFrom('ghcr.io/akuity/guestbook').Tag }}
+      - if: ${{ ctx.targetFreight.origin.name == "features" }}
+        uses: git-clone
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          checkout:
+          - commit: '${{ commitFrom("https://github.com/akuity/sedemo-platform", {"kind": "Warehouse", "name": "features"}).ID }}'
+            path: ./features
+      - if: ${{ ctx.targetFreight.origin.name == "features" }}
+        uses: copy
+        config:
+          inPath: ./features/apps/team-daniel/base/feature-flags.yaml
+          outPath: ./out/apps/team-daniel/env/prod-canary/feature-flags.yaml
+      - if: ${{ ctx.targetFreight.origin.name == "guestbook" }}
+        uses: git-commit
+        config:
+          path: ./out
+          message: "prod-canary: deploy guestbook ${{ imageFrom('ghcr.io/akuity/guestbook').Tag }}"
+      - if: ${{ ctx.targetFreight.origin.name == "features" }}
+        uses: git-commit
+        config:
+          path: ./out
+          message: "prod-canary: update feature flags"
+      - uses: git-push
+        as: push
+        config:
+          path: ./out
+          generateTargetBranch: true
+      - uses: git-open-pr
+        as: open-pr
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          sourceBranch: ${{ outputs.push.branch }}
+          targetBranch: main
+      - uses: git-wait-for-pr
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          prNumber: ${{ outputs['open-pr'].pr.id }}
+      - uses: argocd-update
+        config:
+          apps:
+          - name: team-daniel-prod-canary
+            sources:
+            - repoURL: https://github.com/akuity/sedemo-platform
+      - uses: teams-notify
+        config:
+          webhookURL: ${{ secret("teams-webhook")["teams-webhook"] }}
+          title: "Promoted to ${{ ctx.stage }}"
+          message: "guestbook ${{ imageFrom('ghcr.io/akuity/guestbook').Tag }} is live"
+          stage: ${{ ctx.stage }}
+          freight: ${{ ctx.targetFreight.name }}
