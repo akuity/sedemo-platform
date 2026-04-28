@@ -1,508 +1,508 @@
-# Mock warehouses and stages for Kargo UI layout testing.
-# s-all: subscribed to every warehouse in the project
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: s-all
-  namespace: team-daniel
-  annotations:
-    kargo.akuity.io/color: pink
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: guestbook
-    sources:
-      direct: true
-  - origin:
-      kind: Warehouse
-      name: features
-    sources:
-      direct: true
-  - origin:
-      kind: Warehouse
-      name: config-dev
-    sources:
-      direct: true
-  - origin:
-      kind: Warehouse
-      name: config-prod
-    sources:
-      direct: true
-  - origin:
-      kind: Warehouse
-      name: w-alpha
-    sources:
-      direct: true
-  - origin:
-      kind: Warehouse
-      name: w-beta
-    sources:
-      direct: true
-  - origin:
-      kind: Warehouse
-      name: w-gamma
-    sources:
-      direct: true
-  - origin:
-      kind: Warehouse
-      name: w-delta
-    sources:
-      direct: true
-  - origin:
-      kind: Warehouse
-      name: w-epsilon
-    sources:
-      direct: true
-  - origin:
-      kind: Warehouse
-      name: w-zeta
-    sources:
-      direct: true
-  - origin:
-      kind: Warehouse
-      name: w-eta
-    sources:
-      direct: true
-  - origin:
-      kind: Warehouse
-      name: w-theta
-    sources:
-      direct: true
-  - origin:
-      kind: Warehouse
-      name: w-iota
-    sources:
-      direct: true
-  - origin:
-      kind: Warehouse
-      name: w-kappa
-    sources:
-      direct: true
-  promotionTemplate:
-    spec:
-      steps:
-      - uses: compose-output
-        config: {}
+# # Mock warehouses and stages for Kargo UI layout testing.
+# # s-all: subscribed to every warehouse in the project
+# ---
+# apiVersion: kargo.akuity.io/v1alpha1
+# kind: Stage
+# metadata:
+#   name: s-all
+#   namespace: team-daniel
+#   annotations:
+#     kargo.akuity.io/color: pink
+# spec:
+#   requestedFreight:
+#   - origin:
+#       kind: Warehouse
+#       name: guestbook
+#     sources:
+#       direct: true
+#   - origin:
+#       kind: Warehouse
+#       name: features
+#     sources:
+#       direct: true
+#   - origin:
+#       kind: Warehouse
+#       name: config-dev
+#     sources:
+#       direct: true
+#   - origin:
+#       kind: Warehouse
+#       name: config-prod
+#     sources:
+#       direct: true
+#   - origin:
+#       kind: Warehouse
+#       name: w-alpha
+#     sources:
+#       direct: true
+#   - origin:
+#       kind: Warehouse
+#       name: w-beta
+#     sources:
+#       direct: true
+#   - origin:
+#       kind: Warehouse
+#       name: w-gamma
+#     sources:
+#       direct: true
+#   - origin:
+#       kind: Warehouse
+#       name: w-delta
+#     sources:
+#       direct: true
+#   - origin:
+#       kind: Warehouse
+#       name: w-epsilon
+#     sources:
+#       direct: true
+#   - origin:
+#       kind: Warehouse
+#       name: w-zeta
+#     sources:
+#       direct: true
+#   - origin:
+#       kind: Warehouse
+#       name: w-eta
+#     sources:
+#       direct: true
+#   - origin:
+#       kind: Warehouse
+#       name: w-theta
+#     sources:
+#       direct: true
+#   - origin:
+#       kind: Warehouse
+#       name: w-iota
+#     sources:
+#       direct: true
+#   - origin:
+#       kind: Warehouse
+#       name: w-kappa
+#     sources:
+#       direct: true
+#   promotionTemplate:
+#     spec:
+#       steps:
+#       - uses: compose-output
+#         config: {}
 
 
-# No ArgoCD applications back these — promotions are no-ops.
+# # No ArgoCD applications back these — promotions are no-ops.
 
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Warehouse
-metadata:
-  name: w-alpha
-  namespace: team-daniel
-spec:
-  subscriptions:
-  - image:
-      repoURL: ghcr.io/akuity/guestbook
-      imageSelectionStrategy: SemVer
+# ---
+# apiVersion: kargo.akuity.io/v1alpha1
+# kind: Warehouse
+# metadata:
+#   name: w-alpha
+#   namespace: team-daniel
+# spec:
+#   subscriptions:
+#   - image:
+#       repoURL: ghcr.io/akuity/guestbook
+#       imageSelectionStrategy: SemVer
 
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Warehouse
-metadata:
-  name: w-beta
-  namespace: team-daniel
-spec:
-  subscriptions:
-  - image:
-      repoURL: ghcr.io/akuity/guestbook
-      imageSelectionStrategy: SemVer
+# ---
+# apiVersion: kargo.akuity.io/v1alpha1
+# kind: Warehouse
+# metadata:
+#   name: w-beta
+#   namespace: team-daniel
+# spec:
+#   subscriptions:
+#   - image:
+#       repoURL: ghcr.io/akuity/guestbook
+#       imageSelectionStrategy: SemVer
 
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Warehouse
-metadata:
-  name: w-gamma
-  namespace: team-daniel
-spec:
-  subscriptions:
-  - git:
-      repoURL: https://github.com/akuity/sedemo-platform
-      branch: main
-      commitSelectionStrategy: NewestFromBranch
-      includePaths:
-      - apps/team-daniel/charts
+# ---
+# apiVersion: kargo.akuity.io/v1alpha1
+# kind: Warehouse
+# metadata:
+#   name: w-gamma
+#   namespace: team-daniel
+# spec:
+#   subscriptions:
+#   - git:
+#       repoURL: https://github.com/akuity/sedemo-platform
+#       branch: main
+#       commitSelectionStrategy: NewestFromBranch
+#       includePaths:
+#       - apps/team-daniel/charts
 
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Warehouse
-metadata:
-  name: w-delta
-  namespace: team-daniel
-spec:
-  subscriptions:
-  - image:
-      repoURL: ghcr.io/akuity/guestbook
-      imageSelectionStrategy: SemVer
+# ---
+# apiVersion: kargo.akuity.io/v1alpha1
+# kind: Warehouse
+# metadata:
+#   name: w-delta
+#   namespace: team-daniel
+# spec:
+#   subscriptions:
+#   - image:
+#       repoURL: ghcr.io/akuity/guestbook
+#       imageSelectionStrategy: SemVer
 
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Warehouse
-metadata:
-  name: w-epsilon
-  namespace: team-daniel
-spec:
-  subscriptions:
-  - git:
-      repoURL: https://github.com/akuity/sedemo-platform
-      branch: main
-      commitSelectionStrategy: NewestFromBranch
-      includePaths:
-      - apps/team-daniel/env
+# ---
+# apiVersion: kargo.akuity.io/v1alpha1
+# kind: Warehouse
+# metadata:
+#   name: w-epsilon
+#   namespace: team-daniel
+# spec:
+#   subscriptions:
+#   - git:
+#       repoURL: https://github.com/akuity/sedemo-platform
+#       branch: main
+#       commitSelectionStrategy: NewestFromBranch
+#       includePaths:
+#       - apps/team-daniel/env
 
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Warehouse
-metadata:
-  name: w-zeta
-  namespace: team-daniel
-spec:
-  subscriptions:
-  - image:
-      repoURL: ghcr.io/akuity/guestbook
-      imageSelectionStrategy: SemVer
+# ---
+# apiVersion: kargo.akuity.io/v1alpha1
+# kind: Warehouse
+# metadata:
+#   name: w-zeta
+#   namespace: team-daniel
+# spec:
+#   subscriptions:
+#   - image:
+#       repoURL: ghcr.io/akuity/guestbook
+#       imageSelectionStrategy: SemVer
 
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Warehouse
-metadata:
-  name: w-eta
-  namespace: team-daniel
-spec:
-  subscriptions:
-  - git:
-      repoURL: https://github.com/akuity/sedemo-platform
-      branch: main
-      commitSelectionStrategy: NewestFromBranch
-      includePaths:
-      - apps/team-daniel/argocd
+# ---
+# apiVersion: kargo.akuity.io/v1alpha1
+# kind: Warehouse
+# metadata:
+#   name: w-eta
+#   namespace: team-daniel
+# spec:
+#   subscriptions:
+#   - git:
+#       repoURL: https://github.com/akuity/sedemo-platform
+#       branch: main
+#       commitSelectionStrategy: NewestFromBranch
+#       includePaths:
+#       - apps/team-daniel/argocd
 
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Warehouse
-metadata:
-  name: w-theta
-  namespace: team-daniel
-spec:
-  subscriptions:
-  - image:
-      repoURL: ghcr.io/akuity/guestbook
-      imageSelectionStrategy: SemVer
+# ---
+# apiVersion: kargo.akuity.io/v1alpha1
+# kind: Warehouse
+# metadata:
+#   name: w-theta
+#   namespace: team-daniel
+# spec:
+#   subscriptions:
+#   - image:
+#       repoURL: ghcr.io/akuity/guestbook
+#       imageSelectionStrategy: SemVer
 
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Warehouse
-metadata:
-  name: w-iota
-  namespace: team-daniel
-spec:
-  subscriptions:
-  - image:
-      repoURL: ghcr.io/akuity/guestbook
-      imageSelectionStrategy: SemVer
+# ---
+# apiVersion: kargo.akuity.io/v1alpha1
+# kind: Warehouse
+# metadata:
+#   name: w-iota
+#   namespace: team-daniel
+# spec:
+#   subscriptions:
+#   - image:
+#       repoURL: ghcr.io/akuity/guestbook
+#       imageSelectionStrategy: SemVer
 
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Warehouse
-metadata:
-  name: w-kappa
-  namespace: team-daniel
-spec:
-  subscriptions:
-  - git:
-      repoURL: https://github.com/akuity/sedemo-platform
-      branch: main
-      commitSelectionStrategy: NewestFromBranch
-      includePaths:
-      - apps/team-daniel/kargo
+# ---
+# apiVersion: kargo.akuity.io/v1alpha1
+# kind: Warehouse
+# metadata:
+#   name: w-kappa
+#   namespace: team-daniel
+# spec:
+#   subscriptions:
+#   - git:
+#       repoURL: https://github.com/akuity/sedemo-platform
+#       branch: main
+#       commitSelectionStrategy: NewestFromBranch
+#       includePaths:
+#       - apps/team-daniel/kargo
 
----
-# s-alpha: two warehouses feed one stage
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: s-alpha
-  namespace: team-daniel
-  annotations:
-    kargo.akuity.io/color: blue
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: w-alpha
-    sources:
-      direct: true
-  - origin:
-      kind: Warehouse
-      name: w-beta
-    sources:
-      direct: true
-  promotionTemplate:
-    spec:
-      steps:
-      - uses: compose-output
-        config: {}
+# ---
+# # s-alpha: two warehouses feed one stage
+# apiVersion: kargo.akuity.io/v1alpha1
+# kind: Stage
+# metadata:
+#   name: s-alpha
+#   namespace: team-daniel
+#   annotations:
+#     kargo.akuity.io/color: blue
+# spec:
+#   requestedFreight:
+#   - origin:
+#       kind: Warehouse
+#       name: w-alpha
+#     sources:
+#       direct: true
+#   - origin:
+#       kind: Warehouse
+#       name: w-beta
+#     sources:
+#       direct: true
+#   promotionTemplate:
+#     spec:
+#       steps:
+#       - uses: compose-output
+#         config: {}
 
----
-# s-beta: two warehouses feed one stage (independent of s-alpha)
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: s-beta
-  namespace: team-daniel
-  annotations:
-    kargo.akuity.io/color: purple
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: w-gamma
-    sources:
-      direct: true
-  - origin:
-      kind: Warehouse
-      name: w-delta
-    sources:
-      direct: true
-  promotionTemplate:
-    spec:
-      steps:
-      - uses: compose-output
-        config: {}
+# ---
+# # s-beta: two warehouses feed one stage (independent of s-alpha)
+# apiVersion: kargo.akuity.io/v1alpha1
+# kind: Stage
+# metadata:
+#   name: s-beta
+#   namespace: team-daniel
+#   annotations:
+#     kargo.akuity.io/color: purple
+# spec:
+#   requestedFreight:
+#   - origin:
+#       kind: Warehouse
+#       name: w-gamma
+#     sources:
+#       direct: true
+#   - origin:
+#       kind: Warehouse
+#       name: w-delta
+#     sources:
+#       direct: true
+#   promotionTemplate:
+#     spec:
+#       steps:
+#       - uses: compose-output
+#         config: {}
 
----
-# s-gamma: linear from s-alpha
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: s-gamma
-  namespace: team-daniel
-  annotations:
-    kargo.akuity.io/color: gray
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: w-alpha
-    sources:
-      stages:
-      - s-alpha
-  - origin:
-      kind: Warehouse
-      name: w-beta
-    sources:
-      stages:
-      - s-alpha
-  promotionTemplate:
-    spec:
-      steps:
-      - uses: compose-output
-        config: {}
+# ---
+# # s-gamma: linear from s-alpha
+# apiVersion: kargo.akuity.io/v1alpha1
+# kind: Stage
+# metadata:
+#   name: s-gamma
+#   namespace: team-daniel
+#   annotations:
+#     kargo.akuity.io/color: gray
+# spec:
+#   requestedFreight:
+#   - origin:
+#       kind: Warehouse
+#       name: w-alpha
+#     sources:
+#       stages:
+#       - s-alpha
+#   - origin:
+#       kind: Warehouse
+#       name: w-beta
+#     sources:
+#       stages:
+#       - s-alpha
+#   promotionTemplate:
+#     spec:
+#       steps:
+#       - uses: compose-output
+#         config: {}
 
----
-# s-delta: fan-out from s-alpha + direct warehouse injection
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: s-delta
-  namespace: team-daniel
-  annotations:
-    kargo.akuity.io/color: yellow
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: w-alpha
-    sources:
-      stages:
-      - s-alpha
-  - origin:
-      kind: Warehouse
-      name: w-epsilon
-    sources:
-      direct: true
-  promotionTemplate:
-    spec:
-      steps:
-      - uses: compose-output
-        config: {}
+# ---
+# # s-delta: fan-out from s-alpha + direct warehouse injection
+# apiVersion: kargo.akuity.io/v1alpha1
+# kind: Stage
+# metadata:
+#   name: s-delta
+#   namespace: team-daniel
+#   annotations:
+#     kargo.akuity.io/color: yellow
+# spec:
+#   requestedFreight:
+#   - origin:
+#       kind: Warehouse
+#       name: w-alpha
+#     sources:
+#       stages:
+#       - s-alpha
+#   - origin:
+#       kind: Warehouse
+#       name: w-epsilon
+#     sources:
+#       direct: true
+#   promotionTemplate:
+#     spec:
+#       steps:
+#       - uses: compose-output
+#         config: {}
 
----
-# s-epsilon: from s-beta + direct warehouse injection
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: s-epsilon
-  namespace: team-daniel
-  annotations:
-    kargo.akuity.io/color: cyan
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: w-gamma
-    sources:
-      stages:
-      - s-beta
-  - origin:
-      kind: Warehouse
-      name: w-zeta
-    sources:
-      direct: true
-  promotionTemplate:
-    spec:
-      steps:
-      - uses: compose-output
-        config: {}
+# ---
+# # s-epsilon: from s-beta + direct warehouse injection
+# apiVersion: kargo.akuity.io/v1alpha1
+# kind: Stage
+# metadata:
+#   name: s-epsilon
+#   namespace: team-daniel
+#   annotations:
+#     kargo.akuity.io/color: cyan
+# spec:
+#   requestedFreight:
+#   - origin:
+#       kind: Warehouse
+#       name: w-gamma
+#     sources:
+#       stages:
+#       - s-beta
+#   - origin:
+#       kind: Warehouse
+#       name: w-zeta
+#     sources:
+#       direct: true
+#   promotionTemplate:
+#     spec:
+#       steps:
+#       - uses: compose-output
+#         config: {}
 
----
-# s-zeta: fan-in from s-gamma + s-delta
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: s-zeta
-  namespace: team-daniel
-  annotations:
-    kargo.akuity.io/color: orange
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: w-alpha
-    sources:
-      stages:
-      - s-gamma
-  - origin:
-      kind: Warehouse
-      name: w-epsilon
-    sources:
-      stages:
-      - s-delta
-  promotionTemplate:
-    spec:
-      steps:
-      - uses: compose-output
-        config: {}
+# ---
+# # s-zeta: fan-in from s-gamma + s-delta
+# apiVersion: kargo.akuity.io/v1alpha1
+# kind: Stage
+# metadata:
+#   name: s-zeta
+#   namespace: team-daniel
+#   annotations:
+#     kargo.akuity.io/color: orange
+# spec:
+#   requestedFreight:
+#   - origin:
+#       kind: Warehouse
+#       name: w-alpha
+#     sources:
+#       stages:
+#       - s-gamma
+#   - origin:
+#       kind: Warehouse
+#       name: w-epsilon
+#     sources:
+#       stages:
+#       - s-delta
+#   promotionTemplate:
+#     spec:
+#       steps:
+#       - uses: compose-output
+#         config: {}
 
----
-# s-eta: from s-epsilon + direct warehouse injection
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: s-eta
-  namespace: team-daniel
-  annotations:
-    kargo.akuity.io/color: pink
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: w-gamma
-    sources:
-      stages:
-      - s-epsilon
-  - origin:
-      kind: Warehouse
-      name: w-eta
-    sources:
-      direct: true
-  promotionTemplate:
-    spec:
-      steps:
-      - uses: compose-output
-        config: {}
+# ---
+# # s-eta: from s-epsilon + direct warehouse injection
+# apiVersion: kargo.akuity.io/v1alpha1
+# kind: Stage
+# metadata:
+#   name: s-eta
+#   namespace: team-daniel
+#   annotations:
+#     kargo.akuity.io/color: pink
+# spec:
+#   requestedFreight:
+#   - origin:
+#       kind: Warehouse
+#       name: w-gamma
+#     sources:
+#       stages:
+#       - s-epsilon
+#   - origin:
+#       kind: Warehouse
+#       name: w-eta
+#     sources:
+#       direct: true
+#   promotionTemplate:
+#     spec:
+#       steps:
+#       - uses: compose-output
+#         config: {}
 
----
-# s-theta: fan-in from s-zeta + s-eta
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: s-theta
-  namespace: team-daniel
-  annotations:
-    kargo.akuity.io/color: red
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: w-alpha
-    sources:
-      stages:
-      - s-zeta
-  - origin:
-      kind: Warehouse
-      name: w-gamma
-    sources:
-      stages:
-      - s-eta
-  promotionTemplate:
-    spec:
-      steps:
-      - uses: compose-output
-        config: {}
+# ---
+# # s-theta: fan-in from s-zeta + s-eta
+# apiVersion: kargo.akuity.io/v1alpha1
+# kind: Stage
+# metadata:
+#   name: s-theta
+#   namespace: team-daniel
+#   annotations:
+#     kargo.akuity.io/color: red
+# spec:
+#   requestedFreight:
+#   - origin:
+#       kind: Warehouse
+#       name: w-alpha
+#     sources:
+#       stages:
+#       - s-zeta
+#   - origin:
+#       kind: Warehouse
+#       name: w-gamma
+#     sources:
+#       stages:
+#       - s-eta
+#   promotionTemplate:
+#     spec:
+#       steps:
+#       - uses: compose-output
+#         config: {}
 
----
-# s-iota: independent branch, two warehouses
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: s-iota
-  namespace: team-daniel
-  annotations:
-    kargo.akuity.io/color: green
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: w-theta
-    sources:
-      direct: true
-  - origin:
-      kind: Warehouse
-      name: w-iota
-    sources:
-      direct: true
-  promotionTemplate:
-    spec:
-      steps:
-      - uses: compose-output
-        config: {}
+# ---
+# # s-iota: independent branch, two warehouses
+# apiVersion: kargo.akuity.io/v1alpha1
+# kind: Stage
+# metadata:
+#   name: s-iota
+#   namespace: team-daniel
+#   annotations:
+#     kargo.akuity.io/color: green
+# spec:
+#   requestedFreight:
+#   - origin:
+#       kind: Warehouse
+#       name: w-theta
+#     sources:
+#       direct: true
+#   - origin:
+#       kind: Warehouse
+#       name: w-iota
+#     sources:
+#       direct: true
+#   promotionTemplate:
+#     spec:
+#       steps:
+#       - uses: compose-output
+#         config: {}
 
----
-# s-kappa: grand convergence — s-theta + s-iota + direct warehouse
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: s-kappa
-  namespace: team-daniel
-  annotations:
-    kargo.akuity.io/color: red
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: w-alpha
-    sources:
-      stages:
-      - s-theta
-  - origin:
-      kind: Warehouse
-      name: w-theta
-    sources:
-      stages:
-      - s-iota
-  - origin:
-      kind: Warehouse
-      name: w-kappa
-    sources:
-      direct: true
-  promotionTemplate:
-    spec:
-      steps:
-      - uses: compose-output
-        config: {}
+# ---
+# # s-kappa: grand convergence — s-theta + s-iota + direct warehouse
+# apiVersion: kargo.akuity.io/v1alpha1
+# kind: Stage
+# metadata:
+#   name: s-kappa
+#   namespace: team-daniel
+#   annotations:
+#     kargo.akuity.io/color: red
+# spec:
+#   requestedFreight:
+#   - origin:
+#       kind: Warehouse
+#       name: w-alpha
+#     sources:
+#       stages:
+#       - s-theta
+#   - origin:
+#       kind: Warehouse
+#       name: w-theta
+#     sources:
+#       stages:
+#       - s-iota
+#   - origin:
+#       kind: Warehouse
+#       name: w-kappa
+#     sources:
+#       direct: true
+#   promotionTemplate:
+#     spec:
+#       steps:
+#       - uses: compose-output
+#         config: {}
