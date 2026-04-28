@@ -70,6 +70,20 @@ spec:
   promotionTemplate:
     spec:
       steps:
+      - uses: gha-dispatch-workflow
+        as: gha-dispatch
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          workflowFile: example-github-action.yaml
+          ref: main
+          inputs:
+            environment: ${{ ctx.stage }}
+            version: ${{ imageFrom('ghcr.io/akuity/guestbook').Tag }}
+      - uses: gha-wait-for-workflow
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          runID: ${{ outputs['gha-dispatch'].runID }}
+          expectedConclusion: success
       - uses: trivy-image
         config:
           image: ghcr.io/akuity/guestbook:${{ imageFrom('ghcr.io/akuity/guestbook').Tag }}
