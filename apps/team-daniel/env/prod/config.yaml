@@ -1,1 +1,3 @@
 replicaCount: 1
+securityContext:
+  privileged: true
