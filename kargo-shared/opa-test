@@ -1,11 +1,7 @@
 apiVersion: ee.kargo.akuity.io/v1alpha1
 kind: CustomPromotionStep
 metadata:
-  creationTimestamp: 2026-03-20T06:46:14Z
-  generation: 1
   name: opa-test
-  resourceVersion: "109319548"
-  uid: da5aaeff-8774-47bc-8eb8-238cd66fe1b8
 spec:
   command:
     - sh
