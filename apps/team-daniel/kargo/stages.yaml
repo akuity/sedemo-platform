@@ -80,6 +80,11 @@ spec:
     sources:
       stages:
       - dev
+  - origin:
+      kind: Warehouse
+      name: config-staging-security
+    sources:
+      direct: true
   promotionTemplate:
     spec:
       steps:
@@ -144,6 +149,11 @@ spec:
     sources:
       stages:
       - dev
+  - origin:
+      kind: Warehouse
+      name: config-staging
+    sources:
+      direct: true
   verification:
     analysisTemplates:
     - name: staging-analysis
