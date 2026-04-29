@@ -39,6 +39,7 @@ spec:
     config:
       inPath: ./features/apps/team-daniel/base/feature-flags.yaml
       outPath: ./out/apps/team-daniel/env/${{ ctx.stage }}/feature-flags.yaml
+  # alias "commit" captures the SHA so argocd-update can reference it via task.outputs
   - if: ${{ ctx.targetFreight.origin.name == "guestbook" || ctx.targetFreight.origin.name == "features" }}
     uses: git-commit
     as: commit
@@ -50,6 +51,9 @@ spec:
     config:
       path: ./out
       targetBranch: main
+  # pins the ArgoCD Application's targetRevision to the exact commit SHA produced above;
+  # desiredRevision tells Kargo what revision to expect when health-checking this stage,
+  # updateTargetRevision writes that SHA into the Application so it stops tracking HEAD
   - if: ${{ ctx.targetFreight.origin.name == "guestbook" || ctx.targetFreight.origin.name == "features" }}
     uses: argocd-update
     config:
@@ -59,6 +63,7 @@ spec:
         - repoURL: ${{ vars.gitRepo }}
           desiredRevision: ${{ task.outputs['commit'].commit }}
           updateTargetRevision: true
+  # config-* freights carry no git changes, so no commit SHA exists; just trigger a sync
   - if: ${{ ctx.targetFreight.origin.name != "guestbook" && ctx.targetFreight.origin.name != "features" }}
     uses: argocd-update
     config:
