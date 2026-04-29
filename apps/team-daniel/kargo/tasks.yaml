@@ -32,7 +32,7 @@ spec:
     config:
       repoURL: ${{ vars.gitRepo }}
       checkout:
-      - commit: '${{ commitFrom(vars.gitRepo, {"kind": "Warehouse", "name": "features"}).ID }}'
+      - commit: '${{ commitFrom(vars.gitRepo).ID }}'
         path: ./features
   - if: ${{ ctx.targetFreight.origin.name == "features" }}
     uses: copy
@@ -90,7 +90,7 @@ spec:
     config:
       repoURL: ${{ vars.gitRepo }}
       checkout:
-      - commit: '${{ commitFrom(vars.gitRepo, {"kind": "Warehouse", "name": "features"}).ID }}'
+      - commit: '${{ commitFrom(vars.gitRepo).ID }}'
         path: ./features
   - if: ${{ vars.freightOrigin == "features" }}
     uses: copy
@@ -120,7 +120,7 @@ spec:
       repoURL: ${{ vars.gitRepo }}
       sourceBranch: ${{ task.outputs.push.branch }}
       targetBranch: main
-  - if: ${{ vars.freightOrigin == "guestbook" || vars.freightOrigin == "features" }}
+  - if: ${{ status('open-pr') != 'Skipped' }}
     uses: git-wait-for-pr
     config:
       repoURL: ${{ vars.gitRepo }}
