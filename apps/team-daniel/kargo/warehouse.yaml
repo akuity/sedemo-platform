@@ -51,7 +51,7 @@ spec:
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
-  name: config-prod
+  name: config-prod-canary
   namespace: team-daniel
   annotations:
     argocd.argoproj.io/sync-wave: "2"
@@ -63,7 +63,7 @@ spec:
       commitSelectionStrategy: NewestFromBranch
       discoveryLimit: 20
       includePaths:
-      - apps/team-daniel/env/prod/config.yaml
+      - apps/team-daniel/env/prod-canary/config.yaml
 
 ---
 apiVersion: kargo.akuity.io/v1alpha1

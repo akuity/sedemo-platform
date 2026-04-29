@@ -189,7 +189,7 @@ spec:
       - staging
   - origin:
       kind: Warehouse
-      name: config-prod
+      name: config-prod-canary
     sources:
       direct: true
   promotionTemplate:
@@ -201,53 +201,9 @@ spec:
           checkout:
           - branch: main
             path: ./out
-      - if: ${{ ctx.targetFreight.origin.name == "guestbook" }}
-        uses: yaml-update
-        config:
-          path: ./out/apps/team-daniel/env/prod-canary/image.yaml
-          updates:
-          - key: image.tag
-            value: ${{ imageFrom('ghcr.io/akuity/guestbook').Tag }}
-      - if: ${{ ctx.targetFreight.origin.name == "features" }}
-        uses: git-clone
-        config:
-          repoURL: https://github.com/akuity/sedemo-platform
-          checkout:
-          - commit: '${{ commitFrom("https://github.com/akuity/sedemo-platform", {"kind": "Warehouse", "name": "features"}).ID }}'
-            path: ./features
-      - if: ${{ ctx.targetFreight.origin.name == "features" }}
-        uses: copy
-        config:
-          inPath: ./features/apps/team-daniel/base/feature-flags.yaml
-          outPath: ./out/apps/team-daniel/env/prod-canary/feature-flags.yaml
-      - if: ${{ ctx.targetFreight.origin.name == "guestbook" }}
-        uses: git-commit
-        config:
-          path: ./out
-          message: "prod-canary: deploy guestbook ${{ imageFrom('ghcr.io/akuity/guestbook').Tag }}"
-      - if: ${{ ctx.targetFreight.origin.name == "features" }}
-        uses: git-commit
-        config:
-          path: ./out
-          message: "prod-canary: update feature flags"
       - if: ${{ ctx.targetFreight.origin.name == "guestbook" || ctx.targetFreight.origin.name == "features" }}
-        uses: git-push
-        as: push
-        config:
-          path: ./out
-          generateTargetBranch: true
-      - if: ${{ ctx.targetFreight.origin.name == "guestbook" || ctx.targetFreight.origin.name == "features" }}
-        uses: git-open-pr
-        as: open-pr
-        config:
-          repoURL: https://github.com/akuity/sedemo-platform
-          sourceBranch: ${{ outputs.push.branch }}
-          targetBranch: main
-      - if: ${{ ctx.targetFreight.origin.name == "guestbook" || ctx.targetFreight.origin.name == "features" }}
-        uses: git-wait-for-pr
-        config:
-          repoURL: https://github.com/akuity/sedemo-platform
-          prNumber: ${{ outputs['open-pr'].pr.id }}
+        task:
+          name: pr-promote-prod-canary
       - uses: argocd-update
         config:
           apps:

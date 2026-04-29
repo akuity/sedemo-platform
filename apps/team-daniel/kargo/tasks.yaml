@@ -60,3 +60,63 @@ spec:
       - name: team-daniel-${{ ctx.stage }}
         sources:
         - repoURL: ${{ vars.gitRepo }}
+
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: pr-promote-prod-canary
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  vars:
+  - name: gitRepo
+    value: https://github.com/akuity/sedemo-platform
+  - name: imageRepo
+    value: ghcr.io/akuity/guestbook
+  steps:
+  - if: ${{ ctx.targetFreight.origin.name == "guestbook" }}
+    uses: yaml-update
+    config:
+      path: ./out/apps/team-daniel/env/prod-canary/image.yaml
+      updates:
+      - key: image.tag
+        value: ${{ imageFrom(vars.imageRepo).Tag }}
+  - if: ${{ ctx.targetFreight.origin.name == "features" }}
+    uses: git-clone
+    config:
+      repoURL: ${{ vars.gitRepo }}
+      checkout:
+      - commit: '${{ commitFrom(vars.gitRepo, {"kind": "Warehouse", "name": "features"}).ID }}'
+        path: ./features
+  - if: ${{ ctx.targetFreight.origin.name == "features" }}
+    uses: copy
+    config:
+      inPath: ./features/apps/team-daniel/base/feature-flags.yaml
+      outPath: ./out/apps/team-daniel/env/prod-canary/feature-flags.yaml
+  - if: ${{ ctx.targetFreight.origin.name == "guestbook" }}
+    uses: git-commit
+    config:
+      path: ./out
+      message: "prod-canary: deploy guestbook ${{ imageFrom(vars.imageRepo).Tag }}"
+  - if: ${{ ctx.targetFreight.origin.name == "features" }}
+    uses: git-commit
+    config:
+      path: ./out
+      message: "prod-canary: update feature flags"
+  - uses: git-push
+    as: push
+    config:
+      path: ./out
+      generateTargetBranch: true
+  - uses: git-open-pr
+    as: open-pr
+    config:
+      repoURL: ${{ vars.gitRepo }}
+      sourceBranch: ${{ task.outputs.push.branch }}
+      targetBranch: main
+  - uses: git-wait-for-pr
+    config:
+      repoURL: ${{ vars.gitRepo }}
+      prNumber: ${{ task.outputs['open-pr'].pr.id }}
