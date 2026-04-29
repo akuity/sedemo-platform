@@ -203,6 +203,9 @@ spec:
             path: ./out
       - task:
           name: pr-promote-prod-canary
+        vars:
+        - name: freightOrigin
+          value: ${{ ctx.targetFreight.origin.name }}
       - uses: argocd-update
         config:
           apps:
