@@ -7,6 +7,7 @@ spec:
     - trivy
     - image
     - --severity=CRITICAL
+    - --exit-code=1
     - ${{ config.image }}
   image: ghcr.io/jessesuen/trivy:0.69.3
   output:
