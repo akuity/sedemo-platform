@@ -201,8 +201,7 @@ spec:
           checkout:
           - branch: main
             path: ./out
-      - if: ${{ ctx.targetFreight.origin.name == "guestbook" || ctx.targetFreight.origin.name == "features" }}
-        task:
+      - task:
           name: pr-promote-prod-canary
       - uses: argocd-update
         config:
