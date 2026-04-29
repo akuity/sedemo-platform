@@ -52,7 +52,7 @@ spec:
         config:
           webhookURL: ${{ secret("teams-webhook")["teams-webhook"] }}
           title: "Promoted to ${{ ctx.stage }}"
-          message: ${{ ctx.targetFreight.origin.name == 'guestbook' ? 'Deployed guestbook ' + imageFrom('ghcr.io/akuity/guestbook').Tag + ' — OPA policy check passed (informational)' : ctx.targetFreight.origin.name == 'features' ? 'Feature flags updated in dev' : 'Dev environment configuration updated' }}
+          message: "${{ ctx.targetFreight.origin.name == 'guestbook' ? 'Deployed guestbook ' + imageFrom('ghcr.io/akuity/guestbook').Tag + ' — OPA policy check passed (informational)' : ctx.targetFreight.origin.name == 'features' ? 'Feature flags updated in dev' : 'Dev environment configuration updated' }}"
           stage: ${{ ctx.stage }}
           freight: ${{ ctx.targetFreight.name }}
 
@@ -128,7 +128,7 @@ spec:
         config:
           webhookURL: ${{ secret("teams-webhook")["teams-webhook"] }}
           title: "Security Gates Passed — ${{ ctx.stage }}"
-          message: ${{ ctx.targetFreight.origin.name == 'guestbook' ? 'guestbook ' + imageFrom('ghcr.io/akuity/guestbook').Tag + ' cleared all gates: OPA policy OK, Trivy no critical CVEs, GHA integration tests OK' : 'Feature flags promoted through staging-security checks' }}
+          message: "${{ ctx.targetFreight.origin.name == 'guestbook' ? 'guestbook ' + imageFrom('ghcr.io/akuity/guestbook').Tag + ' cleared all gates: OPA policy OK, Trivy no critical CVEs, GHA integration tests OK' : 'Feature flags promoted through staging-security checks' }}"
           stage: ${{ ctx.stage }}
           freight: ${{ ctx.targetFreight.name }}
 
@@ -173,7 +173,7 @@ spec:
         config:
           webhookURL: ${{ secret("teams-webhook")["teams-webhook"] }}
           title: "Promoted to ${{ ctx.stage }}"
-          message: ${{ ctx.targetFreight.origin.name == 'guestbook' ? 'guestbook ' + imageFrom('ghcr.io/akuity/guestbook').Tag + ' deployed to staging — Kargo verification analysis running' : ctx.targetFreight.origin.name == 'features' ? 'Feature flags promoted to staging' : 'Staging configuration updated' }}
+          message: "${{ ctx.targetFreight.origin.name == 'guestbook' ? 'guestbook ' + imageFrom('ghcr.io/akuity/guestbook').Tag + ' deployed to staging — Kargo verification analysis running' : ctx.targetFreight.origin.name == 'features' ? 'Feature flags promoted to staging' : 'Staging configuration updated' }}"
           stage: ${{ ctx.stage }}
           freight: ${{ ctx.targetFreight.name }}
 
@@ -230,6 +230,6 @@ spec:
         config:
           webhookURL: ${{ secret("teams-webhook")["teams-webhook"] }}
           title: "Canary Initiated — ${{ ctx.stage }}"
-          message: ${{ ctx.targetFreight.origin.name == 'guestbook' ? 'Canary rollout started: guestbook ' + imageFrom('ghcr.io/akuity/guestbook').Tag + ' at 20% traffic, auto-promotes to 100% after 1 min' : ctx.targetFreight.origin.name == 'features' ? 'Feature flags updated in prod-canary via PR gate' : 'Production canary configuration updated' }}
+          message: "${{ ctx.targetFreight.origin.name == 'guestbook' ? 'Canary rollout started: guestbook ' + imageFrom('ghcr.io/akuity/guestbook').Tag + ' at 20% traffic, auto-promotes to 100% after 1 min' : ctx.targetFreight.origin.name == 'features' ? 'Feature flags updated in prod-canary via PR gate' : 'Production canary configuration updated' }}"
           stage: ${{ ctx.stage }}
           freight: ${{ ctx.targetFreight.name }}
