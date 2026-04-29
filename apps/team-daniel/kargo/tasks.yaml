@@ -63,6 +63,7 @@ spec:
         sources:
         - repoURL: ${{ vars.gitRepo }}
           desiredRevision: ${{ outputs.commit.commit }}
+          updateTargetRevision: true
 
 ---
 apiVersion: kargo.akuity.io/v1alpha1
