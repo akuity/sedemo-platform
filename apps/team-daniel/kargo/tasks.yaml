@@ -120,6 +120,7 @@ spec:
       repoURL: ${{ vars.gitRepo }}
       sourceBranch: ${{ task.outputs.push.branch }}
       targetBranch: main
+      description: ${{ vars.freightOrigin == 'guestbook' ? 'Canary deploy: guestbook ' + imageFrom(vars.imageRepo).Tag + ' to prod-canary. Rollout strategy: 20% traffic for 1 min, then 100%.' : 'Feature flags update: promoting latest feature-flags.yaml to prod-canary.' }}
   - if: ${{ status('open-pr') != 'Skipped' }}
     uses: git-wait-for-pr
     config:
