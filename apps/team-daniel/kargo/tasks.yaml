@@ -39,18 +39,12 @@ spec:
     config:
       inPath: ./features/apps/team-daniel/base/feature-flags.yaml
       outPath: ./out/apps/team-daniel/env/${{ ctx.stage }}/feature-flags.yaml
-  - if: ${{ ctx.targetFreight.origin.name == "guestbook" }}
+  - if: ${{ ctx.targetFreight.origin.name == "guestbook" || ctx.targetFreight.origin.name == "features" }}
     uses: git-commit
-    as: commit-image
+    as: commit
     config:
       path: ./out
-      message: "${{ ctx.stage }}: deploy guestbook ${{ imageFrom(vars.imageRepo).Tag }}"
-  - if: ${{ ctx.targetFreight.origin.name == "features" }}
-    uses: git-commit
-    as: commit-features
-    config:
-      path: ./out
-      message: "${{ ctx.stage }}: update feature flags"
+      message: "${{ ctx.stage }}: promote ${{ ctx.targetFreight.origin.name }}"
   - if: ${{ ctx.targetFreight.origin.name == "guestbook" || ctx.targetFreight.origin.name == "features" }}
     uses: git-push
     config:
@@ -62,7 +56,7 @@ spec:
       - name: team-daniel-${{ ctx.stage }}
         sources:
         - repoURL: ${{ vars.gitRepo }}
-          desiredRevision: "${{ ctx.targetFreight.origin.name == 'guestbook' ? outputs['commit-image'].commit : outputs['commit-features'].commit }}"
+          desiredRevision: ${{ outputs.commit.commit }}
           updateTargetRevision: true
 
 ---
