@@ -41,11 +41,13 @@ spec:
       outPath: ./out/apps/team-daniel/env/${{ ctx.stage }}/feature-flags.yaml
   - if: ${{ ctx.targetFreight.origin.name == "guestbook" }}
     uses: git-commit
+    as: commit
     config:
       path: ./out
       message: "${{ ctx.stage }}: deploy guestbook ${{ imageFrom(vars.imageRepo).Tag }}"
   - if: ${{ ctx.targetFreight.origin.name == "features" }}
     uses: git-commit
+    as: commit
     config:
       path: ./out
       message: "${{ ctx.stage }}: update feature flags"
@@ -60,6 +62,7 @@ spec:
       - name: team-daniel-${{ ctx.stage }}
         sources:
         - repoURL: ${{ vars.gitRepo }}
+          desiredRevision: ${{ outputs.commit.commit }}
 
 ---
 apiVersion: kargo.akuity.io/v1alpha1
