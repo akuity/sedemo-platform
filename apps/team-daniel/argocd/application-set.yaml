@@ -4,6 +4,9 @@ metadata:
   name: team-daniel
   namespace: argocd
 spec:
+  ignoreApplicationDifferences:
+  - jsonPointers:
+    - /spec/source/targetRevision
   generators:
   - list:
       elements:
