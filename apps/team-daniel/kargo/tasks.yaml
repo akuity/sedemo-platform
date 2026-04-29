@@ -12,7 +12,7 @@ spec:
   - name: imageRepo
     value: ghcr.io/akuity/guestbook
   steps:
-  - if: ${{ ctx.targetFreight.origin.name != "config-dev" && ctx.targetFreight.origin.name != "config-prod" }}
+  - if: ${{ ctx.targetFreight.origin.name == "guestbook" || ctx.targetFreight.origin.name == "features" }}
     uses: git-clone
     config:
       repoURL: ${{ vars.gitRepo }}
@@ -57,7 +57,7 @@ spec:
       - name: team-daniel-${{ ctx.stage }}
         sources:
         - repoURL: ${{ vars.gitRepo }}
-          desiredRevision: ${{ outputs.commit.commit }}
+          desiredRevision: ${{ task.outputs['commit'].commit }}
           updateTargetRevision: true
   - if: ${{ ctx.targetFreight.origin.name != "guestbook" && ctx.targetFreight.origin.name != "features" }}
     uses: argocd-update
