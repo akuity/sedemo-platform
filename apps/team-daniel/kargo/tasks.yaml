@@ -50,7 +50,8 @@ spec:
     config:
       path: ./out
       targetBranch: main
-  - uses: argocd-update
+  - if: ${{ ctx.targetFreight.origin.name == "guestbook" || ctx.targetFreight.origin.name == "features" }}
+    uses: argocd-update
     config:
       apps:
       - name: team-daniel-${{ ctx.stage }}
@@ -58,6 +59,13 @@ spec:
         - repoURL: ${{ vars.gitRepo }}
           desiredRevision: ${{ outputs.commit.commit }}
           updateTargetRevision: true
+  - if: ${{ ctx.targetFreight.origin.name != "guestbook" && ctx.targetFreight.origin.name != "features" }}
+    uses: argocd-update
+    config:
+      apps:
+      - name: team-daniel-${{ ctx.stage }}
+        sources:
+        - repoURL: ${{ vars.gitRepo }}
 
 ---
 apiVersion: kargo.akuity.io/v1alpha1
