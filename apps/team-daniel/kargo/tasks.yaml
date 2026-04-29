@@ -62,7 +62,7 @@ spec:
       - name: team-daniel-${{ ctx.stage }}
         sources:
         - repoURL: ${{ vars.gitRepo }}
-          desiredRevision: ${{ ctx.targetFreight.origin.name == "guestbook" ? outputs['commit-image'].commit : outputs['commit-features'].commit }}
+          desiredRevision: "${{ ctx.targetFreight.origin.name == 'guestbook' ? outputs['commit-image'].commit : outputs['commit-features'].commit }}"
           updateTargetRevision: true
 
 ---
