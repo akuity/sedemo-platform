@@ -8,10 +8,12 @@ spec:
   - name: env
   - name: reg
     value: us-central1-docker.pkg.dev/google-samples/microservices-demo
+  - name: gitRepo
+    value: https://github.com/akuity/sedemo-platform.git
   steps:
   - uses: git-clone
     config:
-      repoURL: https://github.com/akuity/sedemo-platform.git
+      repoURL: ${{ vars.gitRepo }}
       checkout:
       - branch: main
         path: ./src
@@ -38,16 +40,19 @@ spec:
     as: commit
     config:
       path: ./src
-      messageFromSteps:
-      - update-images
+      message: "backend-${{ vars.env }}: promote ${{ ctx.targetFreight.origin.name }}"
   - uses: git-push
     config:
       path: ./src
+      targetBranch: main
   - uses: argocd-update
     config:
       apps:
       - name: backend-${{ vars.env }}
-        namespace: argocd
+        sources:
+        - repoURL: ${{ vars.gitRepo }}
+          desiredRevision: ${{ task.outputs['commit'].commit }}
+          updateTargetRevision: true
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
@@ -59,10 +64,12 @@ spec:
   - name: env
   - name: reg
     value: us-central1-docker.pkg.dev/google-samples/microservices-demo
+  - name: gitRepo
+    value: https://github.com/akuity/sedemo-platform.git
   steps:
   - uses: git-clone
     config:
-      repoURL: https://github.com/akuity/sedemo-platform.git
+      repoURL: ${{ vars.gitRepo }}
       checkout:
       - branch: main
         path: ./src
@@ -98,34 +105,43 @@ spec:
     as: commit
     config:
       path: ./src
-      messageFromSteps:
-      - update-adservice
-      - update-recommendation
-      - update-shoppingassistant
-      - update-frontend
+      message: "frontend-${{ vars.env }}: promote ${{ ctx.targetFreight.origin.name }}"
   - uses: git-push
     config:
       path: ./src
+      targetBranch: main
   - uses: argocd-update
     config:
       apps:
       - name: adservice-${{ vars.env }}
-        namespace: argocd
+        sources:
+        - repoURL: ${{ vars.gitRepo }}
+          desiredRevision: ${{ task.outputs['commit'].commit }}
+          updateTargetRevision: true
   - uses: argocd-update
     config:
       apps:
       - name: recommendationservice-${{ vars.env }}
-        namespace: argocd
+        sources:
+        - repoURL: ${{ vars.gitRepo }}
+          desiredRevision: ${{ task.outputs['commit'].commit }}
+          updateTargetRevision: true
   - uses: argocd-update
     config:
       apps:
       - name: shoppingassistantservice-${{ vars.env }}
-        namespace: argocd
+        sources:
+        - repoURL: ${{ vars.gitRepo }}
+          desiredRevision: ${{ task.outputs['commit'].commit }}
+          updateTargetRevision: true
   - uses: argocd-update
     config:
       apps:
       - name: frontend-${{ vars.env }}
-        namespace: argocd
+        sources:
+        - repoURL: ${{ vars.gitRepo }}
+          desiredRevision: ${{ task.outputs['commit'].commit }}
+          updateTargetRevision: true
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
@@ -137,10 +153,12 @@ spec:
   - name: env
   - name: reg
     value: us-central1-docker.pkg.dev/google-samples/microservices-demo
+  - name: gitRepo
+    value: https://github.com/akuity/sedemo-platform.git
   steps:
   - uses: git-clone
     config:
-      repoURL: https://github.com/akuity/sedemo-platform.git
+      repoURL: ${{ vars.gitRepo }}
       checkout:
       - branch: main
         path: ./src
@@ -155,13 +173,16 @@ spec:
     as: commit
     config:
       path: ./src
-      messageFromSteps:
-      - update-images
+      message: "loadgenerator-${{ vars.env }}: promote ${{ ctx.targetFreight.origin.name }}"
   - uses: git-push
     config:
       path: ./src
+      targetBranch: main
   - uses: argocd-update
     config:
       apps:
       - name: loadgenerator-${{ vars.env }}
-        namespace: argocd
+        sources:
+        - repoURL: ${{ vars.gitRepo }}
+          desiredRevision: ${{ task.outputs['commit'].commit }}
+          updateTargetRevision: true
