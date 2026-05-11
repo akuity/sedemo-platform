@@ -49,10 +49,6 @@ spec:
     config:
       apps:
       - name: backend-${{ vars.env }}
-        sources:
-        - repoURL: ${{ vars.gitRepo }}
-          desiredRevision: ${{ task.outputs['commit'].commit }}
-          updateTargetRevision: true
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
@@ -114,34 +110,18 @@ spec:
     config:
       apps:
       - name: adservice-${{ vars.env }}
-        sources:
-        - repoURL: ${{ vars.gitRepo }}
-          desiredRevision: ${{ task.outputs['commit'].commit }}
-          updateTargetRevision: true
   - uses: argocd-update
     config:
       apps:
       - name: recommendationservice-${{ vars.env }}
-        sources:
-        - repoURL: ${{ vars.gitRepo }}
-          desiredRevision: ${{ task.outputs['commit'].commit }}
-          updateTargetRevision: true
   - uses: argocd-update
     config:
       apps:
       - name: shoppingassistantservice-${{ vars.env }}
-        sources:
-        - repoURL: ${{ vars.gitRepo }}
-          desiredRevision: ${{ task.outputs['commit'].commit }}
-          updateTargetRevision: true
   - uses: argocd-update
     config:
       apps:
       - name: frontend-${{ vars.env }}
-        sources:
-        - repoURL: ${{ vars.gitRepo }}
-          desiredRevision: ${{ task.outputs['commit'].commit }}
-          updateTargetRevision: true
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
@@ -182,7 +162,3 @@ spec:
     config:
       apps:
       - name: loadgenerator-${{ vars.env }}
-        sources:
-        - repoURL: ${{ vars.gitRepo }}
-          desiredRevision: ${{ task.outputs['commit'].commit }}
-          updateTargetRevision: true
