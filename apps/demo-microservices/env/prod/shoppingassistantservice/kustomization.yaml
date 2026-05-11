@@ -5,4 +5,4 @@ resources:
 - ../../../kustomize/base/shoppingassistantservice
 images:
 - name: us-central1-docker.pkg.dev/google-samples/microservices-demo/shoppingassistantservice
-  newTag: v0.10.2
+  newTag: v0.10.5

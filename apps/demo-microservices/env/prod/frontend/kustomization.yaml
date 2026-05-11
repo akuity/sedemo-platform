@@ -5,4 +5,4 @@ resources:
 - ../../../kustomize/base/frontend
 images:
 - name: us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend
-  newTag: v0.10.2
+  newTag: v0.10.5

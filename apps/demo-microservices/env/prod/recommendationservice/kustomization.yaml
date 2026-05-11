@@ -5,4 +5,4 @@ resources:
 - ../../../kustomize/base/recommendationservice
 images:
 - name: us-central1-docker.pkg.dev/google-samples/microservices-demo/recommendationservice
-  newTag: v0.10.2
+  newTag: v0.10.5
