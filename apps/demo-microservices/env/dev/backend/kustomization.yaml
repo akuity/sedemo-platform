@@ -5,16 +5,16 @@ resources:
 - ../../../kustomize/base/backend
 images:
 - name: us-central1-docker.pkg.dev/google-samples/microservices-demo/cartservice
-  newTag: v0.10.2
+  newTag: v0.10.5
 - name: us-central1-docker.pkg.dev/google-samples/microservices-demo/checkoutservice
-  newTag: v0.10.2
+  newTag: v0.10.5
 - name: us-central1-docker.pkg.dev/google-samples/microservices-demo/currencyservice
-  newTag: v0.10.2
+  newTag: v0.10.5
 - name: us-central1-docker.pkg.dev/google-samples/microservices-demo/emailservice
-  newTag: v0.10.2
+  newTag: v0.10.5
 - name: us-central1-docker.pkg.dev/google-samples/microservices-demo/paymentservice
-  newTag: v0.10.2
+  newTag: v0.10.5
 - name: us-central1-docker.pkg.dev/google-samples/microservices-demo/productcatalogservice
-  newTag: v0.10.2
+  newTag: v0.10.5
 - name: us-central1-docker.pkg.dev/google-samples/microservices-demo/shippingservice
-  newTag: v0.10.2
+  newTag: v0.10.5
