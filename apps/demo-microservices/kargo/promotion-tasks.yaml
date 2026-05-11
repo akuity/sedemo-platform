@@ -1,0 +1,167 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: deploy-backend
+  namespace: kargo-microservices
+spec:
+  vars:
+  - name: env
+  - name: reg
+    value: us-central1-docker.pkg.dev/google-samples/microservices-demo
+  steps:
+  - uses: git-clone
+    config:
+      repoURL: https://github.com/akuity/sedemo-platform.git
+      checkout:
+      - branch: main
+        path: ./src
+  - uses: kustomize-set-image
+    as: update-images
+    config:
+      path: ./src/apps/demo-microservices/env/${{ vars.env }}/backend
+      images:
+      - image: ${{ vars.reg }}/cartservice
+        tag: ${{ imageFrom(vars.reg + "/cartservice").Tag }}
+      - image: ${{ vars.reg }}/checkoutservice
+        tag: ${{ imageFrom(vars.reg + "/checkoutservice").Tag }}
+      - image: ${{ vars.reg }}/currencyservice
+        tag: ${{ imageFrom(vars.reg + "/currencyservice").Tag }}
+      - image: ${{ vars.reg }}/emailservice
+        tag: ${{ imageFrom(vars.reg + "/emailservice").Tag }}
+      - image: ${{ vars.reg }}/paymentservice
+        tag: ${{ imageFrom(vars.reg + "/paymentservice").Tag }}
+      - image: ${{ vars.reg }}/productcatalogservice
+        tag: ${{ imageFrom(vars.reg + "/productcatalogservice").Tag }}
+      - image: ${{ vars.reg }}/shippingservice
+        tag: ${{ imageFrom(vars.reg + "/shippingservice").Tag }}
+  - uses: git-commit
+    as: commit
+    config:
+      path: ./src
+      messageFromSteps:
+      - update-images
+  - uses: git-push
+    config:
+      path: ./src
+  - uses: argocd-update
+    config:
+      apps:
+      - name: backend-${{ vars.env }}
+        namespace: argocd
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: deploy-frontend
+  namespace: kargo-microservices
+spec:
+  vars:
+  - name: env
+  - name: reg
+    value: us-central1-docker.pkg.dev/google-samples/microservices-demo
+  steps:
+  - uses: git-clone
+    config:
+      repoURL: https://github.com/akuity/sedemo-platform.git
+      checkout:
+      - branch: main
+        path: ./src
+  - uses: kustomize-set-image
+    as: update-adservice
+    config:
+      path: ./src/apps/demo-microservices/env/${{ vars.env }}/adservice
+      images:
+      - image: ${{ vars.reg }}/adservice
+        tag: ${{ imageFrom(vars.reg + "/adservice").Tag }}
+  - uses: kustomize-set-image
+    as: update-recommendation
+    config:
+      path: ./src/apps/demo-microservices/env/${{ vars.env }}/recommendationservice
+      images:
+      - image: ${{ vars.reg }}/recommendationservice
+        tag: ${{ imageFrom(vars.reg + "/recommendationservice").Tag }}
+  - uses: kustomize-set-image
+    as: update-shoppingassistant
+    config:
+      path: ./src/apps/demo-microservices/env/${{ vars.env }}/shoppingassistantservice
+      images:
+      - image: ${{ vars.reg }}/shoppingassistantservice
+        tag: ${{ imageFrom(vars.reg + "/shoppingassistantservice").Tag }}
+  - uses: kustomize-set-image
+    as: update-frontend
+    config:
+      path: ./src/apps/demo-microservices/env/${{ vars.env }}/frontend
+      images:
+      - image: ${{ vars.reg }}/frontend
+        tag: ${{ imageFrom(vars.reg + "/frontend").Tag }}
+  - uses: git-commit
+    as: commit
+    config:
+      path: ./src
+      messageFromSteps:
+      - update-adservice
+      - update-recommendation
+      - update-shoppingassistant
+      - update-frontend
+  - uses: git-push
+    config:
+      path: ./src
+  - uses: argocd-update
+    config:
+      apps:
+      - name: adservice-${{ vars.env }}
+        namespace: argocd
+  - uses: argocd-update
+    config:
+      apps:
+      - name: recommendationservice-${{ vars.env }}
+        namespace: argocd
+  - uses: argocd-update
+    config:
+      apps:
+      - name: shoppingassistantservice-${{ vars.env }}
+        namespace: argocd
+  - uses: argocd-update
+    config:
+      apps:
+      - name: frontend-${{ vars.env }}
+        namespace: argocd
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: deploy-loadgenerator
+  namespace: kargo-microservices
+spec:
+  vars:
+  - name: env
+  - name: reg
+    value: us-central1-docker.pkg.dev/google-samples/microservices-demo
+  steps:
+  - uses: git-clone
+    config:
+      repoURL: https://github.com/akuity/sedemo-platform.git
+      checkout:
+      - branch: main
+        path: ./src
+  - uses: kustomize-set-image
+    as: update-images
+    config:
+      path: ./src/apps/demo-microservices/env/${{ vars.env }}/loadgenerator
+      images:
+      - image: ${{ vars.reg }}/loadgenerator
+        tag: ${{ imageFrom(vars.reg + "/loadgenerator").Tag }}
+  - uses: git-commit
+    as: commit
+    config:
+      path: ./src
+      messageFromSteps:
+      - update-images
+  - uses: git-push
+    config:
+      path: ./src
+  - uses: argocd-update
+    config:
+      apps:
+      - name: loadgenerator-${{ vars.env }}
+        namespace: argocd
