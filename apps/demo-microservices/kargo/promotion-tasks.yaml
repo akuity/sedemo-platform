@@ -53,11 +53,12 @@ spec:
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
-  name: deploy-frontend
+  name: deploy-frontend-service
   namespace: kargo-microservices
 spec:
   vars:
   - name: env
+  - name: service
   - name: reg
     value: us-central1-docker.pkg.dev/google-samples/microservices-demo
   - name: gitRepo
@@ -70,38 +71,16 @@ spec:
       - branch: main
         path: ./src
   - uses: kustomize-set-image
-    as: update-adservice
     config:
-      path: ./src/apps/demo-microservices/env/${{ vars.env }}/adservice
+      path: ./src/apps/demo-microservices/env/${{ vars.env }}/${{ vars.service }}
       images:
-      - image: ${{ vars.reg }}/adservice
-        tag: ${{ imageFrom(vars.reg + "/adservice").Tag }}
-  - uses: kustomize-set-image
-    as: update-recommendation
-    config:
-      path: ./src/apps/demo-microservices/env/${{ vars.env }}/recommendationservice
-      images:
-      - image: ${{ vars.reg }}/recommendationservice
-        tag: ${{ imageFrom(vars.reg + "/recommendationservice").Tag }}
-  - uses: kustomize-set-image
-    as: update-shoppingassistant
-    config:
-      path: ./src/apps/demo-microservices/env/${{ vars.env }}/shoppingassistantservice
-      images:
-      - image: ${{ vars.reg }}/shoppingassistantservice
-        tag: ${{ imageFrom(vars.reg + "/shoppingassistantservice").Tag }}
-  - uses: kustomize-set-image
-    as: update-frontend
-    config:
-      path: ./src/apps/demo-microservices/env/${{ vars.env }}/frontend
-      images:
-      - image: ${{ vars.reg }}/frontend
-        tag: ${{ imageFrom(vars.reg + "/frontend").Tag }}
+      - image: ${{ vars.reg }}/${{ vars.service }}
+        tag: ${{ imageFrom(vars.reg + "/" + vars.service).Tag }}
   - uses: git-commit
     as: commit
     config:
       path: ./src
-      message: "frontend-${{ vars.env }}: promote ${{ ctx.targetFreight.origin.name }}"
+      message: "${{ vars.service }}-${{ vars.env }}: promote ${{ ctx.targetFreight.origin.name }}"
   - uses: git-push
     config:
       path: ./src
@@ -109,19 +88,7 @@ spec:
   - uses: argocd-update
     config:
       apps:
-      - name: adservice-${{ vars.env }}
-  - uses: argocd-update
-    config:
-      apps:
-      - name: recommendationservice-${{ vars.env }}
-  - uses: argocd-update
-    config:
-      apps:
-      - name: shoppingassistantservice-${{ vars.env }}
-  - uses: argocd-update
-    config:
-      apps:
-      - name: frontend-${{ vars.env }}
+      - name: ${{ vars.service }}-${{ vars.env }}
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask

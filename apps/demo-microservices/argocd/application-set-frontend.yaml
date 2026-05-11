@@ -21,7 +21,7 @@ spec:
     metadata:
       name: "{{service}}-{{stage}}"
       annotations:
-        kargo.akuity.io/authorized-stage: kargo-microservices:frontend-{{stage}}
+        kargo.akuity.io/authorized-stage: kargo-microservices:{{service}}-{{stage}}
     spec:
       project: demo-microservices
       source:

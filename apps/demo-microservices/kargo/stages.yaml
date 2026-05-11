@@ -48,7 +48,7 @@ spec:
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: frontend-dev
+  name: adservice-dev
   namespace: kargo-microservices
   annotations:
     kargo.akuity.io/color: blue
@@ -63,15 +63,95 @@ spec:
     spec:
       steps:
       - task:
-          name: deploy-frontend
+          name: deploy-frontend-service
         vars:
         - name: env
           value: dev
+        - name: service
+          value: adservice
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: frontend-prod
+  name: recommendationservice-dev
+  namespace: kargo-microservices
+  annotations:
+    kargo.akuity.io/color: blue
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: frontend-group
+    sources:
+      stages:
+      - adservice-dev
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: deploy-frontend-service
+        vars:
+        - name: env
+          value: dev
+        - name: service
+          value: recommendationservice
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: shoppingassistantservice-dev
+  namespace: kargo-microservices
+  annotations:
+    kargo.akuity.io/color: blue
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: frontend-group
+    sources:
+      stages:
+      - recommendationservice-dev
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: deploy-frontend-service
+        vars:
+        - name: env
+          value: dev
+        - name: service
+          value: shoppingassistantservice
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: frontend-dev
+  namespace: kargo-microservices
+  annotations:
+    kargo.akuity.io/color: blue
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: frontend-group
+    sources:
+      stages:
+      - shoppingassistantservice-dev
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: deploy-frontend-service
+        vars:
+        - name: env
+          value: dev
+        - name: service
+          value: frontend
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: adservice-prod
   namespace: kargo-microservices
   annotations:
     kargo.akuity.io/color: blue
@@ -87,10 +167,90 @@ spec:
     spec:
       steps:
       - task:
-          name: deploy-frontend
+          name: deploy-frontend-service
         vars:
         - name: env
           value: prod
+        - name: service
+          value: adservice
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: recommendationservice-prod
+  namespace: kargo-microservices
+  annotations:
+    kargo.akuity.io/color: blue
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: frontend-group
+    sources:
+      stages:
+      - adservice-prod
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: deploy-frontend-service
+        vars:
+        - name: env
+          value: prod
+        - name: service
+          value: recommendationservice
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: shoppingassistantservice-prod
+  namespace: kargo-microservices
+  annotations:
+    kargo.akuity.io/color: blue
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: frontend-group
+    sources:
+      stages:
+      - recommendationservice-prod
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: deploy-frontend-service
+        vars:
+        - name: env
+          value: prod
+        - name: service
+          value: shoppingassistantservice
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: frontend-prod
+  namespace: kargo-microservices
+  annotations:
+    kargo.akuity.io/color: blue
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: frontend-group
+    sources:
+      stages:
+      - shoppingassistantservice-prod
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: deploy-frontend-service
+        vars:
+        - name: env
+          value: prod
+        - name: service
+          value: frontend
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
