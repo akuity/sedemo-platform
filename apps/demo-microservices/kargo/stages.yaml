@@ -59,12 +59,6 @@ spec:
       name: frontend-group
     sources:
       direct: true
-  - origin:
-      kind: Warehouse
-      name: backend-group
-    sources:
-      stages:
-      - backend-dev
   promotionTemplate:
     spec:
       steps:
@@ -89,12 +83,6 @@ spec:
     sources:
       stages:
       - frontend-dev
-  - origin:
-      kind: Warehouse
-      name: backend-group
-    sources:
-      stages:
-      - backend-prod
   promotionTemplate:
     spec:
       steps:
@@ -118,12 +106,6 @@ spec:
       name: loadgenerator
     sources:
       direct: true
-  - origin:
-      kind: Warehouse
-      name: frontend-group
-    sources:
-      stages:
-      - frontend-dev
   promotionTemplate:
     spec:
       steps:
@@ -148,12 +130,6 @@ spec:
     sources:
       stages:
       - loadgen-dev
-  - origin:
-      kind: Warehouse
-      name: frontend-group
-    sources:
-      stages:
-      - frontend-prod
   promotionTemplate:
     spec:
       steps:
