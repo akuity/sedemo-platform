@@ -1,0 +1,107 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev
+  namespace: kargo-microservices
+  annotations:
+    kargo.akuity.io/color: green
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: online-boutique
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      steps:
+      - uses: git-clone
+        config:
+          repoURL: https://github.com/jessesuen/kargo-microservices.git
+          checkout:
+          - branch: main
+            path: ./src  
+
+      - uses: kustomize-set-image
+        as: update-image
+        config:
+          path: ./src/env/dev
+          images:
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/adservice
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/cartservice
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/checkoutservice
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/currencyservice
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/emailservice
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/loadgenerator
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/paymentservice
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/productcatalogservice
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/recommendationservice
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/shippingservice
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/shoppingassistantservice
+
+      - uses: git-commit
+        as: commit
+        config:
+          path: ./src
+          messageFromSteps:
+          - update-image
+
+      - uses: git-push
+        config:
+          path: ./src
+
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod
+  namespace: kargo-microservices
+  annotations:
+    kargo.akuity.io/color: red
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: online-boutique
+    sources:
+      stages:
+      - dev
+  promotionTemplate:
+    spec:
+      steps:
+      - uses: git-clone
+        config:
+          repoURL: https://github.com/jessesuen/kargo-microservices.git
+          checkout:
+          - branch: main
+            path: ./src
+
+      - uses: kustomize-set-image
+        as: update-image
+        config:
+          path: ./src/env/prod
+          images:
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/adservice
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/cartservice
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/checkoutservice
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/currencyservice
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/emailservice
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/loadgenerator
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/paymentservice
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/productcatalogservice
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/recommendationservice
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/shippingservice
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/shoppingassistantservice
+
+      - uses: git-commit
+        as: commit
+        config:
+          path: ./src
+          messageFromSteps:
+          - update-image
+
+      - uses: git-push
+        config:
+          path: ./src

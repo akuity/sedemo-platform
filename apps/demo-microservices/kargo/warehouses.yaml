@@ -1,0 +1,31 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: online-boutique
+  namespace: kargo-microservices
+spec:
+  subscriptions:
+  - image:
+      repoURL: us-central1-docker.pkg.dev/google-samples/microservices-demo/adservice
+  - image:
+      repoURL: us-central1-docker.pkg.dev/google-samples/microservices-demo/cartservice
+  - image:
+      repoURL: us-central1-docker.pkg.dev/google-samples/microservices-demo/checkoutservice
+  - image:
+      repoURL: us-central1-docker.pkg.dev/google-samples/microservices-demo/currencyservice
+  - image:
+      repoURL: us-central1-docker.pkg.dev/google-samples/microservices-demo/emailservice
+  - image:
+      repoURL: us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend
+  - image:
+      repoURL: us-central1-docker.pkg.dev/google-samples/microservices-demo/loadgenerator
+  - image:
+      repoURL: us-central1-docker.pkg.dev/google-samples/microservices-demo/paymentservice
+  - image:
+      repoURL: us-central1-docker.pkg.dev/google-samples/microservices-demo/productcatalogservice
+  - image:
+      repoURL: us-central1-docker.pkg.dev/google-samples/microservices-demo/recommendationservice
+  - image:
+      repoURL: us-central1-docker.pkg.dev/google-samples/microservices-demo/shippingservice
+  - image:
+      repoURL: us-central1-docker.pkg.dev/google-samples/microservices-demo/shoppingassistantservice
