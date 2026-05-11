@@ -5,4 +5,4 @@ resources:
 - ../../../kustomize/base/adservice
 images:
 - name: us-central1-docker.pkg.dev/google-samples/microservices-demo/adservice
-  newTag: v0.10.1
+  newTag: v0.10.5
