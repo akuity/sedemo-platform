@@ -80,6 +80,7 @@ spec:
       if: ${{ vars.asPR == "true" }}
       config:
         repoURL: ${{ vars.gitRepo }}
+        description: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }}"
         createTargetBranch: true
         sourceBranch: ${{ task.outputs['pr-push'].branch }}
         targetBranch: ${{ vars.targetBranch }}
@@ -108,7 +109,7 @@ spec:
     #     encodingType: yaml
     - uses: git-wait-for-pr
       as: wait-for-pr
-      if: ${{ vars.asPR == "true" }}
+      if: ${{ vars.asPR == "true" }} && ${{ status('open-pr') != 'Skipped' }}
       config:
         repoURL: ${{ vars.gitRepo }}
         prNumber: ${{ task.outputs['open-pr'].pr.id }}
