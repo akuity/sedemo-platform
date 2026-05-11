@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: demo-microservices-loadgenerator
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - stage: dev
+      - stage: prod
+  template:
+    metadata:
+      name: loadgenerator-{{stage}}
+      annotations:
+        kargo.akuity.io/authorized-stage: kargo-microservices:loadgen-{{stage}}
+    spec:
+      project: demo-microservices
+      source:
+        repoURL: https://github.com/akuity/sedemo-platform.git
+        path: apps/demo-microservices/env/{{stage}}/loadgenerator
+        targetRevision: main
+      destination:
+        name: sedemo-primary
+        namespace: online-boutique-{{stage}}
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true

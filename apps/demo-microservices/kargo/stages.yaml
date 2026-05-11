@@ -1,7 +1,7 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: dev
+  name: backend-dev
   namespace: kargo-microservices
   annotations:
     kargo.akuity.io/color: green
@@ -9,7 +9,7 @@ spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: online-boutique
+      name: backend-group
     sources:
       direct: true
   promotionTemplate:
@@ -17,91 +17,364 @@ spec:
       steps:
       - uses: git-clone
         config:
-          repoURL: https://github.com/jessesuen/kargo-microservices.git
+          repoURL: https://github.com/akuity/sedemo-platform.git
           checkout:
           - branch: main
-            path: ./src  
-
+            path: ./src
       - uses: kustomize-set-image
-        as: update-image
+        as: update-backend
         config:
-          path: ./src/env/dev
+          path: ./src/apps/demo-microservices/env/dev/backend
           images:
-          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/adservice
           - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/cartservice
           - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/checkoutservice
           - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/currencyservice
           - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/emailservice
-          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend
-          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/loadgenerator
           - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/paymentservice
           - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/productcatalogservice
-          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/recommendationservice
           - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/shippingservice
-          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/shoppingassistantservice
-
       - uses: git-commit
         as: commit
         config:
           path: ./src
           messageFromSteps:
-          - update-image
-
+          - update-backend
       - uses: git-push
+        as: push
         config:
           path: ./src
-
+      - uses: argocd-update
+        config:
+          apps:
+          - name: backend-dev
+            namespace: argocd
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: prod
+  name: backend-prod
   namespace: kargo-microservices
   annotations:
-    kargo.akuity.io/color: red
+    kargo.akuity.io/color: green
 spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: online-boutique
+      name: backend-group
     sources:
       stages:
-      - dev
+      - backend-dev
   promotionTemplate:
     spec:
       steps:
       - uses: git-clone
         config:
-          repoURL: https://github.com/jessesuen/kargo-microservices.git
+          repoURL: https://github.com/akuity/sedemo-platform.git
           checkout:
           - branch: main
             path: ./src
-
       - uses: kustomize-set-image
-        as: update-image
+        as: update-backend
         config:
-          path: ./src/env/prod
+          path: ./src/apps/demo-microservices/env/prod/backend
           images:
-          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/adservice
           - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/cartservice
           - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/checkoutservice
           - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/currencyservice
           - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/emailservice
-          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend
-          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/loadgenerator
           - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/paymentservice
           - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/productcatalogservice
-          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/recommendationservice
           - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/shippingservice
-          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/shoppingassistantservice
-
       - uses: git-commit
         as: commit
         config:
           path: ./src
           messageFromSteps:
-          - update-image
-
+          - update-backend
       - uses: git-push
+        as: push
         config:
           path: ./src
+      - uses: argocd-update
+        config:
+          apps:
+          - name: backend-prod
+            namespace: argocd
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: frontend-dev
+  namespace: kargo-microservices
+  annotations:
+    kargo.akuity.io/color: blue
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: frontend-group
+    sources:
+      direct: true
+  - origin:
+      kind: Warehouse
+      name: backend-group
+    sources:
+      stages:
+      - backend-dev
+  promotionTemplate:
+    spec:
+      steps:
+      - uses: git-clone
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform.git
+          checkout:
+          - branch: main
+            path: ./src
+      - uses: kustomize-set-image
+        as: update-adservice
+        config:
+          path: ./src/apps/demo-microservices/env/dev/adservice
+          images:
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/adservice
+      - uses: kustomize-set-image
+        as: update-recommendation
+        config:
+          path: ./src/apps/demo-microservices/env/dev/recommendationservice
+          images:
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/recommendationservice
+      - uses: kustomize-set-image
+        as: update-shoppingassistant
+        config:
+          path: ./src/apps/demo-microservices/env/dev/shoppingassistantservice
+          images:
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/shoppingassistantservice
+      - uses: kustomize-set-image
+        as: update-frontend
+        config:
+          path: ./src/apps/demo-microservices/env/dev/frontend
+          images:
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend
+      - uses: git-commit
+        as: commit
+        config:
+          path: ./src
+          messageFromSteps:
+          - update-adservice
+          - update-recommendation
+          - update-shoppingassistant
+          - update-frontend
+      - uses: git-push
+        as: push
+        config:
+          path: ./src
+      - uses: argocd-update
+        config:
+          apps:
+          - name: adservice-dev
+            namespace: argocd
+      - uses: argocd-update
+        config:
+          apps:
+          - name: recommendationservice-dev
+            namespace: argocd
+      - uses: argocd-update
+        config:
+          apps:
+          - name: shoppingassistantservice-dev
+            namespace: argocd
+      - uses: argocd-update
+        config:
+          apps:
+          - name: frontend-dev
+            namespace: argocd
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: frontend-prod
+  namespace: kargo-microservices
+  annotations:
+    kargo.akuity.io/color: blue
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: frontend-group
+    sources:
+      stages:
+      - frontend-dev
+  - origin:
+      kind: Warehouse
+      name: backend-group
+    sources:
+      stages:
+      - backend-prod
+  promotionTemplate:
+    spec:
+      steps:
+      - uses: git-clone
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform.git
+          checkout:
+          - branch: main
+            path: ./src
+      - uses: kustomize-set-image
+        as: update-adservice
+        config:
+          path: ./src/apps/demo-microservices/env/prod/adservice
+          images:
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/adservice
+      - uses: kustomize-set-image
+        as: update-recommendation
+        config:
+          path: ./src/apps/demo-microservices/env/prod/recommendationservice
+          images:
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/recommendationservice
+      - uses: kustomize-set-image
+        as: update-shoppingassistant
+        config:
+          path: ./src/apps/demo-microservices/env/prod/shoppingassistantservice
+          images:
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/shoppingassistantservice
+      - uses: kustomize-set-image
+        as: update-frontend
+        config:
+          path: ./src/apps/demo-microservices/env/prod/frontend
+          images:
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend
+      - uses: git-commit
+        as: commit
+        config:
+          path: ./src
+          messageFromSteps:
+          - update-adservice
+          - update-recommendation
+          - update-shoppingassistant
+          - update-frontend
+      - uses: git-push
+        as: push
+        config:
+          path: ./src
+      - uses: argocd-update
+        config:
+          apps:
+          - name: adservice-prod
+            namespace: argocd
+      - uses: argocd-update
+        config:
+          apps:
+          - name: recommendationservice-prod
+            namespace: argocd
+      - uses: argocd-update
+        config:
+          apps:
+          - name: shoppingassistantservice-prod
+            namespace: argocd
+      - uses: argocd-update
+        config:
+          apps:
+          - name: frontend-prod
+            namespace: argocd
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: loadgen-dev
+  namespace: kargo-microservices
+  annotations:
+    kargo.akuity.io/color: purple
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: loadgenerator
+    sources:
+      direct: true
+  - origin:
+      kind: Warehouse
+      name: frontend-group
+    sources:
+      stages:
+      - frontend-dev
+  promotionTemplate:
+    spec:
+      steps:
+      - uses: git-clone
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform.git
+          checkout:
+          - branch: main
+            path: ./src
+      - uses: kustomize-set-image
+        as: update-loadgenerator
+        config:
+          path: ./src/apps/demo-microservices/env/dev/loadgenerator
+          images:
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/loadgenerator
+      - uses: git-commit
+        as: commit
+        config:
+          path: ./src
+          messageFromSteps:
+          - update-loadgenerator
+      - uses: git-push
+        as: push
+        config:
+          path: ./src
+      - uses: argocd-update
+        config:
+          apps:
+          - name: loadgenerator-dev
+            namespace: argocd
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: loadgen-prod
+  namespace: kargo-microservices
+  annotations:
+    kargo.akuity.io/color: purple
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: loadgenerator
+    sources:
+      stages:
+      - loadgen-dev
+  - origin:
+      kind: Warehouse
+      name: frontend-group
+    sources:
+      stages:
+      - frontend-prod
+  promotionTemplate:
+    spec:
+      steps:
+      - uses: git-clone
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform.git
+          checkout:
+          - branch: main
+            path: ./src
+      - uses: kustomize-set-image
+        as: update-loadgenerator
+        config:
+          path: ./src/apps/demo-microservices/env/prod/loadgenerator
+          images:
+          - image: us-central1-docker.pkg.dev/google-samples/microservices-demo/loadgenerator
+      - uses: git-commit
+        as: commit
+        config:
+          path: ./src
+          messageFromSteps:
+          - update-loadgenerator
+      - uses: git-push
+        as: push
+        config:
+          path: ./src
+      - uses: argocd-update
+        config:
+          apps:
+          - name: loadgenerator-prod
+            namespace: argocd

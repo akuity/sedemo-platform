@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: demo-microservices-frontend
+  namespace: argocd
+spec:
+  generators:
+  - matrix:
+      generators:
+      - list:
+          elements:
+          - service: adservice
+          - service: recommendationservice
+          - service: shoppingassistantservice
+          - service: frontend
+      - list:
+          elements:
+          - stage: dev
+          - stage: prod
+  template:
+    metadata:
+      name: "{{service}}-{{stage}}"
+      annotations:
+        kargo.akuity.io/authorized-stage: kargo-microservices:frontend-{{stage}}
+    spec:
+      project: demo-microservices
+      source:
+        repoURL: https://github.com/akuity/sedemo-platform.git
+        path: apps/demo-microservices/env/{{stage}}/{{service}}
+        targetRevision: main
+      destination:
+        name: sedemo-primary
+        namespace: online-boutique-{{stage}}
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
