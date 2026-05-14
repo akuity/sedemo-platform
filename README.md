@@ -70,17 +70,37 @@ Cluster add-ons installed via ArgoCD, including:
 
 ### Progressive Delivery with Argo Rollouts
 
-[`apps/demo-rollouts`](/apps/demo-rollouts/) demonstrates blue/green and canary delivery using Argo Rollouts with a `fan-out` pattern in Kargo to deploy to multiple prod stages concurrently.
+[`apps/demo-rollouts`](/apps/demo-rollouts/) demonstrates blue/green and canary delivery using Argo Rollouts with a fan-out pattern in Kargo to deploy to multiple prod regions concurrently. Staging uses a PR-based approval gate; prod uses Jira change management.
 
 Prometheus monitors traffic for non-200 response codes (triggerable from the rollouts app UI) and feeds Rollouts analysis results.
 
-**URLs:**
-- `demo-{stage}.akpdemoapps.link`
-- `prometheus.akpdemoapps.link`
+**URLs:** `demo-{stage}.akpdemoapps.link` · `prometheus.akpdemoapps.link`
+
+### Active-Active Multi-Region Deployment
+
+[`apps/active-active`](/apps/active-active/) demonstrates a high-availability multi-region pipeline with parallel dev regions, a convergence gate (both `dev-east` and `dev-west` must pass before staging advances), and a ServiceNow change management lifecycle split across `approve` and `close` stages.
+
+**URLs:** `{stage}.ha.akpdemoapps.link`
+
+### ServiceNow Change Management
+
+[`apps/demo-snow`](/apps/demo-snow/) demonstrates ServiceNow integration with a simpler multi-region pipeline. The `prod` stage creates a change request, blocks until it reaches "Implement" state, then fans out to three regional stages automatically.
+
+### Beyond Kubernetes (AWS Fargate + Lambda)
+
+[`apps/beyond-k8s`](/apps/beyond-k8s/) demonstrates Kargo managing workloads outside of Kubernetes. A Fargate pipeline registers new ECS task definitions in AWS, while a parallel K8s pipeline handles standard cluster deployments — both in the same Kargo project.
 
 ### Templatized Projects with Helm
 
-[`templated-teams/`](/templated-teams/) provides a "golden path" — a single Kargo project definition templated with Helm. The platform team controls the k8s rollout and ingress; app teams only supply a Docker image and a few parameters.
+[`templated-teams/`](/templated-teams/) provides a "golden path" — a single Kargo project definition templated with Helm. The platform team controls the k8s rollout and ingress; app teams only supply a Docker image and a few parameters. Includes IaC-defined roles for Dev, SRE, and QA with PR-based prod approvals and optional Argo Rollouts canary.
+
+### OCI Artifact-Based Air-Gap Deployment
+
+[`apps/oci-airgap`](/apps/oci-airgap/) demonstrates packaging all rendered manifests as an OCI artifact at dev time. Downstream stages (including an air-gapped prod) sync from the OCI artifact rather than a git branch, enabling deployment into environments with no outbound git access. Requires Argo CD v3.1+.
+
+### Akuity Intelligence
+
+[`apps/demo-intelligence`](/apps/demo-intelligence/) demonstrates AI-powered incident response. An OOM or crashloop condition triggers an AI runbook that triages the incident, proposes remediation via Slack, waits for approval, applies the fix, and resolves the incident automatically.
 
 ### Vendor Helm Charts with Custom Values
 
