@@ -13,7 +13,7 @@ spec:
         owner: akuity
         repo: sedemo-monorepo
         tokenRef:
-          secretName: github-appset-token
+          secretName: application-set-secret
           key: token
       requeueAfterSeconds: 180
   template:
@@ -58,7 +58,7 @@ spec:
         owner: akuity
         repo: sedemo-monorepo
         tokenRef:
-          secretName: github-appset-token
+          secretName: application-set-secret
           key: token
       requeueAfterSeconds: 180
   template:
