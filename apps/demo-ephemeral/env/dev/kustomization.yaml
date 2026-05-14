@@ -5,7 +5,7 @@ resources:
 - ../base
 images:
 - name: ghcr.io/akuity/sedemo-monorepo-rollouts-app
-  newTag: 43-green
+  newTag: 44-blue
 patches:
 - patch: |-
     - op: replace
