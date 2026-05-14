@@ -11,7 +11,7 @@ spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: app
+      name: fargate
     sources:
       direct: true
   promotionTemplate:
@@ -39,8 +39,7 @@ spec:
       kind: Warehouse
       name: app
     sources:
-      stages:
-      - fargate-task-def
+      direct: true
   promotionTemplate:
     spec:
       steps:
