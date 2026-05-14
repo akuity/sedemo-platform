@@ -15,6 +15,3 @@ spec:
   - stageSelector:
       name: "regex:preview.*"
     autoPromotionEnabled: true
-  - stageSelector:
-      name: dev
-    autoPromotionEnabled: true
