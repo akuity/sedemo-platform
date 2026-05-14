@@ -81,7 +81,7 @@ spec:
         as: post-pr-comment
         config:
           method: POST
-          url: {{`"https://api.github.com/repos/akuity/sedemo-monorepo/issues/"`}}{{ .Values.prNumber }}{{`"/comments"`}}
+          url: "https://api.github.com/repos/akuity/sedemo-monorepo/issues/{{ .Values.prNumber }}/comments"
           headers:
           - name: Authorization
             value: {{`"Bearer ${{ sharedSecret('github-pr-token').token }}"`}}
