@@ -1,0 +1,5 @@
+apiVersion: v2
+name: demo-ephemeral-preview
+description: Per-PR Warehouse and Stage for ephemeral preview environments
+type: application
+version: 0.1.0

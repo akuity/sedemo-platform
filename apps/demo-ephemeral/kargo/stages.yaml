@@ -1,0 +1,4 @@
+# Stages for this project are created dynamically per PR by the
+# demo-ephemeral-stages ApplicationSet, which deploys apps/demo-ephemeral/stage-template.
+# Each PR gets a Stage named preview-pr-<number> that auto-promotes and posts a GitHub PR comment.
+# Stages are pruned automatically when the PR closes.

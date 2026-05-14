@@ -1,0 +1,96 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: preview-pr-{{ .Values.prNumber }}
+  namespace: demo-ephemeral
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: demo-ephemeral-pr-{{ .Values.prNumber }}
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-monorepo
+      - name: platformRepo
+        value: https://github.com/akuity/sedemo-platform
+      - name: imageRepo
+        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+      - name: targetBranch
+        value: env-ephemeral/pr-{{ .Values.prNumber }}
+      - name: previewURL
+        value: https://pr-{{ .Values.prNumber }}.ephemeral.akpdemoapps.link
+      steps:
+      # Clone sedemo-platform to get the preview-chart
+      - uses: git-clone
+        config:
+          repoURL: {{`${{ vars.platformRepo }}`}}
+          checkout:
+          - branch: main
+            path: ./src
+
+      # Clone sedemo-monorepo target branch for rendered manifest output
+      - uses: git-clone
+        config:
+          repoURL: {{`${{ vars.gitRepo }}`}}
+          checkout:
+          - branch: {{`${{ vars.targetBranch }}`}}
+            create: true
+            path: ./out
+
+      - uses: git-clear
+        config:
+          path: ./out
+
+      # Render lightweight preview: ConfigMap (environment/image-tag) + Deployment (replicas: 0)
+      - uses: helm-template
+        config:
+          releaseName: preview
+          path: ./src/apps/demo-ephemeral/preview-chart
+          outPath: ./out/manifests.yaml
+          namespace: demo-ephemeral-pr-{{ .Values.prNumber }}
+          setValues:
+          - key: prNumber
+            value: "{{ .Values.prNumber }}"
+          - key: image.tag
+            value: {{`${{ imageFrom(vars.imageRepo).Tag }}`}}
+
+      - uses: git-commit
+        as: commit
+        config:
+          path: ./out
+          message: {{`"${{ ctx.stage }}: deploy ${{ imageFrom(vars.imageRepo).Tag }} [skip ci]"`}}
+
+      - uses: git-push
+        config:
+          path: ./out
+          targetBranch: {{`${{ vars.targetBranch }}`}}
+
+      - uses: argocd-update
+        continueOnError: true
+        config:
+          apps:
+          - name: demo-ephemeral-pr-{{ .Values.prNumber }}
+            namespace: argocd
+
+      - uses: http
+        as: post-pr-comment
+        config:
+          method: POST
+          url: {{`"https://api.github.com/repos/akuity/sedemo-monorepo/issues/"`}}{{ .Values.prNumber }}{{`"/comments"`}}
+          headers:
+          - name: Authorization
+            value: {{`"Bearer ${{ sharedSecret('github-pr-token').token }}"`}}
+          - name: Accept
+            value: "application/vnd.github+json"
+          - name: X-GitHub-Api-Version
+            value: "2022-11-28"
+          successExpression: response.status == 201
+          body: |
+            {{`${{ quote({
+              "body": "## Preview Environment Ready\n\n**URL:** "`}} + vars.previewURL + {{`"\n**Image:** `" + imageFrom(vars.imageRepo).Tag + "`\n\n_Deployed by [Kargo](https://kargo.akpdemoapps.link/project/demo-ephemeral) · Promotion `" + ctx.promotion + "`_"
+            }) }}`}}

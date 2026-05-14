@@ -1,0 +1,3 @@
+# Warehouses for this project are created dynamically per PR by the
+# demo-ephemeral-stages ApplicationSet, which deploys apps/demo-ephemeral/stage-template.
+# Each PR gets its own Warehouse scoped to ^pr-<number>-.+$ to prevent cross-PR freight.

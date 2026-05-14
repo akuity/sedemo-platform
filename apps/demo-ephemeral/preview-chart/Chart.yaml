@@ -1,0 +1,5 @@
+apiVersion: v2
+name: demo-ephemeral-preview
+description: Lightweight preview manifest — ConfigMap + Deployment at 0 replicas
+type: application
+version: 1.0.0

@@ -1,0 +1,13 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: demo-ephemeral-pr-{{ .Values.prNumber }}
+  namespace: demo-ephemeral
+spec:
+  subscriptions:
+  - image:
+      repoURL: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+      discoveryLimit: 5
+      imageSelectionStrategy: NewestBuild
+      # Scoped exclusively to this PR — pr-<number>-<color>, e.g. pr-42-yellow
+      allowTags: ^pr-{{ .Values.prNumber }}-.+$

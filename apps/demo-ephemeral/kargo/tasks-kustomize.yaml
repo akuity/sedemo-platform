@@ -1,0 +1,38 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: deploy-app
+  namespace: demo-ephemeral
+spec:
+  vars:
+  - name: env
+  - name: gitRepo
+    value: https://github.com/akuity/sedemo-platform.git
+  - name: imageRepo
+    value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+  steps:
+  - uses: git-clone
+    config:
+      repoURL: ${{ vars.gitRepo }}
+      checkout:
+      - branch: main
+        path: ./src
+  - uses: kustomize-set-image
+    config:
+      path: ./src/apps/demo-ephemeral/env/${{ vars.env }}
+      images:
+      - image: ${{ vars.imageRepo }}
+        tag: ${{ imageFrom(vars.imageRepo).Tag }}
+  - uses: git-commit
+    as: commit
+    config:
+      path: ./src
+      message: "${{ vars.env }}: promote ${{ imageFrom(vars.imageRepo).Tag }}"
+  - uses: git-push
+    config:
+      path: ./src
+      targetBranch: main
+  - uses: argocd-update
+    config:
+      apps:
+      - name: demo-ephemeral-${{ vars.env }}

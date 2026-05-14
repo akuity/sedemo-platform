@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: demo-ephemeral
+  template:
+    metadata:
+      labels:
+        app: demo-ephemeral
+    spec:
+      containers:
+      - name: app
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        ports:
+        - containerPort: 8080
+        env:
+        - name: COLOR
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: image-tag

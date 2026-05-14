@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo-ephemeral
+  template:
+    metadata:
+      labels:
+        app: demo-ephemeral
+    spec:
+      containers:
+      - name: app
+        image: ghcr.io/akuity/sedemo-monorepo-rollouts-app:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: COLOR
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: color
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  color: yellow
+  environment: base

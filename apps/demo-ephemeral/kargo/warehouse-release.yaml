@@ -1,0 +1,14 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: demo-ephemeral-release
+  namespace: demo-ephemeral
+spec:
+  subscriptions:
+  - image:
+      repoURL: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+      discoveryLimit: 5
+      imageSelectionStrategy: NewestBuild
+      # Release builds are tagged <build-number>-<variant> (e.g. 1-yellow).
+      # This is mutually exclusive with PR preview tags (pr-<N>-<variant>).
+      allowTags: ^\d+-[a-z]+$
