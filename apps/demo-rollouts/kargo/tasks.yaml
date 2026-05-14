@@ -109,7 +109,7 @@ spec:
     #     encodingType: yaml
     - uses: git-wait-for-pr
       as: wait-for-pr
-      if: ${{ vars.asPR == "true" }} && ${{ status('open-pr') != 'Skipped' }}
+      if: ${{ vars.asPR == "true" && status('open-pr') != 'Skipped' }}
       config:
         repoURL: ${{ vars.gitRepo }}
         prNumber: ${{ task.outputs['open-pr'].pr.id }}
