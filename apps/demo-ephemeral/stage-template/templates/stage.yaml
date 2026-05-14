@@ -92,5 +92,5 @@ spec:
           successExpression: response.status == 201
           body: |
             {{`${{ quote({
-              "body": "## Preview Environment Ready\n\n**URL:** "`}} + vars.previewURL + {{`"\n**Image:** `" + imageFrom(vars.imageRepo).Tag + "`\n\n_Deployed by [Kargo](https://kargo.akpdemoapps.link/project/demo-ephemeral) · Promotion `" + ctx.promotion + "`_"
+              "body": "## Preview Environment Ready\n\n**URL:** " + vars.previewURL + "\n**Image:** " + imageFrom(vars.imageRepo).Tag + "\n\n_Deployed by [Kargo](https://kargo.akpdemoapps.link/project/demo-ephemeral) · Promotion " + ctx.promotion + "_"
             }) }}`}}
