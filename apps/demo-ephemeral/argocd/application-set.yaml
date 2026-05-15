@@ -15,10 +15,9 @@ spec:
         tokenRef:
           secretName: application-set-secret
           key: token
+        labels:
+        - preview
       requeueAfterSeconds: 180
-      filters:
-      - labels:
-          - preview
   template:
     metadata:
       name: demo-ephemeral-pr-{{number}}
@@ -68,10 +67,9 @@ spec:
         tokenRef:
           secretName: application-set-secret
           key: token
+        labels:
+        - preview
       requeueAfterSeconds: 180
-      filters:
-      - labels:
-          - preview
   template:
     metadata:
       name: demo-ephemeral-stage-pr-{{number}}
