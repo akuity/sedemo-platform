@@ -1,0 +1,34 @@
+# Generates app-dev and app-prod Argo CD Applications. Only the App pipeline
+# has Argo CD apps; the IaC pipeline writes to Git and stops there (out-of-band
+# Terraform/Helm picks it up).
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: app-iac-coupled
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - stage: dev
+      - stage: prod
+  template:
+    metadata:
+      name: app-{{stage}}
+      annotations:
+        kargo.akuity.io/authorized-stage: app-iac-coupled:app-{{stage}}
+    spec:
+      project: app-iac-coupled
+      source:
+        repoURL: https://github.com/akuity/sedemo-platform.git
+        path: apps/demo-app-iac-coupled/env/{{stage}}/app
+        targetRevision: main
+      destination:
+        name: sedemo-primary
+        namespace: app-iac-coupled-{{stage}}
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true

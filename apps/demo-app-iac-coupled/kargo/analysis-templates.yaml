@@ -1,0 +1,92 @@
+---
+# cassandra-smoke: cheap Job-based AnalysisTemplate that pretends to validate
+# the Cassandra rollout in each environment. Stand-in for whatever real check
+# the customer wants (cqlsh probe, ring topology, etc.).
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: cassandra-smoke
+  namespace: app-iac-coupled
+spec:
+  args:
+  - name: environment
+    value: missing-value
+  metrics:
+  - name: test
+    provider:
+      job:
+        spec:
+          backoffLimit: 1
+          template:
+            spec:
+              restartPolicy: Never
+              containers:
+              - name: test
+                image: alpine:latest
+                command: [/bin/sh, -c]
+                args:
+                - |
+                  echo "Validating Cassandra ring in {{args.environment}}..."
+                  for i in 1 2 3; do echo "  check $i: PASS"; sleep 2; done
+                  echo "Cassandra in {{args.environment}} healthy."
+---
+# vm-smoke: AGENTLESS feedback loop (Q4).
+#
+# This is the AnalysisTemplate Kargo uses to verify the App rollout WITHOUT
+# any in-cluster agent. Two metrics:
+#
+#   (1) prometheus provider against VictoriaMetrics. VM speaks PromQL on
+#       /api/v1/query, so the stock Argo Rollouts prometheus provider works
+#       drop-in — point it at the VM read endpoint. The query asserts the
+#       running version label matches the Freight commit SHA.
+#
+#   (2) web provider against the GitHub Deployments API. Confirms a Deployment
+#       record exists for the Freight SHA with state=success — this is the
+#       "running version" proof the customer asked about.
+#
+# Note: this template assumes the AnalysisRun is scheduled in a cluster that
+# can reach the VM read endpoint and api.github.com. The provider IS run from
+# Kubernetes, so "agentless" here means "no Akuity Agent in the TARGET cluster"
+# — Kargo's own cluster runs the analysis.
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: vm-smoke
+  namespace: app-iac-coupled
+spec:
+  args:
+  - name: environment
+    value: missing-value
+  - name: expected-sha
+    # In production: pass ${{ ctx.targetFreight.commits[0].id }} from the Stage's
+    # verification.args. Stubbed here so the template applies without context.
+    value: "deadbeef"
+  - name: vm-endpoint
+    value: "http://victoriametrics.observability.svc.cluster.local:8428"
+  metrics:
+  - name: running-version-matches-freight
+    interval: 30s
+    count: 3
+    successCondition: "result[0] >= 1"
+    failureLimit: 2
+    provider:
+      prometheus:
+        # VictoriaMetrics is PromQL-compatible — the stock Rollouts prometheus
+        # provider talks to it without modification.
+        address: "{{args.vm-endpoint}}"
+        query: |
+          sum(up{job="app",env="{{args.environment}}",version_sha="{{args.expected-sha}}"})
+
+  - name: github-deployment-success
+    count: 1
+    successCondition: "result == 'success'"
+    failureLimit: 1
+    provider:
+      web:
+        url: "https://api.github.com/repos/akuity/sedemo-platform/deployments?sha={{args.expected-sha}}&environment={{args.environment}}"
+        headers:
+        - key: Accept
+          value: application/vnd.github+json
+        # In production: mount a GitHub PAT and add Authorization header here.
+        # jsonPath extracts the most-recent statuses_url payload's state.
+        jsonPath: "{$[0].statuses_url}"

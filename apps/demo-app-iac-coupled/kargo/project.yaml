@@ -1,0 +1,23 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: app-iac-coupled
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: app-iac-coupled
+  namespace: app-iac-coupled
+spec:
+  promotionPolicies:
+  - stageSelector:
+      name: iac-dev
+    autoPromotionEnabled: true
+  - stageSelector:
+      name: iac-staging
+    autoPromotionEnabled: true
+  - stageSelector:
+      name: app-dev
+    autoPromotionEnabled: true

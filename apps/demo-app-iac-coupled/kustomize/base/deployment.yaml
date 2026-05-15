@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  labels:
+    app: app-iac-coupled
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-iac-coupled
+  template:
+    metadata:
+      labels:
+        app: app-iac-coupled
+    spec:
+      containers:
+      - name: app
+        image: ghcr.io/akuity/demo-app-iac-coupled-app
+        ports:
+        - containerPort: 8080

@@ -1,0 +1,5 @@
+# Source of truth for the Cassandra IaC version.
+# cassandra-iac-warehouse subscribes to commits touching this directory,
+# so changing `version` here produces a new Freight that flows iac-dev ->
+# iac-staging -> iac-prod.
+version: "7.0.0"

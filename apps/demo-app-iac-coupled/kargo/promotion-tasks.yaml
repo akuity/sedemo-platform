@@ -1,0 +1,168 @@
+---
+# IaC promotion: copy iac/cassandra/version.yaml into the per-env overlay.
+# Pure git-commit + git-push. NO argocd-update on purpose — IaC here is
+# Terraform/Helm-applied out of band; Kargo's job is to publish the desired
+# version into Git.
+#
+# Q3 (defense in depth): the Stage's selectionPolicy: MatchUpstream is the
+# DECLARATIVE rule that controls which Freight gets selected for promotion.
+# The semver-guard step below is the IMPERATIVE rule that controls whether
+# the selected Freight is actually deployed. It compares the incoming Freight's
+# Cassandra major against the major currently deployed in this env, and fails
+# the promotion if the gap is > 1. The guard catches:
+#   - Manual promotions that bypass auto-promotion ordering
+#   - Multi-upstream sources where MatchUpstream cannot be used (single-upstream only)
+#   - Accidental version regressions (downgrade)
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: deploy-iac
+  namespace: app-iac-coupled
+spec:
+  vars:
+  - name: env
+  - name: gitRepo
+    value: https://github.com/akuity/sedemo-platform.git
+  steps:
+  - uses: git-clone
+    config:
+      repoURL: ${{ vars.gitRepo }}
+      checkout:
+      - branch: main
+        path: ./src
+
+  # Parse the version currently deployed in this env (last successful promotion).
+  - uses: yaml-parse
+    as: current
+    config:
+      path: ./src/apps/demo-app-iac-coupled/env/${{ vars.env }}/cassandra/version.yaml
+      outputs:
+      - name: version
+        fromExpression: outputs.version
+
+  # Parse the incoming Freight's version (the source-of-truth file the
+  # cassandra-iac-warehouse is subscribed to).
+  - uses: yaml-parse
+    as: incoming
+    config:
+      path: ./src/apps/demo-app-iac-coupled/iac/cassandra/version.yaml
+      outputs:
+      - name: version
+        fromExpression: outputs.version
+
+  # Semver guard using Kargo's built-in expression functions.
+  #   - semverDiff(a, b) returns "None" | "Patch" | "Minor" | "Major" | "Metadata" | "Incomparable"
+  #     It tells us the MAGNITUDE of difference but NOT the direction. A v6 -> v8
+  #     forward jump and a v8 -> v6 downgrade both return "Major".
+  #   - semverParse(v).Major() / IncMajor() lets us assert "exactly current+1".
+  #
+  # Rule: allow same version (re-deploy), same-major changes (minor/patch),
+  # or exactly the next major. Block downgrades and major skips.
+  #
+  # Docs: https://docs.kargo.io/user-guide/reference-docs/expressions
+  - uses: http
+    as: semver-guard
+    config:
+      method: GET
+      url: https://httpbin.org/status/200
+      successExpression: |
+        semverDiff(outputs.incoming.version, outputs.current.version) != 'Major' ||
+        semverParse(outputs.incoming.version).Major() == semverParse(outputs.current.version).IncMajor().Major()
+      failureExpression: |
+        semverDiff(outputs.incoming.version, outputs.current.version) == 'Major' &&
+        semverParse(outputs.incoming.version).Major() != semverParse(outputs.current.version).IncMajor().Major()
+
+  - uses: copy
+    config:
+      inPath: ./src/apps/demo-app-iac-coupled/iac/cassandra/version.yaml
+      outPath: ./src/apps/demo-app-iac-coupled/env/${{ vars.env }}/cassandra/version.yaml
+  - uses: git-commit
+    config:
+      path: ./src
+      message: "iac/cassandra: promote ${{ outputs.incoming.version }} to ${{ ctx.stage }} (was ${{ outputs.current.version }}) [skip ci]"
+  - uses: git-push
+    config:
+      path: ./src
+      targetBranch: main
+---
+# App promotion with an inline version-compat gate.
+#
+# Q2 illustration: the App image tag is shaped like "1.4.2-cass7"; the Cassandra
+# IaC Freight carries the deployed major version in iac/cassandra/version.yaml.
+# We extract both and fail the promotion (non-zero exit) if they don't match —
+# the failure shows up in the Kargo UI's promotion log, which is exactly the
+# feedback signal an SRE wants.
+#
+# Q4 illustration: the argocd-update step at the end is what you'd REMOVE for
+# the agentless variant. Without it, Kargo's only "deploy" action is the git
+# commit; downstream pickup and health verification are entirely external.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: deploy-app
+  namespace: app-iac-coupled
+spec:
+  vars:
+  - name: env
+  - name: appImage
+    value: ghcr.io/akuity/demo-app-iac-coupled-app
+  - name: gitRepo
+    value: https://github.com/akuity/sedemo-platform.git
+  steps:
+  - uses: git-clone
+    config:
+      repoURL: ${{ vars.gitRepo }}
+      checkout:
+      - branch: main
+        path: ./src
+
+  # Read the IaC Freight's cassandra/version.yaml from the just-cloned working
+  # tree. The IaC pipeline writes it into env/<env>/cassandra/ on every IaC
+  # promotion, so by the time the App pipeline runs, the value reflects the
+  # IaC Freight that has been verified at the corresponding IaC Stage.
+  - uses: yaml-parse
+    as: iac
+    config:
+      path: ./src/apps/demo-app-iac-coupled/env/${{ vars.env }}/cassandra/version.yaml
+      outputs:
+      - name: version
+        fromExpression: outputs.version
+
+  # Compatibility gate: image tag suffix like "-cass7" must match the IaC
+  # Cassandra major. semverParse(...).Major() gives us the integer major from
+  # the deployed Cassandra version string.
+  - uses: http
+    as: compat-check
+    config:
+      method: GET
+      url: https://httpbin.org/status/200
+      successExpression: |
+        endsWith(imageFrom(vars.appImage).Tag, "-cass" + string(semverParse(outputs.iac.version).Major()))
+      failureExpression: |
+        !endsWith(imageFrom(vars.appImage).Tag, "-cass" + string(semverParse(outputs.iac.version).Major()))
+
+  - uses: kustomize-set-image
+    config:
+      path: ./src/apps/demo-app-iac-coupled/env/${{ vars.env }}/app
+      images:
+      - image: ${{ vars.appImage }}
+        tag: ${{ imageFrom(vars.appImage).Tag }}
+
+  - uses: git-commit
+    config:
+      path: ./src
+      message: "app-${{ vars.env }}: promote ${{ imageFrom(vars.appImage).Tag }} against cassandra-major-${{ outputs.iac.major }}"
+
+  - uses: git-push
+    config:
+      path: ./src
+      targetBranch: main
+
+  # AGENTFUL mode: keep this step. Argo CD syncs the app via the Akuity Agent.
+  # AGENTLESS mode (Q4): delete the step below. The only "deploy" trace Kargo
+  # leaves is the git commit; an external CD or GitOps controller picks it up,
+  # and health/version proof comes from the vm-smoke AnalysisTemplate.
+  - uses: argocd-update
+    config:
+      apps:
+      - name: app-${{ vars.env }}
