@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: app-iac-coupled
+  namespace: argocd
+spec:
+  description: App + IaC version-coupled demo (Kargo monorepo orchestration)
+  sourceRepos:
+  - '*'
+  destinations:
+  - server: '*'
+    name: '*'
+    namespace: '*'
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'

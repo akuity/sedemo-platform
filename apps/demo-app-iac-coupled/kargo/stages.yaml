@@ -1,0 +1,199 @@
+# Two pipelines in one Project.
+#
+#   IaC pipeline (cassandra-iac-warehouse):
+#     iac-dev  ->  iac-staging  ->  iac-prod
+#
+#   App pipeline (app-warehouse), coupled to IaC:
+#     app-dev  ->  app-prod
+#
+# Q2 (cross-Freight dependency): the App Stages request Freight from TWO origins.
+#   The Cassandra-IaC source uses availabilityStrategy: All, so the Stage only
+#   becomes promotable once Cassandra has been verified at the listed upstream
+#   IaC Stage. A pre-promotion version-compat check inside deploy-app then asserts
+#   the App's "needs cassN" tag matches the IaC's current major version.
+#
+# Q3 (no skipping versions): downstream IaC Stages use
+#   selectionPolicy: MatchUpstream so they only promote the Freight CURRENTLY
+#   in the upstream Stage. If iac-staging is at v7, iac-prod cannot jump to v9
+#   even if v8 and v9 are already in iac-dev — it will trace v7 -> v8 -> v9 in
+#   order as the upstream advances.
+
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: iac-dev
+  namespace: app-iac-coupled
+  annotations:
+    kargo.akuity.io/color: amber
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: cassandra-iac-warehouse
+    sources:
+      direct: true
+  verification:
+    analysisTemplates:
+    - name: cassandra-smoke
+    args:
+    - name: environment
+      value: dev
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: deploy-iac
+        vars:
+        - name: env
+          value: dev
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: iac-staging
+  namespace: app-iac-coupled
+  annotations:
+    kargo.akuity.io/color: amber
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: cassandra-iac-warehouse
+    sources:
+      stages:
+      - iac-dev
+      # MatchUpstream: promote whatever Freight currently lives in iac-dev,
+      # never "skip" to a newer Freight that exists in the Warehouse. This is
+      # how we enforce v6 -> v7 -> v8 even when Stages fall behind.
+      selectionPolicy: MatchUpstream
+  verification:
+    analysisTemplates:
+    - name: cassandra-smoke
+    args:
+    - name: environment
+      value: staging
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: deploy-iac
+        vars:
+        - name: env
+          value: staging
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: iac-prod
+  namespace: app-iac-coupled
+  annotations:
+    kargo.akuity.io/color: amber
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: cassandra-iac-warehouse
+    sources:
+      stages:
+      - iac-staging
+      selectionPolicy: MatchUpstream
+  verification:
+    analysisTemplates:
+    - name: cassandra-smoke
+    args:
+    - name: environment
+      value: prod
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: deploy-iac
+        vars:
+        - name: env
+          value: prod
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: app-dev
+  namespace: app-iac-coupled
+  annotations:
+    kargo.akuity.io/color: blue
+spec:
+  requestedFreight:
+  # Two sources: the App image AND the Cassandra IaC Freight currently in iac-dev.
+  # Promotion only fires when BOTH are available; the pre-deploy compat check
+  # inside deploy-app fails the promotion if the versions are incompatible.
+  - origin:
+      kind: Warehouse
+      name: app-warehouse
+    sources:
+      direct: true
+  - origin:
+      kind: Warehouse
+      name: cassandra-iac-warehouse
+    sources:
+      stages:
+      - iac-dev
+      # availabilityStrategy: All means this source's Freight must be verified
+      # at every stage listed. With one upstream this is equivalent to "wait
+      # until iac-dev has a verified Freight" — but the flag makes intent
+      # explicit and survives if we later add more upstreams (e.g., a regional
+      # IaC fan-out).
+      availabilityStrategy: All
+  verification:
+    # Post-promotion verification — see analysis-templates.yaml for the
+    # VictoriaMetrics-backed AnalysisTemplate that demonstrates the
+    # "agentless / external telemetry" feedback loop (Q4).
+    analysisTemplates:
+    - name: vm-smoke
+    args:
+    - name: environment
+      value: dev
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: deploy-app
+        vars:
+        - name: env
+          value: dev
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: app-prod
+  namespace: app-iac-coupled
+  annotations:
+    kargo.akuity.io/color: cyan
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: app-warehouse
+    sources:
+      stages:
+      - app-dev
+      selectionPolicy: MatchUpstream
+  - origin:
+      kind: Warehouse
+      name: cassandra-iac-warehouse
+    sources:
+      stages:
+      - iac-prod
+      availabilityStrategy: All
+  verification:
+    analysisTemplates:
+    - name: vm-smoke
+    args:
+    - name: environment
+      value: prod
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: deploy-app
+        vars:
+        - name: env
+          value: prod

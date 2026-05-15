@@ -1,0 +1,43 @@
+# Two Warehouses scoped to different parts of the monorepo.
+#
+# Q1 (path filtering): each Warehouse only produces Freight when its own paths
+# change. A pure-IaC commit can't spawn App Freight, and vice versa.
+#
+# Q3 (sequential / no-skip): cassandra-iac uses freightCreationPolicy: Automatic
+# so every commit becomes a Freight in arrival order. Combined with
+# selectionPolicy: MatchUpstream on downstream Stages (see stages.yaml), this
+# yields v6 -> v7 -> v8 ordering — downstream traces the upstream Stage's
+# current Freight rather than jumping to "newest".
+
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: app-warehouse
+  namespace: app-iac-coupled
+spec:
+  freightCreationPolicy: Automatic
+  subscriptions:
+  - image:
+      repoURL: ghcr.io/akuity/demo-app-iac-coupled-app
+      discoveryLimit: 10
+      imageSelectionStrategy: NewestBuild
+      # Tags encode the required Cassandra major version: e.g. "1.4.2-cass7".
+      # The deploy-app task parses this and the version-compat verification
+      # uses it to gate promotion when IaC isn't at the required version.
+      allowTags: ^\d+\.\d+\.\d+-cass\d+$
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: cassandra-iac-warehouse
+  namespace: app-iac-coupled
+spec:
+  freightCreationPolicy: Automatic
+  subscriptions:
+  - git:
+      repoURL: https://github.com/akuity/sedemo-platform.git
+      branch: main
+      includePaths:
+      - apps/demo-app-iac-coupled/iac/cassandra/**
+      excludePaths:
+      - apps/demo-app-iac-coupled/iac/cassandra/README.md
