@@ -1,6 +1,6 @@
 # Demo Ephemeral — PR Preview + Traditional Pipeline
 
-> **To trigger a preview environment:** open a pull request against `main` in [akuity/sedemo-monorepo](https://github.com/akuity/sedemo-monorepo) that touches any file under `rollouts-app/`.
+> **To trigger a preview environment:** open a pull request against `main` in [akuity/sedemo-monorepo](https://github.com/akuity/sedemo-monorepo) that touches any file under `rollouts-app/`, then add the `preview` label to the PR.
 
 Demonstrates two complementary GitOps delivery patterns in a single Kargo project:
 
@@ -12,8 +12,8 @@ Demonstrates two complementary GitOps delivery patterns in a single Kargo projec
 ### PR Preview Pipeline
 
 ```
-GitHub PR opened / updated
-  → ApplicationSet PR generator (polls every 3 min, instant with ArgoCD webhook)
+GitHub PR opened / updated + labeled "preview"
+  → ApplicationSet PR generator (polls every 3 min, instant with ArgoCD webhook; filtered to PRs with "preview" label)
       → ArgoCD: demo-ephemeral-stage-pr-<N>
           → deploys stage-template Helm chart to kargo cluster
               → Warehouse: demo-ephemeral-pr-<N>  (scoped to ^pr-<N>-.+$ only)
@@ -89,7 +89,7 @@ By default Kargo polls for new images on its own schedule. To trigger immediate 
 ## Storytelling Points
 
 ### PR Preview
-- Open two PRs — two independent `preview-pr-N` stages appear in Kargo UI with separate Warehouses
+- Open two PRs and add the `preview` label to each — two independent `preview-pr-N` stages appear in Kargo UI with separate Warehouses
 - Each PR gets a different color (PR# % 6) — visually proves isolation
 - PR comment appears automatically on each PR with the preview URL
 - Highlight `allowTags` scoping in the Warehouse — neither stage can pick up the other's image

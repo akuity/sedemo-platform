@@ -72,12 +72,12 @@ Cluster add-ons installed via ArgoCD, including:
 
 [`apps/demo-ephemeral`](/apps/demo-ephemeral/) demonstrates two complementary delivery patterns in a single Kargo project:
 
-1. **PR Preview** — every open pull request in `akuity/sedemo-monorepo` gets an isolated, auto-promoted preview environment with its own Warehouse, Stage, namespace, and PR comment. Environments tear down automatically when the PR closes.
+1. **PR Preview** — every open pull request in `akuity/sedemo-monorepo` labeled `preview` gets an isolated, auto-promoted preview environment with its own Warehouse, Stage, namespace, and PR comment. Environments tear down automatically when the PR closes.
 2. **Traditional pipeline** — `dev → staging → prod` promotion driven by `kustomize-set-image` on the main branch, showing the graduation path from a validated preview to production.
 
 Per-PR Warehouses scope image discovery to `^pr-<N>-.+$` tags, preventing any cross-PR freight bleed. ApplicationSets handle the full lifecycle — creating and pruning Argo CD Applications and Kargo resources as PRs open and close.
 
-> To trigger a preview environment: open a pull request against `main` in [akuity/sedemo-monorepo](https://github.com/akuity/sedemo-monorepo) touching any file under `rollouts-app/`.
+> To trigger a preview environment: open a pull request against `main` in [akuity/sedemo-monorepo](https://github.com/akuity/sedemo-monorepo) touching any file under `rollouts-app/`, then add the `preview` label to the PR.
 
 **URLs:** `pr-{N}.ephemeral.akpdemoapps.link`
 
