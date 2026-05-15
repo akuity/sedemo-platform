@@ -18,7 +18,7 @@ spec:
       requeueAfterSeconds: 180
       filters:
       - labels:
-        - preview
+          - preview
   template:
     metadata:
       name: demo-ephemeral-pr-{{number}}
@@ -71,7 +71,7 @@ spec:
       requeueAfterSeconds: 180
       filters:
       - labels:
-        - preview
+          - preview
   template:
     metadata:
       name: demo-ephemeral-stage-pr-{{number}}
