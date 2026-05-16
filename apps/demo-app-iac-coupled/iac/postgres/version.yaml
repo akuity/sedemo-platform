@@ -1,0 +1,9 @@
+# Source of truth for the PostgreSQL IaC version.
+# postgres-iac-warehouse subscribes to commits touching this directory.
+#
+# `version` is the Bitnami postgresql Helm chart semver — its major tracks the
+# PostgreSQL major (chart 14.x → PG 14, 15.x → PG 15, 16.x → PG 16). PG is a
+# genuine "no skipping majors" case: pg_upgrade is only supported between
+# adjacent majors, which is the real-world version of the customer's question.
+chart: bitnami/postgresql
+version: "16.4.0"

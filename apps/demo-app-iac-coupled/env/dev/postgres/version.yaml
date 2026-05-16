@@ -1,2 +1,3 @@
 # Written by Kargo's deploy-iac task on every iac-dev promotion.
-version: "7.0.0"
+chart: bitnami/postgresql
+version: "16.4.0"

@@ -1,5 +1,5 @@
 ---
-# IaC promotion: copy iac/cassandra/version.yaml into the per-env overlay.
+# IaC promotion: copy iac/postgres/version.yaml into the per-env overlay.
 # Pure git-commit + git-push. NO argocd-update on purpose — IaC here is
 # Terraform/Helm-applied out of band; Kargo's job is to publish the desired
 # version into Git.
@@ -7,12 +7,12 @@
 # Q3 (defense in depth): the Stage's selectionPolicy: MatchUpstream is the
 # DECLARATIVE rule that controls which Freight gets selected for promotion.
 # The semver-guard step below is the IMPERATIVE rule that controls whether
-# the selected Freight is actually deployed. It compares the incoming Freight's
-# Cassandra major against the major currently deployed in this env, and fails
-# the promotion if the gap is > 1. The guard catches:
+# the selected Freight is actually deployed. It uses Kargo's built-in
+# semverDiff/semverParse functions to enforce same-major or exactly +1 major,
+# blocking downgrades and major skips. The guard catches:
 #   - Manual promotions that bypass auto-promotion ordering
 #   - Multi-upstream sources where MatchUpstream cannot be used (single-upstream only)
-#   - Accidental version regressions (downgrade)
+#   - Accidental downgrades
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
@@ -35,29 +35,30 @@ spec:
   - uses: yaml-parse
     as: current
     config:
-      path: ./src/apps/demo-app-iac-coupled/env/${{ vars.env }}/cassandra/version.yaml
+      path: ./src/apps/demo-app-iac-coupled/env/${{ vars.env }}/postgres/version.yaml
       outputs:
       - name: version
         fromExpression: outputs.version
 
   # Parse the incoming Freight's version (the source-of-truth file the
-  # cassandra-iac-warehouse is subscribed to).
+  # postgres-iac-warehouse is subscribed to).
   - uses: yaml-parse
     as: incoming
     config:
-      path: ./src/apps/demo-app-iac-coupled/iac/cassandra/version.yaml
+      path: ./src/apps/demo-app-iac-coupled/iac/postgres/version.yaml
       outputs:
       - name: version
         fromExpression: outputs.version
 
   # Semver guard using Kargo's built-in expression functions.
-  #   - semverDiff(a, b) returns "None" | "Patch" | "Minor" | "Major" | "Metadata" | "Incomparable"
-  #     It tells us the MAGNITUDE of difference but NOT the direction. A v6 -> v8
-  #     forward jump and a v8 -> v6 downgrade both return "Major".
+  #   - semverDiff(a, b) returns "None" | "Patch" | "Minor" | "Major" | "Metadata" | "Incomparable".
+  #     It tells us the MAGNITUDE of difference but NOT the direction. A
+  #     14 -> 16 forward jump and a 16 -> 14 downgrade both return "Major".
   #   - semverParse(v).Major() / IncMajor() lets us assert "exactly current+1".
   #
   # Rule: allow same version (re-deploy), same-major changes (minor/patch),
-  # or exactly the next major. Block downgrades and major skips.
+  # or exactly the next major. Block downgrades and major skips — which is
+  # also pg_upgrade's actual constraint.
   #
   # Docs: https://docs.kargo.io/user-guide/reference-docs/expressions
   - uses: http
@@ -74,12 +75,12 @@ spec:
 
   - uses: copy
     config:
-      inPath: ./src/apps/demo-app-iac-coupled/iac/cassandra/version.yaml
-      outPath: ./src/apps/demo-app-iac-coupled/env/${{ vars.env }}/cassandra/version.yaml
+      inPath: ./src/apps/demo-app-iac-coupled/iac/postgres/version.yaml
+      outPath: ./src/apps/demo-app-iac-coupled/env/${{ vars.env }}/postgres/version.yaml
   - uses: git-commit
     config:
       path: ./src
-      message: "iac/cassandra: promote ${{ outputs.incoming.version }} to ${{ ctx.stage }} (was ${{ outputs.current.version }}) [skip ci]"
+      message: "iac/postgres: promote ${{ outputs.incoming.version }} to ${{ ctx.stage }} (was ${{ outputs.current.version }}) [skip ci]"
   - uses: git-push
     config:
       path: ./src
@@ -87,11 +88,11 @@ spec:
 ---
 # App promotion with an inline version-compat gate.
 #
-# Q2 illustration: the App image tag is shaped like "1.4.2-cass7"; the Cassandra
-# IaC Freight carries the deployed major version in iac/cassandra/version.yaml.
-# We extract both and fail the promotion (non-zero exit) if they don't match —
-# the failure shows up in the Kargo UI's promotion log, which is exactly the
-# feedback signal an SRE wants.
+# Q2 illustration: the App's declared requiredPostgresMajor (in app/spec.yaml)
+# must equal the Postgres major currently deployed in this env (parsed from
+# env/<env>/postgres/version.yaml via semverParse). Promotion fails (visibly)
+# when they diverge — exactly the signal an SRE wants when the App's required
+# DB version is ahead of (or behind) what IaC has provisioned.
 #
 # Q4 illustration: the argocd-update step at the end is what you'd REMOVE for
 # the agentless variant. Without it, Kargo's only "deploy" action is the git
@@ -105,7 +106,7 @@ spec:
   vars:
   - name: env
   - name: appImage
-    value: ghcr.io/akuity/demo-app-iac-coupled-app
+    value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
   - name: gitRepo
     value: https://github.com/akuity/sedemo-platform.git
   steps:
@@ -116,30 +117,37 @@ spec:
       - branch: main
         path: ./src
 
-  # Read the IaC Freight's cassandra/version.yaml from the just-cloned working
-  # tree. The IaC pipeline writes it into env/<env>/cassandra/ on every IaC
-  # promotion, so by the time the App pipeline runs, the value reflects the
-  # IaC Freight that has been verified at the corresponding IaC Stage.
+  # Read the App's declared dependency. This file is part of the App Warehouse's
+  # Git subscription, so changing it produces a new App Freight (Q1 path-filter
+  # story).
+  - uses: yaml-parse
+    as: appSpec
+    config:
+      path: ./src/apps/demo-app-iac-coupled/app/spec.yaml
+      outputs:
+      - name: requiredMajor
+        fromExpression: outputs.requiredPostgresMajor
+
+  # Read the IaC Freight's currently-deployed Postgres version in this env.
   - uses: yaml-parse
     as: iac
     config:
-      path: ./src/apps/demo-app-iac-coupled/env/${{ vars.env }}/cassandra/version.yaml
+      path: ./src/apps/demo-app-iac-coupled/env/${{ vars.env }}/postgres/version.yaml
       outputs:
       - name: version
         fromExpression: outputs.version
 
-  # Compatibility gate: image tag suffix like "-cass7" must match the IaC
-  # Cassandra major. semverParse(...).Major() gives us the integer major from
-  # the deployed Cassandra version string.
+  # Compatibility gate: the App's declared PG major must equal the IaC's
+  # actually-deployed PG major (extracted via semverParse).
   - uses: http
     as: compat-check
     config:
       method: GET
       url: https://httpbin.org/status/200
       successExpression: |
-        endsWith(imageFrom(vars.appImage).Tag, "-cass" + string(semverParse(outputs.iac.version).Major()))
+        int(outputs.appSpec.requiredMajor) == semverParse(outputs.iac.version).Major()
       failureExpression: |
-        !endsWith(imageFrom(vars.appImage).Tag, "-cass" + string(semverParse(outputs.iac.version).Major()))
+        int(outputs.appSpec.requiredMajor) != semverParse(outputs.iac.version).Major()
 
   - uses: kustomize-set-image
     config:
@@ -151,7 +159,7 @@ spec:
   - uses: git-commit
     config:
       path: ./src
-      message: "app-${{ vars.env }}: promote ${{ imageFrom(vars.appImage).Tag }} against cassandra-major-${{ outputs.iac.major }}"
+      message: "app-${{ vars.env }}: promote ${{ imageFrom(vars.appImage).Tag }} (requires PG ${{ outputs.appSpec.requiredMajor }}, deployed PG ${{ semverParse(outputs.iac.version).Major() }})"
 
   - uses: git-push
     config:

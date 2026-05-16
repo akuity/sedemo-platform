@@ -5,5 +5,5 @@ resources:
 - ../../../kustomize/base
 images:
 # Tag updated by deploy-app's kustomize-set-image step.
-- name: ghcr.io/akuity/demo-app-iac-coupled-app
-  newTag: 1.4.2-cass7
+- name: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+  newTag: 43-green

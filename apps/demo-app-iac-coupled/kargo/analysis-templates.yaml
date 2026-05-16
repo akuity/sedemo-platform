@@ -1,11 +1,11 @@
 ---
-# cassandra-smoke: cheap Job-based AnalysisTemplate that pretends to validate
-# the Cassandra rollout in each environment. Stand-in for whatever real check
-# the customer wants (cqlsh probe, ring topology, etc.).
+# postgres-smoke: cheap Job-based AnalysisTemplate that pretends to validate
+# the Postgres rollout in each environment. Stand-in for whatever real check
+# the customer wants (psql probe, pg_isready, replication lag, etc.).
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
-  name: cassandra-smoke
+  name: postgres-smoke
   namespace: app-iac-coupled
 spec:
   args:
@@ -26,9 +26,9 @@ spec:
                 command: [/bin/sh, -c]
                 args:
                 - |
-                  echo "Validating Cassandra ring in {{args.environment}}..."
-                  for i in 1 2 3; do echo "  check $i: PASS"; sleep 2; done
-                  echo "Cassandra in {{args.environment}} healthy."
+                  echo "Validating Postgres in {{args.environment}}..."
+                  for i in 1 2 3; do echo "  pg_isready ($i): PASS"; sleep 2; done
+                  echo "Postgres in {{args.environment}} healthy."
 ---
 # vm-smoke: AGENTLESS feedback loop (Q4).
 #

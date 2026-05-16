@@ -1,13 +1,13 @@
 # Two Warehouses scoped to different parts of the monorepo.
 #
-# Q1 (path filtering): each Warehouse only produces Freight when its own paths
-# change. A pure-IaC commit can't spawn App Freight, and vice versa.
+# Q1 (path filtering): each Warehouse only produces Freight when its own
+# subscriptions change. A pure-IaC commit can't spawn App Freight, and vice versa.
 #
-# Q3 (sequential / no-skip): cassandra-iac uses freightCreationPolicy: Automatic
+# Q3 (sequential / no-skip): postgres-iac uses freightCreationPolicy: Automatic
 # so every commit becomes a Freight in arrival order. Combined with
-# selectionPolicy: MatchUpstream on downstream Stages (see stages.yaml), this
-# yields v6 -> v7 -> v8 ordering — downstream traces the upstream Stage's
-# current Freight rather than jumping to "newest".
+# selectionPolicy: MatchUpstream on downstream Stages (see stages.yaml) and an
+# imperative semver guard in deploy-iac (see promotion-tasks.yaml), this yields
+# PG 14 -> 15 -> 16 ordering — pg_upgrade's actual constraint.
 
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
@@ -16,20 +16,26 @@ metadata:
   namespace: app-iac-coupled
 spec:
   freightCreationPolicy: Automatic
+  # Two subscriptions in one Warehouse: a new App Freight is produced when
+  # EITHER a new app image is pushed OR the app's declared dependencies
+  # (apps/demo-app-iac-coupled/app/spec.yaml) change.
   subscriptions:
   - image:
-      repoURL: ghcr.io/akuity/demo-app-iac-coupled-app
+      repoURL: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       discoveryLimit: 10
       imageSelectionStrategy: NewestBuild
-      # Tags encode the required Cassandra major version: e.g. "1.4.2-cass7".
-      # The deploy-app task parses this and the version-compat verification
-      # uses it to gate promotion when IaC isn't at the required version.
-      allowTags: ^\d+\.\d+\.\d+-cass\d+$
+      # Real tag pattern used elsewhere in this repo, e.g. "43-green".
+      allowTags: ^\d+-[a-z]+$
+  - git:
+      repoURL: https://github.com/akuity/sedemo-platform.git
+      branch: main
+      includePaths:
+      - apps/demo-app-iac-coupled/app/**
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
-  name: cassandra-iac-warehouse
+  name: postgres-iac-warehouse
   namespace: app-iac-coupled
 spec:
   freightCreationPolicy: Automatic
@@ -38,6 +44,6 @@ spec:
       repoURL: https://github.com/akuity/sedemo-platform.git
       branch: main
       includePaths:
-      - apps/demo-app-iac-coupled/iac/cassandra/**
+      - apps/demo-app-iac-coupled/iac/postgres/**
       excludePaths:
-      - apps/demo-app-iac-coupled/iac/cassandra/README.md
+      - apps/demo-app-iac-coupled/iac/postgres/README.md
