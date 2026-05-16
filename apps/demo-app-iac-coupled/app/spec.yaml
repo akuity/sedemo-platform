@@ -1,0 +1,10 @@
+# App-side declaration of dependency on the IaC pipeline.
+#
+# This file is part of the App Warehouse's Git subscription — changing it
+# produces a new App Freight. Kargo's deploy-app compat-check reads this
+# value and asserts it matches the currently-deployed Postgres major in the
+# target env. The promotion fails (visibly) if they diverge.
+#
+# In a real codebase this would live next to the app's Chart.yaml or a
+# similar release manifest; for the demo it sits next to the kustomize base.
+requiredPostgresMajor: 16
