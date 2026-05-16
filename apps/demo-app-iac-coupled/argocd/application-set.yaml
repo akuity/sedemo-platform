@@ -22,7 +22,7 @@ spec:
       source:
         repoURL: https://github.com/blakepettersson/sedemo-platform.git
         path: apps/demo-app-iac-coupled/env/{{stage}}/app
-        targetRevision: main
+        targetRevision: stateful-infra
       destination:
         name: sedemo-primary
         namespace: app-iac-coupled-{{stage}}
