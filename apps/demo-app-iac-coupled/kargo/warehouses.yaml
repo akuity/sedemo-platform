@@ -21,14 +21,14 @@ spec:
   # (apps/demo-app-iac-coupled/app/spec.yaml) change.
   subscriptions:
   - image:
-      repoURL: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+      repoURL: ghcr.io/blakepettersson/sedemo-monorepo-rollouts-app
       discoveryLimit: 10
       imageSelectionStrategy: NewestBuild
       # Real tag pattern used elsewhere in this repo, e.g. "43-green".
       allowTags: ^\d+-[a-z]+$
   - git:
-      repoURL: https://github.com/akuity/sedemo-platform.git
-      branch: main
+      repoURL: https://github.com/blakepettersson/sedemo-platform.git
+      branch: feature/stateful-infra
       includePaths:
       - apps/demo-app-iac-coupled/app/**
 ---
@@ -41,8 +41,8 @@ spec:
   freightCreationPolicy: Automatic
   subscriptions:
   - git:
-      repoURL: https://github.com/akuity/sedemo-platform.git
-      branch: main
+      repoURL: https://github.com/blakepettersson/sedemo-platform.git
+      branch: feature/stateful-infra
       includePaths:
       - apps/demo-app-iac-coupled/iac/postgres/**
       excludePaths:
