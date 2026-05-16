@@ -21,7 +21,7 @@ spec:
   # (apps/demo-app-iac-coupled/app/spec.yaml) change.
   subscriptions:
   - image:
-      repoURL: ghcr.io/blakepettersson/sedemo-monorepo-rollouts-app
+      repoURL: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       discoveryLimit: 10
       imageSelectionStrategy: NewestBuild
       # Real tag pattern used elsewhere in this repo, e.g. "43-green".
