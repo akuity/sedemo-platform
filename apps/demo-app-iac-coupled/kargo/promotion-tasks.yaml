@@ -22,7 +22,7 @@ spec:
   vars:
   - name: env
   - name: gitRepo
-    value: https://github.com/akuity/sedemo-platform.git
+    value: https://github.com/blakepettersson/sedemo-platform.git
   steps:
   - uses: git-clone
     config:
@@ -106,9 +106,9 @@ spec:
   vars:
   - name: env
   - name: appImage
-    value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+    value: ghcr.io/blakepettersson/sedemo-monorepo-rollouts-app
   - name: gitRepo
-    value: https://github.com/akuity/sedemo-platform.git
+    value: https://github.com/blakepettersson/sedemo-platform.git
   steps:
   - uses: git-clone
     config:

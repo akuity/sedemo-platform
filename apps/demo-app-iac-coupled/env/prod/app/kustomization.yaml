@@ -4,5 +4,5 @@ namespace: app-iac-coupled-prod
 resources:
 - ../../../kustomize/base
 images:
-- name: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+- name: ghcr.io/blakepettersson/sedemo-monorepo-rollouts-app
   newTag: 43-green

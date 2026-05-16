@@ -83,7 +83,7 @@ spec:
     failureLimit: 1
     provider:
       web:
-        url: "https://api.github.com/repos/akuity/sedemo-platform/deployments?sha={{args.expected-sha}}&environment={{args.environment}}"
+        url: "https://api.github.com/repos/blakepettersson/sedemo-platform/deployments?sha={{args.expected-sha}}&environment={{args.environment}}"
         headers:
         - key: Accept
           value: application/vnd.github+json

@@ -20,7 +20,7 @@ spec:
     spec:
       project: app-iac-coupled
       source:
-        repoURL: https://github.com/akuity/sedemo-platform.git
+        repoURL: https://github.com/blakepettersson/sedemo-platform.git
         path: apps/demo-app-iac-coupled/env/{{stage}}/app
         targetRevision: main
       destination:
