@@ -28,7 +28,7 @@ spec:
       allowTags: ^\d+-[a-z]+$
   - git:
       repoURL: https://github.com/blakepettersson/sedemo-platform.git
-      branch: feature/stateful-infra
+      branch: stateful-infra
       includePaths:
       - apps/demo-app-iac-coupled/app/**
 ---
@@ -42,7 +42,7 @@ spec:
   subscriptions:
   - git:
       repoURL: https://github.com/blakepettersson/sedemo-platform.git
-      branch: feature/stateful-infra
+      branch: stateful-infra
       includePaths:
       - apps/demo-app-iac-coupled/iac/postgres/**
       excludePaths:
