@@ -29,8 +29,13 @@ spec:
   - git:
       repoURL: https://github.com/blakepettersson/sedemo-platform.git
       branch: stateful-infra
+      # NOTE: paths are EXACT-MATCH by default. A bare directory is treated as
+      # "anything under it" (see apps/active-active/kargo/warehouse.yaml for a
+      # known-working example). To use globs/regex, prefix with "glob:" or
+      # "regex:". Trailing /** with no prefix becomes a literal — Kargo will
+      # log "No commits discovered" because nothing matches the literal path.
       includePaths:
-      - apps/demo-app-iac-coupled/app/**
+      - apps/demo-app-iac-coupled/app
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
@@ -44,6 +49,4 @@ spec:
       repoURL: https://github.com/blakepettersson/sedemo-platform.git
       branch: stateful-infra
       includePaths:
-      - apps/demo-app-iac-coupled/iac/postgres/**
-      excludePaths:
-      - apps/demo-app-iac-coupled/iac/postgres/README.md
+      - apps/demo-app-iac-coupled/iac/postgres
