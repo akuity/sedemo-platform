@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
       - name: app
-        image: ghcr.io/akuity/demo-app-iac-coupled-app
+        image: ghcr.io/akuity/sedemo-monorepo-rollouts-app
         ports:
         - containerPort: 8080
