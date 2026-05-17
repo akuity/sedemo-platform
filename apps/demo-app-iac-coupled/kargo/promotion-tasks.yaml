@@ -36,13 +36,16 @@ spec:
         path: ./src
 
   # Parse the version currently deployed in this env (last successful promotion).
+  # NOTE: inside yaml-parse, fromExpression runs against the parsed YAML
+  # document directly — no "outputs." prefix. For a file with top-level
+  # `version: "16.4.0"`, the expression is just `version`.
   - uses: yaml-parse
     as: current
     config:
       path: ./src/apps/demo-app-iac-coupled/env/${{ vars.env }}/postgres/version.yaml
       outputs:
       - name: version
-        fromExpression: outputs.version
+        fromExpression: version
 
   # Parse the incoming Freight's version (the source-of-truth file the
   # postgres-iac-warehouse is subscribed to).
@@ -52,7 +55,7 @@ spec:
       path: ./src/apps/demo-app-iac-coupled/iac/postgres/version.yaml
       outputs:
       - name: version
-        fromExpression: outputs.version
+        fromExpression: version
 
   # Semver guard using Kargo's built-in expression functions.
   #   - semverDiff(a, b) returns "None" | "Patch" | "Minor" | "Major" | "Metadata" | "Incomparable".
@@ -126,13 +129,15 @@ spec:
   # Read the App's declared dependency. This file is part of the App Warehouse's
   # Git subscription, so changing it produces a new App Freight (Q1 path-filter
   # story).
+  # NOTE: inside yaml-parse, fromExpression runs against the parsed YAML
+  # document directly — no "outputs." prefix.
   - uses: yaml-parse
     as: appSpec
     config:
       path: ./src/apps/demo-app-iac-coupled/app/spec.yaml
       outputs:
       - name: requiredMajor
-        fromExpression: outputs.requiredPostgresMajor
+        fromExpression: requiredPostgresMajor
 
   # Read the IaC Freight's currently-deployed Postgres version in this env.
   - uses: yaml-parse
@@ -141,7 +146,7 @@ spec:
       path: ./src/apps/demo-app-iac-coupled/env/${{ vars.env }}/postgres/version.yaml
       outputs:
       - name: version
-        fromExpression: outputs.version
+        fromExpression: version
 
   # Compatibility gate: the App's declared PG major must equal the IaC's
   # actually-deployed PG major (extracted via semverParse).
