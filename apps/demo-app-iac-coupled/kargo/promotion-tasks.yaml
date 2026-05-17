@@ -67,18 +67,27 @@ spec:
   # or exactly the next major. Block downgrades and major skips — which is
   # also pg_upgrade's actual constraint.
   #
+  # IMPORTANT scoping note: the http step's internal expression engine has
+  # NEITHER cross-step `outputs` NOR Kargo helper functions like semverDiff /
+  # semverParse — only the bare expr-lang language plus the `response` object.
+  # So we evaluate the ENTIRE comparison in Kargo's OUTER ${{ }} pre-processor
+  # (which has both the functions and `task.outputs` in scope), and substitute
+  # the boolean result. The http step then sees the literal `true` or `false`.
+  #
   # Docs: https://docs.kargo.io/user-guide/reference-docs/expressions
   - uses: http
     as: semver-guard
     config:
       method: GET
       url: https://httpbin.org/status/200
-      successExpression: |
-        semverDiff(outputs.incoming.version, outputs.current.version) != 'Major' ||
-        semverParse(outputs.incoming.version).Major() == semverParse(outputs.current.version).IncMajor().Major()
-      failureExpression: |
-        semverDiff(outputs.incoming.version, outputs.current.version) == 'Major' &&
-        semverParse(outputs.incoming.version).Major() != semverParse(outputs.current.version).IncMajor().Major()
+      # Wrap with quote() so the substituted result stays a string (Kargo's
+      # JSON template evaluator would otherwise type-coerce `true`/`false` to
+      # YAML booleans and the http step's schema would reject "Expected string,
+      # given boolean"). quote() emits `"true"` / `"false"`; Kargo strips the
+      # outer quotes; the http step then sees the literal string `true`/`false`
+      # and expr-lang parses it as the boolean.
+      successExpression: ${{ quote(semverDiff(task.outputs.incoming.version, task.outputs.current.version) != 'Major' || semverParse(task.outputs.incoming.version).Major() == semverParse(task.outputs.current.version).IncMajor().Major()) }}
+      failureExpression: ${{ quote(semverDiff(task.outputs.incoming.version, task.outputs.current.version) == 'Major' && semverParse(task.outputs.incoming.version).Major() != semverParse(task.outputs.current.version).IncMajor().Major()) }}
 
   - uses: copy
     config:
@@ -87,7 +96,7 @@ spec:
   - uses: git-commit
     config:
       path: ./src
-      message: "iac/postgres: promote ${{ outputs.incoming.version }} to ${{ ctx.stage }} (was ${{ outputs.current.version }}) [skip ci]"
+      message: "iac/postgres: promote ${{ task.outputs.incoming.version }} to ${{ ctx.stage }} (was ${{ task.outputs.current.version }}) [skip ci]"
   - uses: git-push
     config:
       path: ./src
@@ -150,15 +159,17 @@ spec:
 
   # Compatibility gate: the App's declared PG major must equal the IaC's
   # actually-deployed PG major (extracted via semverParse).
+  #
+  # Same scoping caveat as deploy-iac's semver-guard: the http step has neither
+  # cross-step outputs nor Kargo helpers in scope, so we evaluate the whole
+  # comparison in the OUTER ${{ }} pre-processor and substitute the boolean.
   - uses: http
     as: compat-check
     config:
       method: GET
       url: https://httpbin.org/status/200
-      successExpression: |
-        int(outputs.appSpec.requiredMajor) == semverParse(outputs.iac.version).Major()
-      failureExpression: |
-        int(outputs.appSpec.requiredMajor) != semverParse(outputs.iac.version).Major()
+      successExpression: ${{ quote(int(task.outputs.appSpec.requiredMajor) == semverParse(task.outputs.iac.version).Major()) }}
+      failureExpression: ${{ quote(int(task.outputs.appSpec.requiredMajor) != semverParse(task.outputs.iac.version).Major()) }}
 
   - uses: kustomize-set-image
     config:
@@ -170,7 +181,7 @@ spec:
   - uses: git-commit
     config:
       path: ./src
-      message: "app-${{ vars.env }}: promote ${{ imageFrom(vars.appImage).Tag }} (requires PG ${{ outputs.appSpec.requiredMajor }}, deployed PG ${{ semverParse(outputs.iac.version).Major() }})"
+      message: "app-${{ vars.env }}: promote ${{ imageFrom(vars.appImage).Tag }} (requires PG ${{ task.outputs.appSpec.requiredMajor }}, deployed PG ${{ semverParse(task.outputs.iac.version).Major() }})"
 
   - uses: git-push
     config:
