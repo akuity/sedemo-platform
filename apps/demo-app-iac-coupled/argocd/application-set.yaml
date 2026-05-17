@@ -7,6 +7,8 @@ metadata:
   name: app-iac-coupled
   namespace: argocd
 spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
   generators:
   - list:
       elements:
@@ -14,18 +16,18 @@ spec:
       - stage: prod
   template:
     metadata:
-      name: app-{{stage}}
+      name: app-wat-{{.stage}}
       annotations:
-        kargo.akuity.io/authorized-stage: app-iac-coupled:app-{{stage}}
+        kargo.akuity.io/authorized-stage: app-iac-coupled:app-{{.stage}}
     spec:
       project: app-iac-coupled
       source:
         repoURL: https://github.com/blakepettersson/sedemo-platform.git
-        path: apps/demo-app-iac-coupled/env/{{stage}}/app
+        path: apps/demo-app-iac-coupled/env/{{.stage}}/app
         targetRevision: stateful-infra
       destination:
-        name: sedemo-primary
-        namespace: app-iac-coupled-{{stage}}
+        name: "{{.stage}}"
+        namespace: app-iac-coupled-{{.stage}}
       syncPolicy:
         automated:
           prune: true
