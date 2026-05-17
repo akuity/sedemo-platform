@@ -9,6 +9,17 @@ metadata:
 spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
+  # Tells the ApplicationSet controller to leave these fields alone when it
+  # reconciles. Without this, the controller re-renders the Application from
+  # the template and reverts whatever Kargo's argocd-update step wrote — the
+  # kustomize image override, the target revision, helm parameters, etc.
+  # Symptoms: the App reverts to the original image tag on every AppSet
+  # reconcile loop, fighting Kargo's promotion.
+  ignoreApplicationDifferences:
+  - jsonPointers:
+    - /spec/source/targetRevision
+    - /spec/source/kustomize/images
+    - /spec/source/helm/parameters
   generators:
   - list:
       elements:
