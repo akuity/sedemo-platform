@@ -5,5 +5,5 @@ resources:
 - ../../../kustomize/base
 images:
 # Tag updated by deploy-app's kustomize-set-image step.
-- name: ghcr.io/blakepettersson/sedemo-monorepo-rollouts-app
+- name: ghcr.io/akuity/sedemo-monorepo-rollouts-app
   newTag: 43-green

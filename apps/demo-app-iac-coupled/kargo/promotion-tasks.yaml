@@ -122,7 +122,11 @@ spec:
   vars:
   - name: env
   - name: appImage
-    value: ghcr.io/blakepettersson/sedemo-monorepo-rollouts-app
+    # MUST match app-warehouse's image subscription URL exactly — `imageFrom()`
+    # looks up the image in the Freight by repoURL and returns a zero Value if
+    # nothing matches, which then panics on `.Tag` with
+    # "reflect.Value.Field on zero Value".
+    value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
   - name: gitRepo
     value: https://github.com/blakepettersson/sedemo-platform.git
   - name: sourceBranch
