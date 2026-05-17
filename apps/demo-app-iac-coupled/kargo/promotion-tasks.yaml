@@ -23,12 +23,16 @@ spec:
   - name: env
   - name: gitRepo
     value: https://github.com/blakepettersson/sedemo-platform.git
+  - name: sourceBranch
+    # Flip to "main" when this demo lands on main; for now everything runs on
+    # the dev branch.
+    value: stateful-infra
   steps:
   - uses: git-clone
     config:
       repoURL: ${{ vars.gitRepo }}
       checkout:
-      - branch: main
+      - branch: ${{ vars.sourceBranch }}
         path: ./src
 
   # Parse the version currently deployed in this env (last successful promotion).
@@ -84,7 +88,7 @@ spec:
   - uses: git-push
     config:
       path: ./src
-      targetBranch: main
+      targetBranch: ${{ vars.sourceBranch }}
 ---
 # App promotion with an inline version-compat gate.
 #
@@ -109,12 +113,14 @@ spec:
     value: ghcr.io/blakepettersson/sedemo-monorepo-rollouts-app
   - name: gitRepo
     value: https://github.com/blakepettersson/sedemo-platform.git
+  - name: sourceBranch
+    value: stateful-infra
   steps:
   - uses: git-clone
     config:
       repoURL: ${{ vars.gitRepo }}
       checkout:
-      - branch: main
+      - branch: ${{ vars.sourceBranch }}
         path: ./src
 
   # Read the App's declared dependency. This file is part of the App Warehouse's
@@ -164,7 +170,7 @@ spec:
   - uses: git-push
     config:
       path: ./src
-      targetBranch: main
+      targetBranch: ${{ vars.sourceBranch }}
 
   # AGENTFUL mode: keep this step. Argo CD syncs the app via the Akuity Agent.
   # AGENTLESS mode (Q4): delete the step below. The only "deploy" trace Kargo
