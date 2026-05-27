@@ -3,6 +3,7 @@ kind: Warehouse
 metadata:
   name: demo-rollouts
   namespace: team-eddie
+spec:
   subscriptions:
   - git:
       repoURL: https://github.com/akuity/sedemo-platform
