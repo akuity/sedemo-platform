@@ -54,6 +54,8 @@ spec:
               value: ${{ ctx.stage }}
             - key: ingress.root_domain
               value: akpdemoapps.link
+      - uses: kyverno-policy-check
+        as: kyverno
       - task:
           name: push-manifests
       - uses: argocd-update
@@ -65,7 +67,10 @@ spec:
       - uses: hello-world
         as: my-custom-step
         config: 
-          message: "Hello, World! It's Kargo! "
+          message: |
+            Hello, World! It's Kargo!
+            Kyverno output:
+            ${{ steps.kyverno.outputs.version }}
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
