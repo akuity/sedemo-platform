@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
   name: policy-analysis
-  namespace: demo-rollouts
+  namespace: team-eddie
 spec:
   metrics:
   - name: policy-analysis
