@@ -1,9 +1,10 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
-  name: team-eddie
+  name: demo-rollouts
   namespace: team-eddie
-spec:
   subscriptions:
   - git:
-      repoURL: https://github.com/eddiewebb/circleci-samples
+      repoURL: https://github.com/akuity/sedemo-platform
+      includePaths:
+      - templated-teams

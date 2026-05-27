@@ -1,0 +1,66 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prod-team
+  namespace: team-eddie
+  annotations:
+    kargo.akuity.io/description: Promote to Production 
+    # the group/team/role from IdP goes here.
+    rbac.kargo.akuity.io/claims: '{"groups":["sedemo-prod"]}'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: prod-team
+  namespace: team-eddie
+rules:
+- apiGroups:
+  - kargo.akuity.io
+  resources:
+  - promotions
+  verbs:
+  - create
+  - patch
+  - update
+- apiGroups:
+  - kargo.akuity.io
+  resources:
+  - 'stages'
+  verbs:
+  - promote
+  # Limit promotions to a subset of Stages
+  resourceNames:
+  - 'staging' # can also promote to staging
+  - 'production'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prod-team
+  namespace: team-eddie
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: prod-team
+subjects:
+- kind: ServiceAccount
+  name: prod-team
+  namespace: team-eddie
+---
+# This RoleBinding allows the prod-team ServiceAccount to view project
+# resources (without redefining read rules), by binding it to the
+# built-in kargo-viewer Role.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prod-team-viewer
+  namespace: team-eddie
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kargo-viewer
+subjects:
+- kind: ServiceAccount
+  name: prod-team
+  namespace: team-eddie
