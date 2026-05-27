@@ -70,7 +70,7 @@ spec:
           message: |
             Hello, World! It's Kargo!
             Kyverno output:
-            ${{ steps.kyverno.outputs.version }}
+            ${{ kyverno.outputs.version }}
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
