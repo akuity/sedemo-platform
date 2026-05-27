@@ -28,15 +28,15 @@ spec:
       - name: path_out
         value: ./out
       steps:
-    - uses: git-clone
-      config:
-        repoURL: ${{ vars.gitRepo }}
-        checkout:
-        - branch: ${{ vars.sourceBranch }}
-          path: ${{ vars.path_src }}
-        - branch: ${{ vars.targetBranch }}
-          create: true
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: ${{ vars.sourceBranch }}
+            path: ${{ vars.path_src }}
+          - branch: ${{ vars.targetBranch }}
+            create: true
+            path: ${{ vars.path_out }}
+      - uses: git-clear
+        config:
           path: ${{ vars.path_out }}
-    - uses: git-clear
-      config:
-        path: ${{ vars.path_out }}
