@@ -68,7 +68,7 @@ spec:
         as: my-custom-step
         config: 
           message: |
-            Hello, World! It's Kargo!
+            Hello, World! It\'s Kargo!
             Kyverno output:
 ---
 apiVersion: kargo.akuity.io/v1alpha1
