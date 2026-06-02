@@ -16,9 +16,10 @@ data:
   env: "uat"
   log-level: "info"
   max-connections: "1000"
-  feature-advanced-analytics: "true"
-  feature-risk-engine: "v2"
-  feature-compliance-mode: "gdpr"
+  feature-advancedAnalytics: "true"
+  feature-complianceMode: "gdpr"
+  feature-lattedog: "false"
+  feature-riskEngine: "v2"
 ---
 # Source: downstream/templates/service.yaml
 apiVersion: v1
