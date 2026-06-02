@@ -7,7 +7,7 @@ metadata:
   namespace: demo-downstream-dev
   labels:
     app.kubernetes.io/name: downstream
-    app.kubernetes.io/instance: downstream
+    app.kubernetes.io/instance: customer-b-us-east
 data:
   customer-id: "crd-0002"
   customer-tier: "premium"
@@ -28,7 +28,7 @@ metadata:
   namespace: demo-downstream-dev
   labels:
     app.kubernetes.io/name: downstream
-    app.kubernetes.io/instance: downstream
+    app.kubernetes.io/instance: customer-b-us-east
 spec:
   type: ClusterIP
   ports:
@@ -46,7 +46,7 @@ metadata:
   namespace: demo-downstream-dev
   labels:
     app.kubernetes.io/name: downstream
-    app.kubernetes.io/instance: downstream
+    app.kubernetes.io/instance: customer-b-us-east
 spec:
   replicas: 0
   revisionHistoryLimit: 3
