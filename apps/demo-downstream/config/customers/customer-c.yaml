@@ -1,0 +1,16 @@
+config:
+  customerId: crd-0003
+  customerTier: enterprise
+  maxConnections: 1000
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+featureFlags:
+  advancedAnalytics: true
+  riskEngine: v2

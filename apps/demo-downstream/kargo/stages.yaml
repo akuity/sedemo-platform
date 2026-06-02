@@ -1,0 +1,325 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# STAGE: dev
+# Renders all dev instances: customer-a/us-east, customer-a/eu-west,
+#                            customer-b/us-east, customer-b/eu-west
+#
+# Each helm-template call layers:  base ← region ← customer ← env
+# The cartesian product is computed at render time — never stored.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev
+  namespace: demo-downstream
+  annotations:
+    kargo.akuity.io/color: gray
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: demo-downstream
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-platform
+      - name: imageRepo
+        value: ghcr.io/akuity/guestbook
+      - name: src
+        value: ./src
+      steps:
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: main
+            path: ${{ vars.src }}
+
+      # customer-a / us-east / dev
+      - uses: helm-template
+        config:
+          releaseName: downstream
+          path: ${{ vars.src }}/apps/demo-downstream/chart
+          valuesFiles:
+          - ${{ vars.src }}/apps/demo-downstream/config/base/values.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/regions/us-east.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/customers/customer-a.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/envs/dev.yaml
+          outPath: ${{ vars.src }}/apps/demo-downstream/rendered/customer-a/us-east/dev/manifests.yaml
+          namespace: downstream-customer-a-us-east-dev
+          setValues:
+          - key: image.tag
+            value: ${{ imageFrom(vars.imageRepo).Tag }}
+
+      # customer-a / eu-west / dev
+      - uses: helm-template
+        config:
+          releaseName: downstream
+          path: ${{ vars.src }}/apps/demo-downstream/chart
+          valuesFiles:
+          - ${{ vars.src }}/apps/demo-downstream/config/base/values.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/regions/eu-west.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/customers/customer-a.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/envs/dev.yaml
+          outPath: ${{ vars.src }}/apps/demo-downstream/rendered/customer-a/eu-west/dev/manifests.yaml
+          namespace: downstream-customer-a-eu-west-dev
+          setValues:
+          - key: image.tag
+            value: ${{ imageFrom(vars.imageRepo).Tag }}
+
+      # customer-b / us-east / dev
+      - uses: helm-template
+        config:
+          releaseName: downstream
+          path: ${{ vars.src }}/apps/demo-downstream/chart
+          valuesFiles:
+          - ${{ vars.src }}/apps/demo-downstream/config/base/values.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/regions/us-east.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/customers/customer-b.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/envs/dev.yaml
+          outPath: ${{ vars.src }}/apps/demo-downstream/rendered/customer-b/us-east/dev/manifests.yaml
+          namespace: downstream-customer-b-us-east-dev
+          setValues:
+          - key: image.tag
+            value: ${{ imageFrom(vars.imageRepo).Tag }}
+
+      # customer-b / eu-west / dev
+      - uses: helm-template
+        config:
+          releaseName: downstream
+          path: ${{ vars.src }}/apps/demo-downstream/chart
+          valuesFiles:
+          - ${{ vars.src }}/apps/demo-downstream/config/base/values.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/regions/eu-west.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/customers/customer-b.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/envs/dev.yaml
+          outPath: ${{ vars.src }}/apps/demo-downstream/rendered/customer-b/eu-west/dev/manifests.yaml
+          namespace: downstream-customer-b-eu-west-dev
+          setValues:
+          - key: image.tag
+            value: ${{ imageFrom(vars.imageRepo).Tag }}
+
+      - uses: git-commit
+        as: commit
+        config:
+          path: ${{ vars.src }}
+          message: "downstream dev: promote ${{ imageFrom(vars.imageRepo).Tag }} [skip ci]"
+      - uses: git-push
+        config:
+          path: ${{ vars.src }}
+      - uses: argocd-update
+        config:
+          apps:
+          - name: downstream-customer-a-us-east-dev
+            namespace: argocd
+          - name: downstream-customer-a-eu-west-dev
+            namespace: argocd
+          - name: downstream-customer-b-us-east-dev
+            namespace: argocd
+          - name: downstream-customer-b-eu-west-dev
+            namespace: argocd
+
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# STAGE: qa  (manual gate — no rendering)
+# Single approval gate before prod waves. Freight must have passed dev first.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: qa
+  namespace: demo-downstream
+  annotations:
+    kargo.akuity.io/color: amber
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: demo-downstream
+    sources:
+      stages:
+      - dev
+  promotionTemplate:
+    spec:
+      steps: []
+
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# STAGE: prod-us-east
+# Renders all us-east prod instances: customer-a, customer-b
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod-us-east
+  namespace: demo-downstream
+  annotations:
+    kargo.akuity.io/color: green
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: demo-downstream
+    sources:
+      stages:
+      - qa
+      autoPromotionOptions:
+        selectionPolicy: MatchUpstream
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-platform
+      - name: imageRepo
+        value: ghcr.io/akuity/guestbook
+      - name: src
+        value: ./src
+      steps:
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: main
+            path: ${{ vars.src }}
+
+      # customer-a / us-east / prod
+      - uses: helm-template
+        config:
+          releaseName: downstream
+          path: ${{ vars.src }}/apps/demo-downstream/chart
+          valuesFiles:
+          - ${{ vars.src }}/apps/demo-downstream/config/base/values.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/regions/us-east.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/customers/customer-a.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/envs/prod.yaml
+          outPath: ${{ vars.src }}/apps/demo-downstream/rendered/customer-a/us-east/prod/manifests.yaml
+          namespace: downstream-customer-a-us-east-prod
+          setValues:
+          - key: image.tag
+            value: ${{ imageFrom(vars.imageRepo).Tag }}
+
+      # customer-b / us-east / prod
+      - uses: helm-template
+        config:
+          releaseName: downstream
+          path: ${{ vars.src }}/apps/demo-downstream/chart
+          valuesFiles:
+          - ${{ vars.src }}/apps/demo-downstream/config/base/values.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/regions/us-east.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/customers/customer-b.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/envs/prod.yaml
+          outPath: ${{ vars.src }}/apps/demo-downstream/rendered/customer-b/us-east/prod/manifests.yaml
+          namespace: downstream-customer-b-us-east-prod
+          setValues:
+          - key: image.tag
+            value: ${{ imageFrom(vars.imageRepo).Tag }}
+
+      - uses: git-commit
+        as: commit
+        config:
+          path: ${{ vars.src }}
+          message: "downstream prod-us-east: promote ${{ imageFrom(vars.imageRepo).Tag }} [skip ci]"
+      - uses: git-push
+        config:
+          path: ${{ vars.src }}
+      - uses: argocd-update
+        config:
+          apps:
+          - name: downstream-customer-a-us-east-prod
+            namespace: argocd
+          - name: downstream-customer-b-us-east-prod
+            namespace: argocd
+
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# STAGE: prod-eu-west
+# Renders all eu-west prod instances: customer-a, customer-c
+# 2-minute soak after prod-us-east before this stage auto-promotes.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod-eu-west
+  namespace: demo-downstream
+  annotations:
+    kargo.akuity.io/color: green
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: demo-downstream
+    sources:
+      stages:
+      - prod-us-east
+      requiredSoakTime: 2m0s
+      autoPromotionOptions:
+        selectionPolicy: MatchUpstream
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-platform
+      - name: imageRepo
+        value: ghcr.io/akuity/guestbook
+      - name: src
+        value: ./src
+      steps:
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: main
+            path: ${{ vars.src }}
+
+      # customer-a / eu-west / prod
+      - uses: helm-template
+        config:
+          releaseName: downstream
+          path: ${{ vars.src }}/apps/demo-downstream/chart
+          valuesFiles:
+          - ${{ vars.src }}/apps/demo-downstream/config/base/values.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/regions/eu-west.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/customers/customer-a.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/envs/prod.yaml
+          outPath: ${{ vars.src }}/apps/demo-downstream/rendered/customer-a/eu-west/prod/manifests.yaml
+          namespace: downstream-customer-a-eu-west-prod
+          setValues:
+          - key: image.tag
+            value: ${{ imageFrom(vars.imageRepo).Tag }}
+
+      # customer-c / eu-west / prod
+      - uses: helm-template
+        config:
+          releaseName: downstream
+          path: ${{ vars.src }}/apps/demo-downstream/chart
+          valuesFiles:
+          - ${{ vars.src }}/apps/demo-downstream/config/base/values.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/regions/eu-west.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/customers/customer-c.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/envs/prod.yaml
+          outPath: ${{ vars.src }}/apps/demo-downstream/rendered/customer-c/eu-west/prod/manifests.yaml
+          namespace: downstream-customer-c-eu-west-prod
+          setValues:
+          - key: image.tag
+            value: ${{ imageFrom(vars.imageRepo).Tag }}
+
+      - uses: git-commit
+        as: commit
+        config:
+          path: ${{ vars.src }}
+          message: "downstream prod-eu-west: promote ${{ imageFrom(vars.imageRepo).Tag }} [skip ci]"
+      - uses: git-push
+        config:
+          path: ${{ vars.src }}
+      - uses: argocd-update
+        config:
+          apps:
+          - name: downstream-customer-a-eu-west-prod
+            namespace: argocd
+          - name: downstream-customer-c-eu-west-prod
+            namespace: argocd

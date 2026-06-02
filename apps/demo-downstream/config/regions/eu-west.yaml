@@ -1,0 +1,6 @@
+config:
+  region: eu-west
+  datacenter: lon
+
+featureFlags:
+  complianceMode: gdpr

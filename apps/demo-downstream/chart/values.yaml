@@ -1,0 +1,28 @@
+image:
+  repository: ghcr.io/akuity/guestbook
+  tag: latest
+  pullPolicy: IfNotPresent
+
+replicaCount: 0
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+featureFlags:
+  advancedAnalytics: false
+  riskEngine: v1
+  complianceMode: standard
+
+config:
+  logLevel: info
+  maxConnections: 100
+  customerId: ""
+  customerTier: standard
+  region: ""
+  env: ""
+  datacenter: ""

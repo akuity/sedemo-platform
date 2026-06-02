@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: instance-config
+  namespace: downstream-customer-a-us-east-prod
+  labels:
+    app.kubernetes.io/name: downstream
+    app.kubernetes.io/instance: downstream
+data:
+  customer-id: "crd-0001"
+  customer-tier: "standard"
+  region: "us-east"
+  datacenter: "nyc"
+  env: "prod"
+  log-level: "warn"
+  max-connections: "200"
+  feature-advanced-analytics: "false"
+  feature-risk-engine: "v1"
+  feature-compliance-mode: "standard"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guestbook
+  namespace: downstream-customer-a-us-east-prod
+  labels:
+    app.kubernetes.io/name: downstream
+    app.kubernetes.io/instance: downstream
+spec:
+  replicas: 0
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: guestbook
+  template:
+    metadata:
+      labels:
+        app: guestbook
+    spec:
+      containers:
+      - name: guestbook
+        image: "ghcr.io/akuity/guestbook:1-blue"
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 200m
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        envFrom:
+        - configMapRef:
+            name: instance-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: guestbook
+  namespace: downstream-customer-a-us-east-prod
+  labels:
+    app.kubernetes.io/name: downstream
+    app.kubernetes.io/instance: downstream
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: guestbook

@@ -1,0 +1,11 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: demo-downstream
+  namespace: demo-downstream
+spec:
+  subscriptions:
+  - image:
+      repoURL: ghcr.io/akuity/guestbook
+      imageSelectionStrategy: NewestBuild
+      discoveryLimit: 5

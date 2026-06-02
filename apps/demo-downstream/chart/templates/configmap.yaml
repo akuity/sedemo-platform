@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: instance-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: downstream
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  customer-id: {{ .Values.config.customerId | quote }}
+  customer-tier: {{ .Values.config.customerTier | quote }}
+  region: {{ .Values.config.region | quote }}
+  datacenter: {{ .Values.config.datacenter | quote }}
+  env: {{ .Values.config.env | quote }}
+  log-level: {{ .Values.config.logLevel | quote }}
+  max-connections: {{ .Values.config.maxConnections | toString | quote }}
+  feature-advanced-analytics: {{ .Values.featureFlags.advancedAnalytics | toString | quote }}
+  feature-risk-engine: {{ .Values.featureFlags.riskEngine | quote }}
+  feature-compliance-mode: {{ .Values.featureFlags.complianceMode | quote }}
