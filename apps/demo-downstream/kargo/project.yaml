@@ -16,8 +16,5 @@ spec:
       name: "regex:dev.*"
     autoPromotionEnabled: true
   - stageSelector:
-      name: prod-eu-west-customer-c
-    autoPromotionEnabled: false
-  - stageSelector:
       name: "regex:prod.*"
     autoPromotionEnabled: true

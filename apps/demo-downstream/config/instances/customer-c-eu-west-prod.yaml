@@ -1,5 +1,5 @@
 customer: customer-c
 region: eu-west
 env: prod
-stage: prod-eu-west-customer-c
-holdback: true  # uncomment to move this customer to a dedicated stage lane
+stage: prod-eu-west
+# holdback: true  # uncomment to move this customer to a dedicated stage lane

@@ -234,8 +234,8 @@ spec:
 ---
 # ─────────────────────────────────────────────────────────────────────────────
 # STAGE: prod-eu-west
-# Renders eu-west prod instances on the shared train: customer-a only.
-# customer-c is on a dedicated holdback lane (prod-eu-west-customer-c).
+# Renders all eu-west prod instances: customer-a, customer-c
+# 2-minute soak after prod-us-east before this stage auto-promotes.
 # ─────────────────────────────────────────────────────────────────────────────
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -289,61 +289,6 @@ spec:
           - key: image.tag
             value: ${{ imageFrom(vars.imageRepo).Tag }}
 
-      - uses: git-commit
-        as: commit
-        config:
-          path: ${{ vars.src }}
-          message: "downstream prod-eu-west: promote ${{ imageFrom(vars.imageRepo).Tag }} [skip ci]"
-      - uses: git-push
-        config:
-          path: ${{ vars.src }}
-      - uses: argocd-update
-        config:
-          apps:
-          - name: downstream-customer-a-eu-west-prod
-            namespace: argocd
-
----
-# ─────────────────────────────────────────────────────────────────────────────
-# STAGE: prod-eu-west-customer-c  (holdback / change-freeze lane)
-# Sources from prod-eu-west — freight has already passed the full prod wave.
-# autoPromotionEnabled: false — requires explicit manual promotion.
-# ─────────────────────────────────────────────────────────────────────────────
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: prod-eu-west-customer-c
-  namespace: demo-downstream
-  annotations:
-    kargo.akuity.io/color: amber
-spec:
-  shard: sedemo-primary
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: demo-downstream
-    sources:
-      stages:
-      - prod-eu-west
-      autoPromotionOptions:
-        selectionPolicy: MatchUpstream
-  promotionTemplate:
-    spec:
-      vars:
-      - name: gitRepo
-        value: https://github.com/akuity/sedemo-platform
-      - name: imageRepo
-        value: ghcr.io/akuity/guestbook
-      - name: src
-        value: ./src
-      steps:
-      - uses: git-clone
-        config:
-          repoURL: ${{ vars.gitRepo }}
-          checkout:
-          - branch: main
-            path: ${{ vars.src }}
-
       # customer-c / eu-west / prod
       - uses: helm-template
         config:
@@ -364,12 +309,14 @@ spec:
         as: commit
         config:
           path: ${{ vars.src }}
-          message: "downstream prod-eu-west-customer-c: promote ${{ imageFrom(vars.imageRepo).Tag }} [skip ci]"
+          message: "downstream prod-eu-west: promote ${{ imageFrom(vars.imageRepo).Tag }} [skip ci]"
       - uses: git-push
         config:
           path: ${{ vars.src }}
       - uses: argocd-update
         config:
           apps:
+          - name: downstream-customer-a-eu-west-prod
+            namespace: argocd
           - name: downstream-customer-c-eu-west-prod
             namespace: argocd
