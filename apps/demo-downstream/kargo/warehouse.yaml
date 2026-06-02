@@ -9,3 +9,9 @@ spec:
       repoURL: ghcr.io/akuity/guestbook
       imageSelectionStrategy: NewestBuild
       discoveryLimit: 5
+  - git:
+      repoURL: https://github.com/akuity/sedemo-platform
+      branch: main
+      commitSelectionStrategy: NewestFromBranch
+      includePaths:
+      - apps/demo-downstream/config

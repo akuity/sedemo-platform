@@ -35,7 +35,7 @@ spec:
         config:
           repoURL: ${{ vars.gitRepo }}
           checkout:
-          - branch: main
+          - commit: ${{ commitFrom(vars.gitRepo).ID }}
             path: ${{ vars.src }}
 
       # customer-a / us-east / dev
@@ -180,7 +180,7 @@ spec:
         config:
           repoURL: ${{ vars.gitRepo }}
           checkout:
-          - branch: main
+          - commit: ${{ commitFrom(vars.gitRepo).ID }}
             path: ${{ vars.src }}
 
       # customer-a / us-east / prod
@@ -270,7 +270,7 @@ spec:
         config:
           repoURL: ${{ vars.gitRepo }}
           checkout:
-          - branch: main
+          - commit: ${{ commitFrom(vars.gitRepo).ID }}
             path: ${{ vars.src }}
 
       # customer-a / eu-west / prod
