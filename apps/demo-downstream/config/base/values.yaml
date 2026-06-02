@@ -16,7 +16,7 @@ resources:
 featureFlags:
   advancedAnalytics: false
   riskEngine: v1
-  lattedog: true
+  lattedog: false
   complianceMode: standard
 
 config:
