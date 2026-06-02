@@ -7,15 +7,24 @@ spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:
-    - scmProvider:
-        github:
-          organization: akuity
-          tokenRef:
-            secretName: application-set-secret
-            key: token
-        filters:
-        - repositoryMatch: ^sedemo-app-
-          pathsExist: [platform/app-values.yaml]
+    - matrix:
+       generators:
+        - scmProvider:
+            github:
+              organization: akuity
+              tokenRef:
+                secretName: application-set-secret
+                key: token
+            filters:
+            - repositoryMatch: ^sedemo-app-
+              pathsExist: [platform/app-values.yaml]
+        - clusters:
+            selector:
+              matchLabels:
+                argocd.argoproj.io/secret-type: cluster
+                metrics-enabled: "true"
+                
+
   template:
     metadata:
       name: '{{.repository}}-appsets'
@@ -46,6 +55,8 @@ spec:
             application:
               name: '{{.repository}}'
             isStandalone: true
+            team:
+              role: '{{ index .metadata.labels "team-role" }}'
       destination:
         name: in-cluster
       syncPolicy:
