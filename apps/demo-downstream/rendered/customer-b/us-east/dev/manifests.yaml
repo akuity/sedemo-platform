@@ -19,6 +19,7 @@ data:
   feature-advancedAnalytics: "true"
   feature-complianceMode: "standard"
   feature-lattedog: "false"
+  feature-momodog: "true"
   feature-riskEngine: "v1"
 ---
 # Source: downstream/templates/service.yaml
