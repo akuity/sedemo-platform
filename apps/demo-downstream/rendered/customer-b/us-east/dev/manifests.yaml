@@ -16,9 +16,10 @@ data:
   env: "dev"
   log-level: "debug"
   max-connections: "500"
-  feature-advanced-analytics: "true"
-  feature-risk-engine: "v1"
-  feature-compliance-mode: "standard"
+  feature-advancedAnalytics: "true"
+  feature-complianceMode: "standard"
+  feature-lattedog: "false"
+  feature-riskEngine: "v1"
 ---
 # Source: downstream/templates/service.yaml
 apiVersion: v1
