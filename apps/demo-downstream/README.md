@@ -70,6 +70,7 @@ config/
 │   └── customer-e.yaml       ← premium, crd-0005, advancedAnalytics: true
 ├── envs/
 │   ├── dev.yaml              ← replicas: 0, logLevel: debug
+│   ├── staging.yaml          ← replicas: 0, logLevel: info
 │   ├── uat.yaml              ← replicas: 0, logLevel: info
 │   └── prod.yaml             ← replicas: 0, logLevel: warn
 └── instances/
@@ -90,19 +91,16 @@ Warehouse  (image: ghcr.io/akuity/guestbook  +  git: config/)
     └─► dev-eu (auto) ──► a, b, c, e  /  eu-west  /  dev
 
     both pass ──► staging (auto, convergence) ──► customer-a / us-east + eu-west / staging
-                        │
-                        ▼
-                   qa (manual)
-    │
-    ├─► prod-us-east (auto) ──► customer-a / us-east / prod
-    │       ├─► prod-us-east-customer-b ⚠️ (manual) ──► customer-b / us-east / prod
-    │       └─► prod-us-east-customer-d ⚠️ (manual) ──► customer-d / us-east / prod
-    │
-    ├─► prod-eu-west (auto, 2m soak) ──► customer-a, e / eu-west / prod
-    │       └─► prod-eu-west-customer-c ⚠️ (manual) ──► customer-c / eu-west / prod
-    │
-    └─► uat-customer-c (auto) ──► customer-c / eu-west / uat
-            └─► prod-eu-west-customer-c ⚠️ (manual)
+                             │
+                        qa (manual)
+                             │
+              ┌──────────────┼─────────────────────────┐
+              ▼              ▼                          ▼
+    prod-us-east (auto)   prod-eu-west (auto, 2m soak)  uat-customer-c (auto)
+    customer-a/us-east    customer-a, e / eu-west         customer-c / eu-west / uat
+         │                        │                              │
+         ├─ customer-b ⚠️          └─ customer-c ⚠️               └─► prod-eu-west-customer-c ⚠️
+         └─ customer-d ⚠️
 ```
 
 ⚠️ = change-freeze lane. Freight is queued; a human promotes when the maintenance window opens.
@@ -118,7 +116,7 @@ Each promotion renders from the **exact config commit captured in Freight** (`co
 ### Act 1 — O(1) config change
 
 ```bash
-# Touch one file — all 14 instances get the new param
+# Touch one file — all 16 instances get the new param
 echo "  newRiskEngine: false" >> config/base/values.yaml
 git commit -am "feat: add newRiskEngine feature flag"
 git push
@@ -130,7 +128,7 @@ The Warehouse detects the new commit on `apps/demo-downstream/config/`, creates 
 
 New image detected → Freight created → `dev-us` and `dev-eu` fire in parallel → both pass → `staging` auto-promotes (convergence gate, renders US + EU staging instances) → `qa` manual gate → `prod-us-east` auto-promotes → 2m soak → `prod-eu-west` fires. Meanwhile `uat-customer-c` auto-promotes from `qa` so customer-c can start UAT validation while prod waves are in flight.
 
-One Freight. One approval. 14 instances across two regions.
+One Freight. One approval. 16 instances across two regions.
 
 ### Act 3 — Add a new customer
 
@@ -157,11 +155,11 @@ To freeze any other customer: change one field in their `config/instances/` file
 
 ## Key Talking Points
 
-- **O(1) parameter changes:** touch `base/values.yaml` once. The rendered diff shows blast radius across all 14 instances before anything hits prod.
+- **O(1) parameter changes:** touch `base/values.yaml` once. Any key added under `featureFlags:` appears automatically in every instance's ConfigMap — the template ranges over the map dynamically. The rendered diff shows blast radius across all 16 instances before anything hits prod.
 - **No CI needed for config changes:** the Warehouse git subscription means config changes flow through the same Kargo pipeline as image promotions.
 - **4 namespaces, not 16:** all dev instances share `demo-downstream-dev`, all prod share `demo-downstream-prod`. Resources are distinguished by `customer-region` prefix from the Helm release name.
 - **Rendered manifests = real diffs:** every promotion is a real git commit. Rollback is `git revert`.
-- **Scale doesn't change the model:** 14 instances today, 300 next year. The hierarchy, pipeline, and task stay the same — only `config/instances/` grows.
+- **Scale doesn't change the model:** 16 instances today, 300 next year. The hierarchy, pipeline, and task stay the same — only `config/instances/` grows.
 - **Holdbacks are exceptions:** dedicated Stage lanes for change-freeze customers are an escape hatch, not the default. Each lane is a one-line instance file change.
 
 ---
