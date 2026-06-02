@@ -28,6 +28,8 @@ spec:
           name: '{{.Values.project.name}}'
         application:
           name: '{{.Values.application.name}}'
+        team:
+          role: '{{ .Values.team.role }}'
   destination:
     name: kargo
   syncPolicy:
