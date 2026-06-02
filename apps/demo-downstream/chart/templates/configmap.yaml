@@ -14,6 +14,6 @@ data:
   env: {{ .Values.config.env | quote }}
   log-level: {{ .Values.config.logLevel | quote }}
   max-connections: {{ .Values.config.maxConnections | toString | quote }}
-  feature-advanced-analytics: {{ .Values.featureFlags.advancedAnalytics | toString | quote }}
-  feature-risk-engine: {{ .Values.featureFlags.riskEngine | quote }}
-  feature-compliance-mode: {{ .Values.featureFlags.complianceMode | quote }}
+  {{- range $k, $v := .Values.featureFlags }}
+  feature-{{ $k }}: {{ $v | toString | quote }}
+  {{- end }}
