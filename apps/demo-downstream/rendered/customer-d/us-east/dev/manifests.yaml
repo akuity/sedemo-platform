@@ -3,28 +3,28 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: customer-a-eu-west-config
+  name: customer-d-us-east-config
   namespace: demo-downstream-dev
   labels:
     app.kubernetes.io/name: downstream
     app.kubernetes.io/instance: downstream
 data:
-  customer-id: "crd-0001"
+  customer-id: "crd-0004"
   customer-tier: "standard"
-  region: "eu-west"
-  datacenter: "lon"
+  region: "us-east"
+  datacenter: "nyc"
   env: "dev"
   log-level: "debug"
-  max-connections: "200"
+  max-connections: "300"
   feature-advanced-analytics: "false"
   feature-risk-engine: "v1"
-  feature-compliance-mode: "gdpr"
+  feature-compliance-mode: "standard"
 ---
 # Source: downstream/templates/service.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: customer-a-eu-west
+  name: customer-d-us-east
   namespace: demo-downstream-dev
   labels:
     app.kubernetes.io/name: downstream
@@ -36,13 +36,13 @@ spec:
     targetPort: 80
     protocol: TCP
   selector:
-    app: customer-a-eu-west
+    app: customer-d-us-east
 ---
 # Source: downstream/templates/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: customer-a-eu-west
+  name: customer-d-us-east
   namespace: demo-downstream-dev
   labels:
     app.kubernetes.io/name: downstream
@@ -52,11 +52,11 @@ spec:
   revisionHistoryLimit: 3
   selector:
     matchLabels:
-      app: customer-a-eu-west
+      app: customer-d-us-east
   template:
     metadata:
       labels:
-        app: customer-a-eu-west
+        app: customer-d-us-east
     spec:
       containers:
       - name: guestbook
@@ -73,4 +73,4 @@ spec:
             memory: 128Mi
         envFrom:
         - configMapRef:
-            name: customer-a-eu-west-config
+            name: customer-d-us-east-config

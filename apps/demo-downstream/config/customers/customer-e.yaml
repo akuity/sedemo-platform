@@ -1,0 +1,15 @@
+config:
+  customerId: crd-0005
+  customerTier: premium
+  maxConnections: 400
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+featureFlags:
+  advancedAnalytics: true

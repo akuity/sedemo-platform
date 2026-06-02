@@ -3,8 +3,8 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: instance-config
-  namespace: downstream-customer-c-eu-west-prod
+  name: customer-c-eu-west-config
+  namespace: demo-downstream-prod
   labels:
     app.kubernetes.io/name: downstream
     app.kubernetes.io/instance: downstream
@@ -24,8 +24,8 @@ data:
 apiVersion: v1
 kind: Service
 metadata:
-  name: guestbook
-  namespace: downstream-customer-c-eu-west-prod
+  name: customer-c-eu-west
+  namespace: demo-downstream-prod
   labels:
     app.kubernetes.io/name: downstream
     app.kubernetes.io/instance: downstream
@@ -36,14 +36,14 @@ spec:
     targetPort: 80
     protocol: TCP
   selector:
-    app: guestbook
+    app: customer-c-eu-west
 ---
 # Source: downstream/templates/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: guestbook
-  namespace: downstream-customer-c-eu-west-prod
+  name: customer-c-eu-west
+  namespace: demo-downstream-prod
   labels:
     app.kubernetes.io/name: downstream
     app.kubernetes.io/instance: downstream
@@ -52,11 +52,11 @@ spec:
   revisionHistoryLimit: 3
   selector:
     matchLabels:
-      app: guestbook
+      app: customer-c-eu-west
   template:
     metadata:
       labels:
-        app: guestbook
+        app: customer-c-eu-west
     spec:
       containers:
       - name: guestbook
@@ -73,4 +73,4 @@ spec:
             memory: 512Mi
         envFrom:
         - configMapRef:
-            name: instance-config
+            name: customer-c-eu-west-config

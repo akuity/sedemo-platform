@@ -1,0 +1,5 @@
+replicaCount: 0
+
+config:
+  env: staging
+  logLevel: info

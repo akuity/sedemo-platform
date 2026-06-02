@@ -1,0 +1,4 @@
+customer: customer-d
+region: us-east
+env: prod
+stage: prod-us-east-customer-d

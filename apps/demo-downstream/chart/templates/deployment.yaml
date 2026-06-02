@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: guestbook
+  name: {{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: downstream
@@ -11,11 +11,11 @@ spec:
   revisionHistoryLimit: 3
   selector:
     matchLabels:
-      app: guestbook
+      app: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app: guestbook
+        app: {{ .Release.Name }}
     spec:
       containers:
       - name: guestbook
@@ -27,4 +27,4 @@ spec:
           {{- toYaml .Values.resources | nindent 10 }}
         envFrom:
         - configMapRef:
-            name: instance-config
+            name: {{ .Release.Name }}-config

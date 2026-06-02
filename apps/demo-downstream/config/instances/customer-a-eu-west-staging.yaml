@@ -1,4 +1,4 @@
 customer: customer-a
 region: eu-west
-env: dev
-stage: dev-eu
+env: staging
+stage: staging

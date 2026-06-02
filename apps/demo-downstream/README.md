@@ -17,20 +17,40 @@ Every combination of (customer × region × env) produces a folder with slightly
 
 A new parameter touches `config/base/values.yaml` once — O(1) forever. A new customer adds one file to `config/instances/`. These two axes never multiply each other.
 
+Both axes flow through the same Kargo pipeline. The Warehouse subscribes to the image registry **and** the config directory — a change to either creates new Freight.
+
 ---
 
-## Instances (8 total)
+## Customers (5)
 
-| Instance | Stage | Tier | Region | Compliance |
-|---|---|---|---|---|
-| customer-a / us-east / dev | dev | standard | us-east | standard |
-| customer-a / eu-west / dev | dev | standard | eu-west | **gdpr** |
-| customer-b / us-east / dev | dev | premium | us-east | standard |
-| customer-b / eu-west / dev | dev | premium | eu-west | **gdpr** |
-| customer-a / us-east / prod | prod-us-east | standard | us-east | standard |
-| customer-b / us-east / prod | prod-us-east | premium | us-east | standard |
-| customer-a / eu-west / prod | prod-eu-west | standard | eu-west | **gdpr** |
-| customer-c / eu-west / prod | prod-eu-west | **enterprise** | eu-west | **gdpr** |
+| Customer | Tier | ID | Notes |
+|---|---|---|---|
+| customer-a | standard | crd-0001 | Always on main train |
+| customer-b | premium | crd-0002 | Change-freeze in US east (end-of-quarter) |
+| customer-c | enterprise | crd-0003 | UAT sign-off + change-freeze in EU west (GDPR window) |
+| customer-d | standard | crd-0004 | Change-freeze in US east |
+| customer-e | premium | crd-0005 | Main train, EU west |
+
+## Instances (16 total across 4 namespaces)
+
+| Instance | Namespace | Stage | Compliance |
+|---|---|---|---|
+| customer-a / us-east / dev | demo-downstream-dev | dev-us | standard |
+| customer-b / us-east / dev | demo-downstream-dev | dev-us | standard |
+| customer-d / us-east / dev | demo-downstream-dev | dev-us | standard |
+| customer-a / eu-west / dev | demo-downstream-dev | dev-eu | gdpr |
+| customer-b / eu-west / dev | demo-downstream-dev | dev-eu | gdpr |
+| customer-c / eu-west / dev | demo-downstream-dev | dev-eu | gdpr |
+| customer-e / eu-west / dev | demo-downstream-dev | dev-eu | gdpr |
+| customer-a / us-east / staging | demo-downstream-staging | staging | standard |
+| customer-a / eu-west / staging | demo-downstream-staging | staging | gdpr |
+| customer-c / eu-west / uat | demo-downstream-uat | uat-customer-c | gdpr |
+| customer-a / us-east / prod | demo-downstream-prod | prod-us-east | standard |
+| customer-b / us-east / prod | demo-downstream-prod | prod-us-east-customer-b ⚠️ | standard |
+| customer-d / us-east / prod | demo-downstream-prod | prod-us-east-customer-d ⚠️ | standard |
+| customer-a / eu-west / prod | demo-downstream-prod | prod-eu-west | gdpr |
+| customer-e / eu-west / prod | demo-downstream-prod | prod-eu-west | gdpr |
+| customer-c / eu-west / prod | demo-downstream-prod | prod-eu-west-customer-c ⚠️ | gdpr |
 
 ---
 
@@ -40,42 +60,56 @@ A new parameter touches `config/base/values.yaml` once — O(1) forever. A new c
 config/
 ├── base/values.yaml          ← schema + defaults; new params land here once
 ├── regions/
-│   ├── us-east.yaml          ← region delta (datacenter, latency target)
-│   └── eu-west.yaml          ← adds complianceMode: gdpr
+│   ├── us-east.yaml          ← datacenter: nyc
+│   └── eu-west.yaml          ← datacenter: lon, complianceMode: gdpr
 ├── customers/
-│   ├── customer-a.yaml       ← standard tier, crd-0001, 200 max connections
-│   ├── customer-b.yaml       ← premium tier, crd-0002, advancedAnalytics: true
-│   └── customer-c.yaml       ← enterprise tier, crd-0003, riskEngine: v2
+│   ├── customer-a.yaml       ← standard, crd-0001, 200 max connections
+│   ├── customer-b.yaml       ← premium, crd-0002, advancedAnalytics: true
+│   ├── customer-c.yaml       ← enterprise, crd-0003, riskEngine: v2
+│   ├── customer-d.yaml       ← standard, crd-0004, 300 max connections
+│   └── customer-e.yaml       ← premium, crd-0005, advancedAnalytics: true
 ├── envs/
-│   ├── dev.yaml              ← replicas: 1, logLevel: debug
-│   └── prod.yaml             ← replicas: 2, logLevel: warn
+│   ├── dev.yaml              ← replicas: 0, logLevel: debug
+│   ├── uat.yaml              ← replicas: 0, logLevel: info
+│   └── prod.yaml             ← replicas: 0, logLevel: warn
 └── instances/
-    └── customer-*.yaml       ← one file per instance; also the AppSet source
+    └── customer-*.yaml       ← one file per instance; drives the AppSet
 ```
 
 Merge order (last wins): `base ← region ← customer ← env`
 
 ---
 
-## Kargo Pipeline
+## Kargo Pipeline (11 stages)
 
 ```
-Warehouse  (polls ghcr.io/akuity/guestbook)
+Warehouse  (image: ghcr.io/akuity/guestbook  +  git: config/)
+    │  Freight = image tag + config commit
     │
-    ▼
-dev  ─── auto-promote ──► renders 4 dev instances simultaneously
+    ├─► dev-us (auto) ──► a, b, d  /  us-east  /  dev
+    └─► dev-eu (auto) ──► a, b, c, e  /  eu-west  /  dev
+
+    both pass ──► staging (auto, convergence) ──► customer-a / us-east + eu-west / staging
+                        │
+                        ▼
+                   qa (manual)
     │
-    ▼
-qa   ─── manual gate (no rendering — pure approval checkpoint)
+    ├─► prod-us-east (auto) ──► customer-a / us-east / prod
+    │       ├─► prod-us-east-customer-b ⚠️ (manual) ──► customer-b / us-east / prod
+    │       └─► prod-us-east-customer-d ⚠️ (manual) ──► customer-d / us-east / prod
     │
-    ▼
-prod-us-east  ─── auto-promote ──► renders customer-a + customer-b us-east prod
-    │   [2m soak]
-    ▼
-prod-eu-west  ─── auto-promote ──► renders customer-a + customer-c eu-west prod
+    ├─► prod-eu-west (auto, 2m soak) ──► customer-a, e / eu-west / prod
+    │       └─► prod-eu-west-customer-c ⚠️ (manual) ──► customer-c / eu-west / prod
+    │
+    └─► uat-customer-c (auto) ──► customer-c / eu-west / uat
+            └─► prod-eu-west-customer-c ⚠️ (manual)
 ```
 
-Stages model the **promotion axis only** (4 stages). ApplicationSet handles the per-instance fan-out at each stage. Adding a customer never adds a Stage.
+⚠️ = change-freeze lane. Freight is queued; a human promotes when the maintenance window opens.
+
+`uat-customer-c` auto-promotes from qa so customer-c always has a validated build ready. Their prod approval is a separate manual step.
+
+Each promotion renders from the **exact config commit captured in Freight** (`commitFrom()`).
 
 ---
 
@@ -84,54 +118,51 @@ Stages model the **promotion axis only** (4 stages). ApplicationSet handles the 
 ### Act 1 — O(1) config change
 
 ```bash
-# Add a new feature flag to base — touches exactly one file
+# Touch one file — all 14 instances get the new param
 echo "  newRiskEngine: false" >> config/base/values.yaml
 git commit -am "feat: add newRiskEngine feature flag"
 git push
 ```
 
-On push, CI renders all 8 instances and opens a PR. The diff shows `feature-new-risk-engine: "false"` appearing in every `manifests.yaml`. Merge once — every customer gets it.
+The Warehouse detects the new commit on `apps/demo-downstream/config/`, creates new Freight, and auto-promotes to `dev-us` and `dev-eu` in parallel. The git commit to `rendered/` shows the new key appearing in every `manifests.yaml` — that diff is the blast radius, visible in git before it reaches prod.
 
 ### Act 2 — Release train promotion
 
-A new image build is detected → Kargo creates one Freight → auto-promotes to `dev` → all 4 dev instances update simultaneously. Click approve at `qa` → `prod-us-east` fires → 2m soak → `prod-eu-west` fires automatically.
+New image detected → Freight created → `dev-us` and `dev-eu` fire in parallel → both pass → `staging` auto-promotes (convergence gate, renders US + EU staging instances) → `qa` manual gate → `prod-us-east` auto-promotes → 2m soak → `prod-eu-west` fires. Meanwhile `uat-customer-c` auto-promotes from `qa` so customer-c can start UAT validation while prod waves are in flight.
 
-One Freight. One approval. Eight instances in two coordinated waves.
+One Freight. One approval. 14 instances across two regions.
 
 ### Act 3 — Add a new customer
 
 ```bash
-# One file = one new customer
-cat > config/instances/customer-d-us-east-dev.yaml <<EOF
-customer: customer-d
+cat > config/instances/customer-f-us-east-dev.yaml <<EOF
+customer: customer-f
 region: us-east
 env: dev
-stage: dev
+stage: dev-us
 EOF
-git commit -am "onboard customer-d to us-east/dev"
+git commit -am "onboard customer-f"
 git push
 ```
 
-The ApplicationSet detects the new file and generates a new ArgoCD Application within ~30s. The next Kargo promotion automatically includes it.
+ArgoCD Application appears within ~30s. The next Kargo promotion includes it automatically.
 
-### Act 4 — Holdback (enterprise change-freeze)
+### Act 4 — Change-freeze lanes
 
-To give `customer-c` an independent cadence, move it to a dedicated Stage lane:
+`customer-b`, `customer-c`, and `customer-d` are already on dedicated Stage lanes — amber nodes in the Kargo UI with freight queued and waiting. When a maintenance window opens, click **Promote**. That's it.
 
-1. Uncomment `# holdback: true` in `config/instances/customer-c-eu-west-prod.yaml`
-2. Update the ApplicationSet annotation to point at the new stage
-3. Add a `prod-eu-west-customer-c` Stage sourcing from `prod-eu-west` with `autoPromotionEnabled: false`
-
-This is the *exception* model — a few customers needing change windows, not the default.
+To freeze any other customer: change one field in their `config/instances/` file to point at a holdback Stage.
 
 ---
 
 ## Key Talking Points
 
-- **Adding a parameter is O(1):** touch `base/values.yaml` once. The rendered PR shows the blast radius across all N instances — that review is the safety net.
-- **Scale doesn't change the model:** 8 instances today, 300 next year. The hierarchy doesn't grow. The pipeline doesn't grow. Only `config/instances/` gets one file per new customer.
-- **Rendered manifests = real diffs:** Every promotion is a real git commit. Rollback is `git revert`. Argo CD syncs plain YAML with no CMP overhead at scale.
-- **Holdbacks are exceptions, not the model:** Dedicated Stage lanes for change-freeze customers exist as an escape hatch — not the default design.
+- **O(1) parameter changes:** touch `base/values.yaml` once. The rendered diff shows blast radius across all 14 instances before anything hits prod.
+- **No CI needed for config changes:** the Warehouse git subscription means config changes flow through the same Kargo pipeline as image promotions.
+- **4 namespaces, not 16:** all dev instances share `demo-downstream-dev`, all prod share `demo-downstream-prod`. Resources are distinguished by `customer-region` prefix from the Helm release name.
+- **Rendered manifests = real diffs:** every promotion is a real git commit. Rollback is `git revert`.
+- **Scale doesn't change the model:** 14 instances today, 300 next year. The hierarchy, pipeline, and task stay the same — only `config/instances/` grows.
+- **Holdbacks are exceptions:** dedicated Stage lanes for change-freeze customers are an escape hatch, not the default. Each lane is a one-line instance file change.
 
 ---
 
@@ -141,16 +172,19 @@ This is the *exception* model — a few customers needing change windows, not th
 apps/demo-downstream/
 ├── argocd/
 │   ├── appproject.yaml       ← AppProject: demo-downstream
-│   └── appset.yaml           ← Git file generator → N Applications
+│   └── appset.yaml           ← Git file generator → 16 Applications
 ├── kargo/
 │   ├── project.yaml          ← Project + auto-promote policies
-│   ├── warehouse.yaml        ← Watches ghcr.io/akuity/guestbook
-│   └── stages.yaml           ← dev, qa, prod-us-east, prod-eu-west
-├── chart/                    ← Helm chart (Deployment + Service + ConfigMap)
-├── config/                   ← Layered values hierarchy
-│   ├── base/, regions/, customers/, envs/, instances/
+│   ├── warehouse.yaml        ← image + git config/ subscriptions
+│   ├── tasks.yaml            ← render-instance PromotionTask (reused by all stages)
+│   └── stages.yaml           ← 11 stages
+├── chart/                    ← Helm chart; Release.Name drives resource names
+├── config/
+│   ├── base/                 ← schema + defaults
+│   ├── regions/              ← us-east, eu-west
+│   ├── customers/            ← a, b, c, d, e
+│   ├── envs/                 ← dev, staging, uat, prod
+│   └── instances/            ← one file per instance; AppSet reads these
 └── rendered/                 ← Kargo writes here; ArgoCD reads from here
-    ├── customer-a/us-east/dev/
-    ├── customer-a/us-east/prod/
-    └── ...
+    └── <customer>/<region>/<env>/manifests.yaml
 ```

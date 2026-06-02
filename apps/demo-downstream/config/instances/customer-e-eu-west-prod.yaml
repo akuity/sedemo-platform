@@ -1,0 +1,4 @@
+customer: customer-e
+region: eu-west
+env: prod
+stage: prod-eu-west

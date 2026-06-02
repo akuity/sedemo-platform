@@ -1,0 +1,4 @@
+customer: customer-c
+region: eu-west
+env: uat
+stage: uat-customer-c

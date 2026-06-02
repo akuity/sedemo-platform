@@ -4,17 +4,17 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: customer-a-eu-west-config
-  namespace: demo-downstream-dev
+  namespace: demo-downstream-staging
   labels:
     app.kubernetes.io/name: downstream
-    app.kubernetes.io/instance: downstream
+    app.kubernetes.io/instance: customer-a-eu-west
 data:
   customer-id: "crd-0001"
   customer-tier: "standard"
   region: "eu-west"
   datacenter: "lon"
-  env: "dev"
-  log-level: "debug"
+  env: "staging"
+  log-level: "info"
   max-connections: "200"
   feature-advanced-analytics: "false"
   feature-risk-engine: "v1"
@@ -25,10 +25,10 @@ apiVersion: v1
 kind: Service
 metadata:
   name: customer-a-eu-west
-  namespace: demo-downstream-dev
+  namespace: demo-downstream-staging
   labels:
     app.kubernetes.io/name: downstream
-    app.kubernetes.io/instance: downstream
+    app.kubernetes.io/instance: customer-a-eu-west
 spec:
   type: ClusterIP
   ports:
@@ -43,10 +43,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: customer-a-eu-west
-  namespace: demo-downstream-dev
+  namespace: demo-downstream-staging
   labels:
     app.kubernetes.io/name: downstream
-    app.kubernetes.io/instance: downstream
+    app.kubernetes.io/instance: customer-a-eu-west
 spec:
   replicas: 0
   revisionHistoryLimit: 3

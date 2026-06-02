@@ -1,0 +1,32 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: render-instance
+  namespace: demo-downstream
+spec:
+  vars:
+  - name: customer
+    value: ""
+  - name: region
+    value: ""
+  - name: env
+    value: ""
+  - name: imageRepo
+    value: ghcr.io/akuity/guestbook
+  - name: src
+    value: ./src
+  steps:
+  - uses: helm-template
+    config:
+      releaseName: ${{ vars.customer }}-${{ vars.region }}
+      path: ${{ vars.src }}/apps/demo-downstream/chart
+      valuesFiles:
+      - ${{ vars.src }}/apps/demo-downstream/config/base/values.yaml
+      - ${{ vars.src }}/apps/demo-downstream/config/regions/${{ vars.region }}.yaml
+      - ${{ vars.src }}/apps/demo-downstream/config/customers/${{ vars.customer }}.yaml
+      - ${{ vars.src }}/apps/demo-downstream/config/envs/${{ vars.env }}.yaml
+      outPath: ${{ vars.src }}/apps/demo-downstream/rendered/${{ vars.customer }}/${{ vars.region }}/${{ vars.env }}/manifests.yaml
+      namespace: demo-downstream-${{ vars.env }}
+      setValues:
+      - key: image.tag
+        value: ${{ imageFrom(vars.imageRepo).Tag }}

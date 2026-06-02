@@ -1,0 +1,12 @@
+config:
+  customerId: crd-0004
+  customerTier: standard
+  maxConnections: 300
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi

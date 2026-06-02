@@ -3,20 +3,20 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: customer-a-eu-west-config
+  name: customer-e-eu-west-config
   namespace: demo-downstream-dev
   labels:
     app.kubernetes.io/name: downstream
     app.kubernetes.io/instance: downstream
 data:
-  customer-id: "crd-0001"
-  customer-tier: "standard"
+  customer-id: "crd-0005"
+  customer-tier: "premium"
   region: "eu-west"
   datacenter: "lon"
   env: "dev"
   log-level: "debug"
-  max-connections: "200"
-  feature-advanced-analytics: "false"
+  max-connections: "400"
+  feature-advanced-analytics: "true"
   feature-risk-engine: "v1"
   feature-compliance-mode: "gdpr"
 ---
@@ -24,7 +24,7 @@ data:
 apiVersion: v1
 kind: Service
 metadata:
-  name: customer-a-eu-west
+  name: customer-e-eu-west
   namespace: demo-downstream-dev
   labels:
     app.kubernetes.io/name: downstream
@@ -36,13 +36,13 @@ spec:
     targetPort: 80
     protocol: TCP
   selector:
-    app: customer-a-eu-west
+    app: customer-e-eu-west
 ---
 # Source: downstream/templates/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: customer-a-eu-west
+  name: customer-e-eu-west
   namespace: demo-downstream-dev
   labels:
     app.kubernetes.io/name: downstream
@@ -52,11 +52,11 @@ spec:
   revisionHistoryLimit: 3
   selector:
     matchLabels:
-      app: customer-a-eu-west
+      app: customer-e-eu-west
   template:
     metadata:
       labels:
-        app: customer-a-eu-west
+        app: customer-e-eu-west
     spec:
       containers:
       - name: guestbook
@@ -66,11 +66,11 @@ spec:
         - containerPort: 80
         resources:
           limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
             cpu: 200m
             memory: 256Mi
-          requests:
-            cpu: 100m
-            memory: 128Mi
         envFrom:
         - configMapRef:
-            name: customer-a-eu-west-config
+            name: customer-e-eu-west-config

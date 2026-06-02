@@ -27,7 +27,7 @@ spec:
         path: apps/demo-downstream/rendered/{{customer}}/{{region}}/{{env}}
       destination:
         name: sedemo-primary
-        namespace: downstream-{{customer}}-{{region}}-{{env}}
+        namespace: demo-downstream-{{env}}
       syncPolicy:
         automated:
           prune: true

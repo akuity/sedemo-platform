@@ -13,8 +13,11 @@ metadata:
 spec:
   promotionPolicies:
   - stageSelector:
-      name: "regex:dev.*"
+      name: "regex:dev.*|staging.*|uat.*"
     autoPromotionEnabled: true
+  - stageSelector:
+      name: "regex:prod-us-east-customer.*|prod-eu-west-customer.*"
+    autoPromotionEnabled: false
   - stageSelector:
       name: "regex:prod.*"
     autoPromotionEnabled: true
