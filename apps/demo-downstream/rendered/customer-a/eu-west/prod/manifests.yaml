@@ -16,9 +16,10 @@ data:
   env: "prod"
   log-level: "warn"
   max-connections: "200"
-  feature-advanced-analytics: "false"
-  feature-risk-engine: "v1"
-  feature-compliance-mode: "gdpr"
+  feature-advancedAnalytics: "false"
+  feature-complianceMode: "gdpr"
+  feature-lattedog: "false"
+  feature-riskEngine: "v1"
 ---
 # Source: downstream/templates/service.yaml
 apiVersion: v1
