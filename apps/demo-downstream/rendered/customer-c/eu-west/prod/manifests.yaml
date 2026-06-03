@@ -19,7 +19,7 @@ data:
   feature-advancedAnalytics: "true"
   feature-complianceMode: "gdpr"
   feature-lattedog: "false"
-  feature-momodog: "true"
+  feature-momodog: "false"
   feature-riskEngine: "v2"
 ---
 # Source: downstream/templates/service.yaml
@@ -85,7 +85,7 @@ spec:
     spec:
       containers:
       - name: guestbook
-        image: "ghcr.io/akuity/guestbook:v0.0.1"
+        image: "ghcr.io/akuity/guestbook:v0.0.2"
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
