@@ -517,6 +517,9 @@ metadata:
     kargo.akuity.io/color: blue
 spec:
   shard: sedemo-primary
+  verification:
+    analysisTemplates:
+    - name: e2e-verification
   requestedFreight:
   - origin:
       kind: Warehouse
