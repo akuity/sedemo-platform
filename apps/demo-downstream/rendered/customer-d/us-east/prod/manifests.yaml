@@ -16,9 +16,11 @@ data:
   env: "prod"
   log-level: "warn"
   max-connections: "300"
-  feature-advanced-analytics: "false"
-  feature-risk-engine: "v1"
-  feature-compliance-mode: "standard"
+  feature-advancedAnalytics: "false"
+  feature-complianceMode: "standard"
+  feature-lattedog: "false"
+  feature-momodog: "false"
+  feature-riskEngine: "v1"
 ---
 # Source: downstream/templates/service.yaml
 apiVersion: v1
@@ -60,7 +62,7 @@ spec:
     spec:
       containers:
       - name: guestbook
-        image: "ghcr.io/akuity/guestbook:v0.0.2"
+        image: "ghcr.io/akuity/guestbook:v0.0.1"
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
