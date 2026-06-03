@@ -1,0 +1,4 @@
+customer: customer-f
+region: us-east
+env: dev
+stage: dev-us
