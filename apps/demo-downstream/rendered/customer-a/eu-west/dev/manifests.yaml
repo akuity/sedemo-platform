@@ -62,7 +62,7 @@ spec:
     spec:
       containers:
       - name: guestbook
-        image: "ghcr.io/akuity/guestbook:v0.0.1"
+        image: "ghcr.io/akuity/guestbook:v0.0.2"
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
