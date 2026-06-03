@@ -1,16 +1,46 @@
+# kind: EventRouter
+# apiVersion: ee.kargo.akuity.io/v1alpha1
+# metadata:
+#   name: promotion-status
+#   namespace: demo-downstream
+#   annotations:
+#     argocd.argoproj.io/sync-wave: "1"
+# spec:
+#   types:
+#     - PromotionFailed
+#     - PromotionErrored
+#     - PromotionSucceeded
+#     - PromotionCreated
+#   channels:
+#     - name: kargo-notification
+#       kind: ClusterMessageChannel
+---
 kind: EventRouter
 apiVersion: ee.kargo.akuity.io/v1alpha1
 metadata:
-  name: promotion-status
+  name: verification-status
   namespace: demo-downstream
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
   types:
-    - PromotionFailed
-    - PromotionErrored
-    - PromotionSucceeded
-    - PromotionCreated
+    - FreightVerificationFailed
+    - FreightVerificationErrored
   channels:
     - name: kargo-notification
       kind: ClusterMessageChannel
+      output:
+        encodingType: json
+        body: |
+          {
+            "icon_emoji": ":x:",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": ":x: *${{ type }}* in stage *${{ event.stageName }}* (project: `${{ event.project }}`)\nAnalysis run: `${{ event.analysisRunName }}`"
+                }
+              }
+            ]
+          }
