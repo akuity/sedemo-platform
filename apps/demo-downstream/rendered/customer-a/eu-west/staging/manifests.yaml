@@ -19,7 +19,7 @@ data:
   feature-advancedAnalytics: "false"
   feature-complianceMode: "gdpr"
   feature-lattedog: "false"
-  feature-momodog: "true"
+  feature-momodog: "false"
   feature-riskEngine: "v1"
 ---
 # Source: downstream/templates/service.yaml
