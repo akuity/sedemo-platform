@@ -29,4 +29,4 @@ spec:
   channels:
     - name: kargo-notification
       kind: ClusterMessageChannel
-      output: ":x: *${{ type }}* | stage: *${{ event.stageName }}* | project: `${{ event.project }}` | analysis run: `${{ event.analysisRunName }}` | <${{ ctx.uiBaseURL }}/project/${{ event.project }}|View in Kargo>"
+      output: ":x: *${{ type }}*\nStage: *${{ event.stageName }}*  |  Project: `${{ event.project }}`\nAnalysis run: `${{ event.analysisRunName }}`\n<${{ ctx.uiBaseURL }}/project/${{ event.project }}|View in Kargo>"
