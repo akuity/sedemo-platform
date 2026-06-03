@@ -17,7 +17,7 @@ featureFlags:
   advancedAnalytics: false
   riskEngine: v1
   lattedog: false
-  momodog: true
+  momodog: false
   complianceMode: standard
 
 config:
