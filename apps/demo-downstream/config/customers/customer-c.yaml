@@ -11,6 +11,8 @@ resources:
     cpu: 500m
     memory: 512Mi
 
+useRollout: true
+
 featureFlags:
   advancedAnalytics: true
   riskEngine: v2

@@ -1,0 +1,62 @@
+{{- if .Values.useRollout }}
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: e2e-verification
+  namespace: {{ .Release.Namespace }}
+spec:
+  metrics:
+  - name: test
+    provider:
+      job:
+        spec:
+          backoffLimit: 1
+          template:
+            spec:
+              restartPolicy: Never
+              containers:
+              - name: test
+                image: alpine:latest
+                command: ["/bin/sh", "-c"]
+                args:
+                - 'for i in $(seq 1 5); do echo "Verification Step $i of 5"; sleep 2; if [ $i -eq 4 ]; then echo -e "\tFAIL - assertion error: unexpected response code"; exit 1; else echo -e "\tPASS"; fi; done'
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: downstream
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: guestbook
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: 80
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        envFrom:
+        - configMapRef:
+            name: {{ .Release.Name }}-config
+  strategy:
+    canary:
+      steps:
+      - setWeight: 50
+      - analysis:
+          templates:
+          - templateName: e2e-verification
+      - setWeight: 100
+{{- end }}

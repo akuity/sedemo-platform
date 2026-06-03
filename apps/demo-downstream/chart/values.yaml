@@ -5,6 +5,8 @@ image:
 
 replicaCount: 0
 
+useRollout: false
+
 resources:
   limits:
     cpu: 100m

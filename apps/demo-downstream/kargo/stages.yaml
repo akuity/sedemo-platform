@@ -604,15 +604,22 @@ spec:
           checkout:
           - commit: ${{ commitFrom(vars.gitRepo).ID }}
             path: ${{ vars.src }}
-      - task:
-          name: render-instance
-        vars:
-        - name: customer
-          value: customer-c
-        - name: region
-          value: eu-west
-        - name: env
-          value: prod
+      - uses: helm-template
+        config:
+          releaseName: customer-c-eu-west
+          path: ${{ vars.src }}/apps/demo-downstream/chart
+          valuesFiles:
+          - ${{ vars.src }}/apps/demo-downstream/config/base/values.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/regions/eu-west.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/customers/customer-c.yaml
+          - ${{ vars.src }}/apps/demo-downstream/config/envs/prod.yaml
+          outPath: ${{ vars.src }}/apps/demo-downstream/rendered/customer-c/eu-west/prod/manifests.yaml
+          namespace: demo-downstream-prod
+          setValues:
+          - key: image.tag
+            value: ${{ imageFrom(vars.imageRepo).Tag }}
+          - key: replicaCount
+            value: "2"
       - uses: git-commit
         as: commit
         config:

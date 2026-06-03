@@ -16,9 +16,11 @@ data:
   env: "prod"
   log-level: "warn"
   max-connections: "1000"
-  feature-advanced-analytics: "true"
-  feature-risk-engine: "v2"
-  feature-compliance-mode: "gdpr"
+  feature-advancedAnalytics: "true"
+  feature-complianceMode: "gdpr"
+  feature-lattedog: "false"
+  feature-momodog: "true"
+  feature-riskEngine: "v2"
 ---
 # Source: downstream/templates/service.yaml
 apiVersion: v1
@@ -38,9 +40,32 @@ spec:
   selector:
     app: customer-c-eu-west
 ---
-# Source: downstream/templates/deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
+# Source: downstream/templates/rollout.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: e2e-verification
+  namespace: demo-downstream-prod
+spec:
+  metrics:
+  - name: test
+    provider:
+      job:
+        spec:
+          backoffLimit: 1
+          template:
+            spec:
+              restartPolicy: Never
+              containers:
+              - name: test
+                image: alpine:latest
+                command: ["/bin/sh", "-c"]
+                args:
+                - 'for i in $(seq 1 5); do echo "Verification Step $i of 5"; sleep 2; if [ $i -eq 4 ]; then echo -e "\tFAIL - assertion error: unexpected response code"; exit 1; else echo -e "\tPASS"; fi; done'
+---
+# Source: downstream/templates/rollout.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
 metadata:
   name: customer-c-eu-west
   namespace: demo-downstream-prod
@@ -48,7 +73,7 @@ metadata:
     app.kubernetes.io/name: downstream
     app.kubernetes.io/instance: customer-c-eu-west
 spec:
-  replicas: 0
+  replicas: 2
   revisionHistoryLimit: 3
   selector:
     matchLabels:
@@ -74,3 +99,11 @@ spec:
         envFrom:
         - configMapRef:
             name: customer-c-eu-west-config
+  strategy:
+    canary:
+      steps:
+      - setWeight: 50
+      - analysis:
+          templates:
+          - templateName: e2e-verification
+      - setWeight: 100
