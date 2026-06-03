@@ -20,6 +20,19 @@ spec:
   types:
     - PromotionFailed
     - PromotionErrored
+  channels:
+    - name: kargo-notification
+      kind: MessageChannel
+---
+kind: EventRouter
+apiVersion: ee.kargo.akuity.io/v1alpha1
+metadata:
+  name: verification-status
+  namespace: demo-downstream
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  types:
     - VerificationFailed
     - VerificationErrored
   channels:
