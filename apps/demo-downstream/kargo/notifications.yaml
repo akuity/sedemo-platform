@@ -20,6 +20,8 @@ spec:
   types:
     - PromotionFailed
     - PromotionErrored
+    - VerificationFailed
+    - VerificationErrored
   channels:
     - name: kargo-notification
       kind: MessageChannel
