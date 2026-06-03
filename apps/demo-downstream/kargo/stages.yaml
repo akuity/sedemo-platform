@@ -620,6 +620,8 @@ spec:
             value: ${{ imageFrom(vars.imageRepo).Tag }}
           - key: replicaCount
             value: "2"
+          - key: useRollout
+            value: "true"
       - uses: git-commit
         as: commit
         config:
