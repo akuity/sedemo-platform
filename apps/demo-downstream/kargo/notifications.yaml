@@ -1,14 +1,3 @@
-apiVersion: ee.kargo.akuity.io/v1alpha1
-kind: MessageChannel
-metadata:
-  name: kargo-notification
-  namespace: demo-downstream
-spec:
-  secretRef:
-    name: slack-token
-  slack:
-    channelID: C0A8YDED6BU
----
 kind: EventRouter
 apiVersion: ee.kargo.akuity.io/v1alpha1
 metadata:
@@ -22,7 +11,7 @@ spec:
     - PromotionErrored
   channels:
     - name: kargo-notification
-      kind: MessageChannel
+      kind: ClusterMessageChannel
 ---
 kind: EventRouter
 apiVersion: ee.kargo.akuity.io/v1alpha1
@@ -37,4 +26,4 @@ spec:
     - VerificationErrored
   channels:
     - name: kargo-notification
-      kind: MessageChannel
+      kind: ClusterMessageChannel
