@@ -95,7 +95,7 @@ spec:
           credentials:
             secretName: jira-credentials
           commentOnIssue:
-            issueKey: "${{ freightMetadata(ctx.targetFreight.name, 'jira-issue-key') }}"
+            issueKey: "${{ freightMetadata(ctx.targetFreight.name)['jira-issue-key'] }}"
             body: "Promotion started. Environment: ${{ ctx.stage }}. Image: ${{ imageFrom(vars.imageRepo).RepoURL }}:${{ imageFrom(vars.imageRepo).Tag }}. Promotion: ${{ ctx.promotion }}. Status: Deploying to ${{ ctx.stage }} environment..."
       - uses: git-clone
         config:
@@ -174,7 +174,7 @@ spec:
           credentials:
             secretName: jira-credentials
           waitForStatus:
-            issueKey: "${{ freightMetadata(ctx.targetFreight.name, 'jira-issue-key') }}"
+            issueKey: "${{ freightMetadata(ctx.targetFreight.name)['jira-issue-key'] }}"
             expectedStatus: "STAGED"
       - uses: argocd-update
         config:
@@ -188,7 +188,7 @@ spec:
           credentials:
             secretName: jira-credentials
           deleteComment:
-            issueKey: "${{ freightMetadata(ctx.targetFreight.name, 'jira-issue-key') }}"
+            issueKey: "${{ freightMetadata(ctx.targetFreight.name)['jira-issue-key'] }}"
             commentID: "${{ quote(outputs['add-progress-comment'].commentID) }}"
   verification:
     analysisTemplates:
