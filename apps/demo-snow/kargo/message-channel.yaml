@@ -1,12 +1,8 @@
 apiVersion: ee.kargo.akuity.io/v1alpha1
 kind: MessageChannel
 metadata:
-  creationTimestamp: 2026-06-04T13:03:52Z
-  generation: 1
   name: demo-snow-smtp
   namespace: demo-snow
-  resourceVersion: "39927476"
-  uid: ff148a6f-6727-4644-b90a-abcbf244d433
 spec:
   secretRef:
     name: smtp-credentials
