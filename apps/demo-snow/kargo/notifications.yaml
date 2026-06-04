@@ -31,4 +31,6 @@ spec:
   channels:
     - name: kargo-notification
       kind: ClusterMessageChannel
+    - name: demo-snow-smtp
+      kind: MessageChannel
 
