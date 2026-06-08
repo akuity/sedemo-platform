@@ -12,9 +12,13 @@ spec:
       - stage: prod-amer-east
       - stage: prod-amer-west
       - stage: prod-emea
+  - list: 
+      elements: 
+      - component: frontend 
+      - component: backend
   template:
     metadata:
-      name: demo-snow-{{stage}}
+      name: demo-snow-{{stage}}-{{component}} 
       annotations:
         kargo.akuity.io/authorized-stage: demo-snow:{{stage}}
         notifications.argoproj.io/subscriptions: |
@@ -27,7 +31,7 @@ spec:
       source:
         repoURL: https://github.com/akuity/sedemo-monorepo
         targetRevision: env-snow-demo/{{stage}}
-        path: .
+        path: {{component}}
       destination:
         name: sedemo-primary
         namespace: snow-demo-{{stage}}
