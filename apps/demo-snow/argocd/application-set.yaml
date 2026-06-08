@@ -6,18 +6,18 @@ metadata:
 spec:
   generators:
     - matrix: 
-      generators: 
-        - list:
-            elements:
-              - stage: dev
-              - stage: staging 
-              - stage: prod-amer-east
-              - stage: prod-amer-west
-              - stage: prod-emea
-        - list: 
-            elements: 
-              - component: frontend 
-              - component: backend
+        generators: 
+          - list:
+              elements:
+                - stage: dev
+                - stage: staging 
+                - stage: prod-amer-east
+                - stage: prod-amer-west
+                - stage: prod-emea
+          - list: 
+              elements: 
+                - component: frontend 
+                - component: backend
   template:
     metadata:
       name: demo-snow-{{stage}}-{{component}} 
