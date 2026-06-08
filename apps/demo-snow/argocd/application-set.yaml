@@ -21,6 +21,10 @@ spec:
   template:
     metadata:
       name: demo-snow-{{stage}}-{{component}} 
+      labels: 
+        app.kubernetes.io/part-of: demo-snow
+        kargo.akuity.io/stage: "{{stage}}"
+        app.kubernetes.io/component: "{{component}}"
       annotations:
         kargo.akuity.io/authorized-stage: demo-snow:{{stage}}
         notifications.argoproj.io/subscriptions: |
