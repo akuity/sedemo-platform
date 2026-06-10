@@ -38,10 +38,6 @@ spec:
         repoURL: https://github.com/akuity/sedemo-monorepo
         targetRevision: env-snow-demo/{{stage}}
         path: .
-        helm:
-          parameters:
-            - name: component
-              value: "{{component}}"
       destination:
         name: sedemo-primary
         namespace: snow-demo-{{stage}}-{{component}}
