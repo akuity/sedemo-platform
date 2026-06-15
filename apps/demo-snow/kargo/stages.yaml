@@ -54,6 +54,10 @@ spec:
               value: ${{ ctx.stage }}
             - key: ingress.root_domain
               value: akpdemoapps.link
+      - uses: copy
+        config:
+          inPath: ./src/verification-snow-demo/deploy/overlays/*
+          outPath: ./out
       - uses: kyverno-policy-check
         as: kyverno
       - task:
