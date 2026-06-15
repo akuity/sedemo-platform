@@ -33,7 +33,7 @@ spec:
       kind: ClusterMessageChannel
     - name: demo-snow-smtp
       kind: MessageChannel
-      output: |
-        subject: Promotion activity detected
-        body: Kargo has performed promotion to stage: ${{ event.stageName }}.
+      output: 
+        subject: ${{ type }} activity detected
+        body: Kargo has performed ${{ type }} to stage: ${{ event.stageName }}.
 
