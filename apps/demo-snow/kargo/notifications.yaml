@@ -34,6 +34,6 @@ spec:
     - name: demo-snow-smtp
       kind: MessageChannel
       output: 
-        subject: ${{ type }} activity detected
-        body: Kargo has performed ${{ type }} to stage: ${{ event.stageName }}.
+        subject: "${{ type }} activity detected"
+        body: "Kargo has performed ${{ type }} to stage: ${{ event.stageName }}."
 
