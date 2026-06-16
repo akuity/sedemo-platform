@@ -67,16 +67,26 @@ spec:
             - key: destinationCluster
               value: ${{ outputs['find-primary'].primaryCluster }}
           outLayout: flat
+      - uses: git-commit
+        as: commit
+        config:
+          path: ${{ vars.path_out }}
+          message: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
+      - uses: git-push
+        as: push
+        config:
+          path: ${{ vars.path_out }}
+          targetBranch: env-eddie/dev/${{ outputs['find-primary'].primaryCluster }}
       # Now two conditional argocd-update steps to deploy the primary, using a conditional if
       - uses: argocd-update
         as: deploy-cluster-a
-        if: ${{ outputs['find-primary'].primaryCluster }} == "sedemo-primary"
+        if: ${{ outputs['find-primary'].primaryCluster  == "sedemo-primary" }}
         config:
           apps:
           - name: team-eddie-dev-sedemo-primary
       - uses: argocd-update
         as: deploy-cluster-b
-        if: ${{ outputs['find-primary'].primaryCluster }} == "sedemo-secondary"
+        if: ${{ outputs['find-primary'].primaryCluster  == "sedemo-secondary" }}
         config:
           apps:
           - name: team-eddie-dev-sedemo-secondary
@@ -153,16 +163,26 @@ spec:
             - key: destinationCluster
               value: ${{ outputs['find-secondary'].secondaryCluster }}
           outLayout: flat
+      - uses: git-commit
+        as: commit
+        config:
+          path: ${{ vars.path_out }}
+          message: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
+      - uses: git-push
+        as: push
+        config:
+          path: ${{ vars.path_out }}
+          targetBranch: env-eddie/dev/${{ outputs['find-secondary'].secondaryCluster }}
       # Now two conditional argocd-update steps to deploy the secondary, using a conditional if
       - uses: argocd-update
         as: deploy-cluster-a
-        if: ${{ outputs['find-secondary'].secondaryCluster }} == "sedemo-primary"
+        if: ${{ outputs['find-secondary'].secondaryCluster  == "sedemo-primary" }}
         config:
           apps:
           - name: team-eddie-dev-sedemo-primary
       - uses: argocd-update
         as: deploy-cluster-b
-        if: ${{ outputs['find-secondary'].secondaryCluster }} == "sedemo-secondary"
+        if: ${{ outputs['find-secondary'].secondaryCluster  == "sedemo-secondary" }}
         config:
           apps:
           - name: team-eddie-dev-sedemo-secondary
