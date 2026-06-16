@@ -49,10 +49,11 @@ spec:
       # use output in helm template step to generate k8s manifests for promotion
       - uses: helm-template
         config:
-          path: ${{ vars.path_src }}/deploy/chart
+          path: ${{ vars.path_src }}/rollout-apps/deploy/chart
           outPath: ${{ vars.path_out }}/${{ outputs['find-primary'].currentPrimary }}/manifests
           outLayout: flat
           namespace: team-eddie-dev
+          releaseName: rollouts
           setValues:
             key: destinationCluster
             value: ${{ outputs['find-primary'].currentPrimary }}
@@ -124,10 +125,11 @@ spec:
       # use output in helm template step to generate k8s manifests for promotion
       - uses: helm-template
         config:
-          path: ${{ vars.path_src }}/deploy/chart
+          path: ${{ vars.path_src }}/rollout-apps/deploy/chart
           outPath: ${{ vars.path_out }}/${{ outputs['find-secondary'].secondaryCluster }}/manifests
           outLayout: flat
           namespace: team-eddie-dev
+          releaseName: rollouts
           setValues:
             key: destinationCluster
             value: ${{ outputs['find-secondary'].secondaryCluster }}
