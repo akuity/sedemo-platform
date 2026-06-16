@@ -12,10 +12,12 @@ spec:
             - stage: dev
             - stage: staging
             - stage: prod
-      - clusters:
-          selector:
-            matchLabels:
-              team-role: sedemo
+      - list:
+          elements:
+            - cluster: sedemo-primary
+              name: cluster-a
+            - cluster: sedemo-secondary
+              name: cluster-b
   template:
     metadata:
       name: team-eddie-{{stage}}-{{name}}
@@ -28,7 +30,7 @@ spec:
         targetRevision: env-eddie/{{stage}}/{{name}}
         path: .
       destination:
-        name: '{{name}}'
+        name: '{{cluster}}'
         namespace: team-eddie-{{stage}}
       syncPolicy:
         automated:
