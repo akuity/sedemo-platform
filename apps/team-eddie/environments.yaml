@@ -1,0 +1,15 @@
+dev:
+  primary:
+    cluster: cluster-a
+  secondary:
+    cluster: cluster-b
+staging:
+  primary:
+    cluster: cluster-a
+  secondary:
+    cluster: cluster-b
+production:
+  primary:
+    cluster: cluster-a
+  secondary:
+    cluster: cluster-b
