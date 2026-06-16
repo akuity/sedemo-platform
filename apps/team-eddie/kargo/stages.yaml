@@ -26,10 +26,13 @@ spec:
       steps:
       # use http step to pull https://demo-public-notsecure.s3.us-east-1.amazonaws.com/environments.yaml
       - uses: http
+        as: find-primary
         config:
           url: https://demo-public-notsecure.s3.us-east-1.amazonaws.com/environments.yaml
           method: GET
-          outputPath: ${{ vars.path_info }}/environments.yaml
+          outputs:
+          - name: primaryCluster
+            fromExpression: body.dev.primary.cluster
       # load current primary destination cluster using yaml parse step
       - uses: yaml-parse
         as: find-primary
@@ -103,25 +106,23 @@ spec:
       steps:
       # use http step to pull https://demo-public-notsecure.s3.us-east-1.amazonaws.com/environments.yaml
       - uses: http
+        as: find-secondary
         config:
           url: https://demo-public-notsecure.s3.us-east-1.amazonaws.com/environments.yaml
           method: GET
-          outputPath: ${{ vars.path_info }}/environments.yaml
-      # load current primary destination cluster using yaml parse step
-      - uses: yaml-parse
-        as: find-secondary
-        config:   
-          path: ${{ vars.path_info }}/environments.yaml  
           outputs:
-          - name: currentSecondary
-            fromExpression: dev.secondary.cluster
+          - name: secondaryCluster
+            fromExpression: body.dev.secondary.cluster
+      #
+      # Alternately authorative file could be cloned from git, and then parsed with yaml-parse step to get current primary
+      #
       - uses: git-clone
         config:
           repoURL: ${{ vars.gitRepo }}
           checkout:
           - branch: main
             path: ${{ vars.path_src }}
-          - branch: env-eddie/dev/${{ find-secondary.outputs.currentSecondary }}
+          - branch: env-eddie/dev/${{ find-secondary.outputs.secondaryCluster }}
             create: true
             path: ${{ vars.path_out }}
       - uses: git-clear
@@ -131,22 +132,22 @@ spec:
       - uses: helm-template
         config:
           path: ${{ vars.path_src }}/deploy/chart
-          outPath: ${{ vars.path_out }}/${{ find-secondary.outputs.currentSecondary }}/manifests
+          outPath: ${{ vars.path_out }}/${{ find-secondary.outputs.secondaryCluster }}/manifests
           outLayout: flat
           namespace: team-eddie-dev
           setValues:
             key: destinationCluster
-            value: ${{ find-secondary.outputs.currentSecondary }}
+            value: ${{ find-secondary.outputs.secondaryCluster }}
       # Now two conditional argocd-update steps to deploy the secondary, using a conditional if
       - uses: argocd-update
         as: deploy-cluster-a
-        if: ${{ find-secondary.outputs.currentSecondary }} == "sedemo-primary"
+        if: ${{ find-secondary.outputs.secondaryCluster }} == "sedemo-primary"
         config:
           apps:
           - name: team-eddie-dev-sedemo-primary
       - uses: argocd-update
         as: deploy-cluster-b
-        if: ${{ find-secondary.outputs.currentSecondary }} == "sedemo-secondary"
+        if: ${{ find-secondary.outputs.secondaryCluster }} == "sedemo-secondary"
         config:
           apps:
           - name: team-eddie-dev-sedemo-secondary
