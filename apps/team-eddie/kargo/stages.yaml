@@ -17,8 +17,6 @@ spec:
       vars:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
-      - name: targetBranch
-        value: env-eddie/dev 
       - name: path_src
         value: ./src
       - name: path_out
@@ -26,18 +24,6 @@ spec:
       - name: path_info
         value: ./info
       steps:
-      - uses: git-clone
-        config:
-          repoURL: ${{ vars.gitRepo }}
-          checkout:
-          - branch: ${{ vars.sourceBranch }}
-            path: ${{ vars.path_src }}
-          - branch: ${{ vars.targetBranch }}
-            create: true
-            path: ${{ vars.path_out }}
-      - uses: git-clear
-        config:
-          path: ${{ vars.path_out }}
       # use http step to pull https://demo-public-notsecure.s3.us-east-1.amazonaws.com/environments.yaml
       - uses: http
         config:
@@ -52,6 +38,18 @@ spec:
           outputs:
           - name: currentPrimary
             fromExpression: dev.primary.cluster
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: main
+            path: ${{ vars.path_src }}
+          - branch: env-eddie/dev/${{ find-primary.outputs.currentPrimary }}
+            create: true
+            path: ${{ vars.path_out }}
+      - uses: git-clear
+        config:
+          path: ${{ vars.path_out }}
       # use output in helm template step to generate k8s manifests for promotion
       - uses: helm-template
         config:
@@ -96,8 +94,6 @@ spec:
       vars:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
-      - name: targetBranch
-        value: env-eddie/dev 
       - name: path_src
         value: ./src
       - name: path_out
@@ -105,18 +101,6 @@ spec:
       - name: path_info
         value: ./info
       steps:
-      - uses: git-clone
-        config:
-          repoURL: ${{ vars.gitRepo }}
-          checkout:
-          - branch: ${{ vars.sourceBranch }}
-            path: ${{ vars.path_src }}
-          - branch: ${{ vars.targetBranch }}
-            create: true
-            path: ${{ vars.path_out }}
-      - uses: git-clear
-        config:
-          path: ${{ vars.path_out }}
       # use http step to pull https://demo-public-notsecure.s3.us-east-1.amazonaws.com/environments.yaml
       - uses: http
         config:
@@ -131,6 +115,18 @@ spec:
           outputs:
           - name: currentSecondary
             fromExpression: dev.secondary.cluster
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: main
+            path: ${{ vars.path_src }}
+          - branch: env-eddie/dev/${{ find-secondary.outputs.currentSecondary }}
+            create: true
+            path: ${{ vars.path_out }}
+      - uses: git-clear
+        config:
+          path: ${{ vars.path_out }}
       # use output in helm template step to generate k8s manifests for promotion
       - uses: helm-template
         config:
