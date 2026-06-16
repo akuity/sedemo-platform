@@ -40,7 +40,7 @@ spec:
           checkout:
           - branch: main
             path: ${{ vars.path_src }}
-          - branch: env-eddie/dev/${{ outputs['find-primary'].currentPrimary }}
+          - branch: env-eddie/dev/${{ outputs['find-primary'].primaryCluster }}
             create: true
             path: ${{ vars.path_out }}
       - uses: git-clear
@@ -49,24 +49,24 @@ spec:
       # use output in helm template step to generate k8s manifests for promotion
       - uses: helm-template
         config:
-          path: ${{ vars.path_src }}/rollout-apps/deploy/chart
-          outPath: ${{ vars.path_out }}/${{ outputs['find-primary'].currentPrimary }}/manifests
+          path: ${{ vars.path_src }}/rollouts-app/deploy/chart
+          outPath: ${{ vars.path_out }}/${{ outputs['find-primary'].primaryCluster }}/manifests
           outLayout: flat
           namespace: team-eddie-dev
           releaseName: rollouts
           setValues:
             - key: destinationCluster
-              value: ${{ outputs['find-primary'].currentPrimary }}
+              value: ${{ outputs['find-primary'].primaryCluster }}
       # Now two conditional argocd-update steps to deploy the primary, using a conditional if
       - uses: argocd-update
         as: deploy-cluster-a
-        if: ${{ outputs['find-primary'].currentPrimary }} == "sedemo-primary"
+        if: ${{ outputs['find-primary'].primaryCluster }} == "sedemo-primary"
         config:
           apps:
           - name: team-eddie-dev-sedemo-primary
       - uses: argocd-update
         as: deploy-cluster-b
-        if: ${{ outputs['find-primary'].currentPrimary }} == "sedemo-secondary"
+        if: ${{ outputs['find-primary'].primaryCluster }} == "sedemo-secondary"
         config:
           apps:
           - name: team-eddie-dev-sedemo-secondary
@@ -125,7 +125,7 @@ spec:
       # use output in helm template step to generate k8s manifests for promotion
       - uses: helm-template
         config:
-          path: ${{ vars.path_src }}/rollout-apps/deploy/chart
+          path: ${{ vars.path_src }}/rollouts-app/deploy/chart
           outPath: ${{ vars.path_out }}/${{ outputs['find-secondary'].secondaryCluster }}/manifests
           outLayout: flat
           namespace: team-eddie-dev
