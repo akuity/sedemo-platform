@@ -49,14 +49,22 @@ spec:
       # use output in helm template step to generate k8s manifests for promotion
       - uses: helm-template
         config:
+          releaseName: deploy
           path: ${{ vars.path_src }}/rollouts-app/deploy/chart
+          valuesFiles:
+          - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/${{ outputs['find-primary'].primaryCluster }}/manifests
-          outLayout: flat
           namespace: team-eddie-dev
-          releaseName: rollouts
           setValues:
+            - key: image.tag
+              value: ${{ imageFrom(vars.imageRepo).Tag }}
+            - key: kargo.stage
+              value: ${{ ctx.stage }}
+            - key: ingress.root_domain
+              value: akpdemoapps.link
             - key: destinationCluster
               value: ${{ outputs['find-primary'].primaryCluster }}
+          outLayout: flat
       # Now two conditional argocd-update steps to deploy the primary, using a conditional if
       - uses: argocd-update
         as: deploy-cluster-a
@@ -125,14 +133,22 @@ spec:
       # use output in helm template step to generate k8s manifests for promotion
       - uses: helm-template
         config:
+          releaseName: deploy
           path: ${{ vars.path_src }}/rollouts-app/deploy/chart
+          valuesFiles:
+          - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
           outPath: ${{ vars.path_out }}/${{ outputs['find-secondary'].secondaryCluster }}/manifests
-          outLayout: flat
           namespace: team-eddie-dev
-          releaseName: rollouts
           setValues:
+            - key: image.tag
+              value: ${{ imageFrom(vars.imageRepo).Tag }}
+            - key: kargo.stage
+              value: ${{ ctx.stage }}
+            - key: ingress.root_domain
+              value: akpdemoapps.link
             - key: destinationCluster
               value: ${{ outputs['find-secondary'].secondaryCluster }}
+          outLayout: flat
       # Now two conditional argocd-update steps to deploy the secondary, using a conditional if
       - uses: argocd-update
         as: deploy-cluster-a
