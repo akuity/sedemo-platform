@@ -86,10 +86,11 @@ metadata:
 spec:
   requestedFreight:
   - origin:
-      kind: Stage
-      name: dev-primary
+      kind: Warehouse
+      name: application-a
     sources:
-      direct: true
+      stages:
+      - dev-primary
   promotionTemplate:
     spec:
       vars:
