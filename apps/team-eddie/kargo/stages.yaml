@@ -1,7 +1,7 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: dev
+  name: dev-primary
   namespace: team-eddie
   annotations:
     kargo.akuity.io/color: red
@@ -9,13 +9,9 @@ spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: demo-pod-identity
+      name: application-a
     sources:
       direct: true
-  # verification:
-  #   analysisTemplates:
-  #     - name: integration-test
-  #       kind: ClusterAnalysisTemplate
   promotionTemplate:
     spec:
       vars:
@@ -27,6 +23,8 @@ spec:
         value: ./src
       - name: path_out
         value: ./out
+      - name: path_info
+        value: ./info
       steps:
       - uses: git-clone
         config:
@@ -40,3 +38,40 @@ spec:
       - uses: git-clear
         config:
           path: ${{ vars.path_out }}
+      # use http step to pull https://demo-public-notsecure.s3.us-east-1.amazonaws.com/environments.yaml
+      - uses: http
+        config:
+          url: https://demo-public-notsecure.s3.us-east-1.amazonaws.com/environments.yaml
+          method: GET
+          outputPath: ${{ vars.path_info }}/environments.yaml
+      # load current primary destination cluster using yaml parse step
+      - uses: yaml-parse
+        as: find-primary
+        config:   
+          path: ${{ vars.path_info }}/environments.yaml  
+          outputs:
+          - name: currentPrimary
+            fromExpression: dev.primary.cluster
+      # use output in helm template step to generate k8s manifests for promotion
+      - uses: helm-template
+        config:
+          path: ${{ vars.path_src }}/deploy/chart
+          outPath: ${{ vars.path_out }}/${{ find-primary.outputs.currentPrimary }}/manifests
+          outLayout: flat
+          namespace: team-eddie-dev
+          setValues:
+            key: destinationCluster
+            value: ${{ find-primary.outputs.currentPrimary }}
+      # Now two conditional argocd-update steps to deploy the primary, using a conditional if
+      - uses: argocd-update
+        as: deploy-cluster-a
+        if: ${{ find-primary.outputs.currentPrimary }} == "sedemo-primary"
+        config:
+          apps:
+          - name: team-eddie-${{ctx.stage}}-sedemo-primary
+      - uses: argocd-update
+        as: deploy-cluster-b
+        if: ${{ find-primary.outputs.currentPrimary }} == "sedemo-secondary"
+        config:
+          apps:
+          - name: team-eddie-${{ctx.stage}}-sedemo-secondary

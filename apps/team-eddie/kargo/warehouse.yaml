@@ -1,11 +1,11 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
-  name: demo-rollouts
+  name: application-a
   namespace: team-eddie
 spec:
   subscriptions:
   - git:
       repoURL: https://github.com/akuity/sedemo-platform
       includePaths:
-      - templated-teams
+      - active-active
