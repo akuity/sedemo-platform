@@ -55,8 +55,8 @@ spec:
           namespace: team-eddie-dev
           releaseName: rollouts
           setValues:
-            key: destinationCluster
-            value: ${{ outputs['find-primary'].currentPrimary }}
+            - key: destinationCluster
+              value: ${{ outputs['find-primary'].currentPrimary }}
       # Now two conditional argocd-update steps to deploy the primary, using a conditional if
       - uses: argocd-update
         as: deploy-cluster-a
@@ -131,8 +131,8 @@ spec:
           namespace: team-eddie-dev
           releaseName: rollouts
           setValues:
-            key: destinationCluster
-            value: ${{ outputs['find-secondary'].secondaryCluster }}
+            - key: destinationCluster
+              value: ${{ outputs['find-secondary'].secondaryCluster }}
       # Now two conditional argocd-update steps to deploy the secondary, using a conditional if
       - uses: argocd-update
         as: deploy-cluster-a
