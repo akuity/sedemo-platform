@@ -106,6 +106,7 @@ spec:
     sources:
       stages:
       - dev-primary
+      requiredSoakTime: 1m
   promotionTemplate:
     spec:
       vars:
