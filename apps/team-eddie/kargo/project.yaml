@@ -13,5 +13,5 @@ metadata:
 spec:
   promotionPolicies:
   - stageSelector:
-      name: dev
+      name: "regex:*-secondary"
     autoPromotionEnabled: true
