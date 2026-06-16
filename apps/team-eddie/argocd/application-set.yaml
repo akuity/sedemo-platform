@@ -18,18 +18,18 @@ spec:
               argocd.argoproj.io/secret-type: cluster
   template:
     metadata:
-      name: team-eddie-{{stage}}-{{.name}}
+      name: team-eddie-{{stage}}-{{name}}
       annotations:
-        kargo.akuity.io/authorized-stage: team-eddie:{{.stage}}-primary,team-eddie:{{.stage}}-secondary
+        kargo.akuity.io/authorized-stage: team-eddie:{{stage}}-primary,team-eddie:{{stage}}-secondary
     spec:
       project: team-eddie
       source:
         repoURL: https://github.com/akuity/sedemo-monorepo
-        targetRevision: env-eddie/{{.stage}}/{{.name}}
+        targetRevision: env-eddie/{{stage}}/{{name}}
         path: .
       destination:
-        name: '{{.name}}'
-        namespace: team-eddie-{{.stage}}
+        name: '{{name}}'
+        namespace: team-eddie-{{stage}}
       syncPolicy:
         automated:
           prune: true
