@@ -40,7 +40,7 @@ spec:
           checkout:
           - branch: main
             path: ${{ vars.path_src }}
-          - branch: env-eddie/dev/${{ find-primary.outputs.currentPrimary }}
+          - branch: env-eddie/dev/${{ outputs['find-primary'].currentPrimary }}
             create: true
             path: ${{ vars.path_out }}
       - uses: git-clear
@@ -50,22 +50,22 @@ spec:
       - uses: helm-template
         config:
           path: ${{ vars.path_src }}/deploy/chart
-          outPath: ${{ vars.path_out }}/${{ find-primary.outputs.currentPrimary }}/manifests
+          outPath: ${{ vars.path_out }}/${{ outputs['find-primary'].currentPrimary }}/manifests
           outLayout: flat
           namespace: team-eddie-dev
           setValues:
             key: destinationCluster
-            value: ${{ find-primary.outputs.currentPrimary }}
+            value: ${{ outputs['find-primary'].currentPrimary }}
       # Now two conditional argocd-update steps to deploy the primary, using a conditional if
       - uses: argocd-update
         as: deploy-cluster-a
-        if: ${{ find-primary.outputs.currentPrimary }} == "sedemo-primary"
+        if: ${{ outputs['find-primary'].currentPrimary }} == "sedemo-primary"
         config:
           apps:
           - name: team-eddie-dev-sedemo-primary
       - uses: argocd-update
         as: deploy-cluster-b
-        if: ${{ find-primary.outputs.currentPrimary }} == "sedemo-secondary"
+        if: ${{ outputs['find-primary'].currentPrimary }} == "sedemo-secondary"
         config:
           apps:
           - name: team-eddie-dev-sedemo-secondary
@@ -115,7 +115,7 @@ spec:
           checkout:
           - branch: main
             path: ${{ vars.path_src }}
-          - branch: env-eddie/dev/${{ find-secondary.outputs.secondaryCluster }}
+          - branch: env-eddie/dev/${{ outputs['find-secondary'].secondaryCluster }}
             create: true
             path: ${{ vars.path_out }}
       - uses: git-clear
@@ -125,22 +125,22 @@ spec:
       - uses: helm-template
         config:
           path: ${{ vars.path_src }}/deploy/chart
-          outPath: ${{ vars.path_out }}/${{ find-secondary.outputs.secondaryCluster }}/manifests
+          outPath: ${{ vars.path_out }}/${{ outputs['find-secondary'].secondaryCluster }}/manifests
           outLayout: flat
           namespace: team-eddie-dev
           setValues:
             key: destinationCluster
-            value: ${{ find-secondary.outputs.secondaryCluster }}
+            value: ${{ outputs['find-secondary'].secondaryCluster }}
       # Now two conditional argocd-update steps to deploy the secondary, using a conditional if
       - uses: argocd-update
         as: deploy-cluster-a
-        if: ${{ find-secondary.outputs.secondaryCluster }} == "sedemo-primary"
+        if: ${{ outputs['find-secondary'].secondaryCluster }} == "sedemo-primary"
         config:
           apps:
           - name: team-eddie-dev-sedemo-primary
       - uses: argocd-update
         as: deploy-cluster-b
-        if: ${{ find-secondary.outputs.secondaryCluster }} == "sedemo-secondary"
+        if: ${{ outputs['find-secondary'].secondaryCluster }} == "sedemo-secondary"
         config:
           apps:
           - name: team-eddie-dev-sedemo-secondary
