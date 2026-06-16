@@ -6,6 +6,6 @@ metadata:
 spec:
   subscriptions:
   - git:
-      repoURL: https://github.com/akuity/sedemo-platform
+      repoURL: https://github.com/akuity/sedemo-monorepo
       includePaths:
       - active-active
