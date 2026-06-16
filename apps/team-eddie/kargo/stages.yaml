@@ -33,7 +33,7 @@ spec:
           method: GET
           outputs:
           - name: primaryCluster
-            fromExpression: body.dev.primary.cluster
+            fromExpression: response.body.dev.primary.cluster
       - uses: git-clone
         config:
           repoURL: ${{ vars.gitRepo }}
@@ -105,7 +105,7 @@ spec:
           method: GET
           outputs:
           - name: secondaryCluster
-            fromExpression: body.dev.secondary.cluster
+            fromExpression: response.body.dev.secondary.cluster
       #
       # Alternately authorative file could be cloned from git, and then parsed with yaml-parse step to get current primary
       #
