@@ -25,6 +25,7 @@ spec:
         value: ./info
       steps:
       # use http step to pull https://demo-public-notsecure.s3.us-east-1.amazonaws.com/environments.yaml
+      # Alternately authorative file could be cloned from git, and then parsed with yaml-parse step 
       - uses: http
         as: find-primary
         config:
@@ -33,14 +34,6 @@ spec:
           outputs:
           - name: primaryCluster
             fromExpression: body.dev.primary.cluster
-      # load current primary destination cluster using yaml parse step
-      - uses: yaml-parse
-        as: find-primary
-        config:   
-          path: ${{ vars.path_info }}/environments.yaml  
-          outputs:
-          - name: currentPrimary
-            fromExpression: dev.primary.cluster
       - uses: git-clone
         config:
           repoURL: ${{ vars.gitRepo }}
