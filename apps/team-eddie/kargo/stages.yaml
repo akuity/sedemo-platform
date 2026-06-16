@@ -107,6 +107,8 @@ spec:
       stages:
       - dev-primary
       requiredSoakTime: 1m0s
+      autoPromotionOptions:
+        selectionPolicy: MatchUpstream
   promotionTemplate:
     spec:
       vars:
