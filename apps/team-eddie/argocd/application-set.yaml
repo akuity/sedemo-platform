@@ -18,7 +18,7 @@ spec:
               argocd.argoproj.io/secret-type: cluster
   template:
     metadata:
-      name: team-eddie-{{.stage}}-{{.name}}
+      name: team-eddie-{{stage}}-{{.name}}
       annotations:
         kargo.akuity.io/authorized-stage: team-eddie:{{.stage}}-primary,team-eddie:{{.stage}}-secondary
     spec:
