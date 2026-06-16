@@ -28,7 +28,7 @@ spec:
         targetRevision: env-eddie/{{.stage}}/{{.name}}
         path: .
       destination:
-        name: {{.name}}
+        name: '{{.name}}'
         namespace: team-eddie-{{.stage}}
       syncPolicy:
         automated:
