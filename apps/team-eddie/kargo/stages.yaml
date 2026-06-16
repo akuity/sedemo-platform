@@ -23,6 +23,8 @@ spec:
         value: ./out
       - name: path_info
         value: ./info
+      - name: imageRepo
+        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       steps:
       # use http step to pull https://demo-public-notsecure.s3.us-east-1.amazonaws.com/environments.yaml
       # Alternately authorative file could be cloned from git, and then parsed with yaml-parse step 
@@ -105,6 +107,8 @@ spec:
         value: ./out
       - name: path_info
         value: ./info
+      - name: imageRepo
+        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       steps:
       # use http step to pull https://demo-public-notsecure.s3.us-east-1.amazonaws.com/environments.yaml
       - uses: http
