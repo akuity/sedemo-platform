@@ -269,8 +269,7 @@ spec:
           workflowFile: team-eddie-functional-tests.yaml  
           ref: main
           inputs:
-            environment: "${{ ctx.stage }}"
-            version: "${{ imageFrom(vars.imageRepo).Tag }}"
+            path: "./tests_dir"
           timeout: 120
           insecureSkipTLSVerify: false
       - uses: gha-wait-for-workflow
