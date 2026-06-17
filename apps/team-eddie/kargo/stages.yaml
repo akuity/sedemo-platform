@@ -298,20 +298,19 @@ spec:
       - dev-secondary
       autoPromotionOptions:
         selectionPolicy: MatchUpstream
-
   promotionTemplate:
-    vars:
-    - name: gitRepo
-      value: https://github.com/akuity/sedemo-monorepo
-    - name: path_src
-      value: ./src
-    - name: path_out
-      value: ./out
-    - name: path_info
-      value: ./info
-    - name: imageRepo
-      value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
     spec:
+      vars:
+        - name: gitRepo
+          value: https://github.com/akuity/sedemo-monorepo
+        - name: path_src
+          value: ./src
+        - name: path_out
+          value: ./out
+        - name: path_info
+          value: ./info
+        - name: imageRepo
+          value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       steps:
       - as: allure-report
         uses: allure-report
