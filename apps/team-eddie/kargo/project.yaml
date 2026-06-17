@@ -14,4 +14,4 @@ spec:
   promotionPolicies:
   - stageSelector:
       name: "regex:.*-secondary"
-    autoPromotionEnabled: true
+    #autoPromotionEnabled: true

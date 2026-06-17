@@ -1,0 +1,26 @@
+name: Demo - Existing Job in GHA - Functional Tests
+on:
+  workflow_dispatch:
+    inputs:
+      path:
+        description: 'path to tests'
+        required: true
+        default: 'tests'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run functional tests
+        run: |
+          echo "Executiong tests in path: ${{ github.event.inputs.path }}"
+          # Add your functional test commands here
+          sleep 10
+          echo "Functional tests completed successfully!"
+
+      - name: Notify completion
+        run: |
+          echo "Workflow ${{ github.workflow }} completed "

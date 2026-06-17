@@ -1,0 +1,43 @@
+apiVersion: ee.kargo.akuity.io/v1alpha1
+kind: CustomPromotionStep
+metadata:
+  name: allure-report
+spec:
+  ## REQUIRED: image to execute the command in
+  image: ubuntu
+  ## REQUIRED: command to run
+  command: ["sh", "-c", "sleep 5; echo '{'status': 'success','failure_count': 0 }' > $KARGO_OUTPUT"]
+  ## OPTIONAL: additional environment to provide to the command
+  env:
+    - name: HELLO
+      value: ${{ config.input-a }}
+## OPTIONAL: output capture configuration
+  output:
+    source:
+## One of Pipe | Stdout | Stderr | File, default is Pipe
+      type: Pipe
+## required when type is File, should be omitted if it's not
+      path: ""
+## One of JSON | YAML | KeyValue | Text
+## inferred from file extension when omitted, default is KeyValue
+      format: JSON
+## Apply expressions to output to reformat with different keys
+## If omitted returns the parsed output as is
+    #transform:
+     # message: output.hello
+## OPTIONAL: error handling metadata
+  defaultTimeout: 5m
+  defaultErrorThreshold: 3
+## OPTIONAL: capabilities to provision into step container
+## Options: access-control-plane, access-argocd
+  capabilities: []
+## OPTIONAL: container resources configuration
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "25m"
+    limits:
+      memory: "128Mi"
+      cpu: "25m"
+## OPTIONAL: secrets to pull the image from private repos
+  imagePullSecrets: []

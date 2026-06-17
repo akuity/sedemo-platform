@@ -1,0 +1,29 @@
+name: Demo - Existing Job in GHA - Environment Verification
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to verify'
+        required: true
+        default: 'staging'
+      version:
+        description: 'Version to verify'
+        required: true
+        default: 'latest'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify environment
+        run: |
+          echo "Verifying version ${{ github.event.inputs.version }} in environment ${{ github.event.inputs.environment }}"
+          # Add your verification commands here
+          echo "Verification completed successfully!"
+
+      - name: Notify completion
+        run: |
+          echo "Workflow ${{ github.workflow }} completed for environment ${{ github.event.inputs.environment }}"

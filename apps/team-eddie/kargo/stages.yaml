@@ -1,3 +1,42 @@
+
+
+
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: validate-inputs
+  namespace: team-eddie
+  annotations:
+    kargo.akuity.io/color: yellow
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: application-a
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      steps:
+      - uses: gha-dispatch-workflow
+        as: verify-inputs-gha-workflow
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          workflowFile: team-eddie-validate-inputs.yaml  
+          ref: main
+          inputs:
+            project: "${{ ctx.project }}"
+            actor: "${{ ctx.meta.promotion.actor}}"
+          timeout: 120
+          insecureSkipTLSVerify: false
+      - uses: gha-wait-for-workflow
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          runID: "${{ outputs['verify-inputs-gha-workflow'].runID }}"
+          expectedConclusion: success
+          insecureSkipTLSVerify: false
+---
+# This stage uses Kargo's AnalysisTemplate support to run functional tests as a verification step in the promotion process.
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
@@ -11,9 +50,15 @@ spec:
       kind: Warehouse
       name: application-a
     sources:
-      direct: true
+      stages:
+      - validate-inputs
+      autoPromotionOptions:
+        selectionPolicy: MatchUpstream
   promotionTemplate:
     spec:
+      verification:
+        analysisTemplates:
+        - name: functional-tests
       vars:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
@@ -36,6 +81,23 @@ spec:
           outputs:
           - name: primaryCluster
             fromExpression: response.body.dev.primary.cluster
+      - uses: gha-dispatch-workflow
+        as: verify-environment-gha-workflow
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          workflowFile: team-eddie-validate-env.yaml  
+          ref: main
+          inputs:
+            environment: "${{ ctx.stage }}"
+            version: "${{ imageFrom(vars.imageRepo).Tag }}"
+          timeout: 120
+          insecureSkipTLSVerify: false
+      - uses: gha-wait-for-workflow
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          runID: "${{ outputs['verify-environment-gha-workflow'].runID }}"
+          expectedConclusion: success
+          insecureSkipTLSVerify: false
       - uses: git-clone
         config:
           repoURL: ${{ vars.gitRepo }}
@@ -91,6 +153,7 @@ spec:
           apps:
           - name: team-eddie-dev-cluster-b
 ---
+# This stage uses GHA to act as the functional test verification step, demonstrating Kargo's support for using any external system as part of the promotion process.
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
@@ -189,3 +252,119 @@ spec:
         config:
           apps:
           - name: team-eddie-dev-cluster-b
+      - uses: argocd-wait
+        if: ${{ outputs['find-secondary'].secondaryCluster  == "cluster-a" }}
+        config:
+          apps:
+          - name: team-eddie-dev-cluster-a
+      - uses: argocd-wait
+        if: ${{ outputs['find-secondary'].secondaryCluster  == "cluster-b" }}
+        config:
+          apps:
+          - name: team-eddie-dev-cluster-b
+      - uses: gha-dispatch-workflow
+        as: run-functional-tests
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          workflowFile: team-eddie-functional-tests.yaml  
+          ref: main
+          inputs:
+            environment: "${{ ctx.stage }}"
+            version: "${{ imageFrom(vars.imageRepo).Tag }}"
+          timeout: 120
+          insecureSkipTLSVerify: false
+      - uses: gha-wait-for-workflow
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          runID: "${{ outputs['run-functional-tests'].runID }}"
+          expectedConclusion: success
+          insecureSkipTLSVerify: false
+
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: summarize-deployment-dev
+  namespace: team-eddie
+  annotations:
+    kargo.akuity.io/color: gray
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse     
+      name: functional-tests
+    sources:
+      stages:
+      - dev-secondary
+      autoPromotionOptions:
+        selectionPolicy: MatchUpstream
+  steps:
+  - as: allure-report
+    uses: allure-report
+    config:
+      input-a: 'some-value'
+      transform:
+        failure-count: output.failure_count
+        failed: output.failure_count > 5
+        status: output.status
+  - uses: set-metadata
+    config:
+        - kind: Freight
+          name: ${{ ctx.targetFreight.name }}
+          values:
+            dev-functional-test-failures: ${{ outputs['allure-report'].failure-count }}
+            dev-functional-test-status: ${{ outputs['allure-report'].status }}
+  - uses: jira
+    as: create-change-ticket
+    config:
+      credentials:
+        sharedSecretName: jira-access-secret
+      createIssue:
+        projectKey: CHANGE
+        summary: "Promotion of ${{ imageFrom(vars.imageRepo).Tag }} to Dev environments"
+        adfDescription:
+          type: doc
+          version: 1
+          content:
+          - type: heading
+            attrs:
+              level: 3
+            content:
+            - type: text
+              text: "Promotion: ${{ ctx.stage }},  "
+            - type: text
+              text: "${{ imageFrom(vars.imageRepo).Tag }}"
+              marks:
+              - type: code
+          - type: paragraph
+            content:
+            - type: text
+              text: "Promotion ID: "
+              marks:
+              - type: strong
+            - type: text
+              text: ${{ ctx.promotion }}
+              marks:
+              - type: link
+                attrs:
+                  href: "https://kargo.akpdemoapps.link/project/team-eddie/promotion/${{ ctx.promotion }}"
+          - type: paragraph
+            content:
+            - type: text
+              text: "Freight ID: "
+              marks:
+              - type: strong
+            - type: text
+              text: ${{ ctx.targetFreight.name }}
+              marks:
+              - type: link
+                attrs:
+                  href: "https://kargo.akpdemoapps.link/project/team-eddie/freight/${{ ctx.targetFreight.name }}"
+        issueType: task
+        #customFields:
+          #customfield_11301: Standard
+          #customfield_10800: Request a change
+        labels:
+        - promotion
+        - "${{ ctx.stage }}"
+        - "release-${{ imageFrom(vars.imageRepo).Tag }}"

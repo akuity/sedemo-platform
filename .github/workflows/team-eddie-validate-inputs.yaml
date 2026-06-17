@@ -1,0 +1,30 @@
+name: Demo - Existing Job in GHA - Input Verification
+on:
+  workflow_dispatch:
+    inputs:
+      project:
+        description: 'input to verify'
+        required: true
+        default: 'mississippi'
+      actor:
+        description: 'input to verify'
+        required: true
+        default: 'mississippi'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify input
+        run: |
+          echo "Verifying project: ${{ github.event.inputs.project }}"
+          echo "Verifying actor: ${{ github.event.inputs.actor }}"
+          # Add your verification commands here
+          echo "Validation completed successfully!"
+
+      - name: Notify completion
+        run: |
+          echo "Workflow ${{ github.workflow }} completed "

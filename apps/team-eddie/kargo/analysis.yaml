@@ -1,19 +1,23 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
-  name: policy-analysis
+  name: functional-tests
   namespace: team-eddie
-spec:
+spec:  
   metrics:
-  - name: policy-analysis
-    provider:
-      job:
-        spec:
-          template:
-            spec:
-              containers:
-              - name: sleep
-                image: alpine:latest
-                command: [sleep, "10"]
-              restartPolicy: Never
-          backoffLimit: 1
+    - name: functional-tests
+      provider:
+        job:
+          spec:
+            backoffLimit: 1
+            template:
+              spec:
+                containers:
+                  - command:
+                      - /bin/sh
+                      - -c
+                    args:
+                      - 'for i in $(seq 1 5); do echo "Verification Step $i of 5"; sleep 2; echo -e "\tPASS"; done'
+                    image: alpine:latest
+                    name: test
+                restartPolicy: Never
