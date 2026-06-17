@@ -45,7 +45,7 @@ spec:
           path: ${{ vars.path_src }}/verification-snow-demo/deploy/chart
           valuesFiles:
           - ${{ vars.path_src }}/verification-snow-demo/deploy/chart/values.yaml
-          outPath: ${{ vars.path_out }}/manifests.yaml
+          outPath: ${{ vars.path_out }}/base/manifests.yaml
           namespace: snow-demo-dev
           setValues:
             - key: image.tag
