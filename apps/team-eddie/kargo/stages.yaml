@@ -43,7 +43,7 @@ metadata:
   name: dev-primary
   namespace: team-eddie
   annotations:
-    kargo.akuity.io/color: red
+    kargo.akuity.io/color: green
 spec:
   requestedFreight:
   - origin:
@@ -292,7 +292,7 @@ spec:
   requestedFreight:
   - origin:
       kind: Warehouse     
-      name: functional-tests
+      name: application-a
     sources:
       stages:
       - dev-secondary
