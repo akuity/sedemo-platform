@@ -408,7 +408,7 @@ spec:
       name: application-a
     sources:
       stages:
-      - validate-environment
+      - validate-environment-staging
       autoPromotionOptions:
         selectionPolicy: MatchUpstream
   promotionTemplate:
