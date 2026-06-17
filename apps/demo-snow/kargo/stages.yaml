@@ -451,7 +451,7 @@ spec:
           value: env-snow-demo/prod-${{ vars.region }}
       - uses: copy
         config:
-          inPath: ${{ vars.path_src }}/prod-emea
+          inPath: ${{ vars.sourceBranch }}/prod-emea
           outPath: ${{ vars.path_out }}
       - uses: copy
         config:
