@@ -69,9 +69,9 @@ spec:
           # - name: demo-snow-dev
           #   namespace: argocd
           - selector:
-            matchLabels:
-              app.kubernetes.io/part-of: demo-snow
-              kargo.akuity.io/stage: dev
+              matchLabels:
+                app.kubernetes.io/part-of: demo-snow
+                kargo.akuity.io/stage: dev
       - uses: hello-world
         as: my-custom-step
         config: 
