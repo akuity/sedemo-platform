@@ -331,7 +331,7 @@ spec:
           value: env-snow-demo/prod-${{ vars.region }}
       - uses: copy
         config:
-          inPath: ${{ vars.path_src }}/verification-snow-demo/deploy/overlays/prod-amer-east
+          inPath: ${{ vars.path_src }}/prod-amer-east
           outPath: ${{ vars.path_out }}
       - uses: copy
         config:
@@ -391,7 +391,7 @@ spec:
           value: env-snow-demo/prod-${{ vars.region }}
       - uses: copy
         config:
-          inPath: ${{ vars.path_src }}/verification-snow-demo/deploy/overlays/prod-amer-west
+          inPath: ${{ vars.path_src }}/prod-amer-west
           outPath: ${{ vars.path_out }}
       - uses: copy
         config:
@@ -451,7 +451,7 @@ spec:
           value: env-snow-demo/prod-${{ vars.region }}
       - uses: copy
         config:
-          inPath: ${{ vars.path_src }}/verification-snow-demo/deploy/overlays/prod-emea
+          inPath: ${{ vars.path_src }}/prod-emea
           outPath: ${{ vars.path_out }}
       - uses: copy
         config:
