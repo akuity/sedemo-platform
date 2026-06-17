@@ -36,6 +36,44 @@ spec:
           expectedConclusion: success
           insecureSkipTLSVerify: false
 ---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: validate-environment-dev
+  namespace: team-eddie
+  annotations:
+    kargo.akuity.io/color: yellow
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: application-a
+    sources:
+      stages:
+      - validate-inputs
+      autoPromotionOptions:
+        selectionPolicy: MatchUpstream
+  promotionTemplate:
+    spec:
+      steps:
+      - uses: gha-dispatch-workflow
+        as: verify-environment-gha-workflow
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          workflowFile: team-eddie-validate-env.yaml  
+          ref: main
+          inputs:
+            environment: "dev"
+            version: "${{ imageFrom(vars.imageRepo).Tag }}"
+          timeout: 120
+          insecureSkipTLSVerify: false
+      - uses: gha-wait-for-workflow
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          runID: "${{ outputs['verify-environment-gha-workflow'].runID }}"
+          expectedConclusion: success
+          insecureSkipTLSVerify: false
+---
 # This stage uses Kargo's AnalysisTemplate support to run functional tests as a verification step in the promotion process.
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -54,7 +92,7 @@ spec:
       name: application-a
     sources:
       stages:
-      - validate-inputs
+      - validate-environment-dev
       autoPromotionOptions:
         selectionPolicy: MatchUpstream
   promotionTemplate:
@@ -81,23 +119,6 @@ spec:
           outputs:
           - name: primaryCluster
             fromExpression: response.body.dev.primary.cluster
-      - uses: gha-dispatch-workflow
-        as: verify-environment-gha-workflow
-        config:
-          repoURL: https://github.com/akuity/sedemo-platform
-          workflowFile: team-eddie-validate-env.yaml  
-          ref: main
-          inputs:
-            environment: "${{ ctx.stage }}"
-            version: "${{ imageFrom(vars.imageRepo).Tag }}"
-          timeout: 120
-          insecureSkipTLSVerify: false
-      - uses: gha-wait-for-workflow
-        config:
-          repoURL: https://github.com/akuity/sedemo-platform
-          runID: "${{ outputs['verify-environment-gha-workflow'].runID }}"
-          expectedConclusion: success
-          insecureSkipTLSVerify: false
       - uses: git-clone
         config:
           repoURL: ${{ vars.gitRepo }}
@@ -323,6 +344,322 @@ spec:
             values:
               dev-functional-test-failures: "${{ outputs['allure-report'].failure_count }}"
               dev-functional-test-status: "${{ outputs['allure-report'].status }}"
+
+
+
+
+
+# Staging Repeats same high level flow, with different parameters.
+
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: validate-environment-staging
+  namespace: team-eddie
+  annotations:
+    kargo.akuity.io/color: yellow
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: application-a
+    sources:
+      stages:
+      - summarize-deployment-dev
+      autoPromotionOptions:
+        selectionPolicy: MatchUpstream
+  promotionTemplate:
+    spec:
+      steps:
+      - uses: gha-dispatch-workflow
+        as: verify-environment-gha-workflow
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          workflowFile: team-eddie-validate-env.yaml  
+          ref: main
+          inputs:
+            environment: "staging"
+            version: "${{ imageFrom(vars.imageRepo).Tag }}"
+          timeout: 120
+          insecureSkipTLSVerify: false
+      - uses: gha-wait-for-workflow
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          runID: "${{ outputs['verify-environment-gha-workflow'].runID }}"
+          expectedConclusion: success
+          insecureSkipTLSVerify: false
+---
+# This stage uses Kargo's AnalysisTemplate support to run functional tests as a verification step in the promotion process.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: staging-primary
+  namespace: team-eddie
+  annotations:
+    kargo.akuity.io/color: green
+spec:
+  verification:
+    analysisTemplates:
+    - name: functional-tests
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: application-a
+    sources:
+      stages:
+      - validate-environment
+      autoPromotionOptions:
+        selectionPolicy: MatchUpstream
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-monorepo
+      - name: path_src
+        value: ./src
+      - name: path_out
+        value: ./out
+      - name: path_info
+        value: ./info
+      - name: imageRepo
+        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+      steps:
+      # use http step to pull https://demo-public-notsecure.s3.us-east-1.amazonaws.com/environments.yaml
+      # Alternately authorative file could be cloned from git, and then parsed with yaml-parse step 
+      - uses: http
+        as: find-primary
+        config:
+          url: https://demo-public-notsecure.s3.us-east-1.amazonaws.com/environments.yaml
+          method: GET
+          outputs:
+          - name: primaryCluster
+            fromExpression: response.body.staging.primary.cluster
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: main
+            path: ${{ vars.path_src }}
+          - branch: env-eddie/staging/${{ outputs['find-primary'].primaryCluster }}
+            create: true
+            path: ${{ vars.path_out }}
+      - uses: git-clear
+        config:
+          path: ${{ vars.path_out }}
+      # use output in helm template step to generate k8s manifests for promotion
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ${{ vars.path_src }}/rollouts-app/deploy/chart
+          valuesFiles:
+          - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
+          outPath: ${{ vars.path_out }}/${{ outputs['find-primary'].primaryCluster }}/manifests
+          namespace: team-eddie-staging
+          setValues:
+            - key: image.tag
+              value: ${{ imageFrom(vars.imageRepo).Tag }}
+            - key: kargo.stage
+              value: ${{ ctx.stage }}
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+            - key: destinationCluster
+              value: ${{ outputs['find-primary'].primaryCluster }}
+          outLayout: flat
+      - uses: git-commit
+        as: commit
+        config:
+          path: ${{ vars.path_out }}
+          message: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
+      - uses: git-push
+        as: push
+        config:
+          path: ${{ vars.path_out }}
+          targetBranch: env-eddie/staging/${{ outputs['find-primary'].primaryCluster }}
+      # Now two conditional argocd-update steps to deploy the primary, using a conditional if
+      - uses: argocd-update
+        as: deploy-cluster-a
+        if: ${{ outputs['find-primary'].primaryCluster  == "cluster-a" }}
+        config:
+          apps:
+          - name: team-eddie-staging-cluster-a
+      - uses: argocd-update
+        as: deploy-cluster-b
+        if: ${{ outputs['find-primary'].primaryCluster  == "cluster-b" }}
+        config:
+          apps:
+          - name: team-eddie-staging-cluster-b
+---
+# This stage uses GHA to act as the functional test verification step, demonstrating Kargo's support for using any external system as part of the promotion process.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: staging-secondary
+  namespace: team-eddie
+  annotations:
+    kargo.akuity.io/color: green
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: application-a
+    sources:
+      stages:
+      - staging-primary
+      requiredSoakTime: 11m0s
+      autoPromotionOptions:
+        selectionPolicy: MatchUpstream
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-monorepo
+      - name: path_src
+        value: ./src
+      - name: path_out
+        value: ./out
+      - name: path_info
+        value: ./info
+      - name: imageRepo
+        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+      steps:
+      # use http step to pull https://demo-public-notsecure.s3.us-east-1.amazonaws.com/environments.yaml
+      - uses: http
+        as: find-secondary
+        config:
+          url: https://demo-public-notsecure.s3.us-east-1.amazonaws.com/environments.yaml
+          method: GET
+          outputs:
+          - name: secondaryCluster
+            fromExpression: response.body.staging.secondary.cluster
+      #
+      # Alternately authorative file could be cloned from git, and then parsed with yaml-parse step to get current primary
+      #
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: main
+            path: ${{ vars.path_src }}
+          - branch: env-eddie/staging/${{ outputs['find-secondary'].secondaryCluster }}
+            create: true
+            path: ${{ vars.path_out }}
+      - uses: git-clear
+        config:
+          path: ${{ vars.path_out }}
+      # use output in helm template step to generate k8s manifests for promotion
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ${{ vars.path_src }}/rollouts-app/deploy/chart
+          valuesFiles:
+          - ${{ vars.path_src }}/rollouts-app/deploy/chart/values.yaml
+          outPath: ${{ vars.path_out }}/${{ outputs['find-secondary'].secondaryCluster }}/manifests
+          namespace: team-eddie-staging
+          setValues:
+            - key: image.tag
+              value: ${{ imageFrom(vars.imageRepo).Tag }}
+            - key: kargo.stage
+              value: ${{ ctx.stage }}
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+            - key: destinationCluster
+              value: ${{ outputs['find-secondary'].secondaryCluster }}
+          outLayout: flat
+      - uses: git-commit
+        as: commit
+        config:
+          path: ${{ vars.path_out }}
+          message: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
+      - uses: git-push
+        as: push
+        config:
+          path: ${{ vars.path_out }}
+          targetBranch: env-eddie/staging/${{ outputs['find-secondary'].secondaryCluster }}
+      # Now two conditional argocd-update steps to deploy the secondary, using a conditional if
+      - uses: argocd-update
+        as: deploy-cluster-a
+        if: ${{ outputs['find-secondary'].secondaryCluster  == "cluster-a" }}
+        config:
+          apps:
+          - name: team-eddie-staging-cluster-a
+      - uses: argocd-update
+        as: deploy-cluster-b
+        if: ${{ outputs['find-secondary'].secondaryCluster  == "cluster-b" }}
+        config:
+          apps:
+          - name: team-eddie-staging-cluster-b
+      - uses: argocd-wait
+        if: ${{ outputs['find-secondary'].secondaryCluster  == "cluster-a" }}
+        config:
+          apps:
+          - name: team-eddie-staging-cluster-a
+      - uses: argocd-wait
+        if: ${{ outputs['find-secondary'].secondaryCluster  == "cluster-b" }}
+        config:
+          apps:
+          - name: team-eddie-staging-cluster-b
+      - uses: gha-dispatch-workflow
+        as: run-functional-tests
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          workflowFile: team-eddie-functional-tests.yaml  
+          ref: main
+          inputs:
+            path: "./tests_dir"
+          timeout: 120
+          insecureSkipTLSVerify: false
+      - uses: gha-wait-for-workflow
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          runID: "${{ outputs['run-functional-tests'].runID }}"
+          expectedConclusion: success
+          insecureSkipTLSVerify: false
+
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: summarize-deployment-staging
+  namespace: team-eddie
+  annotations:
+    kargo.akuity.io/color: gray
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse     
+      name: application-a
+    sources:
+      stages:
+      - staging-secondary
+      autoPromotionOptions:
+        selectionPolicy: MatchUpstream
+  promotionTemplate:
+    spec:
+      vars:
+        - name: gitRepo
+          value: https://github.com/akuity/sedemo-monorepo
+        - name: path_src
+          value: ./src
+        - name: path_out
+          value: ./out
+        - name: path_info
+          value: ./info
+        - name: imageRepo
+          value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+      steps:
+      - as: allure-report
+        uses: allure-report
+        config:
+          input_a: 'some-value'
+      - uses: set-metadata
+        config:
+          updates:
+          - kind: Freight
+            name: ${{ ctx.targetFreight.name }}
+            values:
+              staging-functional-test-failures: "${{ outputs['allure-report'].failure_count }}"
+              staging-functional-test-status: "${{ outputs['allure-report'].status }}"
       - uses: jira
         as: create-change-ticket
         config:
@@ -330,7 +667,7 @@ spec:
             sharedSecretName: jira-access-secret
           createIssue:
             projectKey: CHANGE
-            summary: "Promotion of ${{ imageFrom(vars.imageRepo).Tag }} to Dev environments"
+            summary: "Promotion of ${{ imageFrom(vars.imageRepo).Tag }} to staging environments"
             adfDescription:
               type: doc
               version: 1
