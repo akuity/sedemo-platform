@@ -129,7 +129,7 @@ spec:
               value: akpdemoapps.link
       - uses: copy
         config:
-          inPath: ${{ vars.path_src }}/verification-snow-demo/deploy/overlays
+          inPath: ${{ vars.path_src }}/verification-snow-demo/deploy/overlays/staging
           outPath: ${{ vars.path_out }}
       - task:
           name: push-manifests
