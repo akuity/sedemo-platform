@@ -137,8 +137,12 @@ spec:
         continueOnError: true
         config:
           apps:
-          - name: demo-snow-staging
-            namespace: argocd
+          # - name: demo-snow-staging
+          #   namespace: argocd
+          - selector:
+              matchLabels:
+                app.kubernetes.io/part-of: demo-snow
+                kargo.akuity.io/stage: staging
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -340,8 +344,12 @@ spec:
         continueOnError: true
         config:
           apps:
-          - name: demo-snow-prod-${{ vars.region }}
-            namespace: argocd
+          # - name: demo-snow-prod-${{ vars.region }}
+          #   namespace: argocd
+          - selector:
+              matchLabels:
+                app.kubernetes.io/part-of: demo-snow
+                kargo.akuity.io/stage: ${{ vars.region }}
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -392,8 +400,12 @@ spec:
         continueOnError: true
         config:
           apps:
-          - name: demo-snow-prod-${{ vars.region }}
-            namespace: argocd
+          # - name: demo-snow-prod-${{ vars.region }}
+          #   namespace: argocd
+          - selector:
+              matchLabels:
+                app.kubernetes.io/part-of: demo-snow
+                kargo.akuity.io/stage: ${{ vars.region }}
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -444,5 +456,9 @@ spec:
         continueOnError: true
         config:
           apps:
-          - name: demo-snow-prod-${{ vars.region }}
-            namespace: argocd
+          # - name: demo-snow-prod-${{ vars.region }}
+          #   namespace: argocd
+          - selector:
+              matchLabels:
+                app.kubernetes.io/part-of: demo-snow
+                kargo.akuity.io/stage: ${{ vars.region }}
