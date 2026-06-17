@@ -127,10 +127,10 @@ spec:
               value: ${{ ctx.stage }}
             - key: ingress.root_domain
               value: akpdemoapps.link
-        - uses: copy
-          config:
-            inPath: ${{ vars.path_src }}/verification-snow-demo/deploy/overlays
-            outPath: ${{ vars.path_out }}
+      - uses: copy
+        config:
+          inPath: ${{ vars.path_src }}/verification-snow-demo/deploy/overlays
+          outPath: ${{ vars.path_out }}
       - task:
           name: push-manifests
       - uses: argocd-update
