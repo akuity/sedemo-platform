@@ -331,8 +331,8 @@ spec:
           value: env-snow-demo/prod-${{ vars.region }}
       - uses: copy
         config:
-          inPath: ${{ vars.path_src }}/prod-amer-east
-          outPath: ${{ vars.path_out }}
+          inPath: ./src/prod-amer-east
+          outPath: ./out
       - uses: copy
         config:
           inPath: ./src/manifests-${{ vars.region }}.yaml
@@ -353,7 +353,7 @@ spec:
           - selector:
               matchLabels:
                 app.kubernetes.io/part-of: demo-snow
-                kargo.akuity.io/stage: ${{ vars.region }}
+                kargo.akuity.io/stage: prod-${{ vars.region }}
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -391,8 +391,8 @@ spec:
           value: env-snow-demo/prod-${{ vars.region }}
       - uses: copy
         config:
-          inPath: ${{ vars.path_src }}/prod-amer-west
-          outPath: ${{ vars.path_out }}
+          inPath: ./src/prod-amer-west
+          outPath: ./out
       - uses: copy
         config:
           inPath: ./src/manifests-${{ vars.region }}.yaml
