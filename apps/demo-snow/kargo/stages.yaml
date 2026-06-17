@@ -66,8 +66,8 @@ spec:
         continueOnError: true
         config:
           apps:
-          - name: demo-snow-dev
-            namespace: argocd
+          # - name: demo-snow-dev
+          #   namespace: argocd
           - selector:
             matchLabels:
               app.kubernetes.io/part-of: demo-snow
