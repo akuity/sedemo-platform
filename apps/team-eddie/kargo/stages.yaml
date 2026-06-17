@@ -325,7 +325,7 @@ spec:
           - kind: Freight
             name: ${{ ctx.targetFreight.name }}
             values:
-              dev-functional-test-failures: ${{ outputs['allure-report'].failure-count }}
+              dev-functional-test-failures: "${{ outputs['allure-report'].failure_count }}"
               dev-functional-test-status: "${{ outputs['allure-report'].status }}"
       - uses: jira
         as: create-change-ticket
