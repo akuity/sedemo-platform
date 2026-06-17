@@ -473,4 +473,4 @@ spec:
           - selector:
               matchLabels:
                 app.kubernetes.io/part-of: demo-snow
-                kargo.akuity.io/stage: ${{ vars.region }}
+                kargo.akuity.io/stage: prod-${{ vars.region }}
