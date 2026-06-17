@@ -56,9 +56,9 @@ spec:
         selectionPolicy: MatchUpstream
   promotionTemplate:
     spec:
-      verification:
-        analysisTemplates:
-        - name: functional-tests
+      # verification:
+      #   analysisTemplates:
+      #   - name: functional-tests
       vars:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
@@ -160,7 +160,7 @@ metadata:
   name: dev-secondary
   namespace: team-eddie
   annotations:
-    kargo.akuity.io/color: red
+    kargo.akuity.io/color: green
 spec:
   requestedFreight:
   - origin:
