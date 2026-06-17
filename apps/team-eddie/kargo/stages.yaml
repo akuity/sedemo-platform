@@ -193,7 +193,7 @@ spec:
     sources:
       stages:
       - dev-primary
-      requiredSoakTime: 11m0s
+      #requiredSoakTime: 11m0s
       autoPromotionOptions:
         selectionPolicy: MatchUpstream
   promotionTemplate:
@@ -512,7 +512,7 @@ spec:
     sources:
       stages:
       - staging-primary
-      requiredSoakTime: 11m0s
+      #requiredSoakTime: 11m0s
       autoPromotionOptions:
         selectionPolicy: MatchUpstream
   promotionTemplate:

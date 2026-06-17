@@ -13,7 +13,10 @@ metadata:
 spec:
   promotionPolicies:
   - stageSelector:
-      name: "regex:dev-.*"
+      name: "regex:.*-primary"
+    autoPromotionEnabled: true
+  - stageSelector:
+      name: "regex:.*-secondary"
     autoPromotionEnabled: true
   - stageSelector:
       name: "regex:validate-environment-dev"
