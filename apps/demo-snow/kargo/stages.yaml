@@ -237,10 +237,10 @@ spec:
               value: ${{ ctx.stage }}-emea
             - key: ingress.root_domain
               value: akpdemoapps.link
-        - uses: copy
-          config:
-            inPath: ${{ vars.path_src }}/verification-snow-demo/deploy/overlays/prod-emea
-            outPath: ${{ vars.path_out }}
+      - uses: copy
+        config:
+          inPath: ${{ vars.path_src }}/verification-snow-demo/deploy/overlays/prod-emea
+          outPath: ${{ vars.path_out }}
 
       # Since JIRA gates downstream stages, commit directly to prod branch.
       - task:
