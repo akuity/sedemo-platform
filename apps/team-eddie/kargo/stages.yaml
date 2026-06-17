@@ -314,7 +314,7 @@ spec:
       - as: allure-report
         uses: allure-report
         config:
-          input-a: 'some-value'
+          input_a: 'some-value'
           transform:
             failure-count: output.failure_count
             failed: output.failure_count > 5

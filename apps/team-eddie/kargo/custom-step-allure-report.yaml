@@ -10,7 +10,7 @@ spec:
   ## OPTIONAL: additional environment to provide to the command
   env:
     - name: HELLO
-      value: ${{ config.input-a }}
+      value: ${{ config.input_a }}
 ## OPTIONAL: output capture configuration
   output:
     source:
