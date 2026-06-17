@@ -298,73 +298,87 @@ spec:
       - dev-secondary
       autoPromotionOptions:
         selectionPolicy: MatchUpstream
-  steps:
-  - as: allure-report
-    uses: allure-report
-    config:
-      input-a: 'some-value'
-      transform:
-        failure-count: output.failure_count
-        failed: output.failure_count > 5
-        status: output.status
-  - uses: set-metadata
-    config:
-        - kind: Freight
-          name: ${{ ctx.targetFreight.name }}
-          values:
-            dev-functional-test-failures: ${{ outputs['allure-report'].failure-count }}
-            dev-functional-test-status: ${{ outputs['allure-report'].status }}
-  - uses: jira
-    as: create-change-ticket
-    config:
-      credentials:
-        sharedSecretName: jira-access-secret
-      createIssue:
-        projectKey: CHANGE
-        summary: "Promotion of ${{ imageFrom(vars.imageRepo).Tag }} to Dev environments"
-        adfDescription:
-          type: doc
-          version: 1
-          content:
-          - type: heading
-            attrs:
-              level: 3
+
+promotionTemplate:
+  vars:
+  - name: gitRepo
+    value: https://github.com/akuity/sedemo-monorepo
+  - name: path_src
+    value: ./src
+  - name: path_out
+    value: ./out
+  - name: path_info
+    value: ./info
+  - name: imageRepo
+    value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+  spec:
+    steps:
+    - as: allure-report
+      uses: allure-report
+      config:
+        input-a: 'some-value'
+        transform:
+          failure-count: output.failure_count
+          failed: output.failure_count > 5
+          status: output.status
+    - uses: set-metadata
+      config:
+          - kind: Freight
+            name: ${{ ctx.targetFreight.name }}
+            values:
+              dev-functional-test-failures: ${{ outputs['allure-report'].failure-count }}
+              dev-functional-test-status: ${{ outputs['allure-report'].status }}
+    - uses: jira
+      as: create-change-ticket
+      config:
+        credentials:
+          sharedSecretName: jira-access-secret
+        createIssue:
+          projectKey: CHANGE
+          summary: "Promotion of ${{ imageFrom(vars.imageRepo).Tag }} to Dev environments"
+          adfDescription:
+            type: doc
+            version: 1
             content:
-            - type: text
-              text: "Promotion: ${{ ctx.stage }},  "
-            - type: text
-              text: "${{ imageFrom(vars.imageRepo).Tag }}"
-              marks:
-              - type: code
-          - type: paragraph
-            content:
-            - type: text
-              text: "Promotion ID: "
-              marks:
-              - type: strong
-            - type: text
-              text: ${{ ctx.promotion }}
-              marks:
-              - type: link
-                attrs:
-                  href: "https://kargo.akpdemoapps.link/project/team-eddie/promotion/${{ ctx.promotion }}"
-          - type: paragraph
-            content:
-            - type: text
-              text: "Freight ID: "
-              marks:
-              - type: strong
-            - type: text
-              text: ${{ ctx.targetFreight.name }}
-              marks:
-              - type: link
-                attrs:
-                  href: "https://kargo.akpdemoapps.link/project/team-eddie/freight/${{ ctx.targetFreight.name }}"
-        issueType: task
-        #customFields:
-          #customfield_11301: Standard
-          #customfield_10800: Request a change
-        labels:
-        - promotion
-        - "${{ ctx.stage }}"
-        - "release-${{ imageFrom(vars.imageRepo).Tag }}"
+            - type: heading
+              attrs:
+                level: 3
+              content:
+              - type: text
+                text: "Promotion: ${{ ctx.stage }},  "
+              - type: text
+                text: "${{ imageFrom(vars.imageRepo).Tag }}"
+                marks:
+                - type: code
+            - type: paragraph
+              content:
+              - type: text
+                text: "Promotion ID: "
+                marks:
+                - type: strong
+              - type: text
+                text: ${{ ctx.promotion }}
+                marks:
+                - type: link
+                  attrs:
+                    href: "https://kargo.akpdemoapps.link/project/team-eddie/promotion/${{ ctx.promotion }}"
+            - type: paragraph
+              content:
+              - type: text
+                text: "Freight ID: "
+                marks:
+                - type: strong
+              - type: text
+                text: ${{ ctx.targetFreight.name }}
+                marks:
+                - type: link
+                  attrs:
+                    href: "https://kargo.akpdemoapps.link/project/team-eddie/freight/${{ ctx.targetFreight.name }}"
+          issueType: task
+          #customFields:
+            #customfield_11301: Standard
+            #customfield_10800: Request a change
+          labels:
+          - promotion
+          - "${{ ctx.stage }}"
+          - "release-${{ imageFrom(vars.imageRepo).Tag }}"
