@@ -184,7 +184,7 @@ spec:
           path: ${{ vars.path_src }}/verification-snow-demo/deploy/chart
           valuesFiles:
           - ${{ vars.path_src }}/verification-snow-demo/deploy/chart/values.yaml
-          outPath: ${{ vars.path_out }}/base/manifests-${{ vars.region }}.yaml
+          outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
           namespace: snow-demo-prod-amer-east
           setValues:
             - key: image.tag
@@ -193,10 +193,6 @@ spec:
               value: ${{ ctx.stage }}-amer-east
             - key: ingress.root_domain
               value: akpdemoapps.link
-      - uses: copy
-        config:
-          inPath: ${{ vars.path_src }}/verification-snow-demo/deploy/overlays/prod-amer-east
-          outPath: ${{ vars.path_out }}
       - uses: helm-template
         vars:
         - name: region
@@ -206,7 +202,7 @@ spec:
           path: ${{ vars.path_src }}/verification-snow-demo/deploy/chart
           valuesFiles:
           - ${{ vars.path_src }}/verification-snow-demo/deploy/chart/values.yaml
-          outPath: ${{ vars.path_out }}/base/manifests-${{ vars.region }}.yaml
+          outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
           namespace: snow-demo-prod-amer-west
           setValues:
             - key: image.tag
@@ -215,10 +211,6 @@ spec:
               value: ${{ ctx.stage }}-amer-west
             - key: ingress.root_domain
               value: akpdemoapps.link
-      - uses: copy
-        config:
-          inPath: ${{ vars.path_src }}/verification-snow-demo/deploy/overlays/prod-amer-west
-          outPath: ${{ vars.path_out }}
       - uses: helm-template
         vars:
         - name: region
@@ -239,8 +231,16 @@ spec:
               value: akpdemoapps.link
       - uses: copy
         config:
+          inPath: ${{ vars.path_src }}/verification-snow-demo/deploy/overlays/prod-amer-east
+          outPath: ${{ vars.path_out }}/prod-amer-east
+      - uses: copy
+        config:
+          inPath: ${{ vars.path_src }}/verification-snow-demo/deploy/overlays/prod-amer-west
+          outPath: ${{ vars.path_out }}/prod-amer-west
+      - uses: copy
+        config:
           inPath: ${{ vars.path_src }}/verification-snow-demo/deploy/overlays/prod-emea
-          outPath: ${{ vars.path_out }}
+          outPath: ${{ vars.path_out }}/prod-emea
 
       # Since JIRA gates downstream stages, commit directly to prod branch.
       - task:
