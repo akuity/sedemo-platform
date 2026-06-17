@@ -25,6 +25,8 @@ spec:
 ## If omitted returns the parsed output as is
     transform:
       warning: output.failure_count > 5
+      status: output.status
+      failure_count: output.failure_count
      # message: output.hello
 ## OPTIONAL: error handling metadata
   defaultTimeout: 5m
