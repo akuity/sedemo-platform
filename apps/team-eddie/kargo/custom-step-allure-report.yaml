@@ -23,7 +23,8 @@ spec:
       format: JSON
 ## Apply expressions to output to reformat with different keys
 ## If omitted returns the parsed output as is
-    #transform:
+    transform:
+      warning: output.failure_count > 5
      # message: output.hello
 ## OPTIONAL: error handling metadata
   defaultTimeout: 5m

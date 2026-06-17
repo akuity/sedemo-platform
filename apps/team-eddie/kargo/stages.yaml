@@ -315,10 +315,6 @@ spec:
         uses: allure-report
         config:
           input_a: 'some-value'
-          transform:
-            failure-count: output.failure_count
-            failed: output.failure_count > 5
-            status: output.status
       - uses: set-metadata
         config:
           updates:
