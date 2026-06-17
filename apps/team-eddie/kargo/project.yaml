@@ -16,8 +16,8 @@ spec:
       name: "regex:dev-.*"
     autoPromotionEnabled: true
   - stageSelector:
-      name: "regex:summarize-deployment-.*"
+      name: "regex:validate-environment-dev"
     autoPromotionEnabled: true
   - stageSelector:
-      name: "regex:validate-environment-.*"
+      name: "regex:summarize-deployment-.*"
     autoPromotionEnabled: true
