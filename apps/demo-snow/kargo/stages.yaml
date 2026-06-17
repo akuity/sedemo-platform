@@ -118,7 +118,7 @@ spec:
           path: ${{ vars.path_src }}/verification-snow-demo/deploy/chart
           valuesFiles:
           - ${{ vars.path_src }}/verification-snow-demo/deploy/chart/values.yaml
-          outPath: ${{ vars.path_out }}/manifests.yaml
+          outPath: ${{ vars.path_out }}/base/manifests.yaml
           namespace: snow-demo-staging
           setValues:
             - key: image.tag
@@ -127,6 +127,10 @@ spec:
               value: ${{ ctx.stage }}
             - key: ingress.root_domain
               value: akpdemoapps.link
+        - uses: copy
+          config:
+            inPath: ${{ vars.path_src }}/verification-snow-demo/deploy/overlays
+            outPath: ${{ vars.path_out }}
       - task:
           name: push-manifests
       - uses: argocd-update
@@ -176,7 +180,7 @@ spec:
           path: ${{ vars.path_src }}/verification-snow-demo/deploy/chart
           valuesFiles:
           - ${{ vars.path_src }}/verification-snow-demo/deploy/chart/values.yaml
-          outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
+          outPath: ${{ vars.path_out }}/base/manifests-${{ vars.region }}.yaml
           namespace: snow-demo-prod-amer-east
           setValues:
             - key: image.tag
@@ -185,6 +189,10 @@ spec:
               value: ${{ ctx.stage }}-amer-east
             - key: ingress.root_domain
               value: akpdemoapps.link
+      - uses: copy
+        config:
+          inPath: ${{ vars.path_src }}/verification-snow-demo/deploy/overlays
+          outPath: ${{ vars.path_out }}
       - uses: helm-template
         vars:
         - name: region
@@ -194,7 +202,7 @@ spec:
           path: ${{ vars.path_src }}/verification-snow-demo/deploy/chart
           valuesFiles:
           - ${{ vars.path_src }}/verification-snow-demo/deploy/chart/values.yaml
-          outPath: ${{ vars.path_out }}/manifests-${{ vars.region }}.yaml
+          outPath: ${{ vars.path_out }}/base/manifests-${{ vars.region }}.yaml
           namespace: snow-demo-prod-amer-west
           setValues:
             - key: image.tag
@@ -203,6 +211,10 @@ spec:
               value: ${{ ctx.stage }}-amer-west
             - key: ingress.root_domain
               value: akpdemoapps.link
+      - uses: copy
+        config:
+          inPath: ${{ vars.path_src }}/verification-snow-demo/deploy/overlays
+          outPath: ${{ vars.path_out }}
       - uses: helm-template
         vars:
         - name: region
@@ -221,6 +233,10 @@ spec:
               value: ${{ ctx.stage }}-emea
             - key: ingress.root_domain
               value: akpdemoapps.link
+      - uses: copy
+        config:
+          inPath: ${{ vars.path_src }}/verification-snow-demo/deploy/overlays
+          outPath: ${{ vars.path_out }}
 
       # Since JIRA gates downstream stages, commit directly to prod branch.
       - task:
