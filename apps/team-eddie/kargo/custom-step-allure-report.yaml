@@ -6,7 +6,7 @@ spec:
   ## REQUIRED: image to execute the command in
   image: ubuntu
   ## REQUIRED: command to run
-  command: ["sh", "-c", "sleep 5; echo '{\"status\": \"success\",\"failure_count\": 0 }' > $KARGO_OUTPUT"]
+  command: ["sh", "-c", "echo '{\"status\": \"success\",\"failure_count\": 0 }' > $KARGO_OUTPUT"]
   ## OPTIONAL: additional environment to provide to the command
   env:
     - name: HELLO
