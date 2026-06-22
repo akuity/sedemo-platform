@@ -31,8 +31,8 @@ spec:
   channels:
     - name: kargo-notification
       kind: ClusterMessageChannel
-    - name: demo-snow-smtp
-      kind: MessageChannel
-      output: |
-        "Kargo has performed ${{ type }} to stage: ${{ event.stageName }}."
+    # - name: demo-snow-smtp
+    #   kind: MessageChannel
+    #   output: |
+    #     "Kargo has performed ${{ type }} to stage: ${{ event.stageName }}."
 
