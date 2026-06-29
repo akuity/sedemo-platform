@@ -11,3 +11,4 @@ spec:
           - deviceClassName: gpu.nvidia.com
             allocationMode: ExactCount
             count: 1
+            name: single-gpu
