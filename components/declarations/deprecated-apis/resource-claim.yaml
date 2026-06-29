@@ -8,6 +8,6 @@ spec:
       requests:
       - name: single-gpu
         firstAvailable:
-          deviceClassName: gpu.nvidia.com
-          allocationMode: ExactCount
-          count: 1
+          - deviceClassName: gpu.nvidia.com
+            allocationMode: ExactCount
+            count: 1
