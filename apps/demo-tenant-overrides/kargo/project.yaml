@@ -25,8 +25,9 @@ spec:
   - stageSelector:
       name: prod
     autoPromotionEnabled: false
-  # The tenant-override axis is also manual — tenant changes roll out on their own
-  # cadence, independent of the dev->uat->prod lifecycle.
+  # The tenant-override axis is also manual at every tier — tenant changes roll out
+  # on their own cadence, independent of the dev->uat->prod lifecycle. One regex
+  # covers dev-tenant-overrides, uat-tenant-overrides, and prod-tenant-overrides.
   - stageSelector:
-      name: prod-tenant-overrides
+      name: "regex:.*-tenant-overrides"
     autoPromotionEnabled: false

@@ -1,5 +1,9 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# TWO WAREHOUSES = TWO INDEPENDENT AXES. This is where the separation is enforced.
+# WAREHOUSES = THE TWO AXES.
+#   AXIS 1: one image Warehouse feeding the linear dev -> uat -> prod lifecycle.
+#   AXIS 2: one git Warehouse PER TIER, each watching only that tier's tenant
+#           override files. Tenant input is independent at every tier and never
+#           enters the linear lifecycle.
 # ─────────────────────────────────────────────────────────────────────────────
 
 # AXIS 1 — SHARED LIFECYCLE.
@@ -23,15 +27,46 @@ spec:
       imageSelectionStrategy: SemVer
       discoveryLimit: 10
 ---
-# AXIS 2 — TENANT OVERRIDES (hung off a single stage: prod).
-# Watches ONLY the prod tenant override files. A tenant pin change produces Freight
-# here and feeds the prod-tenant-overrides Stage directly — it never enters the
-# dev->uat->prod lifecycle. This is the whole point: tenant input is independent.
+# AXIS 2 — TENANT OVERRIDES, one Warehouse PER TIER (dev / uat / prod).
 #
-# This Warehouse subscribes to GIT (the override files). The matching Stage only
-# syncs the affected instances; it does NOT rewrite these files (no loop). See the
-# README for the symmetric image-driven alternative (write the tag into the override
-# file via yaml-update), which we deliberately did NOT build to keep the axes clear.
+# Each Warehouse watches ONLY its own tier's override files. A tenant pin change
+# produces Freight here and feeds that tier's *-tenant-overrides Stage directly — it
+# never enters the dev->uat->prod lifecycle. Three independent Warehouses make the
+# "tenants don't line up across stages" point structural, not just asserted: dev/uat/
+# prod each have their own tenant input.
+#
+# These subscribe to GIT (the override files). The matching Stages only SYNC the
+# affected instances; they do NOT rewrite these files (no loop). See the README for
+# the symmetric image-driven alternative (write the tag into the override file via
+# yaml-update), which we deliberately did NOT build to keep the axes clear.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: tenant-overrides-dev
+  namespace: demo-tenant-overrides
+spec:
+  subscriptions:
+  - git:
+      repoURL: https://github.com/akuity/sedemo-platform
+      branch: main
+      commitSelectionStrategy: NewestFromBranch
+      includePaths:
+      - apps/demo-tenant-overrides/versions/overrides/dev
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: tenant-overrides-uat
+  namespace: demo-tenant-overrides
+spec:
+  subscriptions:
+  - git:
+      repoURL: https://github.com/akuity/sedemo-platform
+      branch: main
+      commitSelectionStrategy: NewestFromBranch
+      includePaths:
+      - apps/demo-tenant-overrides/versions/overrides/uat
+---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:

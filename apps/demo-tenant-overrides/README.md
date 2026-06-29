@@ -27,9 +27,9 @@ real setup:
   the real release artifact so Freight is discoverable. A real setup likely has a per-service build.
 - **Workloads:** every service is a `replicas: 0` Deployment + a ConfigMap. Nothing runs; the
   demo proves promotion mechanics and health-gating, not a live app.
-- **Tenant axis trigger:** modeled as a **git** subscription on the prod override files, rolled
-  out by sync only. A real setup might drive tenant pins from a tenant-specific image instead
-  (see "Tenant axis: alternative" below).
+- **Tenant axis trigger:** modeled as a **git** subscription on each tier's override files
+  (one Warehouse + stage per tier), rolled out by sync only. A real setup might drive tenant
+  pins from a tenant-specific image instead (see "Tenant axis: alternative" below).
 - **argocd-update scope:** each shared stage gates on its `app-<stage>-default` instance only;
   the rest converge via ApplicationSet auto-sync. At 140 instances you'd gate on a label selector.
 - **Fleet size:** represented by a short ApplicationSet list + 2 hand-written Applications, not 140.
@@ -42,14 +42,15 @@ real setup:
 |---|---|---|
 | What varies | default service tags | per-tenant pins on specific services |
 | File(s) | `versions/defaults/<stage>.yaml` | `versions/overrides/<stage>/tenant-*.yaml` |
-| Warehouse | `defaults-release` (image) | `tenant-overrides-prod` (git) |
-| Flow | linear `dev → uat → prod` | enters at one stage, **does not promote** |
+| Warehouse | `defaults-release` (image) | `tenant-overrides-{dev,uat,prod}` (git, one per tier) |
+| Flow | linear `dev → uat → prod` | enters at its own tier, **does not promote** |
 | Promotion writes | **only** the defaults file | nothing (sync only) — never the defaults file |
-| Stage(s) | `dev`, `uat`, `prod` | `prod-tenant-overrides` |
+| Stage(s) | `dev`, `uat`, `prod` | `dev-tenant-overrides`, `uat-tenant-overrides`, `prod-tenant-overrides` |
 
 **Why separate?** Tenants don't line up across stages (dev tenants ≠ uat tenants ≠ prod
-tenants), so tenancy is not a promotion axis. Modeling it as its own Warehouse hung off a
-single stage keeps the linear lifecycle clean and the tenant cadence independent.
+tenants), so tenancy is not a promotion axis. Modeling it as its own Warehouse + stage at
+each tier keeps the linear lifecycle clean and the tenant cadence independent — and shows the
+per-tier independence at every tier rather than asserting it.
 
 A service renders from `defaults` **unless** a tenant override pins it (Helm last-file-wins):
 
@@ -75,8 +76,8 @@ demo-tenant-overrides/
 │   └── rendered/                # 2 hand-written Applications: the expanded shape, readable
 └── kargo/
     ├── project.yaml             # Project + ProjectConfig (dev auto; uat/prod/tenant manual)
-    ├── warehouses.yaml          # defaults-release (image) + tenant-overrides-prod (git)
-    ├── stages.yaml              # dev → uat → prod  +  prod-tenant-overrides
+    ├── warehouses.yaml          # defaults-release (image) + tenant-overrides-{dev,uat,prod} (git)
+    ├── stages.yaml              # dev → uat → prod  +  {dev,uat,prod}-tenant-overrides
     ├── promotion-tasks.yaml     # promote-defaults: edits ONLY defaults/<stage>.yaml
     └── analysis.yaml            # healthy-sync-check verification (uat/prod)
 ```
@@ -95,9 +96,10 @@ This repo is auto-discovered by the platform bootstrap (`bootstrap/argocd-apps.y
    (edits `defaults/dev.yaml`, syncs `app-dev-default`). Promote `dev → uat → prod` from the
    Kargo UI; each step edits only that stage's defaults file, the ConfigMap re-renders, the app
    reports Healthy, and the `healthy-sync-check` verification runs on uat/prod.
-3. **Tenant axis (independent):** edit a file under `versions/overrides/prod/` (e.g. bump
-   `tenant-charlie.yaml`'s `api` tag) and push. `tenant-overrides-prod` produces Freight; promote
-   `prod-tenant-overrides` to roll that tenant out — with **no movement** in dev/uat/prod.
+3. **Tenant axis (independent, per tier):** edit a file under `versions/overrides/<tier>/`
+   (e.g. bump `prod/tenant-charlie.yaml`'s `api` tag) and push. `tenant-overrides-<tier>` produces
+   Freight; promote `<tier>-tenant-overrides` to roll that tenant out — with **no movement** in
+   the linear lifecycle and no effect on the other tiers' tenants.
 
 Local sanity check (no cluster needed):
 
@@ -149,7 +151,8 @@ Mechanical find-and-replace once the real structure is known:
 - **Release artifact:** `ghcr.io/stefanprodan/podinfo` → real image repo(s). For per-service
   builds, add one `image:` subscription per repo in `warehouses.yaml` and one matching
   `yaml-update` key in `promotion-tasks.yaml`.
-- **Override watch path:** `tenant-overrides-prod` `includePaths` → the real per-tenant override dir.
+- **Override watch paths:** the `tenant-overrides-{dev,uat,prod}` `includePaths` → the real
+  per-tenant override dirs (one Warehouse per tier).
 - **Chart:** `chart/` → the real chart (or point `source.path` at it). Keep the layered
   `valueFiles` order (defaults then tenant override).
 - **Instances/fleet:** replace the ApplicationSet list generator with a `git` files generator
@@ -175,7 +178,7 @@ tenant flow is image-driven. **The shared promotion still must never write overr
 **Does prove**
 - One chart → many Argo CD Applications, differing only by layered value files.
 - The two axes are mechanically separate: the shared promotion writes **only** `defaults/<stage>.yaml`
-  and never an override file; tenant input enters at one stage and never promotes.
+  and never an override file; tenant input enters at its own tier and never promotes.
 - Promotion gates on **real Application health** (argocd-update waits for Healthy + Synced;
   verification runs on uat/prod) — not "a commit landed".
 - Immutable re-tag (path a) carries one artifact across stages with per-stage provenance.

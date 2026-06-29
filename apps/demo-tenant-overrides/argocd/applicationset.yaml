@@ -42,12 +42,12 @@ spec:
       # Different tenants per stage on purpose: dev/uat/prod tenant sets do NOT line up.
       - name: app-dev-tenant-alpha
         stage: dev
-        authorizedStage: dev
+        authorizedStage: dev-tenant-overrides
         baseValues: ../versions/defaults/dev.yaml
         tenantValues: ../versions/overrides/dev/tenant-alpha.yaml
       - name: app-uat-tenant-bravo
         stage: uat
-        authorizedStage: uat
+        authorizedStage: uat-tenant-overrides
         baseValues: ../versions/defaults/uat.yaml
         tenantValues: ../versions/overrides/uat/tenant-bravo.yaml
       - name: app-prod-tenant-delta

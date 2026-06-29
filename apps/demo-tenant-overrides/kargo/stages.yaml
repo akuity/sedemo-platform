@@ -5,9 +5,10 @@
 #   `defaults-release` Warehouse. Each stage runs the promote-defaults task, which
 #   edits ONLY versions/defaults/<stage>.yaml.
 #
-# AXIS 2 (tenant overrides): prod-tenant-overrides, a standalone stage off the
-#   `tenant-overrides-prod` Warehouse. It takes tenant input directly at prod and
-#   never participates in dev -> uat -> prod.
+# AXIS 2 (tenant overrides): one standalone *-tenant-overrides stage PER TIER, each
+#   off its own tenant Warehouse. Each takes tenant input directly at its tier and
+#   never participates in dev -> uat -> prod. The tenant stages do not chain to each
+#   other either — dev/uat/prod tenants are independent sets.
 # ─────────────────────────────────────────────────────────────────────────────
 
 # ── AXIS 1: dev (entry — direct from the Warehouse, auto-promoted) ──────────────
@@ -93,12 +94,90 @@ spec:
         - name: stage
           value: prod
 ---
-# ── AXIS 2: prod-tenant-overrides (INDEPENDENT of the linear lifecycle) ─────────
-# Off a SEPARATE Warehouse (tenant-overrides-prod, a git subscription on the prod
-# override files). Freight here is created when a tenant pin changes. The promotion
-# does NOT edit defaults and does NOT rewrite the override files — it only syncs the
-# affected tenant instances, health-gated. Tenant input enters at prod and goes
-# nowhere else.
+# ── AXIS 2: per-tier tenant-override stages (INDEPENDENT of the linear lifecycle) ─
+# Each is off a SEPARATE Warehouse (tenant-overrides-<tier>, a git subscription on
+# that tier's override files). Freight is created when a tenant pin changes. The
+# promotion does NOT edit defaults and does NOT rewrite the override files — it only
+# syncs that tier's affected tenant instances, health-gated. Tenant input enters at
+# its tier and goes nowhere else; the tenant stages don't chain to each other.
+
+# dev tier — tenant "alpha"
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev-tenant-overrides
+  namespace: demo-tenant-overrides
+  annotations:
+    kargo.akuity.io/color: amber
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: tenant-overrides-dev
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-platform
+      - name: src
+        value: ./src
+      steps:
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: main
+            path: ${{ vars.src }}
+      # No edit step: override files are authored by humans/CI; this stage only rolls
+      # them out, gating on real health. Sync the dev tenant instances.
+      - uses: argocd-update
+        config:
+          apps:
+          - name: app-dev-tenant-alpha
+            namespace: argocd
+---
+# uat tier — tenant "bravo"
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: uat-tenant-overrides
+  namespace: demo-tenant-overrides
+  annotations:
+    kargo.akuity.io/color: amber
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: tenant-overrides-uat
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-platform
+      - name: src
+        value: ./src
+      steps:
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: main
+            path: ${{ vars.src }}
+      # No edit step: override files are authored by humans/CI; this stage only rolls
+      # them out, gating on real health. Sync the uat tenant instances.
+      - uses: argocd-update
+        config:
+          apps:
+          - name: app-uat-tenant-bravo
+            namespace: argocd
+---
+# prod tier — tenants "charlie", "delta", "echo"
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
@@ -128,8 +207,8 @@ spec:
           checkout:
           - branch: main
             path: ${{ vars.src }}
-      # No edit step: the override files are authored by humans/CI; this stage only
-      # rolls them out, gating on real health. Sync the prod tenant instances.
+      # No edit step: override files are authored by humans/CI; this stage only rolls
+      # them out, gating on real health. Sync the prod tenant instances.
       - uses: argocd-update
         config:
           apps:
