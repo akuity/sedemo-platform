@@ -1,0 +1,8 @@
+# AXIS 2 — TENANT OVERRIDE — tenant "bravo", uat stage.
+# Pins only what diverges from versions/defaults/uat.yaml. Does NOT promote anywhere.
+# tenant-bravo appears in uat only — a different tenant set than dev or prod.
+services:
+  worker:
+    tag: "6.5.4"   # bravo is held back on worker pending a UAT sign-off
+  frontend:
+    tag: "6.6.2"   # bravo is piloting a newer frontend than the uat default

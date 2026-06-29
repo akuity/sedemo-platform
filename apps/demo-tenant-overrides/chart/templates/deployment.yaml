@@ -1,0 +1,40 @@
+{{- /*
+One Deployment per service in .Values.services. replicaCount is 0 by design
+(see values.yaml) — nothing actually runs, but Argo CD reports the resource
+Healthy/Synced, so promotions and the health gate behave exactly as they would
+with real workloads, at ~zero cost. The resolved image tag is also stamped as an
+annotation so each promotion's effect is visible in the Argo CD resource tree.
+*/ -}}
+{{- $root := . -}}
+{{- range $name, $svc := .Values.services }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $root.Release.Name }}-{{ $name }}
+  namespace: {{ $root.Release.Namespace }}
+  labels:
+    {{- include "tenant-app.labels" $root | nindent 4 }}
+    app.kubernetes.io/component: {{ $name }}
+  annotations:
+    demo.akuity.io/resolved-tag: {{ $svc.tag | quote }}
+spec:
+  replicas: {{ $root.Values.replicaCount | default 0 }}
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ $root.Release.Name }}
+      app.kubernetes.io/component: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: {{ $root.Release.Name }}
+        app.kubernetes.io/component: {{ $name }}
+    spec:
+      containers:
+      - name: {{ $name }}
+        image: "{{ $svc.repo }}:{{ $svc.tag }}"
+        imagePullPolicy: IfNotPresent
+        resources:
+          {{- toYaml $root.Values.resources | nindent 10 }}
+{{- end }}

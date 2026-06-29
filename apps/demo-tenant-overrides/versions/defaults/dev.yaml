@@ -1,0 +1,22 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# AXIS 1 — SHARED LIFECYCLE — default service versions for the `dev` stage.
+#
+# This is the ONLY file the `dev` promotion writes to (see kargo/promotion-tasks.yaml,
+# the yaml-update step). It promotes dev -> uat -> prod as a linear pipeline.
+# Promotions edit services.<svc>.tag here and NEVER touch versions/overrides/**.
+#
+# api/worker/frontend are carried by the shared lifecycle. redis/nginx are shared
+# infra, pinned manually here (not subscribed to a Warehouse in this demo).
+# ─────────────────────────────────────────────────────────────────────────────
+stage: dev
+services:
+  api:
+    tag: "6.7.0"
+  worker:
+    tag: "6.7.0"
+  frontend:
+    tag: "6.7.0"
+  redis:
+    tag: "7.2.4"
+  nginx:
+    tag: "1.25.3"

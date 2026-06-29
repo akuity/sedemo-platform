@@ -1,0 +1,38 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# HAND-WRITTEN EXAMPLE INSTANCE (per-tenant override, prod).
+#
+# Identical to app-prod-default.yaml except for ONE extra value file layered last:
+# versions/overrides/prod/tenant-charlie.yaml. That single line is the whole of the
+# tenant axis — charlie pins `api` ahead of the prod default; every other service
+# falls through to versions/defaults/prod.yaml.
+#
+# authorized-stage points at `prod-tenant-overrides` (the separate tenant Stage),
+# NOT `prod` — tenant input is independent of the shared lifecycle.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-prod-tenant-charlie
+  namespace: argocd
+  annotations:
+    kargo.akuity.io/authorized-stage: demo-tenant-overrides:prod-tenant-overrides
+spec:
+  project: demo-tenant-overrides
+  source:
+    repoURL: https://github.com/akuity/sedemo-platform
+    targetRevision: HEAD
+    path: apps/demo-tenant-overrides/chart
+    helm:
+      releaseName: app-prod-tenant-charlie
+      valueFiles:
+      - ../versions/defaults/prod.yaml                    # shared defaults (falls through)
+      - ../versions/overrides/prod/tenant-charlie.yaml    # tenant pin (wins, api only)
+  destination:
+    name: sedemo-primary
+    namespace: demo-tenant-overrides-prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

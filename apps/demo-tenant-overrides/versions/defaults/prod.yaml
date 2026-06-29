@@ -1,0 +1,15 @@
+# AXIS 1 — SHARED LIFECYCLE — default service versions for the `prod` stage.
+# Written ONLY by the `prod` promotion (yaml-update). prod trails uat: it receives
+# what uat promoted. NEVER touches versions/overrides/**.
+stage: prod
+services:
+  api:
+    tag: "6.5.4"
+  worker:
+    tag: "6.5.4"
+  frontend:
+    tag: "6.5.4"
+  redis:
+    tag: "7.2.4"
+  nginx:
+    tag: "1.25.3"

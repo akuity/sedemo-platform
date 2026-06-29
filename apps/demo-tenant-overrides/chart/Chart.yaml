@@ -1,0 +1,9 @@
+apiVersion: v2
+# DEMO STAND-IN: a single generic multi-service app. In a real setup this is the
+# ONE chart that gets deployed ~140 times as near-duplicate Argo CD Applications.
+# Rename to match the real chart when repointing this demo at an actual repo.
+name: tenant-app
+description: Generic multi-service app — one chart rendered many times (defaults + per-tenant overrides)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

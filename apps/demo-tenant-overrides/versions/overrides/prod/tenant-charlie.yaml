@@ -1,0 +1,6 @@
+# AXIS 2 — TENANT OVERRIDE — tenant "charlie", prod stage.
+# Pins only what diverges from versions/defaults/prod.yaml. Does NOT promote.
+# charlie runs the api AHEAD of the prod default (contractual early-access feature).
+services:
+  api:
+    tag: "6.6.0"

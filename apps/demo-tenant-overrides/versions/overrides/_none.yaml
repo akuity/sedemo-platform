@@ -1,0 +1,6 @@
+# Intentionally empty no-op overlay.
+#
+# Default (non-tenant) instances layer this as their "tenant override" slot so every
+# instance has the SAME shape — exactly two value files: defaults + (tenant | none).
+# This keeps the ApplicationSet's valueFiles a fixed-length list (valid YAML / typed
+# template) instead of a variable-length one. It pins nothing; defaults fall through.

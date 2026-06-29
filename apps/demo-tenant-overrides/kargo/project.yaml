@@ -1,0 +1,32 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: demo-tenant-overrides
+  annotations:
+    # Ensure the Project (and its namespace) is created before the resources in it.
+    argocd.argoproj.io/sync-wave: "-1"
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: demo-tenant-overrides
+  namespace: demo-tenant-overrides
+spec:
+  promotionPolicies:
+  # dev is the fast inner loop: auto-promote new Freight straight in.
+  - stageSelector:
+      name: dev
+    autoPromotionEnabled: true
+  # uat and prod are gated (manual promotion + verification) so the demo can show a
+  # human stepping the shared lifecycle forward.
+  - stageSelector:
+      name: uat
+    autoPromotionEnabled: false
+  - stageSelector:
+      name: prod
+    autoPromotionEnabled: false
+  # The tenant-override axis is also manual — tenant changes roll out on their own
+  # cadence, independent of the dev->uat->prod lifecycle.
+  - stageSelector:
+      name: prod-tenant-overrides
+    autoPromotionEnabled: false

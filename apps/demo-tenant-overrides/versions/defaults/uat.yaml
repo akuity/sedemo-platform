@@ -1,0 +1,15 @@
+# AXIS 1 — SHARED LIFECYCLE — default service versions for the `uat` stage.
+# Written ONLY by the `uat` promotion (yaml-update). uat trails dev: it receives
+# what dev promoted. NEVER touches versions/overrides/**.
+stage: uat
+services:
+  api:
+    tag: "6.6.0"
+  worker:
+    tag: "6.6.0"
+  frontend:
+    tag: "6.6.0"
+  redis:
+    tag: "7.2.4"
+  nginx:
+    tag: "1.25.3"

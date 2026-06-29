@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-versions
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "tenant-app.labels" . | nindent 4 }}
+data:
+  # Resolved per-service image tags for THIS instance = chart defaults, overlaid by
+  # versions/defaults/<stage>.yaml, overlaid by any tenant override file.
+  # A shared-lifecycle promotion changes a tag in the defaults file; a tenant pin
+  # changes it in that tenant's override file. Either way this ConfigMap re-renders,
+  # so the effect is visible in Argo CD without running a single pod.
+  {{- range $name, $svc := .Values.services }}
+  {{ $name }}: {{ $svc.tag | quote }}
+  {{- end }}
+  _instance: {{ .Release.Name | quote }}
+  _stage: {{ .Values.stage | default "unset" | quote }}

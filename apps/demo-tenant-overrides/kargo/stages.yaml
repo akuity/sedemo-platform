@@ -1,0 +1,141 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# STAGES
+#
+# AXIS 1 (shared lifecycle): dev -> uat -> prod, a linear pipeline off the
+#   `defaults-release` Warehouse. Each stage runs the promote-defaults task, which
+#   edits ONLY versions/defaults/<stage>.yaml.
+#
+# AXIS 2 (tenant overrides): prod-tenant-overrides, a standalone stage off the
+#   `tenant-overrides-prod` Warehouse. It takes tenant input directly at prod and
+#   never participates in dev -> uat -> prod.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── AXIS 1: dev (entry — direct from the Warehouse, auto-promoted) ──────────────
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev
+  namespace: demo-tenant-overrides
+  annotations:
+    kargo.akuity.io/color: gray
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: defaults-release
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: promote-defaults
+        vars:
+        - name: stage
+          value: dev
+---
+# ── AXIS 1: uat (promotes from dev; gated by verification) ──────────────────────
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: uat
+  namespace: demo-tenant-overrides
+  annotations:
+    kargo.akuity.io/color: blue
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: defaults-release
+    sources:
+      stages:
+      - dev
+  verification:
+    analysisTemplates:
+    - name: healthy-sync-check
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: promote-defaults
+        vars:
+        - name: stage
+          value: uat
+---
+# ── AXIS 1: prod (promotes from uat; gated by verification) ─────────────────────
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod
+  namespace: demo-tenant-overrides
+  annotations:
+    kargo.akuity.io/color: green
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: defaults-release
+    sources:
+      stages:
+      - uat
+  verification:
+    analysisTemplates:
+    - name: healthy-sync-check
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: promote-defaults
+        vars:
+        - name: stage
+          value: prod
+---
+# ── AXIS 2: prod-tenant-overrides (INDEPENDENT of the linear lifecycle) ─────────
+# Off a SEPARATE Warehouse (tenant-overrides-prod, a git subscription on the prod
+# override files). Freight here is created when a tenant pin changes. The promotion
+# does NOT edit defaults and does NOT rewrite the override files — it only syncs the
+# affected tenant instances, health-gated. Tenant input enters at prod and goes
+# nowhere else.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod-tenant-overrides
+  namespace: demo-tenant-overrides
+  annotations:
+    kargo.akuity.io/color: amber
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: tenant-overrides-prod
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-platform
+      - name: src
+        value: ./src
+      steps:
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: main
+            path: ${{ vars.src }}
+      # No edit step: the override files are authored by humans/CI; this stage only
+      # rolls them out, gating on real health. Sync the prod tenant instances.
+      - uses: argocd-update
+        config:
+          apps:
+          - name: app-prod-tenant-charlie
+            namespace: argocd
+          - name: app-prod-tenant-delta
+            namespace: argocd
+          - name: app-prod-tenant-echo
+            namespace: argocd

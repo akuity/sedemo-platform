@@ -1,0 +1,6 @@
+# AXIS 2 — TENANT OVERRIDE — tenant "delta", prod stage.
+# Pins only what diverges from versions/defaults/prod.yaml. Does NOT promote.
+# delta is pinned BEHIND the prod default on worker (frozen during an audit window).
+services:
+  worker:
+    tag: "6.5.0"

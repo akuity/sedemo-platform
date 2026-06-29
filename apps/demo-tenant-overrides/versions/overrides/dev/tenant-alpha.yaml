@@ -1,0 +1,14 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# AXIS 2 — TENANT OVERRIDE — tenant "alpha", dev stage.
+#
+# This file pins ONLY the services that diverge from versions/defaults/dev.yaml;
+# everything else falls through to the defaults (Helm last-file-wins merge).
+#
+# Tenant overrides are NOT a promotion axis: this file does not flow to uat/prod.
+# Note that tenant-alpha exists in `dev` but NOT in uat/prod — tenants do not line
+# up across stages, which is exactly why tenancy is modeled separately from the
+# shared lifecycle.
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+  api:
+    tag: "6.7.1"   # alpha is dogfooding an api hotfix ahead of the dev default

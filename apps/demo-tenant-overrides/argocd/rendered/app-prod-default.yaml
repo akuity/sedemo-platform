@@ -1,0 +1,34 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# HAND-WRITTEN EXAMPLE INSTANCE (shared-lifecycle default, prod).
+#
+# This is exactly what the ApplicationSet generates for one element — written out
+# in full so the "one chart, many instances" shape is concrete and readable. It is
+# a plain Argo CD Application: same chart, layered value files, nothing tenant-
+# specific. Compare with app-prod-tenant-charlie.yaml (one extra value file).
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-prod-default
+  namespace: argocd
+  annotations:
+    kargo.akuity.io/authorized-stage: demo-tenant-overrides:prod
+spec:
+  project: demo-tenant-overrides
+  source:
+    repoURL: https://github.com/akuity/sedemo-platform
+    targetRevision: HEAD
+    path: apps/demo-tenant-overrides/chart
+    helm:
+      releaseName: app-prod-default
+      valueFiles:
+      - ../versions/defaults/prod.yaml          # shared lifecycle only — no tenant override
+  destination:
+    name: sedemo-primary
+    namespace: demo-tenant-overrides-prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

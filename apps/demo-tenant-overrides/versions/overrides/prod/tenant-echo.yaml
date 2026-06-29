@@ -1,0 +1,9 @@
+# AXIS 2 — TENANT OVERRIDE — tenant "echo", prod stage.
+# Pins only what diverges from versions/defaults/prod.yaml. Does NOT promote.
+# echo pins BOTH a service and shared infra, to show overrides can touch anything
+# in the versions schema — not just app services.
+services:
+  frontend:
+    tag: "6.6.2"
+  nginx:
+    tag: "1.25.4"

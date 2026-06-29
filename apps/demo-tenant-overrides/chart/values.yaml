@@ -1,0 +1,44 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Chart defaults (the chart's own baseline). The per-instance variation does NOT
+# live here — it lives in ../versions/**. At render time Argo CD layers value
+# files on top of this, last-file-wins:
+#
+#     this values.yaml  <  versions/defaults/<stage>.yaml  <  versions/overrides/<stage>/tenant-*.yaml
+#
+# The versions files set ONLY services.<name>.tag. The image `repo` for each
+# service is defined here so the versions files stay tiny and tag-only — exactly
+# the shape we want to mirror from the real repo.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Set by each instance (informational only; surfaced in the ConfigMap).
+stage: ""
+
+# Kept at 0 on purpose: this demo proves the GitOps/promotion mechanics, not a
+# running workload. A 0-replica Deployment + a ConfigMap both report Healthy/Synced
+# in Argo CD at ~zero cluster cost, so the argocd-update health gate stays real.
+replicaCount: 0
+
+resources:
+  limits: {cpu: 50m, memory: 64Mi}
+  requests: {cpu: 10m, memory: 32Mi}
+
+# The service catalog. `tag` values shown here are only fallbacks — every real
+# instance overrides them via versions/defaults/<stage>.yaml (and tenants pin a
+# subset on top). api/worker/frontend are app services driven by the shared
+# lifecycle; redis/nginx are shared infra pinned manually in the defaults file.
+services:
+  api:
+    repo: ghcr.io/stefanprodan/podinfo   # DEMO: stand-in for the real `api` image
+    tag: "6.5.0"
+  worker:
+    repo: ghcr.io/stefanprodan/podinfo   # DEMO: stand-in for the real `worker` image
+    tag: "6.5.0"
+  frontend:
+    repo: ghcr.io/stefanprodan/podinfo   # DEMO: stand-in for the real `frontend` image
+    tag: "6.5.0"
+  redis:
+    repo: redis                          # shared infra
+    tag: "7.2.4"
+  nginx:
+    repo: nginx                          # shared infra
+    tag: "1.25.3"

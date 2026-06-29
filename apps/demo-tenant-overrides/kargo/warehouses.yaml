@@ -1,0 +1,47 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# TWO WAREHOUSES = TWO INDEPENDENT AXES. This is where the separation is enforced.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# AXIS 1 — SHARED LIFECYCLE.
+# Produces the Freight that flows dev -> uat -> prod. Subscribes to the release
+# artifact and discovers new image tags.
+#
+# DEMO STAND-IN: one real, reliably-tagged public image (podinfo) stands in for the
+# real release build, so Freight is genuinely discoverable out of the box. A real
+# setup typically has a per-service build — to mirror it, add one `image:`
+# subscription per service repo here, then add one matching yaml-update key in
+# kargo/promotion-tasks.yaml. See README "Swap to point at a real repo".
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: defaults-release
+  namespace: demo-tenant-overrides
+spec:
+  subscriptions:
+  - image:
+      repoURL: ghcr.io/stefanprodan/podinfo
+      imageSelectionStrategy: SemVer
+      discoveryLimit: 10
+---
+# AXIS 2 — TENANT OVERRIDES (hung off a single stage: prod).
+# Watches ONLY the prod tenant override files. A tenant pin change produces Freight
+# here and feeds the prod-tenant-overrides Stage directly — it never enters the
+# dev->uat->prod lifecycle. This is the whole point: tenant input is independent.
+#
+# This Warehouse subscribes to GIT (the override files). The matching Stage only
+# syncs the affected instances; it does NOT rewrite these files (no loop). See the
+# README for the symmetric image-driven alternative (write the tag into the override
+# file via yaml-update), which we deliberately did NOT build to keep the axes clear.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: tenant-overrides-prod
+  namespace: demo-tenant-overrides
+spec:
+  subscriptions:
+  - git:
+      repoURL: https://github.com/akuity/sedemo-platform
+      branch: main
+      commitSelectionStrategy: NewestFromBranch
+      includePaths:
+      - apps/demo-tenant-overrides/versions/overrides/prod

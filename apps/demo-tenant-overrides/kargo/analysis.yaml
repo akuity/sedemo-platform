@@ -1,0 +1,32 @@
+# Verification gate for the shared lifecycle (referenced by uat and prod stages).
+#
+# DEMO STAND-IN: a representative Job (same style as apps/demo-downstream/kargo/
+# analysis.yaml). In a real setup, replace the Job with the actual post-promotion
+# check — e.g. a smoke test hitting the app endpoint, or a metric query — so that
+# Freight is only verified when the promoted version is genuinely healthy.
+#
+# Note this is verification AFTER sync; the argocd-update step in promote-defaults
+# already blocks the promotion until the Application reports Healthy + Synced. The
+# two together are why a promotion reflects real Application health, not just a
+# git commit that "succeeded the instant it landed".
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: healthy-sync-check
+  namespace: demo-tenant-overrides
+spec:
+  metrics:
+  - name: post-promotion-check
+    provider:
+      job:
+        spec:
+          backoffLimit: 1
+          template:
+            spec:
+              restartPolicy: Never
+              containers:
+              - name: check
+                image: alpine:latest
+                command: ["/bin/sh", "-c"]
+                args:
+                - 'for i in $(seq 1 3); do echo "post-promotion verification $i/3"; sleep 2; echo "  PASS"; done'

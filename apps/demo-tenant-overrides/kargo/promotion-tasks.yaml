@@ -1,0 +1,73 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# promote-defaults — the SHARED-LIFECYCLE promotion (AXIS 1).
+#
+# Sharded/agent model: git-clone -> edit ONLY the defaults file for this stage ->
+# commit -> push -> argocd-update (gate on real health). One task, parameterized by
+# `stage`, reused by dev/uat/prod.
+#
+# HARD GUARANTEE: this task writes ONLY versions/defaults/<stage>.yaml. It never
+# reads or writes anything under versions/overrides/** — the tenant axis is fully
+# independent. The yaml-update `path` and `key` lines are the explicit repoint
+# targets for pointing this at a real repo (see README "Swap to point at a real repo").
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: promote-defaults
+  namespace: demo-tenant-overrides
+spec:
+  vars:
+  - name: stage                                   # dev | uat | prod
+  - name: gitRepo
+    value: https://github.com/akuity/sedemo-platform
+  - name: imageRepo
+    value: ghcr.io/stefanprodan/podinfo           # DEMO stand-in release artifact
+  - name: src
+    value: ./src
+  steps:
+  - uses: git-clone
+    config:
+      repoURL: ${{ vars.gitRepo }}
+      checkout:
+      - branch: main
+        path: ${{ vars.src }}
+
+  # ── THE TARGETED EDIT ──────────────────────────────────────────────────────
+  # Writes ONLY the shared defaults for THIS stage. Repoint `path` + the `key`s
+  # below at the real repo's defaults file and YAML structure. NEVER touches
+  # versions/overrides/** .
+  - uses: yaml-update
+    as: set-defaults
+    config:
+      path: ${{ vars.src }}/apps/demo-tenant-overrides/versions/defaults/${{ vars.stage }}.yaml
+      updates:
+      # RE-TAG PATH (a) — IMMUTABLE RE-TAG (the clean case): carry the SAME
+      # discovered artifact's tag forward into this stage's defaults. Same image,
+      # new tag value written here for provenance. See README for path (b) (rebuild).
+      - key: services.api.tag
+        value: ${{ imageFrom(vars.imageRepo).Tag }}
+      - key: services.worker.tag
+        value: ${{ imageFrom(vars.imageRepo).Tag }}
+      - key: services.frontend.tag
+        value: ${{ imageFrom(vars.imageRepo).Tag }}
+
+  - uses: git-commit
+    as: commit
+    config:
+      path: ${{ vars.src }}
+      message: "promote defaults/${{ vars.stage }} -> ${{ imageFrom(vars.imageRepo).Tag }} [skip ci]"
+  - uses: git-push
+    config:
+      path: ${{ vars.src }}
+      targetBranch: main
+
+  # Gate on REAL Application health: refresh the app and wait for Healthy + Synced.
+  # This is the difference between "promotion succeeded" and "a git commit landed".
+  - uses: argocd-update
+    config:
+      apps:
+      # The representative default instance for this stage. Other instances of the
+      # stage (tenants) converge via the ApplicationSet's auto-sync; expand this
+      # list (or use a label selector) to gate on more instances if desired.
+      - name: app-${{ vars.stage }}-default
+        namespace: argocd

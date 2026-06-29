@@ -1,0 +1,92 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# THE "ONE CHART, MANY INSTANCES" MECHANISM.
+#
+# Every element below becomes one Argo CD Application that renders the SAME chart
+# (apps/demo-tenant-overrides/chart) with a layered set of value files:
+#
+#     chart/values.yaml  <  baseValues (defaults/<stage>.yaml)  <  tenantValues (override | _none)
+#
+# This is how "a few" become "140+": you don't add charts or copy manifests — you
+# add a row here (or, more realistically, drive this generator from a git `files:`
+# or cluster generator). The shape of each instance is identical; only its two value
+# files differ. Default instances use the no-op `_none.yaml` in the tenant slot so
+# every element has exactly two value files (keeps valueFiles a fixed-length list).
+#
+# Two instances (app-prod-default and app-prod-tenant-charlie) are ALSO written out
+# by hand under argocd/rendered/ so you can read a fully-expanded Application — those
+# two are intentionally NOT in this list to avoid duplicate ownership.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: demo-tenant-overrides
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      # ---- AXIS 1: shared-lifecycle default instances (one per stage) ----
+      - name: app-dev-default
+        stage: dev
+        authorizedStage: dev
+        baseValues: ../versions/defaults/dev.yaml
+        tenantValues: ../versions/overrides/_none.yaml
+      - name: app-uat-default
+        stage: uat
+        authorizedStage: uat
+        baseValues: ../versions/defaults/uat.yaml
+        tenantValues: ../versions/overrides/_none.yaml
+      # (app-prod-default lives in argocd/rendered/ as a hand-written example)
+
+      # ---- AXIS 2: per-tenant instances (defaults + a tenant override file) ----
+      # Different tenants per stage on purpose: dev/uat/prod tenant sets do NOT line up.
+      - name: app-dev-tenant-alpha
+        stage: dev
+        authorizedStage: dev
+        baseValues: ../versions/defaults/dev.yaml
+        tenantValues: ../versions/overrides/dev/tenant-alpha.yaml
+      - name: app-uat-tenant-bravo
+        stage: uat
+        authorizedStage: uat
+        baseValues: ../versions/defaults/uat.yaml
+        tenantValues: ../versions/overrides/uat/tenant-bravo.yaml
+      - name: app-prod-tenant-delta
+        stage: prod
+        authorizedStage: prod-tenant-overrides
+        baseValues: ../versions/defaults/prod.yaml
+        tenantValues: ../versions/overrides/prod/tenant-delta.yaml
+      - name: app-prod-tenant-echo
+        stage: prod
+        authorizedStage: prod-tenant-overrides
+        baseValues: ../versions/defaults/prod.yaml
+        tenantValues: ../versions/overrides/prod/tenant-echo.yaml
+      # (app-prod-tenant-charlie lives in argocd/rendered/ as a hand-written example)
+  template:
+    metadata:
+      name: '{{name}}'
+      annotations:
+        # Authorizes the named Kargo Stage to run argocd-update against this app so
+        # promotion can gate on real sync health.
+        kargo.akuity.io/authorized-stage: 'demo-tenant-overrides:{{authorizedStage}}'
+    spec:
+      project: demo-tenant-overrides
+      source:
+        repoURL: https://github.com/akuity/sedemo-platform
+        targetRevision: HEAD
+        path: apps/demo-tenant-overrides/chart
+        helm:
+          releaseName: '{{name}}'
+          # valueFiles are relative to the chart path and resolve within this repo.
+          # Fixed two-file list: shared defaults, then tenant override (or _none).
+          valueFiles:
+          - '{{baseValues}}'
+          - '{{tenantValues}}'
+      destination:
+        name: sedemo-primary
+        namespace: 'demo-tenant-overrides-{{stage}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
