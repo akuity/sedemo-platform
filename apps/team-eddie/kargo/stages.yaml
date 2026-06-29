@@ -339,6 +339,7 @@ spec:
         uses: allure-report
         config:
           input_a: 'some-value'
+          environment: "dev"
       - uses: set-metadata
         config:
           updates:
@@ -658,6 +659,7 @@ spec:
         uses: allure-report
         config:
           input_a: 'some-value'
+          environment: "staging"
       - uses: set-metadata
         config:
           updates:
