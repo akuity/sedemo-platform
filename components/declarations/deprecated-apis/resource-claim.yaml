@@ -1,7 +1,7 @@
 apiVersion: resource.k8s.io/v1beta1
 kind: ResourceClaimTemplate
 metadata:
-  name: gpu-claim-template
+  name: gpu-claim-template-nvidia
 spec:
   spec:
     devices:
