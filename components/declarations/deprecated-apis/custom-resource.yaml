@@ -3,6 +3,5 @@ kind: BogusCustomResource
 metadata:
   name: bogus-custom-resource
 spec:
-  spec:
-    message: "This is a bogus custom resource for testing purposes."
-    replicas: 1
+  message: "This is a bogus custom resource for testing purposes."
+  replicas: 1
