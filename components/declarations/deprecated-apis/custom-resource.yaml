@@ -4,10 +4,5 @@ metadata:
   name: bogus-custom-resource
 spec:
   spec:
-    devices:
-      requests:
-      - name: single-gpu
-        exactly:
-          deviceClassName: gpu.nvidia.com
-          allocationMode: ExactCount
-          count: 1
+    message: "This is a bogus custom resource for testing purposes."
+    replicas: 1
