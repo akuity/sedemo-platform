@@ -1,7 +1,7 @@
 apiVersion: stable.example.com/v1beta
 kind: BogusCustomResource
 metadata:
-  name: gpu-claim-template
+  name: bogus-custom-resource
 spec:
   spec:
     devices:
