@@ -12,9 +12,6 @@ spec:
   destination:
         name: sedemo-primary
         namespace: default
-  syncPolicy:
-    syncOptions:
-    - ServerSideApply=true
 
 
 
