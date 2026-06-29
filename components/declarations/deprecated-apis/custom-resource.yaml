@@ -1,0 +1,13 @@
+apiVersion: stable.example.com/v1beta
+kind: BogusCustomResource
+metadata:
+  name: gpu-claim-template
+spec:
+  spec:
+    devices:
+      requests:
+      - name: single-gpu
+        exactly:
+          deviceClassName: gpu.nvidia.com
+          allocationMode: ExactCount
+          count: 1
