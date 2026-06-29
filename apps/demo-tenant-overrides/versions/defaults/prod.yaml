@@ -4,11 +4,11 @@
 stage: prod
 services:
   api:
-    tag: "6.5.4"
+    tag: 6.14.0
   worker:
-    tag: "6.5.4"
+    tag: 6.14.0
   frontend:
-    tag: "6.5.4"
+    tag: 6.14.0
   redis:
     tag: "7.2.4"
   nginx:
