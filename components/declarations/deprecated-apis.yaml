@@ -6,7 +6,7 @@ metadata:
 spec:
   project: components
   source:
-  - repoURL: https://github.com/akuity/sedemo-platform.git
+    repoURL: https://github.com/akuity/sedemo-platform.git
     targetRevision: main
     path: components/declarations/deprecated-apis
   destination:
