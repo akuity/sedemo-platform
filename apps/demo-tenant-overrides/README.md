@@ -22,7 +22,8 @@ real setup:
   chart's `values.yaml`. The real `defaults`/override files may key differently.
 - **Stages:** `dev → uat → prod`. dev auto-promotes; uat/prod are manual + verified.
 - **Tenant names:** `alpha` (dev), `bravo` (uat), `charlie`/`delta`/`echo` (prod) — deliberately
-  different sets per stage to show tenants do NOT line up across environments.
+  different sets per stage to show tenants do NOT line up across environments. Plus `flagship`
+  (prod) as a high-value tenant on its own dedicated lane (see "High-value tenant" below).
 - **Single stand-in image:** one public image (`ghcr.io/stefanprodan/podinfo`) stands in for
   the real release artifact so Freight is discoverable. A real setup likely has a per-service build.
 - **Workloads:** every service is a `replicas: 0` Deployment + a ConfigMap. Nothing runs; the
@@ -45,12 +46,33 @@ real setup:
 | Warehouse | `defaults-release` (image) | `tenant-overrides-{dev,uat,prod}` (git, one per tier) |
 | Flow | linear `dev → uat → prod` | enters at its own tier, **does not promote** |
 | Promotion writes | **only** the defaults file | nothing (sync only) — never the defaults file |
-| Stage(s) | `dev`, `uat`, `prod` | `dev-tenant-overrides`, `uat-tenant-overrides`, `prod-tenant-overrides` |
+| Stage(s) | `dev`, `uat`, `prod` | `dev-tenant-overrides`, `uat-tenant-overrides`, `prod-tenant-overrides`, `prod-tenant-flagship` |
 
 **Why separate?** Tenants don't line up across stages (dev tenants ≠ uat tenants ≠ prod
 tenants), so tenancy is not a promotion axis. Modeling it as its own Warehouse + stage at
 each tier keeps the linear lifecycle clean and the tenant cadence independent — and shows the
 per-tier independence at every tier rather than asserting it.
+
+### High-value tenant: a dedicated lane
+
+Most tenants share one grouped lane per tier (`*-tenant-overrides`), which keeps Kargo readable
+at scale. For a tenant that warrants individual treatment, carve out a **dedicated lane**: its
+own Warehouse (watching only that tenant's file) + its own Stage. It then appears as its **own
+node** in the Kargo pipeline graph and promotes independently of everything else.
+
+`tenant-flagship` (prod) demonstrates this:
+
+- Warehouse `tenant-flagship-prod` watches only `versions/overrides/prod/tenant-flagship.yaml`
+  (and the grouped `tenant-overrides-prod` Warehouse **excludes** that file, so the two lanes
+  don't overlap).
+- Stage `prod-tenant-flagship` syncs only `app-prod-tenant-flagship`.
+- The override pins all app services to a frozen, validated build, so the moving prod default
+  does not touch it — flagship advances only through its own gated lane.
+
+**Scale caveat:** this per-tenant pattern is ~1 Warehouse + 1 Stage per tenant. Great for a
+handful of high-value tenants; doing it for all ~140 would mean ~280 Kargo objects and an
+unreadable graph. Keep the majority in the grouped lane and read their per-tenant health in
+Argo CD's Applications view; reserve dedicated lanes for the few that earn them.
 
 A service renders from `defaults` **unless** a tenant override pins it (Helm last-file-wins):
 
@@ -76,8 +98,8 @@ demo-tenant-overrides/
 │   └── rendered/                # 2 hand-written Applications: the expanded shape, readable
 └── kargo/
     ├── project.yaml             # Project + ProjectConfig (dev auto; uat/prod/tenant manual)
-    ├── warehouses.yaml          # defaults-release (image) + tenant-overrides-{dev,uat,prod} (git)
-    ├── stages.yaml              # dev → uat → prod  +  {dev,uat,prod}-tenant-overrides
+    ├── warehouses.yaml          # defaults-release (image) + tenant-overrides-{dev,uat,prod} + tenant-flagship-prod (git)
+    ├── stages.yaml              # dev → uat → prod  +  {dev,uat,prod}-tenant-overrides  +  prod-tenant-flagship
     ├── promotion-tasks.yaml     # promote-defaults: edits ONLY defaults/<stage>.yaml
     └── analysis.yaml            # healthy-sync-check verification (uat/prod)
 ```

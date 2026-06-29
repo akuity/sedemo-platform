@@ -1,0 +1,25 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# AXIS 2 — TENANT OVERRIDE — tenant "flagship", prod stage.  ★ HIGH-VALUE TENANT ★
+#
+# Unlike the other prod tenants (charlie/delta/echo), this tenant gets its OWN
+# dedicated promotion lane in Kargo: a per-tenant Warehouse (tenant-flagship-prod)
+# and a per-tenant Stage (prod-tenant-flagship). On the Kargo graph it appears as
+# its own node, separate from the grouped `prod-tenant-overrides` lane.
+#
+# Why a dedicated lane: this tenant is contractually pinned to an individually
+# validated build. The shared prod default can move underneath the fleet, but every
+# app service for flagship stays frozen here until it is advanced deliberately
+# through its own gated lane. (Shared infra — redis/nginx — still falls through to
+# versions/defaults/prod.yaml.)
+#
+# NOTE on scale: this per-tenant pattern is great for a FEW high-value tenants. Doing
+# it for all ~140 would mean ~140 Warehouses + Stages — see README. Most tenants stay
+# in the grouped lane; only carve out the ones that warrant individual treatment.
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+  api:
+    tag: "6.13.2"
+  worker:
+    tag: "6.13.2"
+  frontend:
+    tag: "6.13.2"

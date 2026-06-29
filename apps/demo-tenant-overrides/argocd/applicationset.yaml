@@ -60,6 +60,12 @@ spec:
         authorizedStage: prod-tenant-overrides
         baseValues: ../versions/defaults/prod.yaml
         tenantValues: ../versions/overrides/prod/tenant-echo.yaml
+      # High-value tenant: authorized to its OWN dedicated stage, not the grouped one.
+      - name: app-prod-tenant-flagship
+        stage: prod
+        authorizedStage: prod-tenant-flagship
+        baseValues: ../versions/defaults/prod.yaml
+        tenantValues: ../versions/overrides/prod/tenant-flagship.yaml
       # (app-prod-tenant-charlie lives in argocd/rendered/ as a hand-written example)
   template:
     metadata:

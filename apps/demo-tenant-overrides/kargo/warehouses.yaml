@@ -80,3 +80,27 @@ spec:
       commitSelectionStrategy: NewestFromBranch
       includePaths:
       - apps/demo-tenant-overrides/versions/overrides/prod
+      # The high-value "flagship" tenant has its OWN Warehouse/Stage below, so the
+      # grouped lane must ignore its file — otherwise a flagship pin change would
+      # also create Freight here and light up the grouped stage.
+      excludePaths:
+      - apps/demo-tenant-overrides/versions/overrides/prod/tenant-flagship.yaml
+---
+# AXIS 2 — DEDICATED LANE for the high-value "flagship" tenant (prod).
+# Watches ONLY that one tenant's override file, so its lane reacts solely to its own
+# pin changes — independent of both the shared lifecycle and the grouped tenant lane.
+# This is how you give a specific high-value tenant its own node in the Kargo graph;
+# do it for the few tenants that warrant it, not all 140 (see README).
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: tenant-flagship-prod
+  namespace: demo-tenant-overrides
+spec:
+  subscriptions:
+  - git:
+      repoURL: https://github.com/akuity/sedemo-platform
+      branch: main
+      commitSelectionStrategy: NewestFromBranch
+      includePaths:
+      - apps/demo-tenant-overrides/versions/overrides/prod/tenant-flagship.yaml

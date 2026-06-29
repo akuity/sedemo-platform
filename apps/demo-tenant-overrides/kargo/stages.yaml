@@ -218,3 +218,46 @@ spec:
             namespace: argocd
           - name: app-prod-tenant-echo
             namespace: argocd
+---
+# ── AXIS 2: prod-tenant-flagship — DEDICATED LANE for one high-value tenant ──────
+# Same shape as the grouped tenant stages, but off its own Warehouse and syncing a
+# single tenant app. Because it has its own Warehouse + Stage, "flagship" shows up as
+# its own node in the Kargo pipeline graph and promotes independently of everything
+# else. This is the per-tenant granularity for tenants that warrant it — used here
+# for ONE, not all 140 (see README on scale).
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod-tenant-flagship
+  namespace: demo-tenant-overrides
+  annotations:
+    kargo.akuity.io/color: violet
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: tenant-flagship-prod
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-platform
+      - name: src
+        value: ./src
+      steps:
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: main
+            path: ${{ vars.src }}
+      # No edit step: the override file is authored by humans/CI; this stage only
+      # rolls it out, gating on real health. Sync the flagship tenant instance.
+      - uses: argocd-update
+        config:
+          apps:
+          - name: app-prod-tenant-flagship
+            namespace: argocd
