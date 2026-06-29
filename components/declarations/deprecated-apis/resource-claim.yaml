@@ -7,7 +7,4 @@ spec:
     devices:
       requests:
       - name: single-gpu
-        exactly:
-          deviceClassName: gpu.nvidia.com
-          allocationMode: ExactCount
-          count: 1
+        count: 0
