@@ -1,6 +1,24 @@
 
-
-
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: validate-repo-access
+  namespace: team-eddie
+  annotations:
+    kargo.akuity.io/color: yellow
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: application-a
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      steps:
+      - as: repo-credentials
+        uses: repo-credentials 
+---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
