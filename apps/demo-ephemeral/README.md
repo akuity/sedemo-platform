@@ -36,7 +36,7 @@ GitHub PR closed
 
 ```
 PR merged → CI builds release image (e.g. 42-blue)
-  → Warehouse: demo-ephemeral-release  (allowTags: ^\d+-[a-z]+$)
+  → Warehouse: demo-ephemeral-release  (allowTagsRegexes: ^\d+-[a-z]+$)
       → Stage: dev     (manual) → kustomize-set-image → main branch → demo-ephemeral-dev
           → Stage: staging (manual) → kustomize-set-image → main branch → demo-ephemeral-staging
               → Stage: prod (manual) → kustomize-set-image → main branch → demo-ephemeral-prod
@@ -92,7 +92,7 @@ By default Kargo polls for new images on its own schedule. To trigger immediate 
 - Open two PRs and add the `preview` label to each — two independent `preview-pr-N` stages appear in Kargo UI with separate Warehouses
 - Each PR gets a different color (PR# % 6) — visually proves isolation
 - PR comment appears automatically on each PR with the preview URL
-- Highlight `allowTags` scoping in the Warehouse — neither stage can pick up the other's image
+- Highlight `allowTagsRegexes` scoping in the Warehouse — neither stage can pick up the other's image
 - Close one PR — its Stage, Warehouse, namespace, and ArgoCD apps disappear automatically
 
 ### Traditional Pipeline (graduation story)

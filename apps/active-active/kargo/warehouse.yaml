@@ -9,7 +9,8 @@ spec:
       repoURL: ghcr.io/akuity/sedemo-monorepo-active-active
       discoveryLimit: 5
       imageSelectionStrategy: NewestBuild
-      allowTags: ^\d*-[a-z]*$
+      allowTagsRegexes:
+      - ^\d*-[a-z]*$
   - git:
       repoURL: https://github.com/akuity/sedemo-monorepo
       branch: main

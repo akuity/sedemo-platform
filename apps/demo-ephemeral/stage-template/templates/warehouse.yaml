@@ -10,4 +10,5 @@ spec:
       discoveryLimit: 5
       imageSelectionStrategy: NewestBuild
       # Scoped exclusively to this PR — pr-<number>-<color>, e.g. pr-42-yellow
-      allowTags: ^pr-{{ .Values.prNumber }}-.+$
+      allowTagsRegexes:
+      - ^pr-{{ .Values.prNumber }}-.+$

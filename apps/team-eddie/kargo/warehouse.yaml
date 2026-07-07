@@ -13,4 +13,5 @@ spec:
       repoURL: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       discoveryLimit: 5
       imageSelectionStrategy: NewestBuild
-      allowTags: ^\d*-[a-z]*$
+      allowTagsRegexes:
+      - ^\d*-[a-z]*$

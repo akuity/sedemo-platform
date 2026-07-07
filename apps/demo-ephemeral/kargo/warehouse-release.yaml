@@ -11,4 +11,5 @@ spec:
       imageSelectionStrategy: NewestBuild
       # Release builds are tagged <build-number>-<variant> (e.g. 1-yellow).
       # This is mutually exclusive with PR preview tags (pr-<N>-<variant>).
-      allowTagsRegexes: ^\d+-[a-z]+$
+      allowTagsRegexes:
+      - ^\d+-[a-z]+$
