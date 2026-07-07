@@ -10,7 +10,7 @@ spec:
       discoveryLimit: 5
       imageSelectionStrategy: NewestBuild
       allowTagsRegexes: 
-        - "^\d*-[a-z]*$"
+        - ^\d*-[a-z]*$
   - git:
       repoURL: https://github.com/akuity/sedemo-monorepo
       includePaths:
