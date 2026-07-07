@@ -9,7 +9,7 @@ spec:
       repoURL: ghcr.io/akuity/sedemo-monorepo-snow-demo
       discoveryLimit: 5
       imageSelectionStrategy: NewestBuild
-      allowTags: ^\d*-[a-z]*$
+      AllowTagsRegexes: ^\d*-[a-z]*$
   - git:
       repoURL: https://github.com/akuity/sedemo-monorepo
       includePaths:
