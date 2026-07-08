@@ -12,6 +12,11 @@ project:
   group: sedemo-team-open
   path: templated/name
 
+# Platform-wide RBAC group prefix (e.g. sedemo-admin, sedemo-qa).
+# Overridden by appset-repos.yaml; default here guards helm render.
+team:
+  role: sedemo
+
 
 kargo:
   # this will be overridden per environment by kargo promo steps.

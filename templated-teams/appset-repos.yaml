@@ -7,23 +7,19 @@ spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:
-    - matrix:
-       generators:
-        - scmProvider:
-            github:
-              organization: akuity
-              tokenRef:
-                secretName: application-set-secret
-                key: token
-            filters:
-            - repositoryMatch: ^sedemo-app-
-              pathsExist: [platform/app-values.yaml]
-        - clusters:
-            selector:
-              matchLabels:
-                argocd.argoproj.io/secret-type: cluster
-                metrics-enabled: "true"
-                
+    # One Application per repo. team.role is a single platform-wide value
+    # ("sedemo"), so it's set statically below rather than sourced from a
+    # cluster label — a matrix over clusters produced duplicate Applications
+    # whenever more than one cluster matched the selector.
+    - scmProvider:
+        github:
+          organization: akuity
+          tokenRef:
+            secretName: application-set-secret
+            key: token
+        filters:
+        - repositoryMatch: ^sedemo-app-
+          pathsExist: [platform/app-values.yaml]
 
   template:
     metadata:
@@ -56,7 +52,7 @@ spec:
               name: '{{.repository}}'
             isStandalone: true
             team:
-              role: '{{ index .clusters.metadata.labels "team-role" }}'
+              role: sedemo
       destination:
         name: in-cluster
       syncPolicy:
