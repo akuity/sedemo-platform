@@ -11,7 +11,6 @@ spec:
           elements:
             - stage: dev
             - stage: staging
-            - stage: prod
       - list:
           elements:
             - cluster: sedemo-primary
