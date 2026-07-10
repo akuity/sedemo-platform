@@ -20,7 +20,7 @@ data:
   feature-complianceMode: "gdpr"
   feature-lattedog: "false"
   feature-momodog: "false"
-  feature-riskEngine: "v1.222"
+  feature-riskEngine: "v1.22222"
 ---
 # Source: downstream/templates/service.yaml
 apiVersion: v1
