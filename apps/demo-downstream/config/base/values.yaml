@@ -15,7 +15,7 @@ resources:
 
 featureFlags:
   advancedAnalytics: false
-  riskEngine: v1.2
+  riskEngine: v1.22
   lattedog: false
   momodog: false
   complianceMode: standard
