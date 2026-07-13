@@ -1,0 +1,66 @@
+# CustomPromotionStep: flyway-migrate
+#
+# Applies Flyway SQL migrations to a stage's database during promotion, so the
+# schema travels with the Freight instead of drifting on its own schedule.
+# Used by apps/demo-db-rollback-routing, reusable by any project.
+#
+# Design notes (these flags are what make the step safe under Kargo semantics):
+#   - `flyway repair` runs first. A failed non-transactional migration (e.g.
+#     CREATE INDEX CONCURRENTLY) leaves a failed row in flyway_schema_history
+#     that blocks every later run. Repair clears it; on a clean history it is
+#     a no-op.
+#   - `-ignoreMigrationPatterns=*:missing,*:future` makes rollbacks work. When
+#     Kargo promotes OLD Freight (manual rollback or 1.11 autoRollback), the
+#     checked-out migrations dir is missing migrations already applied to the
+#     DB. Default Flyway validation fails hard on that; these patterns turn a
+#     rollback promotion into a clean no-op instead.
+#   - Re-running is idempotent: applied versions are skipped via
+#     flyway_schema_history, so Kargo step retries and re-promotions are safe.
+#   - Flyway takes a Postgres advisory lock, so concurrent promotions against
+#     the same database serialize instead of corrupting.
+#
+# Required config keys:
+#   url             - JDBC URL, e.g. jdbc:postgresql://host:5432/dbname
+#   username        - database user
+#   password        - database password (pass via secret() in the caller)
+#   migrationsPath  - workspace-relative dir with V*.sql files (from git-clone)
+#
+# Outputs (via $KARGO_OUTPUT):
+#   schemaVersion      - schema version after migrate ("unchanged" if no-op)
+#   migrationsApplied  - number of migrations applied in this run
+apiVersion: ee.kargo.akuity.io/v1alpha1
+kind: CustomPromotionStep
+metadata:
+  name: flyway-migrate
+spec:
+  image: flyway/flyway:11
+  command:
+    - /bin/bash
+    - -c
+    - |
+      set -euo pipefail
+
+      run_flyway() {
+        flyway \
+          -url='${{ config.url }}' \
+          -user='${{ config.username }}' \
+          -password='${{ config.password }}' \
+          -locations='filesystem:/workdir/${{ config.migrationsPath }}' \
+          -ignoreMigrationPatterns='*:missing,*:future' \
+          -connectRetries=10 \
+          "$@"
+      }
+
+      # Clear any failed-migration row left by a prior non-transactional
+      # failure. No-op on a healthy history table.
+      run_flyway repair
+
+      MIGRATE_OUT=$(run_flyway migrate)
+      echo "$MIGRATE_OUT"
+
+      # "Successfully applied N migration(s) to schema "public", now at version vX"
+      VERSION=$(echo "$MIGRATE_OUT" | sed -n 's/.*now at version v\([0-9.]*\).*/\1/p' | tail -1)
+      APPLIED=$(echo "$MIGRATE_OUT" | sed -n 's/.*Successfully applied \([0-9]*\) migration.*/\1/p' | tail -1)
+
+      printf 'schemaVersion=%s\nmigrationsApplied=%s' \
+        "${VERSION:-unchanged}" "${APPLIED:-0}" > "$KARGO_OUTPUT"

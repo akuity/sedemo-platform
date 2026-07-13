@@ -1,0 +1,6 @@
+apiVersion: v2
+name: demo-db-rollback-routing
+description: Demo app with per-stage Postgres, schema viewer, and load generator
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

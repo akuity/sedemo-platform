@@ -115,6 +115,12 @@ Prometheus monitors traffic for non-200 response codes (triggerable from the rol
 
 [`apps/demo-intelligence`](/apps/demo-intelligence/) demonstrates AI-powered incident response. An OOM or crashloop condition triggers an AI runbook that triages the incident, proposes remediation via Slack, waits for approval, applies the fix, and resolves the incident automatically.
 
+### Database Migrations, Auto-Rollback, and Freight Routing
+
+[`apps/demo-db-rollback-routing`](/apps/demo-db-rollback-routing/) combines three stories: Flyway schema migrations applied during promotion via an enterprise `CustomPromotionStep` (shared in [`kargo-shared/`](/kargo-shared/)), Kargo 1.11 automated rollbacks driven by Prometheus error-rate verification, and artifact routing patterns (separate main and PR-preview Warehouses, tag-based previews via a labeled-PR GitHub Action, honest auto-promotion queue behavior). Requires Kargo 1.11+.
+
+**URLs:** `dbr-{stage}.akpdemoapps.link` · `dbr-{stage}-schema.akpdemoapps.link`
+
 ### Vendor Helm Charts with Custom Values
 
 [`components/`](/components/) uses multi-source ArgoCD Applications that pull vendor Helm charts and apply custom value files from `components/value-overrides/`.

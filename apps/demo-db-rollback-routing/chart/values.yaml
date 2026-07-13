@@ -1,0 +1,26 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Per-env overrides live in env/<stage>/config.yaml.
+# App is served at <hostPrefix>.<rootDomain>, schema viewer at
+# <hostPrefix>-schema.<rootDomain>.
+hostPrefix: dbr-dev
+ingress:
+  rootDomain: akpdemoapps.link
+
+db:
+  name: appdb
+  user: app
+  # Demo-only credential; matches the flyway-db Secret in the Kargo project.
+  password: kargodemo1
+  storage: 1Gi
+
+pgweb:
+  enabled: true
+
+loadgen:
+  enabled: true

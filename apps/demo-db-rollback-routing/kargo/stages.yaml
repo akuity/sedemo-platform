@@ -1,0 +1,106 @@
+# Pipeline: main lane dev -> staging -> prod, plus a dead-end preview lane.
+# All stages shard to sedemo-primary, so promotion step containers (including
+# flyway-migrate) run in that cluster and reach each stage's Postgres over
+# in-cluster DNS.
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev
+  namespace: demo-db-rollback-routing
+  annotations:
+    kargo.akuity.io/color: green
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: main
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: promote
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: staging
+  namespace: demo-db-rollback-routing
+  annotations:
+    kargo.akuity.io/color: yellow
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: main
+    sources:
+      stages:
+      - dev
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: promote
+  # Post-promotion verification. If the error rate check fails, the
+  # autoRollback policy in ProjectConfig re-promotes the last good Freight.
+  verification:
+    analysisTemplates:
+    - name: error-rate
+    args:
+    - name: namespace
+      value: demo-db-rollback-routing-staging
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod
+  namespace: demo-db-rollback-routing
+  annotations:
+    kargo.akuity.io/color: red
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: main
+    sources:
+      stages:
+      - staging
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: promote
+  verification:
+    analysisTemplates:
+    - name: error-rate
+    args:
+    - name: namespace
+      value: demo-db-rollback-routing-prod
+---
+# Preview lane dead-end: nothing sources from this stage, so tagged PR Freight
+# never enters the main promotion path.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: preview
+  namespace: demo-db-rollback-routing
+  annotations:
+    kargo.akuity.io/color: blue
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: preview
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: promote

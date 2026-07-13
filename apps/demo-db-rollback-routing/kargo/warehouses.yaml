@@ -1,0 +1,52 @@
+# Two Warehouses = two Freight streams. A Warehouse bundles ALL of its
+# subscriptions into one Freight, and every Stage sourcing from it gets that
+# identical Freight. Keeping the preview lane on a separate Warehouse is what
+# keeps preview Freight off the main promotion path.
+---
+# Main lane: app image + schema migrations bundled into one Freight.
+# A new image tag OR a commit touching db/migrations mints new Freight, so a
+# schema change is a first-class promotable artifact.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: main
+  namespace: demo-db-rollback-routing
+spec:
+  # Polling floor. Commits landing inside one interval coalesce into a single
+  # head Freight (only on this poll path; webhooks would defeat it).
+  interval: 2m
+  subscriptions:
+  - image:
+      repoURL: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+      discoveryLimit: 5
+      imageSelectionStrategy: NewestBuild
+      allowTagsRegexes:
+      - ^\d+-[a-z]+$
+  - git:
+      repoURL: https://github.com/akuity/sedemo-platform
+      commitSelectionStrategy: NewestFromBranch
+      branch: main
+      includePaths:
+      - apps/demo-db-rollback-routing/db/migrations
+      - apps/demo-db-rollback-routing/chart
+---
+# Preview lane: git tags only. A GitHub Action tags a PR head `preview-<PR#>`
+# when the PR gets the `deploy-preview` label; the label is only the trigger,
+# the tag is what Kargo sees (git subscriptions cannot read PR labels).
+# Git-only provenance: no image subscription, so previews deploy whatever tag
+# env/preview/image.yaml pins. True image parity would need PR CI to push an
+# image by head SHA and a subscription selecting it.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: preview
+  namespace: demo-db-rollback-routing
+spec:
+  interval: 1m
+  freightCreationPolicy: Automatic
+  subscriptions:
+  - git:
+      repoURL: https://github.com/akuity/sedemo-platform
+      commitSelectionStrategy: NewestTag
+      allowTagsRegexes:
+      - ^preview-

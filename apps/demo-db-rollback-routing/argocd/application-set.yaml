@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: demo-db-rollback-routing
+  namespace: argocd
+spec:
+  # Kargo pins targetRevision to exact commits via argocd-update, so ignore
+  # drift on that field.
+  ignoreApplicationDifferences:
+  - jsonPointers:
+    - /spec/source/targetRevision
+  generators:
+  - list:
+      elements:
+      - stage: preview
+      - stage: dev
+      - stage: staging
+      - stage: prod
+  template:
+    metadata:
+      name: demo-db-rollback-routing-{{stage}}
+      annotations:
+        kargo.akuity.io/authorized-stage: demo-db-rollback-routing:{{stage}}
+    spec:
+      project: demo-db-rollback-routing
+      source:
+        repoURL: https://github.com/akuity/sedemo-platform
+        targetRevision: main
+        path: apps/demo-db-rollback-routing/chart
+        helm:
+          valueFiles:
+          - /apps/demo-db-rollback-routing/env/{{stage}}/config.yaml
+          - /apps/demo-db-rollback-routing/env/{{stage}}/image.yaml
+      destination:
+        name: sedemo-primary
+        namespace: demo-db-rollback-routing-{{stage}}
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true

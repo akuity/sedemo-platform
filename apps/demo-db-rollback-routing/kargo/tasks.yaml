@@ -1,0 +1,93 @@
+# One PromotionTask serves both lanes. Lane detection is by Freight origin:
+# main-lane Freight (origin "main") carries an image and updates env files on
+# the main branch; preview Freight (origin "preview") is git-only and pins the
+# Argo app straight to the tagged PR commit.
+#
+# Migrations are checked out at the FREIGHT commit (./src), never at branch
+# head. This is what makes rollbacks correct: re-promoting old Freight checks
+# out the old migrations dir, and flyway-migrate no-ops on it instead of
+# applying migrations that belong to newer Freight.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: promote
+  namespace: demo-db-rollback-routing
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  vars:
+  - name: gitRepo
+    value: https://github.com/akuity/sedemo-platform
+  - name: imageRepo
+    value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+  - name: appPath
+    value: apps/demo-db-rollback-routing
+  steps:
+  - uses: git-clone
+    config:
+      repoURL: ${{ vars.gitRepo }}
+      checkout:
+      # Freight commit: source of truth for migrations (and, on the preview
+      # lane, for the chart the Argo app will render).
+      - commit: ${{ commitFrom(vars.gitRepo).ID }}
+        path: ./src
+      # Branch head: target for env file updates on the main lane.
+      - branch: main
+        path: ./out
+  # Schema migrates BEFORE the app updates, expand/contract style: every
+  # migration must be backward compatible with the previous app version, so a
+  # rolled-back app still runs against the newer schema.
+  - uses: flyway-migrate
+    as: migrate
+    retry:
+      errorThreshold: 2
+      timeout: 5m
+    config:
+      url: jdbc:postgresql://db.${{ ctx.project }}-${{ ctx.stage }}.svc.cluster.local:5432/appdb
+      username: ${{ secret("flyway-db")["username"] }}
+      password: ${{ secret("flyway-db")["password"] }}
+      migrationsPath: src/${{ vars.appPath }}/db/migrations
+  - if: ${{ ctx.targetFreight.origin.name == "main" }}
+    uses: yaml-update
+    config:
+      path: ./out/${{ vars.appPath }}/env/${{ ctx.stage }}/image.yaml
+      updates:
+      - key: image.tag
+        value: ${{ imageFrom(vars.imageRepo).Tag }}
+  - if: ${{ ctx.targetFreight.origin.name == "main" }}
+    uses: git-commit
+    as: commit
+    config:
+      path: ./out
+      message: |
+        ${{ ctx.stage }}: promote ${{ ctx.targetFreight.alias }} (schema v${{ task.outputs['migrate'].schemaVersion }})
+
+        Freight: ${{ ctx.targetFreight.name }}
+        Image: ${{ vars.imageRepo }}:${{ imageFrom(vars.imageRepo).Tag }}
+        Migrations applied: ${{ task.outputs['migrate'].migrationsApplied }}
+  - if: ${{ ctx.targetFreight.origin.name == "main" }}
+    uses: git-push
+    config:
+      path: ./out
+      targetBranch: main
+  # Main lane: pin the app to the commit just pushed (env file update).
+  - if: ${{ ctx.targetFreight.origin.name == "main" }}
+    uses: argocd-update
+    config:
+      apps:
+      - name: demo-db-rollback-routing-${{ ctx.stage }}
+        sources:
+        - repoURL: ${{ vars.gitRepo }}
+          desiredRevision: ${{ task.outputs['commit'].commit }}
+          updateTargetRevision: true
+  # Preview lane: pin the app to the tagged PR commit itself, so the preview
+  # renders the PR's chart and env files, not main's.
+  - if: ${{ ctx.targetFreight.origin.name == "preview" }}
+    uses: argocd-update
+    config:
+      apps:
+      - name: demo-db-rollback-routing-${{ ctx.stage }}
+        sources:
+        - repoURL: ${{ vars.gitRepo }}
+          desiredRevision: ${{ commitFrom(vars.gitRepo).ID }}
+          updateTargetRevision: true

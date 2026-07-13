@@ -1,0 +1,50 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: demo-db-rollback-routing
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: demo-db-rollback-routing
+  namespace: demo-db-rollback-routing
+spec:
+  promotionPolicies:
+  - stageSelector:
+      name: dev
+    autoPromotionEnabled: true
+  - stageSelector:
+      name: preview
+    autoPromotionEnabled: true
+  # autoRollback (Kargo 1.11): when a promotion fails/errors or verification
+  # fails, Kargo automatically re-promotes the last good Freight. Empty object
+  # enables all default triggers (onPromotion: Failed/Errored,
+  # onVerification: Failed/Error).
+  - stageSelector:
+      name: staging
+    autoPromotionEnabled: true
+    autoRollback: {}
+  - stageSelector:
+      name: prod
+    autoPromotionEnabled: false
+    autoRollback: {}
+  # NOTE: no webhookReceivers on purpose. Warehouse discovery stays on the
+  # polling path so `spec.interval` coalescing (routing demo, route 2) is
+  # actually observable. Wiring webhooks would mint one Freight per push.
+---
+# Demo-grade DB credential for the flyway-migrate step, referenced in
+# promotions via ${{ secret("flyway-db")["password"] }}. The same value is in
+# env/*/config.yaml for the in-cluster Postgres. Intentionally not sensitive;
+# a real setup would source this from ESO like secrets/kargo-sync-secrets.yaml.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: flyway-db
+  namespace: demo-db-rollback-routing
+  labels:
+    kargo.akuity.io/cred-type: generic
+stringData:
+  username: app
+  password: kargodemo1

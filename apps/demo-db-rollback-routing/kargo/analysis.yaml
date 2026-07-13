@@ -1,0 +1,35 @@
+# Verification for staging and prod: 5xx rate through the nginx ingress must
+# stay under 5% for 4 consecutive checks. failureLimit 0 means one bad sample
+# fails verification, which (via the ProjectConfig autoRollback policy)
+# triggers automatic re-promotion of the last good Freight.
+#
+# The app UI lets a presenter dial in an error rate, and the in-chart loadgen
+# keeps steady traffic flowing so the query always has samples.
+#
+# The Prometheus address is in-cluster on sedemo-primary, where sharded
+# verification runs. If verification ever executes off-cluster, switch to
+# https://prometheus.akpdemoapps.link.
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: error-rate
+  namespace: demo-db-rollback-routing
+spec:
+  args:
+  - name: namespace
+  metrics:
+  - name: error-rate
+    interval: 15s
+    count: 4
+    failureLimit: 0
+    # Prometheus results come back as a vector; index 0 is the value.
+    successCondition: len(result) == 0 || result[0] < 5
+    provider:
+      prometheus:
+        address: http://prometheus-server.prometheus.svc.cluster.local
+        query: |
+          (
+            sum(rate(nginx_ingress_controller_requests{namespace="{{args.namespace}}",status=~"5.."}[1m]))
+            /
+            clamp_min(sum(rate(nginx_ingress_controller_requests{namespace="{{args.namespace}}"}[1m])), 1)
+          ) * 100 or vector(0)

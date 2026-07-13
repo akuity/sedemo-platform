@@ -1,0 +1,35 @@
+{{- if .Values.loadgen.enabled }}
+# Steady traffic through the ingress so nginx_ingress_controller_requests
+# always has samples for the error-rate verification. Goes through the public
+# hostname on purpose; hitting the Service directly would bypass the ingress
+# metrics that verification queries.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loadgen
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loadgen
+  template:
+    metadata:
+      labels:
+        app: loadgen
+    spec:
+      containers:
+      - name: loadgen
+        image: httpd:2.4-alpine
+        command:
+        - /bin/sh
+        - -c
+        - |
+          while true; do
+            ab -n20 -mPOST "http://{{ .Values.hostPrefix }}.{{ .Values.ingress.rootDomain }}/" >/dev/null 2>&1
+            sleep 2
+          done
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+{{- end }}

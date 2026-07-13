@@ -1,0 +1,59 @@
+{{- if .Values.pgweb.enabled }}
+# Schema viewer: browse flyway_schema_history and tables live during the demo
+# at <hostPrefix>-schema.<rootDomain>.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgweb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pgweb
+  template:
+    metadata:
+      labels:
+        app: pgweb
+    spec:
+      containers:
+      - name: pgweb
+        image: sosedoff/pgweb:0.16.2
+        ports:
+        - containerPort: 8081
+        env:
+        - name: PGWEB_DATABASE_URL
+          value: "postgres://{{ .Values.db.user }}:{{ .Values.db.password }}@db:5432/{{ .Values.db.name }}?sslmode=disable"
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pgweb
+spec:
+  ports:
+  - port: 80
+    targetPort: 8081
+  selector:
+    app: pgweb
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pgweb
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "{{ .Values.hostPrefix }}-schema.{{ .Values.ingress.rootDomain }}"
+    http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: pgweb
+            port:
+              number: 80
+{{- end }}
