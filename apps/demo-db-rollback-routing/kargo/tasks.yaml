@@ -44,6 +44,10 @@ spec:
       timeout: 5m0s
     config:
       url: jdbc:postgresql://db.${{ ctx.project }}-${{ ctx.stage }}.svc.cluster.local:5432/appdb
+      # secret() only resolves Secrets in the PROJECT namespace; the flyway-db
+      # secret arrives there via the kargo.akuity.io/secret-sync label on
+      # secrets/flyway-db-secret.yaml (GitOps cannot write project-namespace
+      # Secrets directly; the admission webhook blocks it).
       username: ${{ secret("flyway-db")["username"] }}
       password: ${{ secret("flyway-db")["password"] }}
       migrationsPath: src/${{ vars.appPath }}/db/migrations

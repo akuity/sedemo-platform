@@ -106,11 +106,17 @@ head. That detail is what makes rollbacks correct.
   (`prometheus-server.prometheus.svc.cluster.local`). If verification executes
   anywhere other than the shard, switch the address to
   `https://prometheus.akpdemoapps.link`.
-- DB credentials are intentionally demo-grade plaintext (`kargodemo1`), in both
-  `secrets/flyway-db-secret.yaml` and chart values. The secret reaches Kargo via
-  the `kargo.akuity.io/secret-sync: kargo-shared-resources` label (the admission
-  webhook blocks writing Secrets into project namespaces via GitOps).
-  Production would source it from ESO like `secrets/kargo-sync-secrets.yaml`.
+- The Flyway DB credential comes from AWS Secrets Manager key `kargo-flyway-db`
+  via ESO (`secrets/flyway-db-secret.yaml`), then reaches the project via the
+  `kargo.akuity.io/secret-sync: demo-db-rollback-routing` label: the agent
+  pushes it from the `akuity` namespace on sedemo-primary into the project
+  namespace, which is the only place the `secret()` expression looks (and the
+  admission webhook blocks writing it there via GitOps). Two gotchas: the
+  `eso-secret-store-kargo` Application has no automated sync policy, so it
+  needs a manual sync after changes; and syncing to `kargo-shared-resources`
+  does NOT work for `secret()`, only for repo creds. The password must match
+  `db.password` in chart values (still demo-grade plaintext there, since the
+  chart also provisions the throwaway Postgres it protects).
 - Verification error rate is measured at the nginx ingress per namespace, so it
   needs the loadgen (in the chart) or real traffic to be meaningful. No traffic
   evaluates as healthy (`or vector(0)`).
