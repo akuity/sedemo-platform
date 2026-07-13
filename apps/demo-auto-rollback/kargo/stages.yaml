@@ -140,6 +140,10 @@ spec:
         value: argoproj/rollouts-demo
       - name: region
         value: amer-east
+      - name: path_src
+        value: ./src
+      - name: path_out
+        value: ./out
       steps:
       - task:
           name: prepare-workdir
@@ -196,6 +200,10 @@ spec:
         value: argoproj/rollouts-demo
       - name: region
         value: amer-west
+      - name: path_src
+        value: ./src
+      - name: path_out
+        value: ./out
       steps:
       - task:
           name: prepare-workdir
