@@ -13,7 +13,16 @@ metadata:
 spec:
   promotionPolicies:
   - stageSelector:
-      name: "regex:prod.*"
+      name: "prod-amer-west"
+    autoRollback: 
+      onPromotion:
+        - Failed
+        - Errored
+      onVerification:
+        - Failed
+        - Error
+  - stageSelector:
+      name: "prod-amer-east"
     autoRollback: 
       onPromotion:
         - Failed
