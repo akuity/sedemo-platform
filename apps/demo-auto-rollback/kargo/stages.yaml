@@ -122,6 +122,10 @@ metadata:
   annotations:
     kargo.akuity.io/color: violet
 spec:
+  verification:
+    analysisTemplates:
+    - name: success-rate
+    - name: response-time
   requestedFreight:
   - origin:
       kind: Warehouse
@@ -182,6 +186,10 @@ metadata:
   annotations:
     kargo.akuity.io/color: violet
 spec:
+  verification:
+    analysisTemplates:
+    - name: success-rate
+    - name: response-time
   requestedFreight:
   - origin:
       kind: Warehouse
