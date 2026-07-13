@@ -8,12 +8,13 @@ spec:
   - name: namespace
   metrics:
   - name: success-rate
+    count: 5
     interval: 15s
+    failureLimit: 2
     # NOTE: prometheus queries return results in the form of a vector.
     # So it is common to access the index 0 of the returned array to obtain the value
     # If there is no traffic to demo app during rollout we will have empty set.
     successCondition: len(result) == 0 || result[0] >= 0.95
-    failureLimit: 3
     provider:
       prometheus:
         address: http://prometheus-server.prometheus.svc.cluster.local
@@ -30,12 +31,13 @@ metadata:
 spec:
   metrics:
   - name: response-time
+    count: 5
     interval: 15s
+    failureLimit: 2
     # NOTE: prometheus queries return results in the form of a vector.
     # So it is common to access the index 0 of the returned array to obtain the value
     # If there is no traffic to demo app during rollout we will have empty set.
     successCondition: len(result) == 0 || result[0] <= 1.5
-    failureLimit: 2
     provider:
       prometheus:
         address: http://prometheus-server.prometheus.svc.cluster.local
