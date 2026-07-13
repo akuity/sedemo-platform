@@ -47,7 +47,7 @@ spec:
           -password='${{ config.password }}' \
           -locations='filesystem:/workdir/${{ config.migrationsPath }}' \
           -ignoreMigrationPatterns='*:missing,*:future' \
-          -connectRetries=10 \
+          -connectRetries=3 \
           "$@"
       }
 
