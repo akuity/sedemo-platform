@@ -16,7 +16,7 @@ metadata:
 spec:
   # Polling floor. Commits landing inside one interval coalesce into a single
   # head Freight (only on this poll path; webhooks would defeat it).
-  interval: 2m
+  interval: 2m0s
   subscriptions:
   - image:
       repoURL: ghcr.io/akuity/sedemo-monorepo-rollouts-app
@@ -46,7 +46,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
-  interval: 1m
+  interval: 1m0s
   freightCreationPolicy: Automatic
   subscriptions:
   - git:

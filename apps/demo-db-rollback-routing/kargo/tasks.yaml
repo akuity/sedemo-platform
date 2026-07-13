@@ -41,7 +41,7 @@ spec:
     as: migrate
     retry:
       errorThreshold: 2
-      timeout: 5m
+      timeout: 5m0s
     config:
       url: jdbc:postgresql://db.${{ ctx.project }}-${{ ctx.stage }}.svc.cluster.local:5432/appdb
       username: ${{ secret("flyway-db")["username"] }}
