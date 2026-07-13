@@ -13,6 +13,25 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
+  # Deep links (Kargo 1.11, kargo#2924): rendered in the UI on Stage and
+  # Freight views. URLs are Go templates evaluated against the resource;
+  # `if` is an expr-lang condition.
+  stageLinks:
+  - title: App UI
+    description: Rollouts demo app; the error dial here drives the auto-rollback beat
+    url: 'https://dbr-{{ .stage.metadata.name }}.akpdemoapps.link'
+  - title: Schema Viewer
+    description: pgweb; watch flyway_schema_history and release_notes land per env
+    url: 'https://dbr-{{ .stage.metadata.name }}-schema.akpdemoapps.link'
+  - title: Error Rate
+    description: The exact Prometheus signal the verification gate evaluates
+    url: 'https://prometheus.akpdemoapps.link/graph?g0.tab=0&g0.expr={{ urlquery (printf "sum(rate(nginx_ingress_controller_requests{namespace=\"demo-db-rollback-routing-%s\",status=~\"5..\"}[1m]))" .stage.metadata.name) }}'
+    if: stage.metadata.name in ["staging", "prod"]
+  freightLinks:
+  - title: Commit
+    description: The git commit carried by this Freight (includes its migrations)
+    url: '{{ (index .freight.commits 0).repoURL }}/commit/{{ (index .freight.commits 0).id }}'
+    if: freight.commits != nil && len(freight.commits) > 0
   promotionPolicies:
   - stageSelector:
       name: dev
