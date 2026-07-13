@@ -8,9 +8,8 @@ spec:
   - image:
       repoURL: argoproj/rollouts-demo
       discoveryLimit: 5
-      imageSelectionStrategy: NewestBuild
-      allowTagsRegexes:
-      - ^\d*-[a-z]*$
+      imageSelectionStrategy: Digest
+      constraint: ^[a-z]*-yellow$
   - git:
       repoURL: https://github.com/akuity/sedemo-monorepo
       includePaths:
