@@ -15,4 +15,10 @@ spec:
   - stageSelector:
       name: "regex:prod.*"
     autoPromotionEnabled: true
-    autoRollback: {}
+    autoRollback: 
+      onPromotion:
+        - Failed
+        - Errored
+      onVerification:
+        - Failed
+        - Error
