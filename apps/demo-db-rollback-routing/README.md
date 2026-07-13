@@ -100,8 +100,10 @@ head. That detail is what makes rollbacks correct.
   anywhere other than the shard, switch the address to
   `https://prometheus.akpdemoapps.link`.
 - DB credentials are intentionally demo-grade plaintext (`kargodemo1`), in both
-  the project Secret (`flyway-db`) and chart values. Production would source
-  both from ESO like `secrets/kargo-sync-secrets.yaml`.
+  `secrets/flyway-db-secret.yaml` and chart values. The secret reaches Kargo via
+  the `kargo.akuity.io/secret-sync: kargo-shared-resources` label (the admission
+  webhook blocks writing Secrets into project namespaces via GitOps).
+  Production would source it from ESO like `secrets/kargo-sync-secrets.yaml`.
 - Verification error rate is measured at the nginx ingress per namespace, so it
   needs the loadgen (in the chart) or real traffic to be meaningful. No traffic
   evaluates as healthy (`or vector(0)`).

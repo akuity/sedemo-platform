@@ -33,18 +33,9 @@ spec:
   # NOTE: no webhookReceivers on purpose. Warehouse discovery stays on the
   # polling path so `spec.interval` coalescing (routing demo, route 2) is
   # actually observable. Wiring webhooks would mint one Freight per push.
----
-# Demo-grade DB credential for the flyway-migrate step, referenced in
-# promotions via ${{ secret("flyway-db")["password"] }}. The same value is in
-# env/*/config.yaml for the in-cluster Postgres. Intentionally not sensitive;
-# a real setup would source this from ESO like secrets/kargo-sync-secrets.yaml.
-apiVersion: v1
-kind: Secret
-metadata:
-  name: flyway-db
-  namespace: demo-db-rollback-routing
-  labels:
-    kargo.akuity.io/cred-type: generic
-stringData:
-  username: app
-  password: kargodemo1
+#
+# The flyway-db credential used by promotions lives in
+# secrets/flyway-db-secret.yaml, NOT here: Kargo's admission webhook blocks
+# the GitOps service account from writing Secrets into project namespaces, so
+# credentials must arrive via the kargo.akuity.io/secret-sync mechanism from
+# the agent namespace on sedemo-primary.
