@@ -126,6 +126,9 @@ spec:
     analysisTemplates:
     - name: success-rate
     - name: response-time
+    args:
+    - name: namespace
+      value: demo-rollbacks-prod-amer-east
   requestedFreight:
   - origin:
       kind: Warehouse
@@ -190,6 +193,9 @@ spec:
     analysisTemplates:
     - name: success-rate
     - name: response-time
+    args:
+    - name: namespace
+      value: demo-rollbacks-prod-amer-west
   requestedFreight:
   - origin:
       kind: Warehouse

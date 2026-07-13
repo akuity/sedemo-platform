@@ -4,6 +4,8 @@ metadata:
   name: success-rate
   namespace: demo-auto-rollback
 spec:
+  args:
+  - name: namespace
   metrics:
   - name: success-rate
     interval: 15s
@@ -16,9 +18,9 @@ spec:
       prometheus:
         address: http://prometheus-server.prometheus.svc.cluster.local
         query: |
-          ( sum(rate(nginx_ingress_controller_requests{namespace="{{  .Release.Namespace }}",status="200"}[30s])) + 1 )
+          ( sum(rate(nginx_ingress_controller_requests{namespace="{{  args.namespace }}",status="200"}[30s])) + 1 )
           /
-          ( sum(rate(nginx_ingress_controller_requests{namespace="{{  .Release.Namespace }}"}[30s])) + 1 )
+          ( sum(rate(nginx_ingress_controller_requests{namespace="{{  args.namespace }}"}[30s])) + 1 )
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
@@ -38,6 +40,6 @@ spec:
       prometheus:
         address: http://prometheus-server.prometheus.svc.cluster.local
         query: |
-          sum(rate(nginx_ingress_controller_response_duration_seconds_sum{namespace="{{  .Release.Namespace }}",method="POST"}[30s]) or vector(.1)) 
+          sum(rate(nginx_ingress_controller_response_duration_seconds_sum{namespace="{{  args.namespace }}",method="POST"}[30s]) or vector(.1)) 
           /
-          sum(rate(nginx_ingress_controller_response_duration_seconds_count{namespace="{{  .Release.Namespace }}",method="POST"}[30s])  or vector(.1))
+          sum(rate(nginx_ingress_controller_response_duration_seconds_count{namespace="{{  args.namespace }}",method="POST"}[30s])  or vector(.1))
