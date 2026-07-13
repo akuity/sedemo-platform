@@ -12,6 +12,10 @@ hostPrefix: dbr-dev
 ingress:
   rootDomain: akpdemoapps.link
 
+# When set (e.g. "blue"), overrides the color the app UI displays, which is
+# otherwise baked into the image tag. The preview beat changes this in a PR.
+colorOverride: ""
+
 db:
   name: appdb
   user: app

@@ -1,3 +1,6 @@
 stage: preview
 hostPrefix: dbr-preview
 replicaCount: 1
+# Change this in a PR branch (not on main) and label the PR `deploy-preview`
+# to see a config-only change land in the preview env: e.g. colorOverride: blue
+colorOverride: ""
