@@ -10,7 +10,7 @@ spec:
       discoveryLimit: 5
       imageSelectionStrategy: NewestBuild
       allowTagsRegexes: 
-      - ^[a-z]*-yellow$
+      - ^[a-z]*-?yellow$
       cacheByTag: true
       constraint: 
   - git:
