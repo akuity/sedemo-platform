@@ -11,7 +11,7 @@ spec:
       imageSelectionStrategy: NewestBuild
       allowTagsRegexes: 
       - ^bad-red$
-      - blue
+      - ^blue
       cacheByTag: true
       constraint: 
   - git:
