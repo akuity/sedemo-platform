@@ -14,7 +14,6 @@ spec:
   promotionPolicies:
   - stageSelector:
       name: "regex:prod.*"
-    autoPromotionEnabled: true
     autoRollback: 
       onPromotion:
         - Failed
