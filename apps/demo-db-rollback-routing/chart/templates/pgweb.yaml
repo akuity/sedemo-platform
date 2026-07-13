@@ -45,8 +45,14 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: pgweb
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   ingressClassName: nginx
+  tls:
+  - hosts:
+    - "{{ .Values.hostPrefix }}-schema.{{ .Values.ingress.rootDomain }}"
+    secretName: tls-pgweb
   rules:
   - host: "{{ .Values.hostPrefix }}-schema.{{ .Values.ingress.rootDomain }}"
     http:
