@@ -92,6 +92,13 @@ head. That detail is what makes rollbacks correct.
 
 - Requires Kargo 1.11+ for `autoRollback` in ProjectConfig, and the Akuity EE
   `CustomPromotionStep` CRD (`ee.kargo.akuity.io/v1alpha1`).
+- Postgres uses emptyDir (the cluster has no CSI driver, and it keeps the
+  footprint minimal). A db pod restart wipes the schema; re-promote the
+  stage's current Freight and Flyway rebuilds it.
+- The `preview` Warehouse reports a discovery error until at least one
+  `preview-*` tag exists in the repo. Bootstrap it once with
+  `git tag preview-0 && git push origin preview-0`, or just run the preview
+  beat (label a PR) and let the Action create the first tag.
 - Stages shard to `sedemo-primary`, so the Flyway container runs in that
   cluster and reaches each stage's Postgres over cluster DNS
   (`db.demo-db-rollback-routing-<stage>.svc.cluster.local`).

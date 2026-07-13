@@ -11,6 +11,8 @@ kind: Warehouse
 metadata:
   name: main
   namespace: demo-db-rollback-routing
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   # Polling floor. Commits landing inside one interval coalesce into a single
   # head Freight (only on this poll path; webhooks would defeat it).
@@ -41,6 +43,8 @@ kind: Warehouse
 metadata:
   name: preview
   namespace: demo-db-rollback-routing
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   interval: 1m
   freightCreationPolicy: Automatic

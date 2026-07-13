@@ -14,6 +14,8 @@ kind: AnalysisTemplate
 metadata:
   name: error-rate
   namespace: demo-db-rollback-routing
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   args:
   - name: namespace

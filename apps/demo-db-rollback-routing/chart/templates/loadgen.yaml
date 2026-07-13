@@ -25,11 +25,13 @@ spec:
         - -c
         - |
           while true; do
-            ab -n20 -mPOST "http://{{ .Values.hostPrefix }}.{{ .Values.ingress.rootDomain }}/" >/dev/null 2>&1
-            sleep 2
+            ab -n10 -mPOST "http://{{ .Values.hostPrefix }}.{{ .Values.ingress.rootDomain }}/" >/dev/null 2>&1
+            sleep 5
           done
         resources:
           requests:
             cpu: 10m
             memory: 16Mi
+          limits:
+            memory: 32Mi
 {{- end }}

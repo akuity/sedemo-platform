@@ -15,9 +15,8 @@ ingress:
 db:
   name: appdb
   user: app
-  # Demo-only credential; matches the flyway-db Secret in the Kargo project.
+  # Demo-only credential; matches secrets/flyway-db-secret.yaml.
   password: kargodemo1
-  storage: 1Gi
 
 pgweb:
   enabled: true

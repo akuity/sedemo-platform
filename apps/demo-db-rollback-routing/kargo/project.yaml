@@ -10,6 +10,8 @@ kind: ProjectConfig
 metadata:
   name: demo-db-rollback-routing
   namespace: demo-db-rollback-routing
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   promotionPolicies:
   - stageSelector:
