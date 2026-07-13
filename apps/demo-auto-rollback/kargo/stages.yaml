@@ -1,0 +1,227 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev
+  namespace: demo-auto-rollback
+  annotations:
+    kargo.akuity.io/color: red
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: demo-auto-rollback
+    sources:
+      direct: true
+  # verification:
+  #   analysisTemplates:
+  #     - name: integration-test
+  #       kind: ClusterAnalysisTemplate
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-monorepo
+      - name: imageRepo
+        value: argoproj/rollouts-demo
+      - name: targetBranch
+        value: env-auto-rollback/dev 
+      - name: path_src
+        value: ./src
+      - name: path_out
+        value: ./out
+      steps:
+      - task:
+          name: prepare-workdir 
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ${{ vars.path_src }}/auto-rollback-app/deploy/chart
+          valuesFiles:
+          - ${{ vars.path_src }}/auto-rollback-app/deploy/chart/values.yaml
+          outPath: ${{ vars.path_out }}/manifests.yaml
+          namespace: demo-rollbacks-dev
+          setValues:
+            - key: image.tag
+              value: ${{ imageFrom(vars.imageRepo).Tag }}
+            - key: kargo.stage
+              value: ${{ ctx.stage }}
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+      - task:
+          name: push-manifests
+      - uses: argocd-update
+        continueOnError: true
+        config:
+          apps:
+          - name: demo-auto-rollback-dev
+            namespace: argocd
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: staging
+  namespace: demo-auto-rollback
+  annotations:
+    kargo.akuity.io/color: amber
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: demo-auto-rollback
+    sources:
+      stages:
+      - dev
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-monorepo
+      - name: imageRepo
+        value: argoproj/rollouts-demo
+      - name: targetBranch
+        value: env-auto-rollback/staging
+      - name: path_src
+        value: ./src
+      - name: path_out
+        value: ./out
+      steps:
+      - task:
+          name: prepare-workdir 
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ${{ vars.path_src }}/auto-rollback-app/deploy/chart
+          valuesFiles:
+          - ${{ vars.path_src }}/auto-rollback-app/deploy/chart/values.yaml
+          outPath: ${{ vars.path_out }}/manifests.yaml
+          namespace: demo-rollbacks-staging
+          setValues:
+            - key: image.tag
+              value: ${{ imageFrom(vars.imageRepo).Tag }}
+            - key: kargo.stage
+              value: ${{ ctx.stage }}
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+      - task:
+          name: push-manifests
+        vars:
+        - name: targetBranch
+          value: env-auto-rollback/staging
+      - uses: argocd-update
+        continueOnError: true
+        config:
+          apps:
+          - name: demo-auto-rollback-staging
+            namespace: argocd
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod-amer-east
+  namespace: demo-auto-rollback
+  annotations:
+    kargo.akuity.io/color: violet
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: demo-auto-rollback
+    sources:
+      stages:
+      - prod
+      autoPromotionOptions:
+        selectionPolicy: MatchUpstream
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-monorepo
+      - name: imageRepo
+        value: argoproj/rollouts-demo
+      - name: region
+        value: amer-east
+      steps:
+      - task:
+          name: prepare-workdir
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ${{ vars.path_src }}/auto-rollback-app/deploy/chart
+          valuesFiles:
+          - ${{ vars.path_src }}/auto-rollback-app/deploy/chart/values.yaml
+          outPath: ${{ vars.path_out }}/manifests.yaml
+          namespace: demo-rollbacks-prod-amer-east
+          setValues:
+            - key: image.tag
+              value: ${{ imageFrom(vars.imageRepo).Tag }}
+            - key: kargo.stage
+              value: ${{ ctx.stage }}
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+      - task:
+          name: push-manifests
+        vars:
+        - name: targetBranch
+          value: env-auto-rollback/prod-amer-east
+      - uses: argocd-update
+        continueOnError: true
+        config:
+          apps:
+          - name: demo-auto-rollback-prod-${{ vars.region }}
+            namespace: argocd
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod-amer-west
+  namespace: demo-auto-rollback
+  annotations:
+    kargo.akuity.io/color: violet
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: demo-auto-rollback
+    sources:
+      stages:
+      - prod
+      autoPromotionOptions:
+        selectionPolicy: MatchUpstream
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-monorepo
+      - name: imageRepo
+        value: argoproj/rollouts-demo
+      - name: region
+        value: amer-west
+      steps:
+      - task:
+          name: prepare-workdir
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ${{ vars.path_src }}/auto-rollback-app/deploy/chart
+          valuesFiles:
+          - ${{ vars.path_src }}/auto-rollback-app/deploy/chart/values.yaml
+          outPath: ${{ vars.path_out }}/manifests.yaml
+          namespace: demo-rollbacks-prod-amer-west
+          setValues:
+            - key: image.tag
+              value: ${{ imageFrom(vars.imageRepo).Tag }}
+            - key: kargo.stage
+              value: ${{ ctx.stage }}
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+      - task:
+          name: push-manifests
+        vars:
+        - name: targetBranch
+          value: env-auto-rollback/prod-amer-west
+      - uses: argocd-update
+        continueOnError: true
+        config:
+          apps:
+          - name: demo-auto-rollback-prod-${{ vars.region }}
+            namespace: argocd
