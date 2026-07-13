@@ -22,7 +22,10 @@ spec:
   metrics:
   - name: error-rate
     interval: 15s
-    count: 4
+    # 6 checks x 15s = a ~90 second window, enough time to dial errors up in
+    # the app UI during the auto-rollback demo beat. failureLimit 0 still
+    # fails verification on the first bad sample.
+    count: 6
     failureLimit: 0
     # Prometheus results come back as a vector; index 0 is the value.
     successCondition: len(result) == 0 || result[0] < 5
