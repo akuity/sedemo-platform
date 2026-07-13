@@ -1,0 +1,17 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: demo-auto-rollback
+  namespace: demo-auto-rollback
+spec:
+  subscriptions:
+  - image:
+      repoURL: argoproj/rollouts-demo
+      discoveryLimit: 5
+      imageSelectionStrategy: NewestBuild
+      allowTagsRegexes:
+      - ^\d*-[a-z]*$
+  - git:
+      repoURL: https://github.com/akuity/sedemo-monorepo
+      includePaths:
+      - rollouts-app
