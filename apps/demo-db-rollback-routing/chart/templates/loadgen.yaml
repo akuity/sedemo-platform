@@ -25,7 +25,7 @@ spec:
         - -c
         - |
           while true; do
-            ab -n10 -mPOST "http://{{ .Values.hostPrefix }}.{{ .Values.ingress.rootDomain }}/" >/dev/null 2>&1
+            ab -n10 -mPOST "https://{{ .Values.hostPrefix }}.{{ .Values.ingress.rootDomain }}/" >/dev/null 2>&1
             sleep 5
           done
         resources:
