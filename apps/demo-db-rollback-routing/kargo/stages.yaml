@@ -47,8 +47,9 @@ spec:
       steps:
       - task:
           name: promote
-  # Post-promotion verification. If the error rate check fails, the
-  # autoRollback policy in ProjectConfig re-promotes the last good Freight.
+  # Post-promotion verification. A failed check marks the Freight unverified
+  # here, so it can never advance to prod (which sources staging-verified
+  # Freight only). No autoRollback on staging by design; prod has it.
   verification:
     analysisTemplates:
     - name: error-rate

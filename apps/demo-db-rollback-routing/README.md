@@ -26,9 +26,12 @@ main lane (image + migrations in one Freight)
   merge to main / new image tag
   -> Warehouse `main` -> dev -> staging -> prod
                           |       |          |
-                       flyway  flyway     flyway      (EE custom step)
-                               +verify    +verify     (error-rate, Prometheus)
-                               +autoRollback          (ProjectConfig, Kargo 1.11)
+                       flyway  flyway     flyway        (EE custom step)
+                               +verify    +verify       (error-rate, Prometheus)
+                                          +autoRollback (ProjectConfig, Kargo 1.11)
+
+  staging verification is a gate: failed Freight never reaches prod.
+  prod verification is a safety net: failure auto-rolls-back to last good.
 ```
 
 Each stage namespace on `sedemo-primary` runs: the rollouts demo app (its UI can
@@ -85,15 +88,21 @@ which is itself part of the story.
    enters the main lane. Caveats to state out loud: previews are git-only
    provenance (the image is whatever `env/preview/image.yaml` pins), and Kargo
    never saw the label, only the tag.
-4. **Auto-rollback on bad code.** Generate a migration, push, and let the new
-   Freight promote to staging. During the ~90 second verification window, open
-   the staging app UI and dial errors up. The error-rate verification fails
-   (5xx over 5% through the ingress) and the autoRollback policy re-promotes
-   the last good Freight. Point at the Flyway step in the rollback Promotion
-   logs: it no-ops. IMPORTANT: dial errors back to zero as soon as the
-   rollback promotion appears, or its own verification fails too and rollback
-   fires again (the error toggle lives in the app process, which the rollback
-   does not restart when the image tag is unchanged).
+4. **Verification gate (staging) and auto-rollback (prod).** Two variants of
+   the same failure, different policies:
+   - Staging as a gate: dial errors up in the staging app UI, promote fresh
+     Freight, and watch verification fail. The Freight is marked unverified
+     and prod (which only sources staging-verified Freight) can never receive
+     it. Nothing rolls back; the pipeline just refuses to advance.
+   - Prod as a safety net: with healthy Freight verified in staging, promote
+     to prod, then during the ~90 second verification window dial errors up
+     in the PROD app UI. Verification fails and the autoRollback policy
+     re-promotes the last good Freight with no human actor. Point at the
+     Flyway step in the rollback Promotion logs: it no-ops. IMPORTANT: dial
+     errors back to zero as soon as the rollback promotion appears, or its
+     own verification fails too and rollback fires again (the error toggle
+     lives in the app process, which the rollback does not restart when the
+     image tag is unchanged).
 5. **Failed migration.** Run `./new-migration.sh --bad`, push, and watch the
    Flyway step fail the dev promotion (dev has no autoRollback; the pipeline
    simply refuses the Freight, and staging never sees it because it only

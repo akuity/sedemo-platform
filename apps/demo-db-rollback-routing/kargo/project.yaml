@@ -46,7 +46,6 @@ spec:
   - stageSelector:
       name: staging
     autoPromotionEnabled: true
-    autoRollback: {}
   - stageSelector:
       name: prod
     autoPromotionEnabled: false
