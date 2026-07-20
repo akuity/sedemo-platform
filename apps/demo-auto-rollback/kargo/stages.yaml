@@ -136,6 +136,9 @@ spec:
     sources:
       stages:
       - staging
+      autoPromotionOptions:
+        selectionPolicy: MatchUpstream
+
   promotionTemplate:
     spec:
       vars:
@@ -201,6 +204,8 @@ spec:
     sources:
       stages:
       - staging
+      autoPromotionOptions:
+        selectionPolicy: MatchUpstream
   promotionTemplate:
     spec:
       vars:
