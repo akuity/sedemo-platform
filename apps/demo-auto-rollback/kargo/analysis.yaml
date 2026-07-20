@@ -66,6 +66,6 @@ spec:
                 image: jordi/ab
                 command: ["sh","-c"]
                 args: 
-                  - "sleep 1 && ab -l -n300 -mPOST http://{{  args.namespace }}.akpdemoapps.link/color"
+                  - "ab -l -n1000 -mPOST http://{{  args.namespace }}.akpdemoapps.link/color"
               restartPolicy: Never
           backoffLimit: 1
