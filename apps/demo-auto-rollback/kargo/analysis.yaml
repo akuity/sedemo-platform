@@ -50,6 +50,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
   name: loadgen
+  namespace: demo-auto-rollback
 spec:
   args:
   - name: namespace
