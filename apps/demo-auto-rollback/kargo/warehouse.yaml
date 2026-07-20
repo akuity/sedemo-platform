@@ -16,4 +16,4 @@ spec:
   - git:
       repoURL: https://github.com/akuity/sedemo-monorepo
       includePaths:
-      - rollouts-app
+      - demo-auto-rollback
