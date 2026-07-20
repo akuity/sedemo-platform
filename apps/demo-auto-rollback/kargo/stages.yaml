@@ -126,6 +126,7 @@ spec:
     analysisTemplates:
     - name: success-rate
     - name: response-time
+    - name: loadgen
     args:
     - name: namespace
       value: demo-rollbacks-prod-amer-east
@@ -194,6 +195,7 @@ spec:
     analysisTemplates:
     - name: success-rate
     - name: response-time
+    - name: loadgen
     args:
     - name: namespace
       value: demo-rollbacks-prod-amer-west

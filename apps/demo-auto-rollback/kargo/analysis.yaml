@@ -45,3 +45,24 @@ spec:
           sum(rate(nginx_ingress_controller_response_duration_seconds_sum{namespace="{{  args.namespace }}",method="POST"}[30s]) or vector(.1)) 
           /
           sum(rate(nginx_ingress_controller_response_duration_seconds_count{namespace="{{  args.namespace }}",method="POST"}[30s])  or vector(.1))
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: loadgen
+spec:
+  args:
+  - name: namespace
+  metrics:
+  - name: load-gen
+    provider:
+      job:
+        spec:
+          template:
+            spec:
+              containers:
+              - name: loadgen
+                image: jordi/ab
+                command: [ab,"-n200","-mPOST","http://{{  args.namespace }}.akpdemoapps.link/color"]
+              restartPolicy: Never
+          backoffLimit: 1
