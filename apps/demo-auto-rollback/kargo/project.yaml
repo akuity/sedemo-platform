@@ -14,6 +14,7 @@ spec:
   promotionPolicies:
   - stageSelector:
       name: "prod-amer-west"
+    autoPromotionEnabled: true
     autoRollback: 
       onPromotion:
         - Failed
@@ -23,6 +24,7 @@ spec:
         - Error
   - stageSelector:
       name: "prod-amer-east"
+    autoPromotionEnabled: true
     autoRollback: 
       onPromotion:
         - Failed
