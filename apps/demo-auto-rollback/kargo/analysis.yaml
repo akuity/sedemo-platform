@@ -8,6 +8,8 @@ spec:
   - name: namespace
   metrics:
   - name: success-rate
+    # Query uses rate over last 30 seconds, so some initial delay is needed to ensure measure is focused on current release, and not prior version.
+    initialDelay: 20s
     count: 4
     interval: 5s
     failureLimit: 2
@@ -67,5 +69,12 @@ spec:
                 command: ["sh","-c"]
                 args: 
                   - "ab -l -n1000 -mPOST http://{{  args.namespace }}.akpdemoapps.link/color"
+                resources:
+                  requests:
+                    cpu: 10m
+                    memory: 32Mi
+                  limits:
+                    cpu: 10m
+                    memory: 32Mi
               restartPolicy: Never
           backoffLimit: 1
