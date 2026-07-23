@@ -22,8 +22,12 @@ spec:
       repoURL: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       discoveryLimit: 5
       imageSelectionStrategy: NewestBuild
+      # `<build>-<color>` is a normal build; the optional `-bad` suffix marks a
+      # pre-poisoned image (high baked-in ERROR_RATE) used to demo the staging
+      # verification gate without dialing errors in the app UI. Including it in
+      # the tag keeps a bad build from ever masquerading as a good one.
       allowTagsRegexes:
-      - ^\d+-[a-z]+$
+      - ^\d+-[a-z]+(-bad)?$
   - git:
       repoURL: https://github.com/akuity/sedemo-platform
       commitSelectionStrategy: NewestFromBranch
