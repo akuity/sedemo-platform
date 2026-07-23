@@ -2,7 +2,9 @@
 # Steady traffic through the ingress so nginx_ingress_controller_requests
 # always has samples for the error-rate verification. Goes through the public
 # hostname on purpose; hitting the Service directly would bypass the ingress
-# metrics that verification queries.
+# metrics that verification queries. Hits /color (not /), the only endpoint
+# that honors the baked-in ERROR_RATE; POSTing to / just serves static files
+# and always returns 2xx, which would decouple the metric from app health.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -25,7 +27,7 @@ spec:
         - -c
         - |
           while true; do
-            ab -n10 -mPOST "https://{{ .Values.hostPrefix }}.{{ .Values.ingress.rootDomain }}/" >/dev/null 2>&1
+            ab -n10 -mPOST -p /dev/null -T application/json "https://{{ .Values.hostPrefix }}.{{ .Values.ingress.rootDomain }}/color" >/dev/null 2>&1
             sleep 5
           done
         resources:
