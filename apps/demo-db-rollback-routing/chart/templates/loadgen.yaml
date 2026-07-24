@@ -5,6 +5,9 @@
 # metrics that verification queries. Hits /color (not /), the only endpoint
 # that honors the baked-in ERROR_RATE; POSTing to / just serves static files
 # and always returns 2xx, which would decouple the metric from app health.
+# NOTE: -p implies POST, so do NOT also pass -mPOST — ab errors out with
+# "Cannot mix POST with other methods" and sends zero requests, starving the
+# verification query of samples (which then trivially passes via `or vector(0)`).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -27,7 +30,7 @@ spec:
         - -c
         - |
           while true; do
-            ab -n10 -mPOST -p /dev/null -T application/json "https://{{ .Values.hostPrefix }}.{{ .Values.ingress.rootDomain }}/color" >/dev/null 2>&1
+            ab -n10 -p /dev/null -T application/json "https://{{ .Values.hostPrefix }}.{{ .Values.ingress.rootDomain }}/color" >/dev/null 2>&1
             sleep 5
           done
         resources:
