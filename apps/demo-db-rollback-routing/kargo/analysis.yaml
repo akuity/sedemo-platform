@@ -1,10 +1,14 @@
 # Verification for staging and prod: 5xx rate through the nginx ingress must
-# stay under 5% for 4 consecutive checks. failureLimit 0 means one bad sample
-# fails verification, which (via the ProjectConfig autoRollback policy)
-# triggers automatic re-promotion of the last good Freight.
+# stay under 5% on every check. failureLimit 0 means one bad sample fails
+# verification, which (via the ProjectConfig autoRollback policy) triggers
+# automatic re-promotion of the last good Freight.
 #
 # The app UI lets a presenter dial in an error rate, and the in-chart loadgen
-# keeps steady traffic flowing so the query always has samples.
+# keeps steady traffic flowing so the query always has samples. An initialDelay
+# on the metric (see below) keeps the first sample from reading the OUTGOING
+# version's errors, so a good build promoted right after a bad one - a rollback,
+# or a good build replacing a gated bad build - verifies cleanly instead of
+# flaking on residual traffic.
 #
 # The Prometheus address is in-cluster on sedemo-primary, where sharded
 # verification runs. If verification ever executes off-cluster, switch to
@@ -21,10 +25,20 @@ spec:
   - name: namespace
   metrics:
   - name: error-rate
+    # initialDelay lets the just-promoted version's traffic establish AND lets
+    # the previous version's 5xx age out of the rate window BEFORE the first
+    # sample. Without it, a good version promoted right after a bad one (a
+    # rollback, or a good build replacing a gated bad build) fails on sample #1:
+    # verification starts the instant the promotion completes, so the rate
+    # window still spans the outgoing bad version's errors and failureLimit 0
+    # flunks the whole run. Keep initialDelay >= the rate window below so the
+    # first sample looks only at post-promotion traffic.
+    initialDelay: 45s
     interval: 15s
-    # 6 checks x 15s = a ~90 second window, enough time to dial errors up in
-    # the app UI during the auto-rollback demo beat. failureLimit 0 still
-    # fails verification on the first bad sample.
+    # 6 checks x 15s after the initial delay. failureLimit 0 still fails on the
+    # first bad sample, so a genuinely bad build (errors persist all window) is
+    # caught at the first check (~t=45s); a healthy build sees only its own
+    # clean traffic and passes every check.
     count: 6
     failureLimit: 0
     # Prometheus results come back as a vector; index 0 is the value.
@@ -32,9 +46,13 @@ spec:
     provider:
       prometheus:
         address: http://prometheus-server.prometheus.svc.cluster.local
+        # 30s rate window (not 1m): residual 5xx from an outgoing version clear
+        # in 30s, so with initialDelay 45s the first sample's window (t=15s..45s)
+        # contains only the new version's traffic. At the loadgen's ~2 req/s that
+        # is still ~60 samples per window - plenty for a stable ratio.
         query: |
           (
-            sum(rate(nginx_ingress_controller_requests{namespace="{{args.namespace}}",status=~"5.."}[1m]))
+            sum(rate(nginx_ingress_controller_requests{namespace="{{args.namespace}}",status=~"5.."}[30s]))
             /
-            clamp_min(sum(rate(nginx_ingress_controller_requests{namespace="{{args.namespace}}"}[1m])), 1)
+            clamp_min(sum(rate(nginx_ingress_controller_requests{namespace="{{args.namespace}}"}[30s])), 1)
           ) * 100 or vector(0)
