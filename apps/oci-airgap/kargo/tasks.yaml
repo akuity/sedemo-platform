@@ -195,7 +195,7 @@ spec:
     config:
       credentials:
         sharedSecretName: kargo-step-snow
-        type: api-token
+        type: basic
       tableName: change_request
       template:
         type: normal
@@ -251,7 +251,7 @@ spec:
     config:
       credentials:
         sharedSecretName: kargo-step-snow
-        type: api-token
+        type: basic
       tableName: change_request
       ticketId: ${% task.outputs['snowcreate'].sys_id %}
       condition: state=3
@@ -262,7 +262,7 @@ spec:
     config:
       credentials:
         sharedSecretName: kargo-step-snow
-        type: api-token
+        type: basic
       tableName: change_request
       ticketId: ${% task.outputs['snowcreate'].sys_id %}
       parameters:

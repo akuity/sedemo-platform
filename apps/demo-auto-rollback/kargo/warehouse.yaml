@@ -15,5 +15,7 @@ spec:
       constraint: 
   - git:
       repoURL: https://github.com/akuity/sedemo-monorepo
+      commitSelectionStrategy: NewestCommit
+      discoveryLimit: 20
       includePaths:
       - auto-rollback-app

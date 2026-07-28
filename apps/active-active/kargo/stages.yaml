@@ -277,7 +277,7 @@ spec:
         config:
           credentials:
             sharedSecretName: kargo-step-snow
-            type: api-token
+            type: basic
           parameters:
             impact: "3"
             short_description: 'AA: Deploy ${{ imageFrom(vars.imageRepo).Tag }} to Prod'
@@ -296,7 +296,7 @@ spec:
           condition: state=-1
           credentials:
             sharedSecretName: kargo-step-snow
-            type: api-token
+            type: basic
           tableName: change_request
           ticketId: ${% outputs['snowcreate'].sys_id %}
         uses: snow-wait-for-condition
@@ -494,7 +494,7 @@ spec:
         config:
           credentials:
             sharedSecretName: kargo-step-snow
-            type: api-token
+            type: basic
           parameters:
             state: "Review"
             work_notes: "Promotion to prod successful, moving change request to Review state."
@@ -506,7 +506,7 @@ spec:
         config:
           credentials:
             sharedSecretName: kargo-step-snow
-            type: api-token
+            type: basic
           parameters:
             state: "Closed"
             close_notes: "Promotion to prod successful, moving change request to Close state."
