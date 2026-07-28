@@ -10,3 +10,4 @@ spec:
       discoveryLimit: 5
       imageSelectionStrategy: NewestBuild
       cacheByTag: true
+      strictSemvers: false
