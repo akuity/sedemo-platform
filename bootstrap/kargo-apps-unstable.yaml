@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: kargo-apps-unstable
+  namespace: argocd
+spec:
+  generators:
+  - git:
+      repoURL: https://github.com/akuity/sedemo-platform
+      revision: HEAD
+      directories:
+      - path: kargo-unstable/*/kargo
+  template:
+    metadata:
+      name: 'kargo-unstable-{{path[1]}}'
+    spec:
+      project: '{{path[1]}}'
+      source:
+        repoURL: https://github.com/akuity/sedemo-platform
+        targetRevision: HEAD
+        path: '{{path}}'
+        directory:
+          recurse: true
+      destination:
+        name: kargo-unstable
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true

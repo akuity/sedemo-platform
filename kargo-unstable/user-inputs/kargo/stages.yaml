@@ -1,0 +1,77 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev
+  namespace: user-inputs
+  annotations:
+    kargo.akuity.io/color: blue
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: some-warehouse
+    sources:
+      stages:
+      - regulator-approval
+  promotionTemplate:
+    spec:
+      steps:
+      # Fail the promotion if the freight is missing the "reg-id" metadata attribute.
+      - uses: fail
+        if: ${{ freightMetadata(ctx.targetFreight.name)['reg-id'] == nil }}
+        config:
+          message: Freight ${{ ctx.targetFreight.name }} is missing required metadata "reg-id".
+      # Otherwise, surface the value as a step output.
+      - uses: compose-output
+        as: reg-id
+        config:
+          value: ${{ freightMetadata(ctx.targetFreight.name)['reg-id'] }}
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: regulator-approval
+  namespace: user-inputs
+  annotations:
+    kargo.akuity.io/color: red
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: some-warehouse
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      steps:
+      - uses: get-user-input
+        as: collect
+        config:
+          display: Provide the release note ID.
+          #responders:
+          #- role: release-manager
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+            - id
+            - comment
+            properties:
+              id:
+                type: string
+                pattern: "^reg-[0-9]+$"
+                description: Release id, e.g. reg-123
+              comment:
+                type: string
+                minLength: 1
+                description: What is changing in this release
+      # set the collecte dinput as frieght metadara
+      - uses: set-metadata
+        config:
+          updates:
+            - kind: Freight
+              name: ${{ ctx.targetFreight.name }}
+              values:
+                reg-id: "${{ outputs['collect'].values.id }}"

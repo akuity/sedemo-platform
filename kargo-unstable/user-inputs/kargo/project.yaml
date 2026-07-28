@@ -1,0 +1,26 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: user-inputs
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: user-inputs
+  namespace: user-inputs
+spec:
+  promotionPolicies:
+  - stageSelector:
+      name: "regex:dev.*"
+    autoPromotionEnabled: true
+  - stageSelector:
+      name: "regex:approve.*"
+    autoPromotionEnabled: true
+  - stageSelector:
+      name: "regex:prod.*"
+    autoPromotionEnabled: true
+  - stageSelector:
+      name: "regex:close.*"
+    autoPromotionEnabled: true

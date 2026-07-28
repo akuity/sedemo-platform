@@ -1,0 +1,12 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: some-warehouse
+  namespace: user-inputs
+spec:
+  subscriptions:
+  - image:
+      repoURL: argoproj/rollouts-demo
+      discoveryLimit: 5
+      imageSelectionStrategy: NewestBuild
+      cacheByTag: true
