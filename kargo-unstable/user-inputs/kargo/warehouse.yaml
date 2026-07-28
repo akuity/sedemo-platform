@@ -6,10 +6,4 @@ metadata:
 spec:
   subscriptions:
   - image:
-      repoURL: argoproj/rollouts-demo
-      discoveryLimit: 5
-      imageSelectionStrategy: NewestBuild
-      cacheByTag: true
-      strictSemvers: false
-      allowTagsRegexes: 
-      - ^slow
+      repoURL: ghcr.io/akuity/guestbook
