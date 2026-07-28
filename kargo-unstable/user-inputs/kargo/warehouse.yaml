@@ -11,3 +11,5 @@ spec:
       imageSelectionStrategy: NewestBuild
       cacheByTag: true
       strictSemvers: false
+      allowTagsRegexes: 
+      - ^slow
