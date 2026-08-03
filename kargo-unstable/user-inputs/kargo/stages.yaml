@@ -22,7 +22,7 @@ spec:
           message: Freight ${{ ctx.targetFreight.name }} is missing required metadata "reg-id".
       
       - uses: wait-for-approval
-          as: approve
+        as: approve
       # Fail the promotion if the freight is missing the "reg-id" metadata attribute.
       # Otherwise, surface the value as a step output.
       - uses: compose-output
