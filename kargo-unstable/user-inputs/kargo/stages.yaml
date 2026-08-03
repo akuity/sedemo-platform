@@ -19,10 +19,11 @@ spec:
       - uses: fail
         if: ${{ freightMetadata(ctx.targetFreight.name)['reg-id'] == nil }}
         config:
-          message: Freight ${{ ctx.targetFreight.name }} is missing required metadata "reg-id".
+          message: Freight ${{ ctx.targetFreight.alias }} is missing required metadata "reg-id".
       
       - uses: wait-for-approval
         as: approve
+        config: {}
       # Fail the promotion if the freight is missing the "reg-id" metadata attribute.
       # Otherwise, surface the value as a step output.
       - uses: compose-output
