@@ -1,6 +1,38 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
+  name: prod
+  namespace: user-inputs
+  annotations:
+    kargo.akuity.io/color: blue
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: some-warehouse
+    sources:
+      stages:
+      - dev
+  promotionTemplate:
+    spec:
+      steps:
+      - uses: fail
+        if: ${{ freightMetadata(ctx.targetFreight.name)['reg-id'] == nil }}
+        config:
+          message: Freight ${{ ctx.targetFreight.name }} is missing required metadata "reg-id".
+      
+      - uses: wait-for-approval
+          as: approve
+      # Fail the promotion if the freight is missing the "reg-id" metadata attribute.
+      # Otherwise, surface the value as a step output.
+      - uses: compose-output
+        as: reg-id
+        config:
+          value: ${{ freightMetadata(ctx.targetFreight.name)['reg-id'] }}
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
   name: dev
   namespace: user-inputs
   annotations:
