@@ -6,5 +6,4 @@ metadata:
     app.kubernetes.io/name: '{{ .Values.application.name }}'
 data:
   application.name: '{{ .Values.application.name }}'  
-  more:
-    info: 'This is a configmap for {{ .Values.application.name }} application'
+  more.info: 'This is a configmap for {{ .Values.application.name }} application'
