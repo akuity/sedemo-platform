@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: '{{ .Values.application.name }}-config'
+  labels:
+    app.kubernetes.io/name: '{{ .Values.application.name }}'
+data:
+  application.name: '{{ .Values.application.name }}'  
+  more:
+    info: 'This is a configmap for {{ .Values.application.name }} application'
