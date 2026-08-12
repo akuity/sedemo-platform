@@ -29,7 +29,7 @@ spec:
       - uses: compose-output
         as: reg-id
         config:
-          value: ${{ freightMetadata(ctx.targetFreight.name)['reg-id'] }}
+          value: ${{ freightMetadata(ctx.targetFreight.name)['invalid-id'] }}
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -51,7 +51,7 @@ spec:
       steps:
       # Fail the promotion if the freight is missing the "reg-id" metadata attribute.
       - uses: fail
-        if: ${{ freightMetadata(ctx.targetFreight.name)['reg-id'] == nil }}
+        if: ${{ freightMetadata(ctx.targetFreight.bogus)['reg-id'] == nil }}
         config:
           message: Freight ${{ ctx.targetFreight.name }} is missing required metadata "reg-id".
       # Otherwise, surface the value as a step output.
