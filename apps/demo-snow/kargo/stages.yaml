@@ -632,16 +632,6 @@ spec:
   promotionTemplate:
     spec:
       steps:
-      - as: move-snow-request-to-review
-        config:
-          credentials:
-            sharedSecretName: kargo-step-snow
-            type: basic
-          parameters:
-            state: "0"
-          tableName: change_request
-          ticketId: ${{ freightMetadata(ctx.targetFreight.name)['snow-id']}}
-        uses: snow-update
       - as: get-snow-task-testing
         config:
           credentials:
@@ -653,7 +643,6 @@ spec:
             type: "testing"
           tableName: change_task
         uses: snow-query-records
-
       - as: close-snow-task-testing
         config:
           credentials:
@@ -666,6 +655,17 @@ spec:
           tableName: change_task
           ticketId: ${{ outputs['get-snow-task-testing'].sys_id}}
         uses: snow-update
+      - as: move-snow-request-to-review
+        config:
+          credentials:
+            sharedSecretName: kargo-step-snow
+            type: basic
+          parameters:
+            state: "0"
+          tableName: change_request
+          ticketId: ${{ freightMetadata(ctx.targetFreight.name)['snow-id']}}
+        uses: snow-update
+
       - as: close-snow-request
         config:
           credentials:
