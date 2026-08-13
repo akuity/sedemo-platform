@@ -629,19 +629,9 @@ spec:
       - prod-emea
       - prod-amer-east
       - prod-amer-west
-      autoPromotionOptions:
-        selectionPolicy: MatchUpstream
   promotionTemplate:
     spec:
-      vars:
-      - name: gitRepo
-        value: https://github.com/akuity/sedemo-monorepo
-      - name: imageRepo
-        value: ghcr.io/akuity/sedemo-monorepo-snow-demo
-      - name: region
-        value: emea
       steps:
-
       - as: get-snow-task-testing
         config:
           credentials:
