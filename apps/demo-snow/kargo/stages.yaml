@@ -319,7 +319,7 @@ spec:
             change_request: ${% outputs['snowcreate'].number %}
             type: "Implementation"
             short_description: Deploy ${{ imageFrom(vars.imageRepo).Tag }} to amer-east
-          tableName: change_request
+          tableName: change_task
         uses: snow-create
       - uses: set-metadata
         config:
