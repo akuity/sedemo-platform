@@ -291,13 +291,9 @@ spec:
         config:
           inPath: ${{ vars.path_src }}/verification-snow-demo/deploy/overlays/prod-emea
           outPath: ${{ vars.path_out }}/prod-emea
-
-      # Since JIRA gates downstream stages, commit directly to prod branch.
       - task:
           name: push-manifests
         as: push-manifests
-
-
       - as: snowcreate
         config:
           credentials:
@@ -308,13 +304,32 @@ spec:
             short_description: Deploy to ${{ ctx.stage }} complete for ${{ vars.imageRepo }}:${{ imageFrom(vars.imageRepo).Tag }}
             assignment_group: "Application Development"
             urgency: "3"
-            implementation_plan: "See https://kargo.akpdemoapps.link/project/demo-snow/promotion/${{ ctx.promotion }}"
+            implementation_plan: "See https://kargo.akpdemoapps.link/project/${{ ctx.project }}/promotion/${{ ctx.promotion }}"
           tableName: change_request
           template:
             #templateId: 8d3380da83273210b6207e95eeaad33e # example
             type: normal
         uses: snow-create
-
+      - as: create-snow-task-amer-east
+        config:
+          credentials:
+            sharedSecretName: kargo-step-snow
+            type: basic
+          parameters:
+            change_request: ${% outputs['snowcreate'].number %}
+            type: "Implementation"
+            short_description: Deploy ${{ imageFrom(vars.imageRepo).Tag }} to amer-east
+          tableName: change_request
+        uses: snow-create
+      - uses: set-metadata
+        config:
+          updates:
+            - kind: Freight
+              name: ${{ ctx.targetFreight.name }}
+              values:
+                snow-url: "https://${{ sharedSecret('kargo-step-snow').instanceURL }}/change_request.do?sys_id=${{ outputs['snowcreate'].sys_id }}"
+                snow-chg: "${{ outputs['snowcreate'].number }}"
+                snow-east-task: "${{ outputs['create-snow-task-amer-east'].sys_id }}"
       - as: snow-wait-for-condition
         config:
           # wait for "Implment" state
@@ -325,18 +340,17 @@ spec:
           tableName: change_request
           ticketId: ${% outputs['snowcreate'].sys_id %}
         uses: snow-wait-for-condition
-
-      - as: snowupdate
-        config:
-          credentials:
-            sharedSecretName: kargo-step-snow
-            type: basic
-          parameters:
-            state: "Review"
-            work_notes: "Promotion to prod successful, moving change request to Review state."
-          tableName: change_request
-          ticketId: ${% outputs['snowcreate'].sys_id %}
-        uses: snow-update
+      # - as: snowupdate
+      #   config:
+      #     credentials:
+      #       sharedSecretName: kargo-step-snow
+      #       type: basic
+      #     parameters:
+      #       state: "Review"
+      #       work_notes: "Promotion to prod successful, moving change request to Review state."
+      #     tableName: change_request
+      #     ticketId: ${% outputs['snowcreate'].sys_id %}
+      #   uses: snow-update
 
 
 
@@ -395,6 +409,7 @@ spec:
         - name: targetBranch
           value: env-snow-demo/prod-${{ vars.region }}
       - uses: argocd-update
+        as: argocd-update
         continueOnError: true
         config:
           apps:
@@ -404,6 +419,24 @@ spec:
               matchLabels:
                 app.kubernetes.io/part-of: demo-snow
                 kargo.akuity.io/stage: prod-${{ vars.region }}
+
+      
+
+      - as: snow-ct-close
+        config:
+          credentials:
+            sharedSecretName: kargo-step-snow
+            type: basic
+          parameters:
+            state: "3"
+            close_notes: "Automatically closing change task after ${{ status('argocd-update') }} promotion to prod."
+            work_notes: "Automatically closing change task after ${{ status('argocd-update') }} promotion to prod."
+          tableName: change_task
+          ticketId: ${{ freightMetadata(ctx.targetFreight.name)['snow-east-task']}}
+        uses: snow-update
+
+     
+
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -524,3 +557,19 @@ spec:
               matchLabels:
                 app.kubernetes.io/part-of: demo-snow
                 kargo.akuity.io/stage: prod-${{ vars.region }}
+
+
+# #
+# Fan into a stage that closes ticket on complete promoton
+#
+
+      # - as: get-snow-task-testing
+      #   config:
+      #     credentials:
+      #       sharedSecretName: kargo-step-snow
+      #       type: basic
+      #     query:
+      #       change_request: ${% outputs['snowcreate'].number %}
+      #       state: "2"
+      #     tableName: change_task
+      #   uses: snow-query-records
