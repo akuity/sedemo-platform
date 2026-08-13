@@ -317,8 +317,30 @@ spec:
             type: basic
           parameters:
             change_request: ${% outputs['snowcreate'].number %}
-            type: "Implementation"
+            type: "implementation"
             short_description: Deploy ${{ imageFrom(vars.imageRepo).Tag }} to amer-east
+          tableName: change_task
+        uses: snow-create
+      - as: create-snow-task-amer-west
+        config:
+          credentials:
+            sharedSecretName: kargo-step-snow
+            type: basic
+          parameters:
+            change_request: ${% outputs['snowcreate'].number %}
+            type: "implementation"
+            short_description: Deploy ${{ imageFrom(vars.imageRepo).Tag }} to amer-west
+          tableName: change_task
+        uses: snow-create
+      - as: create-snow-task-emea
+        config:
+          credentials:
+            sharedSecretName: kargo-step-snow
+            type: basic
+          parameters:
+            change_request: ${% outputs['snowcreate'].number %}
+            type: "implementation"
+            short_description: Deploy ${{ imageFrom(vars.imageRepo).Tag }} to emea
           tableName: change_task
         uses: snow-create
       - uses: set-metadata
@@ -329,7 +351,10 @@ spec:
               values:
                 snow-url: "https://${{ sharedSecret('kargo-step-snow').instanceURL }}/change_request.do?sys_id=${{ outputs['snowcreate'].sys_id }}"
                 snow-chg: "${{ outputs['snowcreate'].number }}"
+                snow-id: "${{ outputs['snowcreate'].sys_id }}"
                 snow-east-task: "${{ outputs['create-snow-task-amer-east'].sys_id }}"
+                snow-west-task: "${{ outputs['create-snow-task-amer-west'].sys_id }}"
+                snow-emea-task: "${{ outputs['create-snow-task-emea'].sys_id }}"
       - as: snow-wait-for-condition
         config:
           # wait for "Implment" state
@@ -497,6 +522,20 @@ spec:
               matchLabels:
                 app.kubernetes.io/part-of: demo-snow
                 kargo.akuity.io/stage: prod-${{ vars.region }}
+
+      - as: snow-ct-close
+        config:
+          credentials:
+            sharedSecretName: kargo-step-snow
+            type: basic
+          parameters:
+            state: "3"
+            close_notes: "Automatically closing change task after ${{ status('argocd-update') }} promotion to prod."
+            work_notes: "Automatically closing change task after ${{ status('argocd-update') }} promotion to prod."
+          tableName: change_task
+          ticketId: ${{ freightMetadata(ctx.targetFreight.name)['snow-west-task']}}
+        uses: snow-update
+
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -558,18 +597,84 @@ spec:
                 app.kubernetes.io/part-of: demo-snow
                 kargo.akuity.io/stage: prod-${{ vars.region }}
 
+      - as: snow-ct-close
+        config:
+          credentials:
+            sharedSecretName: kargo-step-snow
+            type: basic
+          parameters:
+            state: "3"
+            close_notes: "Automatically closing change task after ${{ status('argocd-update') }} promotion to prod."
+            work_notes: "Automatically closing change task after ${{ status('argocd-update') }} promotion to prod."
+          tableName: change_task
+          ticketId: ${{ freightMetadata(ctx.targetFreight.name)['snow-emea-task']}}
+        uses: snow-update
 
-# #
-# Fan into a stage that closes ticket on complete promoton
-#
 
-      # - as: get-snow-task-testing
-      #   config:
-      #     credentials:
-      #       sharedSecretName: kargo-step-snow
-      #       type: basic
-      #     query:
-      #       change_request: ${% outputs['snowcreate'].number %}
-      #       state: "2"
-      #     tableName: change_task
-      #   uses: snow-query-records
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod-close
+  namespace: demo-snow
+  annotations:
+    kargo.akuity.io/color: violet
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: demo-snow
+    sources:
+      stages:
+      - prod-emea
+      - prod-amer-east
+      - prod-amer-west
+      autoPromotionOptions:
+        selectionPolicy: MatchUpstream
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-monorepo
+      - name: imageRepo
+        value: ghcr.io/akuity/sedemo-monorepo-snow-demo
+      - name: region
+        value: emea
+      steps:
+
+      - as: get-snow-task-testing
+        config:
+          credentials:
+            sharedSecretName: kargo-step-snow
+            type: basic
+          query:
+            change_request: ${{ freightMetadata(ctx.targetFreight.name)['snow-chg']}}
+            state: "2"
+            type: "testing"
+          tableName: change_task
+        uses: snow-query-records
+
+      - as: snow-ct-close
+        config:
+          credentials:
+            sharedSecretName: kargo-step-snow
+            type: basic
+          parameters:
+            state: "3"
+            close_notes: "Automatically closing testing task."
+            work_notes: "Automatically closing testing task."
+          tableName: change_task
+          ticketId: ${{ outputs['get-snow-task-testing'].sys_id}}
+        uses: snow-update
+      - as: snow-ct-close
+        config:
+          credentials:
+            sharedSecretName: kargo-step-snow
+            type: basic
+          parameters:
+            state: "3"
+            close_notes: "Automatically closing testing task."
+            work_notes: "Automatically closing testing task."
+          tableName: change_request
+          ticketId: ${{ freightMetadata(ctx.targetFreight.name)['snow-chg']}}
+        uses: snow-update
