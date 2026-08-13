@@ -349,7 +349,7 @@ spec:
             - kind: Freight
               name: ${{ ctx.targetFreight.name }}
               values:
-                snow-url: "https://${{ sharedSecret('kargo-step-snow').instanceURL }}/change_request.do?sys_id=${{ outputs['snowcreate'].sys_id }}"
+                snow-url: "${{ sharedSecret('kargo-step-snow').instanceURL }}/change_request.do?sys_id=${{ outputs['snowcreate'].sys_id }}"
                 snow-chg: "${{ outputs['snowcreate'].number }}"
                 snow-id: "${{ outputs['snowcreate'].sys_id }}"
                 snow-east-task: "${{ outputs['create-snow-task-amer-east'].sys_id }}"
@@ -666,5 +666,5 @@ spec:
             close_notes: "Automatically closing testing task."
             work_notes: "Automatically closing testing task."
           tableName: change_request
-          ticketId: ${{ freightMetadata(ctx.targetFreight.name)['snow-chg']}}
+          ticketId: ${{ freightMetadata(ctx.targetFreight.name)['snow-id']}}
         uses: snow-update
