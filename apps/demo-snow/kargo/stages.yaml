@@ -24,7 +24,7 @@ spec:
             type: basic
           query:
             change_request: CHG0030001
-            state: 2
+            state: "2"
           tableName: change_task
         uses: snow-query-records
       - as: dumpit
