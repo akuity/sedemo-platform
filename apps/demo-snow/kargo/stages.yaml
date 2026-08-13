@@ -644,7 +644,7 @@ spec:
           tableName: change_task
         uses: snow-query-records
 
-      - as: snow-ct-close
+      - as: close-snow-task-testing
         config:
           credentials:
             sharedSecretName: kargo-step-snow
@@ -656,7 +656,7 @@ spec:
           tableName: change_task
           ticketId: ${{ outputs['get-snow-task-testing'].sys_id}}
         uses: snow-update
-      - as: snow-ct-close
+      - as: close-snow-request
         config:
           credentials:
             sharedSecretName: kargo-step-snow
