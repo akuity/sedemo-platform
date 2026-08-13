@@ -30,17 +30,17 @@ spec:
       - as: dumpit
         uses: compose-output
         config:
-          value: ${{ outputs['snowquery'].records[0].sys_id }}
+          value: ${{ outputs['snowquery'].number }}
       - as: snow-ct-close
         config:
           credentials:
             sharedSecretName: kargo-step-snow
             type: basic
           parameters:
-            state: "Review"
-            work_notes: "Promotion to prod successful, moving change request to Review state."
+            state: "3"
+            work_notes: "Automatically closing change task after successful promotion to prod."
           tableName: change_task
-          ticketId: ${% outputs['snowcreate'].sys_id %}
+          ticketId: ${% outputs['snowquery'].sys_id %}
         uses: snow-update
 ---
 
