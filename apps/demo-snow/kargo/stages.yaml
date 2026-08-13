@@ -639,7 +639,7 @@ spec:
             type: basic
           query:
             change_request: ${{ freightMetadata(ctx.targetFreight.name)['snow-chg']}}
-            state: "2"
+            state: "1"
             type: "testing"
           tableName: change_task
         uses: snow-query-records
