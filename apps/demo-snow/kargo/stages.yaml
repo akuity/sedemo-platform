@@ -38,9 +38,10 @@ spec:
             type: basic
           parameters:
             state: "3"
-            work_notes: "Automatically closing change task after successful promotion to prod."
+            close_notes: "Automatically closing change task after ${{ status('dumpit') }} promotion to prod."
+            work_notes: "Automatically closing change task after ${{ status('dumpit') }} promotion to prod."
           tableName: change_task
-          ticketId: ${% outputs['snowquery'].sys_id %}
+          ticketId: ${{ outputs['snowquery'].sys_id }}
         uses: snow-update
 ---
 
