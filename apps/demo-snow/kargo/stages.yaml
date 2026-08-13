@@ -1,3 +1,52 @@
+
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: close-change-task
+  namespace: demo-snow
+  annotations:
+    kargo.akuity.io/color: red
+spec:
+  shard: sedemo-primary
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: demo-snow
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      steps:
+      - as: snowquery
+        config:
+          credentials:
+            sharedSecretName: kargo-step-snow
+            type: basic
+          query:
+            change_request: CHG0030001
+            state: 2
+          tableName: change_task
+        uses: snow-query-records
+      - as: dumpit
+        uses: compose-output
+        config:
+          value: ${{ outputs['snowquery'].records[0].sys_id }}
+      - as: snow-ct-close
+        config:
+          credentials:
+            sharedSecretName: kargo-step-snow
+            type: basic
+          parameters:
+            state: "Review"
+            work_notes: "Promotion to prod successful, moving change request to Review state."
+          tableName: change_task
+          ticketId: ${% outputs['snowcreate'].sys_id %}
+        uses: snow-update
+---
+
+
+
+
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
@@ -255,8 +304,7 @@ spec:
             type: basic
           parameters:
             impact: "3"
-            short_description: Deploy to ${{ ctx.stage }} complete for ${{ vars.imageRepo
-              }}:${{ imageFrom(vars.imageRepo).Tag }}
+            short_description: Deploy to ${{ ctx.stage }} complete for ${{ vars.imageRepo }}:${{ imageFrom(vars.imageRepo).Tag }}
             assignment_group: "Application Development"
             urgency: "3"
             implementation_plan: "See https://kargo.akpdemoapps.link/project/demo-snow/promotion/${{ ctx.promotion }}"
@@ -288,6 +336,7 @@ spec:
           tableName: change_request
           ticketId: ${% outputs['snowcreate'].sys_id %}
         uses: snow-update
+
 
 
 

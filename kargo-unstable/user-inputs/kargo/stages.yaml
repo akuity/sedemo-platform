@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/d30e01406b32d4ab5fa9445f5710b5011649d9ae/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
