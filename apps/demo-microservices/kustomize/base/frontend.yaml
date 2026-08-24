@@ -127,7 +127,6 @@ metadata:
   labels:
     app: frontend
 spec:
-  type: LoadBalancer
   selector:
     app: frontend
   ports:
@@ -139,3 +138,21 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: frontend
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: stable-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "boutique-frontend.akpdemoapps.link"
+    http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: frontend-external
+            port:
+              number: 80
