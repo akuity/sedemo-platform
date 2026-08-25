@@ -167,13 +167,17 @@ spec:
   promotionTemplate:
     spec:
       steps:
+      # QE gate: trigger the external suite and hold the freight here until it
+      # reports back. Nothing is committed to git until QE passes.
+      - task:
+          name: qe-suite-gate
       - task:
           name: promote-guestbook
       - uses: teams-notify
         config:
           webhookURL: ${{ secret("teams-webhook")["teams-webhook"] }}
           title: "Promoted to ${{ ctx.stage }}"
-          message: "${{ ctx.targetFreight.origin.name == 'guestbook' ? 'guestbook ' + imageFrom('ghcr.io/akuity/guestbook').Tag + ' deployed to staging — Kargo verification analysis running' : ctx.targetFreight.origin.name == 'features' ? 'Feature flags promoted to staging' : 'Staging configuration updated' }}"
+          message: "${{ ctx.targetFreight.origin.name == 'guestbook' ? 'guestbook ' + imageFrom('ghcr.io/akuity/guestbook').Tag + ' cleared the QE suite and deployed to staging — Kargo verification analysis running' : ctx.targetFreight.origin.name == 'features' ? 'Feature flags promoted to staging' : 'Staging configuration updated' }}"
           stage: ${{ ctx.stage }}
           freight: ${{ ctx.targetFreight.name }}
 

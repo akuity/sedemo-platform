@@ -39,3 +39,26 @@ spec:
           selfHeal: true
         syncOptions:
         - CreateNamespace=true
+---
+# Mock QE suite runner backing the `staging` QE gate. Not promoted by Kargo — it is
+# fixed demo infrastructure, so it syncs straight from main.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: team-daniel-qe-mock
+  namespace: argocd
+spec:
+  project: team-daniel
+  source:
+    repoURL: https://github.com/akuity/sedemo-platform
+    targetRevision: main
+    path: apps/team-daniel/qe-mock
+  destination:
+    name: sedemo-primary
+    namespace: team-daniel-qe
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
