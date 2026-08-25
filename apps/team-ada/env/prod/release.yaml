@@ -1,0 +1,14 @@
+chartVersion: 0.5.0
+values:
+  image:
+    tag: v3.19.0
+  akkoma:
+    domain: akkoma.example.com
+    adminEmail: admin@example.com
+  externalSecret:
+    enabled: true
+    name: team-ada-app-secrets
+  postgresql:
+    existingSecret: team-ada-postgresql
+  ingress:
+    enabled: false
