@@ -12,7 +12,7 @@ spec:
   steps:
     - uses: record-audit-event
       if: ${{ freightMetadata(ctx.targetFreight.name)['reg-id'] != nil }}
-      as: audit
+      as: audit-existing-note
       retry:
         errorThreshold: 3
       config:
@@ -43,7 +43,7 @@ spec:
               description: What is changing in this release
     - uses: record-audit-event
       if: ${{ freightMetadata(ctx.targetFreight.name)['reg-id'] == nil }}
-      as: audit
+      as: audit-new-note
       retry:
         errorThreshold: 3
       config:
