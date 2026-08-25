@@ -17,7 +17,7 @@ spec:
         errorThreshold: 3
       config:
         type: regulated-promotion
-        message: "Existing Release notes `freightMetadata(ctx.targetFreight.name)['reg-id']` used for release to ${{ ctx.stage }} "
+        message: "Existing Release notes `${{ freightMetadata(ctx.targetFreight.name)['reg-id'] }}` used for release to ${{ ctx.stage }} "
     - uses: get-user-input
       as: collect
       if: ${{ freightMetadata(ctx.targetFreight.name)?.['reg-id'] == nil }}
