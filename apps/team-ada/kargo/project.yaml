@@ -1,0 +1,20 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: team-ada
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+---
+# Auto-promote new Freight straight to dev -- staging/prod stay manual,
+# gated behind explicit promotion (see tasks.yaml's PromotionTask, invoked
+# per-stage from stages.yaml).
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: team-ada
+  namespace: team-ada
+spec:
+  promotionPolicies:
+  - stageSelector:
+      name: dev
+    autoPromotionEnabled: true
