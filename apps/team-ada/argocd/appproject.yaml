@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: team-ada
+  namespace: argocd
+spec:
+  description: Ada's team app -- Akkoma (Fediverse server), promoted via its published OCI Helm chart
+  sourceRepos:
+    - '*'
+  destinations:
+    - server: '*'
+      name: '*'
+      namespace: '*'
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
