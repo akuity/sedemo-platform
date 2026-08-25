@@ -11,7 +11,7 @@ spec:
   # Sequence of promotion steps
   steps:
     - uses: record-audit-event
-      if: ${{ freightMetadata(ctx.targetFreight.name)['reg-id'] != nil }}
+      if: ${{ freightMetadata(ctx.targetFreight.name)?.['reg-id'] != nil }}
       as: audit-existing-note
       retry:
         errorThreshold: 3
@@ -21,7 +21,7 @@ spec:
         actor: ${{ task.outputs['collect'].responses[0].user }}
     - uses: get-user-input
       as: collect
-      if: ${{ freightMetadata(ctx.targetFreight.name)['reg-id'] == nil }}
+      if: ${{ freightMetadata(ctx.targetFreight.name)?.['reg-id'] == nil }}
       config:
         display: Provide the release note ID.
         #responders:
@@ -42,7 +42,7 @@ spec:
               minLength: 1
               description: What is changing in this release
     - uses: record-audit-event
-      if: ${{ freightMetadata(ctx.targetFreight.name)['reg-id'] == nil }}
+      if: ${{ freightMetadata(ctx.targetFreight.name)?.['reg-id'] == nil }}
       as: audit-new-note
       retry:
         errorThreshold: 3
@@ -52,7 +52,7 @@ spec:
         actor: ${{ task.outputs['collect'].responses[0].user }}
     # set the collecte dinput as frieght metadara
     - uses: set-metadata
-      if: ${{ freightMetadata(ctx.targetFreight.name)['reg-id'] == nil }}
+      if: ${{ freightMetadata(ctx.targetFreight.name)?.['reg-id'] == nil }}
       config:
         updates:
           - kind: Freight
