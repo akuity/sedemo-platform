@@ -32,6 +32,11 @@ spec:
       # stage (all quoted strings -- the one documented-safe pattern).
       # externalSecret.enabled and ingress.enabled are identical at every
       # stage in this design, so they're plain YAML booleans, not templated.
+      # Templating them would mean either leaving the raw, un-rendered
+      # `{{...}}` sitting in this YAML position -- which is ambiguous with
+      # YAML flow-mapping syntax and so wouldn't even parse predictably --
+      # or quoting it as a string, which risks Helm/Sprig's `if` treating a
+      # quoted "false" as truthy. Hardcoding the booleans sidesteps both.
       - repoURL: ghcr.io/adamancini/charts
         chart: akkoma
         targetRevision: '{{.chartVersion}}'

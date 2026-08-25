@@ -6,9 +6,6 @@ values:
     domain: akkoma-staging.example.com
     adminEmail: admin@example.com
   externalSecret:
-    enabled: true
     name: team-ada-app-secrets
   postgresql:
     existingSecret: team-ada-postgresql
-  ingress:
-    enabled: false

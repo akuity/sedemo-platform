@@ -45,6 +45,11 @@ spec:
     config:
       path: ./src
       targetBranch: main
+  # Note: the chart version reaches the Application via the
+  # application-set.yaml ApplicationSet re-reading release.yaml on its own
+  # reconcile loop, not via this task -- so there's a window between the
+  # git-push above and that reconcile where this could trigger a sync
+  # against the still-old chart version. Inherited behavior, not a bug.
   - uses: argocd-update
     config:
       apps:
