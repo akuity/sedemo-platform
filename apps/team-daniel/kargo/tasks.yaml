@@ -181,7 +181,7 @@ spec:
       timeout: 15m
     config:
       method: GET
-      url: ${{ vars.qeBaseURL }}/job/${{ vars.qeJob }}/${{ outputs['qe-trigger'].buildNumber }}/api/json
+      url: ${{ vars.qeBaseURL }}/job/${{ vars.qeJob }}/${{ task.outputs['qe-trigger'].buildNumber }}/api/json
       successExpression: response.status == 200 && response.body.building == false && response.body.result == "SUCCESS"
       failureExpression: response.status == 200 && response.body.building == false && response.body.result != "SUCCESS"
       outputs:
