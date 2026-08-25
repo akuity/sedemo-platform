@@ -50,6 +50,12 @@ spec:
               name: '{{.values.externalSecret.name}}'
             postgresql:
               existingSecret: '{{.values.postgresql.existingSecret}}'
+              storageSize: 2Gi
+            storage:
+              uploads:
+                size: 5Gi
+              frontends:
+                size: 1Gi
             ingress:
               enabled: false
             image:

@@ -56,6 +56,9 @@ spec:
                     --set externalSecret.name=team-ada-app-secrets \
                     --set postgresql.existingSecret=team-ada-postgresql \
                     --set ingress.enabled=false \
+                    --set postgresql.storageSize=2Gi \
+                    --set storage.uploads.size=5Gi \
+                    --set storage.frontends.size=1Gi \
                     > /tmp/rendered.yaml
 
                   # 1.34 matches sedemo-primary's EKS kubernetes_version
