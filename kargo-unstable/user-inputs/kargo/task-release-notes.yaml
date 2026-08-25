@@ -49,7 +49,7 @@ spec:
       config:
         type: regulated-promotion
         message: "Release notes `${{ task.outputs['collect'].values.id }}` for ${{ ctx.stage }} provided by ${{ task.outputs['collect'].respondedBy }}."
-        actor: ${{ task.outputs['collect'].responses[0].user }}
+        actor: ${{ task.outputs['collect'].respondedBy }}
     # set the collecte dinput as frieght metadara
     - uses: set-metadata
       if: ${{ freightMetadata(ctx.targetFreight.name)?.['reg-id'] == nil }}
