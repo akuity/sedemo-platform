@@ -1,7 +1,4 @@
-# One Argo CD Application per env/*/release.yaml. Multi-source: the OCI
-# chart at the version Kargo last promoted, plus this repo's own path for
-# the stage's ExternalSecrets (created by ESO from AWS Secrets Manager --
-# see env/<stage>/externalsecret-*.yaml -- not a Kargo release artifact).
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/argoproj.io/applicationset_v1alpha1.json
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -24,19 +21,6 @@ spec:
     spec:
       project: team-ada
       sources:
-      # valuesObject is an object-typed field (backed by RawExtension) --
-      # Argo CD's Go-template engine only substitutes into string fields, so
-      # `valuesObject: '{{.values}}'` can't work (same restriction the docs
-      # call out for syncPolicy). The structure has to be spelled out here,
-      # templating only the individual leaf values that genuinely vary by
-      # stage (all quoted strings -- the one documented-safe pattern).
-      # externalSecret.enabled and ingress.enabled are identical at every
-      # stage in this design, so they're plain YAML booleans, not templated.
-      # Templating them would mean either leaving the raw, un-rendered
-      # `{{...}}` sitting in this YAML position -- which is ambiguous with
-      # YAML flow-mapping syntax and so wouldn't even parse predictably --
-      # or quoting it as a string, which risks Helm/Sprig's `if` treating a
-      # quoted "false" as truthy. Hardcoding the booleans sidesteps both.
       - repoURL: ghcr.io/adamancini/charts
         chart: akkoma
         targetRevision: '{{.chartVersion}}'

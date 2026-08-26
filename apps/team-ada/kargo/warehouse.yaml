@@ -1,8 +1,4 @@
-# Two independent subscriptions: the chart (adamancini's own, versioned
-# separately from the app it packages) and the akkoma application image
-# itself. A chart bump doesn't necessarily mean a new app version, and
-# vice versa -- each Freight this Warehouse produces bundles the latest
-# of both, and the promotion task sets each independently in release.yaml.
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/warehouses.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
@@ -11,15 +7,11 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
+  interval: 5m
   subscriptions:
   - chart:
       repoURL: oci://ghcr.io/adamancini/charts/akkoma
-      semverConstraint: '>=0.4.6'
+      semverConstraint: '>=0.4.0'
   - image:
       repoURL: ghcr.io/adamancini/akkoma
-      # Floor excludes a legacy tagging bug in akkoma-helm: some chart
-      # releases briefly had their image published tagged with the CHART's
-      # own version number instead of the app version, alongside stray
-      # non-semver tags ("latest", "0", "0.4"). Real app versions are all
-      # >=3.x, so >=1.0.0 safely selects only genuine app-version tags.
-      semverConstraint: '>=1.0.0'
+      semverConstraint: '>=3.0.0'

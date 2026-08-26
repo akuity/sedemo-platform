@@ -1,11 +1,4 @@
-# Replicates the parts of akkoma-helm's "Lint and Test" GitHub Action worth
-# re-checking at promotion time: does THIS exact chart version + image tag
-# lint clean and render valid manifests. Deliberately doesn't replicate
-# ct install (kind cluster) or the yamllint/Trivy config-scan steps -- those
-# validate the chart's source and already gate every merge in akkoma-helm's
-# own CI before the chart is ever published, so re-running them here would
-# just repeat a check that already passed, not verify anything new about
-# this freight.
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/argoproj.io/analysistemplate_v1alpha1.json
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:

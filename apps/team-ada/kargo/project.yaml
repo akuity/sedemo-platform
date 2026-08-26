@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/projects.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Project
 metadata:
@@ -5,9 +6,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 ---
-# Auto-promote new Freight straight to dev -- staging/prod stay manual,
-# gated behind explicit promotion (see tasks.yaml's PromotionTask, invoked
-# per-stage from stages.yaml).
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/projectconfigs.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
 kind: ProjectConfig
 metadata:
