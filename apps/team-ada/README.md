@@ -7,11 +7,6 @@ published chart (`oci://ghcr.io/adamancini/charts/akkoma`) directly to
 CD's `files` generator reads it to build a multi-source Application (chart
 + this repo's own path for the stage's `ExternalSecret`s).
 
-Ported from a personal instance in
-[`adamancini/argo-fleet`](https://github.com/adamancini/argo-fleet)
-(`apps/akkoma/`), which keeps running independently on its own cluster —
-this is a second, separate deployment, not a migration/cutover.
-
 ## Pipeline
 
 ```text
@@ -26,37 +21,9 @@ Warehouse: akkoma (chart + image)  →  dev (auto)  →  staging (manual)  →  
 | `staging` | `team-ada-staging` | no |
 | `prod` | `team-ada-prod` | no |
 
-## Why not vendor the chart
-
-`akkoma-helm` is an independently maintained, versioned chart — copying it
-in means manually re-syncing on every upstream release, which defeats the
-point of it being published. The Warehouse's `chart:` subscription tracks
-real chart SemVer releases directly.
-
 ## Secrets
 
 See [`SECRETS.md`](./SECRETS.md) — `ExternalSecret`s pull the Postgres
 password and Phoenix secret-key-base/signing-salt/release-cookie from AWS
 Secrets Manager via the repo's existing `aws-secretsmanager`
 `ClusterSecretStore`.
-
-## Things to know
-
-+ The Warehouse has two independent subscriptions — the OCI chart and the
-  app image — since a chart bump doesn't necessarily mean a new app
-  version, and vice versa. Each promotion sets both the chart version and
-  the image tag independently in that stage's `release.yaml` (see
-  `kargo/tasks.yaml`).
-+ Storage defaults (bundled Postgres StatefulSet), and TLS/ingress
-  (disabled, placeholder domains) are deferred — see
-  `argo-fleet`'s `docs/superpowers/specs/2026-08-25-akkoma-sedemo-platform-migration-design.md`
-  for full design rationale and what's explicitly out of scope.
-+ Each of the three stages (dev/staging/prod) provisions its own full
-  Postgres + Akkoma stack, with storage sizes reduced below chart
-  defaults (`postgresql.storageSize` 2Gi, `storage.uploads.size` 5Gi,
-  `storage.frontends.size` 1Gi) — roughly 8 GiB of EBS per stage (~24 GiB
-  total across all three), all landing on the shared `sedemo-primary`
-  cluster the moment this merges (all three stages sync automatically).
-  This is a small, deliberately-sized demo footprint, worth noting to
-  platform owners for visibility even though ingress is disabled and the
-  app isn't reachable/demoable yet.
