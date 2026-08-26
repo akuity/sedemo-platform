@@ -12,6 +12,8 @@ kind: ProjectConfig
 metadata:
   name: team-ada
   namespace: team-ada
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   promotionPolicies:
   - stageSelector:

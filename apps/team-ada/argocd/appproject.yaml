@@ -4,6 +4,8 @@ kind: AppProject
 metadata:
   name: team-ada
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   description: Ada's team app -- Akkoma (Fediverse server), promoted via its published OCI Helm chart
   sourceRepos:
