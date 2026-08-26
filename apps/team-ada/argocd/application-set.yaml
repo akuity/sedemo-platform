@@ -1,0 +1,60 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/argoproj.io/applicationset_v1alpha1.json
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: team-ada
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+  - git:
+      repoURL: https://github.com/akuity/sedemo-platform
+      revision: HEAD
+      files:
+      - path: "apps/team-ada/env/*/release.yaml"
+  template:
+    metadata:
+      name: 'team-ada-{{.path.basename}}'
+      annotations:
+        kargo.akuity.io/authorized-stage: 'team-ada:{{.path.basename}}'
+    spec:
+      project: team-ada
+      sources:
+      - repoURL: ghcr.io/adamancini/charts
+        chart: akkoma
+        targetRevision: '{{.chartVersion}}'
+        helm:
+          valuesObject:
+            akkoma:
+              domain: '{{.values.akkoma.domain}}'
+              adminEmail: '{{.values.akkoma.adminEmail}}'
+            externalSecret:
+              enabled: true
+              name: '{{.values.externalSecret.name}}'
+            postgresql:
+              existingSecret: '{{.values.postgresql.existingSecret}}'
+              storageSize: 2Gi
+            storage:
+              uploads:
+                size: 5Gi
+              frontends:
+                size: 1Gi
+            ingress:
+              enabled: false
+            image:
+              tag: '{{.values.image.tag}}'
+      - repoURL: https://github.com/akuity/sedemo-platform
+        targetRevision: HEAD
+        path: '{{.path.path}}'
+        directory:
+          include: 'externalsecret-*.yaml'
+      destination:
+        name: sedemo-primary
+        namespace: 'team-ada-{{.path.basename}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true

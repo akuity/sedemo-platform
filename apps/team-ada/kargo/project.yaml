@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/projects.kargo.akuity.io_v1alpha1.json
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: team-ada
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/projectconfigs.kargo.akuity.io_v1alpha1.json
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: team-ada
+  namespace: team-ada
+spec:
+  promotionPolicies:
+  - stageSelector:
+      name: dev
+    autoPromotionEnabled: true

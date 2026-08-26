@@ -1,0 +1,61 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/argoproj.io/analysistemplate_v1alpha1.json
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: akkoma-chart-lint-test
+  namespace: team-ada
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  args:
+  - name: chart-version
+  - name: image-tag
+  metrics:
+  - name: chart-lint-and-render
+    provider:
+      job:
+        spec:
+          backoffLimit: 0
+          template:
+            spec:
+              restartPolicy: Never
+              containers:
+              - name: chart-lint-test
+                image: alpine/helm:3.16.4
+                command:
+                - sh
+                - -c
+                - |
+                  set -eu
+                  apk add --no-cache curl
+                  curl -fsSL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz \
+                    | tar xz -C /usr/local/bin kubeconform
+
+                  helm pull oci://ghcr.io/adamancini/charts/akkoma \
+                    --version "{{ args.chart-version }}" --untar --untardir /tmp/chart
+
+                  helm lint --strict /tmp/chart/akkoma
+
+                  # Mirrors the real overrides every environment sets (see
+                  # apps/team-ada/argocd/application-set.yaml /
+                  # env/*/release.yaml) -- rendering with only
+                  # image.tag/domain/adminEmail would validate a shape
+                  # nothing actually deploys.
+                  helm template akkoma /tmp/chart/akkoma \
+                    --set image.tag="{{ args.image-tag }}" \
+                    --set akkoma.domain=verify.example.com \
+                    --set akkoma.adminEmail=admin@verify.example.com \
+                    --set externalSecret.enabled=true \
+                    --set externalSecret.name=team-ada-app-secrets \
+                    --set postgresql.existingSecret=team-ada-postgresql \
+                    --set ingress.enabled=false \
+                    --set postgresql.storageSize=2Gi \
+                    --set storage.uploads.size=5Gi \
+                    --set storage.frontends.size=1Gi \
+                    > /tmp/rendered.yaml
+
+                  # 1.34 matches sedemo-primary's EKS kubernetes_version
+                  # (see sedemo-infra-iac/core-env/eks-clusters/main.tf) --
+                  # update this if that cluster's version changes.
+                  kubeconform -strict -summary -ignore-missing-schemas \
+                    -kubernetes-version 1.34.0 /tmp/rendered.yaml

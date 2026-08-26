@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/warehouses.kargo.akuity.io_v1alpha1.json
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: akkoma
+  namespace: team-ada
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  interval: 5m
+  subscriptions:
+  - chart:
+      repoURL: oci://ghcr.io/adamancini/charts/akkoma
+      semverConstraint: '>=0.4.0'
+  - image:
+      repoURL: ghcr.io/adamancini/akkoma
+      semverConstraint: '>=3.0.0'
