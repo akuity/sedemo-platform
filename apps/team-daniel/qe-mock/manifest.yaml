@@ -1,0 +1,291 @@
+# Mock QE suite runner used by the team-daniel `staging` QE gate.
+#
+# This is a STAND-IN, not a real Jenkins. It exposes Jenkins-shaped endpoints so the
+# Kargo promotion can trigger an external job and block on its result using nothing but
+# generic `http` promotion steps. Point the same steps at a real Jenkins by swapping the
+# URLs in `qe-suite-gate` (apps/team-daniel/kargo/tasks.yaml) — no new Kargo step types.
+#
+#   POST /job/<job>/buildWithParameters   -> 201 {"number": N, ...}   (queue a build)
+#   GET  /job/<job>/<number>/api/json     -> {"building": bool, "result": "SUCCESS"|"FAILURE"}
+#   GET  /job/<job>/lastBuild/api/json    -> same, for the most recent build
+#   GET  /                                -> control UI: force the next result, set duration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: qe-mock-src
+  labels:
+    app.kubernetes.io/name: qe-mock
+data:
+  server.py: |
+    import json
+    import threading
+    import time
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+    from urllib.parse import urlparse, parse_qs
+
+    LOCK = threading.Lock()
+    STATE = {"next_result": "SUCCESS", "duration": 20.0, "counter": 0, "builds": {}}
+
+    PAGE = """<!doctype html>
+    <title>QE Suite (mock)</title>
+    <meta http-equiv="refresh" content="2">
+    <style>
+      body {{ font: 15px -apple-system, system-ui, sans-serif; margin: 2rem auto; max-width: 44rem;
+             background: #14161a; color: #e6e8eb; }}
+      h1 {{ font-size: 1.2rem; }}
+      .note {{ color: #9aa3ad; font-size: .85rem; }}
+      .card {{ background: #1d2027; border: 1px solid #2c313a; border-radius: 8px;
+               padding: 1rem 1.25rem; margin: 1rem 0; }}
+      button {{ font: inherit; padding: .45rem .9rem; border-radius: 6px; border: 1px solid #2c313a;
+                background: #262b34; color: #e6e8eb; cursor: pointer; }}
+      button.on {{ border-color: #4c8eda; background: #23384f; }}
+      table {{ border-collapse: collapse; width: 100%; }}
+      td, th {{ text-align: left; padding: .35rem .6rem; border-bottom: 1px solid #2c313a; }}
+      .SUCCESS {{ color: #5ec27a; }} .FAILURE {{ color: #e06b6b; }} .RUNNING {{ color: #d9a441; }}
+    </style>
+    <h1>QE Suite <span class="note">(mock Jenkins &mdash; stand-in for demo)</span></h1>
+    <div class="card">
+      <p>Next build resolves to
+         <strong class="{result}">{result}</strong> after <strong>{duration:.0f}s</strong>.</p>
+      <form method="post" action="/control" style="display:inline">
+        <button name="result" value="SUCCESS" class="{success_on}">Pass next run</button>
+      </form>
+      <form method="post" action="/control" style="display:inline">
+        <button name="result" value="FAILURE" class="{failure_on}">Fail next run</button>
+      </form>
+      <form method="post" action="/control" style="display:inline">
+        <button name="duration" value="5">5s</button>
+      </form>
+      <form method="post" action="/control" style="display:inline">
+        <button name="duration" value="20">20s</button>
+      </form>
+      <form method="post" action="/control" style="display:inline">
+        <button name="duration" value="60">60s</button>
+      </form>
+    </div>
+    <div class="card">
+      <table><tr><th>Build</th><th>Job</th><th>Status</th><th>Parameters</th></tr>{rows}</table>
+    </div>
+    <p class="note">Flip this to &ldquo;Fail next run&rdquo; and re-promote to watch the Kargo
+       staging gate hold the freight instead of advancing to prod-canary.</p>
+    """
+
+
+    def view(b):
+        elapsed = time.time() - b["started"]
+        building = elapsed < b["duration"]
+        return {
+            "number": b["number"],
+            "job": b["job"],
+            "building": building,
+            "result": None if building else b["result"],
+            "duration": 0 if building else int(b["duration"] * 1000),
+            "estimatedDuration": int(b["duration"] * 1000),
+            "parameters": b["params"],
+        }
+
+
+    class Handler(BaseHTTPRequestHandler):
+        protocol_version = "HTTP/1.1"
+
+        def log_message(self, fmt, *a):
+            print("%s - %s" % (self.address_string(), fmt % a), flush=True)
+
+        def _send(self, code, body, ctype="application/json"):
+            raw = body.encode()
+            self.send_response(code)
+            self.send_header("Content-Type", ctype)
+            self.send_header("Content-Length", str(len(raw)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(raw)
+
+        def _json(self, code, obj):
+            self._send(code, json.dumps(obj))
+
+        def do_GET(self):
+            path = urlparse(self.path).path.rstrip("/") or "/"
+            parts = [p for p in path.split("/") if p]
+
+            if path == "/":
+                return self._send(200, self._page(), "text/html; charset=utf-8")
+            if path == "/healthz":
+                return self._json(200, {"ok": True})
+            # /job/<job>/<number|lastBuild>/api/json
+            if len(parts) == 5 and parts[0] == "job" and parts[3:] == ["api", "json"]:
+                job, ref = parts[1], parts[2]
+                with LOCK:
+                    builds = [b for b in STATE["builds"].values() if b["job"] == job]
+                    if ref == "lastBuild":
+                        b = max(builds, key=lambda x: x["number"], default=None)
+                    else:
+                        b = STATE["builds"].get(ref)
+                        if b is not None and b["job"] != job:
+                            b = None
+                    if b is None:
+                        return self._json(404, {"error": "no such build"})
+                    return self._json(200, view(b))
+            return self._json(404, {"error": "not found"})
+
+        def do_POST(self):
+            path = urlparse(self.path).path.rstrip("/") or "/"
+            parts = [p for p in path.split("/") if p]
+            length = int(self.headers.get("Content-Length") or 0)
+            raw = self.rfile.read(length).decode() if length else ""
+            params = parse_qs(urlparse(self.path).query)
+            params.update(parse_qs(raw))
+
+            if path == "/control":
+                with LOCK:
+                    if "result" in params:
+                        STATE["next_result"] = params["result"][0].upper()
+                    if "duration" in params:
+                        STATE["duration"] = float(params["duration"][0])
+                if "text/html" in (self.headers.get("Accept") or ""):
+                    self.send_response(303)
+                    self.send_header("Location", "/")
+                    self.send_header("Content-Length", "0")
+                    self.end_headers()
+                    return
+                with LOCK:
+                    return self._json(200, {"next_result": STATE["next_result"],
+                                            "duration": STATE["duration"]})
+
+            # /job/<job>/buildWithParameters
+            if len(parts) == 3 and parts[0] == "job" and parts[2] == "buildWithParameters":
+                job = parts[1]
+                with LOCK:
+                    STATE["counter"] += 1
+                    number = STATE["counter"]
+                    build = {
+                        "number": number,
+                        "job": job,
+                        "started": time.time(),
+                        "duration": STATE["duration"],
+                        "result": STATE["next_result"],
+                        "params": {k: v[0] for k, v in params.items()},
+                    }
+                    STATE["builds"][str(number)] = build
+                print("queued build %d for %s -> %s in %.0fs"
+                      % (number, job, build["result"], build["duration"]), flush=True)
+                return self._json(201, {"number": number, "job": job,
+                                        "url": "/job/%s/%d/" % (job, number)})
+            return self._json(404, {"error": "not found"})
+
+        def _page(self):
+            with LOCK:
+                rows = ""
+                for b in sorted(STATE["builds"].values(),
+                                key=lambda x: x["number"], reverse=True)[:12]:
+                    v = view(b)
+                    status = "RUNNING" if v["building"] else v["result"]
+                    rows += ('<tr><td>#%d</td><td>%s</td><td class="%s">%s</td><td>%s</td></tr>'
+                             % (v["number"], v["job"], status, status,
+                                ", ".join("%s=%s" % kv for kv in v["parameters"].items()) or "-"))
+                return PAGE.format(
+                    result=STATE["next_result"],
+                    duration=STATE["duration"],
+                    success_on="on" if STATE["next_result"] == "SUCCESS" else "",
+                    failure_on="on" if STATE["next_result"] == "FAILURE" else "",
+                    rows=rows or '<tr><td colspan="4">no builds yet</td></tr>',
+                )
+
+
+    if __name__ == "__main__":
+        print("qe-mock listening on :8080", flush=True)
+        ThreadingHTTPServer(("", 8080), Handler).serve_forever()
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qe-mock
+  labels:
+    app.kubernetes.io/name: qe-mock
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: qe-mock
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: qe-mock
+    spec:
+      containers:
+      - name: qe-mock
+        image: python:3.12-alpine
+        command: ["python", "/srv/server.py"]
+        env:
+        - name: PYTHONDONTWRITEBYTECODE
+          value: "1"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        ports:
+        - containerPort: 8080
+          name: http
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 3
+        volumeMounts:
+        - name: src
+          mountPath: /srv
+        resources:
+          requests:
+            cpu: 25m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop: ["ALL"]
+      volumes:
+      - name: src
+        configMap:
+          name: qe-mock-src
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qe-mock
+  labels:
+    app.kubernetes.io/name: qe-mock
+spec:
+  selector:
+    app.kubernetes.io/name: qe-mock
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: qe-mock
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    ingress.kubernetes.io/cache-enable: "false"
+    nginx.ingress.kubernetes.io/add-headers: "Cache-Control: no-store, no-cache, must-revalidate"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - qe.team-daniel.akpdemoapps.link
+    secretName: tls-secret-qe-mock
+  rules:
+  - host: qe.team-daniel.akpdemoapps.link
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: qe-mock
+            port:
+              number: 80

@@ -1,0 +1,64 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: require-release-note
+  namespace: user-inputs
+spec:
+  # Task-wide input variables
+  vars:
+  - name: stageName
+    value: ${{ ctx.stage }}
+  # Sequence of promotion steps
+  steps:
+    - uses: record-audit-event
+      if: ${{ freightMetadata(ctx.targetFreight.name)?.['reg-id'] != nil }}
+      as: audit-existing-note
+      retry:
+        errorThreshold: 3
+      config:
+        type: regulated-promotion
+        message: "Existing Release notes `${{ freightMetadata(ctx.targetFreight.name)['reg-id'] }}` used for release to ${{ ctx.stage }} "
+    - uses: get-user-input
+      as: collect
+      if: ${{ freightMetadata(ctx.targetFreight.name)?.['reg-id'] == nil }}
+      config:
+        display: Provide the release note ID.
+        #responders:
+        #- role: release-manager
+        schema:
+          type: object
+          additionalProperties: false
+          required:
+          - id
+          - comment
+          properties:
+            id:
+              type: string
+              pattern: "^reg-[0-9]+$"
+              description: Release id, e.g. reg-123
+            comment:
+              type: string
+              minLength: 1
+              description: What is changing in this release
+    - uses: record-audit-event
+      if: ${{ freightMetadata(ctx.targetFreight.name)?.['reg-id'] == nil }}
+      as: audit-new-note
+      retry:
+        errorThreshold: 3
+      config:
+        type: regulated-promotion
+        message: "Release notes `${{ task.outputs['collect'].values.id }}` for ${{ ctx.stage }} provided by ${{ task.outputs['collect'].respondedBy }}."
+        actor: ${{ task.outputs['collect'].respondedBy }}
+    # set the collecte dinput as frieght metadara
+    - uses: set-metadata
+      if: ${{ freightMetadata(ctx.targetFreight.name)?.['reg-id'] == nil }}
+      config:
+        updates:
+          - kind: Freight
+            name: ${{ ctx.targetFreight.name }}
+            values:
+              reg-id: "${{ task.outputs['collect'].values.id }}"
+    - uses: compose-output
+      as: print-reg-id
+      config:
+        value: ${{ freightMetadata(ctx.targetFreight.name)['reg-id'] }}

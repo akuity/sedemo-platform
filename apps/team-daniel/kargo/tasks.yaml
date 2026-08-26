@@ -137,3 +137,53 @@ spec:
     config:
       repoURL: ${{ vars.gitRepo }}
       prNumber: ${{ task.outputs['open-pr'].pr.id }}
+
+---
+# Trigger an external QE suite and block the promotion on its result.
+#
+# Deliberately built from generic `http` steps rather than a vendor-specific step type:
+# Kargo orchestrates any system reachable over HTTP, including ones that have nothing to
+# do with Kubernetes. The demo target is the mock Jenkins in apps/team-daniel/qe-mock/;
+# repointing `qeBaseURL` and `qeJob` at a real Jenkins is the only change required.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: qe-suite-gate
+  namespace: team-daniel
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  vars:
+  - name: qeBaseURL
+    value: https://qe.team-daniel.akpdemoapps.link
+  - name: qeJob
+    value: guestbook-qe-suite
+  - name: imageRepo
+    value: ghcr.io/akuity/guestbook
+  steps:
+  # Queue the job. Jenkins answers 201 on a successful enqueue; anything else fails the
+  # promotion here rather than letting unverified freight move on.
+  - uses: http
+    as: qe-trigger
+    config:
+      method: POST
+      url: ${{ vars.qeBaseURL }}/job/${{ vars.qeJob }}/buildWithParameters?environment=${{ ctx.stage }}&version=${{ imageFrom(vars.imageRepo).Tag }}
+      successExpression: response.status == 201
+      outputs:
+      - name: buildNumber
+        fromExpression: response.body.number
+  # Poll until the build stops running. Neither expression matching leaves the step in
+  # Running, so Kargo re-runs it on the next interval — the promotion sits on this gate
+  # until QE actually reports back.
+  - uses: http
+    as: qe-wait
+    retry:
+      timeout: 15m
+    config:
+      method: GET
+      url: ${{ vars.qeBaseURL }}/job/${{ vars.qeJob }}/${{ task.outputs['qe-trigger'].buildNumber }}/api/json
+      successExpression: response.status == 200 && response.body.building == false && response.body.result == "SUCCESS"
+      failureExpression: response.status == 200 && response.body.building == false && response.body.result != "SUCCESS"
+      outputs:
+      - name: result
+        fromExpression: response.body.result
