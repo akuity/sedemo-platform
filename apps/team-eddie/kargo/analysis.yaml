@@ -8,7 +8,7 @@ spec:
   - name: test-image-tag
     value: alpine:latest
   - name: test-image-fail
-    value: "false"
+    value: "pass"
   metrics:
     - name: functional-tests
       provider:
