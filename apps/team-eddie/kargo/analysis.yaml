@@ -4,6 +4,11 @@ metadata:
   name: functional-tests
   namespace: team-eddie
 spec:  
+  args:
+  - name: test-image-tag
+    value: alpine:latest
+  - name: test-image-fail
+    value: "false"
   metrics:
     - name: functional-tests
       provider:
@@ -15,9 +20,12 @@ spec:
                 containers:
                   - command:
                       - /bin/sh
-                      - -c
+                      - /run-tests.sh
                     args:
-                      - 'for i in $(seq 1 5); do echo "Verification Step $i of 5"; sleep 2; echo -e "\tPASS"; done'
-                    image: alpine:latest
+                      # this is purely demo candy, allows us to print the version in output. 
+                      - '{{ args.test-image-tag }}'
+                      - '{{ args.test-image-fail }}'
+                    # this is the part that matters, we're changing the _actual_ image used.
+                    image: "ghcr.io/akuity/sedemo-monorepo-rollouts-app-test:{{ args.test-image-tag }}"
                     name: test
                 restartPolicy: Never

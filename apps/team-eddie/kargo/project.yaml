@@ -18,6 +18,7 @@ spec:
   - stageSelector:
       name: "regex:.*-secondary"
     autoPromotionEnabled: true
+    autoRollback: {}
   - stageSelector:
       name: "regex:validate-environment-dev"
     autoPromotionEnabled: true

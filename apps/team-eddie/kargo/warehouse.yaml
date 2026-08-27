@@ -4,6 +4,9 @@ metadata:
   name: application-a
   namespace: team-eddie
 spec:
+  freightCreationCriteria:
+    expression: |
+      imageFrom('ghcr.io/akuity/sedemo-monorepo-rollouts-app-test').Tag == imageFrom('ghcr.io/akuity/sedemo-monorepo-rollouts-app').Tag
   subscriptions:
   - git:
       repoURL: https://github.com/akuity/sedemo-monorepo
@@ -11,6 +14,12 @@ spec:
       - active-active
   - image:
       repoURL: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+      discoveryLimit: 5
+      imageSelectionStrategy: NewestBuild
+      allowTagsRegexes:
+      - ^\d*-[a-z]*$
+  - image:
+      repoUrl: ghcr.io/akuity/sedemo-monorepo-rollouts-app-test
       discoveryLimit: 5
       imageSelectionStrategy: NewestBuild
       allowTagsRegexes:
