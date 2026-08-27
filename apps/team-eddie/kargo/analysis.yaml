@@ -4,6 +4,9 @@ metadata:
   name: functional-tests
   namespace: team-eddie
 spec:  
+  args:
+  - name: test-image
+    value: alpine:latest
   metrics:
     - name: functional-tests
       provider:
@@ -18,6 +21,6 @@ spec:
                       - -c
                     args:
                       - 'for i in $(seq 1 5); do echo "Verification Step $i of 5"; sleep 2; echo -e "\tPASS"; done'
-                    image: alpine:latest
+                    image: {{ args.test-image }}
                     name: test
                 restartPolicy: Never
