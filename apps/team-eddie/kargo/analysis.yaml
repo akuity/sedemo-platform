@@ -7,6 +7,8 @@ spec:
   args:
   - name: test-image-tag
     value: alpine:latest
+  - name: test-image-fail
+    value: "false"
   metrics:
     - name: functional-tests
       provider:
@@ -21,7 +23,8 @@ spec:
                       - /run-tests.sh
                     args:
                       # this is purely demo candy, allows us to print the version in output. 
-                      - '{{ args.test-image }}'
+                      - '{{ args.test-image-tag }}'
+                      - '{{ args.test-image-fail }}'
                     # this is the part that matters, we're changing the _actual_ image used.
                     image: "ghcr.io/akuity/sedemo-monorepo-rollouts-app-test:{{ args.test-image-tag }}"
                     name: test
