@@ -107,9 +107,9 @@ spec:
   verification:
     analysisTemplates:
     - name: functional-tests
-      args:
-      - name: test-image-tag
-        value: "${{ imageFrom('ghcr.io/akuity/sedemo-monorepo-rollouts-app-test').Tag }}"
+    args:
+    - name: test-image-tag
+      value: "${{ imageFrom('ghcr.io/akuity/sedemo-monorepo-rollouts-app-test').Tag }}"
   requestedFreight:
   - origin:
       kind: Warehouse
@@ -210,11 +210,11 @@ spec:
   verification:
     analysisTemplates:
     - name: functional-tests
-      args:
-      - name: test-image-tag
-        value: "${{ imageFrom('ghcr.io/akuity/sedemo-monorepo-rollouts-app-test').Tag }}"
-      - name: test-image-fail
-        value: "fail"
+    args:
+    - name: test-image-tag
+      value: "${{ imageFrom('ghcr.io/akuity/sedemo-monorepo-rollouts-app-test').Tag }}"
+    - name: test-image-fail
+      value: "fail"
   requestedFreight:
   - origin:
       kind: Warehouse
