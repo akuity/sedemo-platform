@@ -19,4 +19,4 @@ spec:
   # and only create when they match. 
   freightCreationCriteria:
     expression: |
-      imageFrom('ghcr.io/akuity/sedemo-monorepo-rollouts-app').annotations['org.opencontainers.image.revision'] == commitFrom('https://github.com/akuity/sedemo-monorepo').ID
+      imageFrom('ghcr.io/akuity/sedemo-monorepo-rollouts-app').Annotations['org.opencontainers.image.revision'] == commitFrom('https://github.com/akuity/sedemo-monorepo').ID
