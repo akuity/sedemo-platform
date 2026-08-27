@@ -214,7 +214,7 @@ spec:
     - name: test-image-tag
       value: "${{ imageFrom('ghcr.io/akuity/sedemo-monorepo-rollouts-app-test').Tag }}"
     - name: test-image-fail
-      value: "${{ string( imageFrom('ghcr.io/akuity/sedemo-monorepo-rollouts-app-test').Tag == '48-red'  ? 'fail' : false ) }}"
+      value: "${{ imageFrom('ghcr.io/akuity/sedemo-monorepo-rollouts-app-test').Tag == '48-red'  ? 'fail' : 'pass'  }}"
   requestedFreight:
   - origin:
       kind: Warehouse
