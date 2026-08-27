@@ -15,3 +15,8 @@ spec:
       repoURL: https://github.com/akuity/sedemo-monorepo
       includePaths:
       - rollouts-app
+  # because a commit will come before the corresponding image is publishes, we check the annotation the image
+  # and only create when they match. 
+  freightCreationCriteria:
+    expression: |
+      imageFrom('ghcr.io/akuity/sedemo-monorepo-rollouts-app').annotations['org.opencontainers.image.revision'] == commitFrom('https://github.com/akuity/sedemo-monorepo').ID
