@@ -18,9 +18,9 @@ spec:
                 containers:
                   - command:
                       - /bin/sh
-                      - -c
+                      - /run-tests.sh
                     args:
-                      - 'for i in $(seq 1 5); do echo "Verification Step $i of 5"; sleep 2; echo -e "\tPASS"; done'
+                      - '{{ args.test-image }}'
                     image: {{ args.test-image }}
                     name: test
                 restartPolicy: Never
