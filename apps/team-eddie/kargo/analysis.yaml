@@ -5,7 +5,7 @@ metadata:
   namespace: team-eddie
 spec:  
   args:
-  - name: test-image
+  - name: test-image-tag
     value: alpine:latest
   metrics:
     - name: functional-tests
@@ -20,7 +20,9 @@ spec:
                       - /bin/sh
                       - /run-tests.sh
                     args:
+                      # this is purely demo candy, allows us to print the version in output. 
                       - '{{ args.test-image }}'
-                    image: {{ args.test-image }}
+                    # this is the part that matters, we're changing the _actual_ image used.
+                    image: "ghcr.io/akuity/sedemo-monorepo-rollouts-app-test:{{ args.test-image-tag }}"
                     name: test
                 restartPolicy: Never
