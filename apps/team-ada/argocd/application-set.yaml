@@ -36,11 +36,23 @@ spec:
               name: '{{.values.externalSecret.name}}'
             postgresql:
               existingSecret: '{{.values.postgresql.existingSecret}}'
+              # sedemo-primary has no CSI driver / default StorageClass -- a
+              # PVC stays Pending forever (FailedScheduling: unbound
+              # immediate PersistentVolumeClaims). emptyDir instead: data is
+              # lost on pod restart/reschedule, fine for this demo app.
+              # storageSize stays set (inert while persistence is disabled)
+              # so it's ready if persistence is ever re-enabled.
+              persistence:
+                enabled: false
               storageSize: 2Gi
             storage:
               uploads:
+                persistence:
+                  enabled: false
                 size: 5Gi
               frontends:
+                persistence:
+                  enabled: false
                 size: 1Gi
             ingress:
               enabled: false
