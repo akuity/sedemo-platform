@@ -55,6 +55,17 @@ spec:
                     --set postgresql.persistence.enabled=false \
                     --set storage.uploads.persistence.enabled=false \
                     --set storage.frontends.persistence.enabled=false \
+                    --set resources.requests.cpu=100m \
+                    --set resources.requests.memory=512Mi \
+                    --set resources.limits.memory=2Gi \
+                    --set postgresql.resources.requests.cpu=50m \
+                    --set postgresql.resources.requests.memory=256Mi \
+                    --set postgresql.resources.limits.cpu=1 \
+                    --set postgresql.resources.limits.memory=1Gi \
+                    --set initContainerResources.dbMigrate.requests.cpu=100m \
+                    --set initContainerResources.dbMigrate.requests.memory=1Gi \
+                    --set initContainerResources.dbMigrate.limits.cpu=1 \
+                    --set initContainerResources.dbMigrate.limits.memory=2Gi \
                     > /tmp/rendered.yaml
 
                   # 1.34 matches sedemo-primary's EKS kubernetes_version

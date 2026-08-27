@@ -45,6 +45,18 @@ spec:
               persistence:
                 enabled: false
               storageSize: 2Gi
+              # Chart defaults (250m/512Mi request) are sized for a real
+              # instance -- three concurrent stages on sedemo-primary's
+              # small shared node pool couldn't all get scheduled
+              # (FailedScheduling: Insufficient cpu, no preemption victims).
+              # Limits are untouched; only requests shrink.
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 256Mi
+                limits:
+                  cpu: "1"
+                  memory: 1Gi
             storage:
               uploads:
                 persistence:
@@ -58,6 +70,26 @@ spec:
               enabled: false
             image:
               tag: '{{.values.image.tag}}'
+            # Same demo-footprint reasoning as postgresql.resources above.
+            # No CPU limit here is deliberate (BEAM VM bursting) -- keep it.
+            resources:
+              requests:
+                cpu: 100m
+                memory: 512Mi
+              limits:
+                memory: 2Gi
+            initContainerResources:
+              dbMigrate:
+                requests:
+                  # Memory NOT reduced -- this boots the same BEAM/OTP
+                  # release as the main container just to run
+                  # `pleroma_ctl migrate`; too little risks OOMKill before
+                  # any migration work happens. Only CPU is safe to shrink.
+                  cpu: 100m
+                  memory: 1Gi
+                limits:
+                  cpu: "1"
+                  memory: 2Gi
       - repoURL: https://github.com/akuity/sedemo-platform
         targetRevision: HEAD
         path: '{{.path.path}}'
