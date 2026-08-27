@@ -13,6 +13,7 @@ spec:
       repoURL: https://github.com/akuity/sedemo-monorepo
       includePaths:
       - active-active
+      - '.github/workflows/publish-active-active-app.yml'
   - image:
       repoURL: ghcr.io/akuity/sedemo-monorepo-active-active
       discoveryLimit: 5
