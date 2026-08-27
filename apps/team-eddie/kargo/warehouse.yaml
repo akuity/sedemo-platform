@@ -7,6 +7,7 @@ spec:
   freightCreationCriteria:
     expression: |
       imageFrom('ghcr.io/akuity/sedemo-monorepo-rollouts-app-test').Tag == imageFrom('ghcr.io/akuity/sedemo-monorepo-rollouts-app').Tag
+      && imageFrom('ghcr.io/akuity/sedemo-monorepo-rollouts-app').Annotations['org.opencontainers.image.revision'] == commitFrom('https://github.com/akuity/sedemo-monorepo').ID
   subscriptions:
   - git:
       repoURL: https://github.com/akuity/sedemo-monorepo
