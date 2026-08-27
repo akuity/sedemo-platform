@@ -107,6 +107,9 @@ spec:
   verification:
     analysisTemplates:
     - name: functional-tests
+      args:
+      - name: test-image
+        value: ${{ imageFrom(vars.imageRepo).Tag }}
   requestedFreight:
   - origin:
       kind: Warehouse
