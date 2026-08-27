@@ -14,6 +14,7 @@ spec:
       provider:
         job:
           spec:
+            imagePullPolicy: Always
             backoffLimit: 1
             template:
               spec:
