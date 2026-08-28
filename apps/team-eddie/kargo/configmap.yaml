@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: values
+  namespace: team-eddie
 data:
   appImageUrl: ghcr.io/akuity/sedemo-monorepo-active-active
   testImageUrl: ghcr.io/akuity/sedemo-monorepo-active-active-test
