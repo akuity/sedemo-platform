@@ -26,7 +26,7 @@ spec:
                       - '{{ args.test-image-tag }}'
                       - '{{ args.test-image-fail }}'
                     # this is the part that matters, we're changing the _actual_ image used.
-                    image: "ghcr.io/akuity/sedemo-monorepo-rollouts-app-test:{{ args.test-image-tag }}"
+                    image: "${{ configMap('values').appImageUrl}}:{{ args.test-image-tag }}"
                     name: test
                     imagePullPolicy: Always 
                 restartPolicy: Never

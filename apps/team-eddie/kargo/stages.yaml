@@ -53,8 +53,6 @@ spec:
   promotionTemplate:
     spec:
       vars:
-      - name: imageRepo
-        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       steps:
       - uses: gha-dispatch-workflow
         as: verify-environment-gha-workflow
@@ -64,7 +62,7 @@ spec:
           ref: main
           inputs:
             environment: "dev"
-            version: "${{ imageFrom(vars.imageRepo).Tag }}"
+            version: "${{ imageFrom(configMap('values').appImageUrl).Tag }}"
           timeout: 120
           insecureSkipTLSVerify: false
       - uses: gha-wait-for-workflow
@@ -88,7 +86,7 @@ spec:
     - name: functional-tests
     args:
     - name: test-image-tag
-      value: "${{ imageFrom('ghcr.io/akuity/sedemo-monorepo-rollouts-app-test').Tag }}"
+      value: "${{ imageFrom(configMap('values').testImageUrl).Tag }}"
   requestedFreight:
   - origin:
       kind: Warehouse
@@ -101,16 +99,12 @@ spec:
   promotionTemplate:
     spec:
       vars:
-      - name: gitRepo
-        value: https://github.com/akuity/sedemo-monorepo
       - name: path_src
         value: ./src
       - name: path_out
         value: ./out
       - name: path_info
         value: ./info
-      - name: imageRepo
-        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       steps:
       # use http step to pull https://demo-public-notsecure.s3.us-east-1.amazonaws.com/environments.yaml
       # Alternately authorative file could be cloned from git, and then parsed with yaml-parse step 
@@ -124,7 +118,7 @@ spec:
             fromExpression: response.body.dev.primary.cluster
       - uses: git-clone
         config:
-          repoURL: ${{ vars.gitRepo }}
+          repoURL: ${{ configMap('values').gitRepoUrl }}
           checkout:
           - branch: main
             path: ${{ vars.path_src }}
@@ -145,7 +139,7 @@ spec:
           namespace: team-eddie-dev
           setValues:
             - key: image.tag
-              value: ${{ imageFrom(vars.imageRepo).Tag }}
+              value: ${{ imageFrom(configMap('values').appImageUrl).Tag }}
             - key: kargo.stage
               value: ${{ ctx.stage }}
             - key: ingress.root_domain
@@ -157,7 +151,7 @@ spec:
         as: commit
         config:
           path: ${{ vars.path_out }}
-          message: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
+          message: "Promote ${{ imageFrom(configMap('values').appImageUrl).Tag }} to ${{ ctx.stage }} [skip ci]"
       - uses: git-push
         as: push
         config:
@@ -191,9 +185,9 @@ spec:
     - name: functional-tests
     args:
     - name: test-image-tag
-      value: "${{ imageFrom('ghcr.io/akuity/sedemo-monorepo-rollouts-app-test').Tag }}"
+      value: "${{ imageFrom(configMap('values').testImageUrl).Tag }}"
     - name: test-image-fail
-      value: "${{ imageFrom('ghcr.io/akuity/sedemo-monorepo-rollouts-app-test').Tag endsWith 'red'  ? 'fail' : 'pass'  }}"
+      value: "${{ imageFrom(configMap('values').testImageUrl).Tag endsWith 'red'  ? 'fail' : 'pass'  }}"
   requestedFreight:
   - origin:
       kind: Warehouse
@@ -207,16 +201,12 @@ spec:
   promotionTemplate:
     spec:
       vars:
-      - name: gitRepo
-        value: https://github.com/akuity/sedemo-monorepo
       - name: path_src
         value: ./src
       - name: path_out
         value: ./out
       - name: path_info
         value: ./info
-      - name: imageRepo
-        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       steps:
       # use http step to pull https://demo-public-notsecure.s3.us-east-1.amazonaws.com/environments.yaml
       - uses: http
@@ -232,7 +222,7 @@ spec:
       #
       - uses: git-clone
         config:
-          repoURL: ${{ vars.gitRepo }}
+          repoURL: ${{ configMap('values').gitRepoUrl }}
           checkout:
           - branch: main
             path: ${{ vars.path_src }}
@@ -253,7 +243,7 @@ spec:
           namespace: team-eddie-dev
           setValues:
             - key: image.tag
-              value: ${{ imageFrom(vars.imageRepo).Tag }}
+              value: ${{ imageFrom(configMap('values').appImageUrl).Tag }}
             - key: kargo.stage
               value: ${{ ctx.stage }}
             - key: ingress.root_domain
@@ -265,7 +255,7 @@ spec:
         as: commit
         config:
           path: ${{ vars.path_out }}
-          message: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
+          message: "Promote ${{ imageFrom(configMap('values').appImageUrl).Tag }} to ${{ ctx.stage }} [skip ci]"
       - uses: git-push
         as: push
         config:
@@ -333,15 +323,13 @@ spec:
     spec:
       vars:
         - name: gitRepo
-          value: https://github.com/akuity/sedemo-monorepo
+          value: configMap('values').gitRepoUrl
         - name: path_src
           value: ./src
         - name: path_out
           value: ./out
         - name: path_info
           value: ./info
-        - name: imageRepo
-          value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       steps:
       - as: allure-report
         uses: allure-report
@@ -384,8 +372,6 @@ spec:
   promotionTemplate:
     spec:
       vars:
-      - name: imageRepo
-        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       steps:
       - uses: gha-dispatch-workflow
         as: verify-environment-gha-workflow
@@ -395,7 +381,7 @@ spec:
           ref: main
           inputs:
             environment: "staging"
-            version: "${{ imageFrom(vars.imageRepo).Tag }}"
+            version: "${{ imageFrom(configMap('values').appImageUrl).Tag }}"
           timeout: 120
           insecureSkipTLSVerify: false
       - uses: gha-wait-for-workflow
@@ -429,16 +415,12 @@ spec:
   promotionTemplate:
     spec:
       vars:
-      - name: gitRepo
-        value: https://github.com/akuity/sedemo-monorepo
       - name: path_src
         value: ./src
       - name: path_out
         value: ./out
       - name: path_info
         value: ./info
-      - name: imageRepo
-        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       steps:
       # use http step to pull https://demo-public-notsecure.s3.us-east-1.amazonaws.com/environments.yaml
       # Alternately authorative file could be cloned from git, and then parsed with yaml-parse step 
@@ -452,7 +434,7 @@ spec:
             fromExpression: response.body.staging.primary.cluster
       - uses: git-clone
         config:
-          repoURL: ${{ vars.gitRepo }}
+          repoURL: ${{ configMap('values').gitRepoUrl }}
           checkout:
           - branch: main
             path: ${{ vars.path_src }}
@@ -473,7 +455,7 @@ spec:
           namespace: team-eddie-staging
           setValues:
             - key: image.tag
-              value: ${{ imageFrom(vars.imageRepo).Tag }}
+              value: ${{ imageFrom(configMap('values').appImageUrl).Tag }}
             - key: kargo.stage
               value: ${{ ctx.stage }}
             - key: ingress.root_domain
@@ -485,7 +467,7 @@ spec:
         as: commit
         config:
           path: ${{ vars.path_out }}
-          message: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
+          message: "Promote ${{ imageFrom(configMap('values').appImageUrl).Tag }} to ${{ ctx.stage }} [skip ci]"
       - uses: git-push
         as: push
         config:
@@ -527,16 +509,12 @@ spec:
   promotionTemplate:
     spec:
       vars:
-      - name: gitRepo
-        value: https://github.com/akuity/sedemo-monorepo
       - name: path_src
         value: ./src
       - name: path_out
         value: ./out
       - name: path_info
         value: ./info
-      - name: imageRepo
-        value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       steps:
       # use http step to pull https://demo-public-notsecure.s3.us-east-1.amazonaws.com/environments.yaml
       - uses: http
@@ -552,7 +530,7 @@ spec:
       #
       - uses: git-clone
         config:
-          repoURL: ${{ vars.gitRepo }}
+          repoURL: ${{ configMap('values').gitRepoUrl }}
           checkout:
           - branch: main
             path: ${{ vars.path_src }}
@@ -573,7 +551,7 @@ spec:
           namespace: team-eddie-staging
           setValues:
             - key: image.tag
-              value: ${{ imageFrom(vars.imageRepo).Tag }}
+              value: ${{ imageFrom(configMap('values').appImageUrl).Tag }}
             - key: kargo.stage
               value: ${{ ctx.stage }}
             - key: ingress.root_domain
@@ -585,7 +563,7 @@ spec:
         as: commit
         config:
           path: ${{ vars.path_out }}
-          message: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
+          message: "Promote ${{ imageFrom(configMap('values').appImageUrl).Tag }} to ${{ ctx.stage }} [skip ci]"
       - uses: git-push
         as: push
         config:
@@ -653,15 +631,13 @@ spec:
     spec:
       vars:
         - name: gitRepo
-          value: https://github.com/akuity/sedemo-monorepo
+          value: configMap('values').gitRepoUrl
         - name: path_src
           value: ./src
         - name: path_out
           value: ./out
         - name: path_info
           value: ./info
-        - name: imageRepo
-          value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       steps:
       - as: allure-report
         uses: allure-report
@@ -683,7 +659,7 @@ spec:
             sharedSecretName: jira-access-secret
           createIssue:
             projectKey: CHANGE
-            summary: "Promotion of ${{ imageFrom(vars.imageRepo).Tag }} to staging environments"
+            summary: "Promotion of ${{ imageFrom(configMap('values').appImageUrl).Tag }} to staging environments"
             adfDescription:
               type: doc
               version: 1
@@ -695,7 +671,7 @@ spec:
                 - type: text
                   text: "Promotion: ${{ ctx.stage }},  "
                 - type: text
-                  text: "${{ imageFrom(vars.imageRepo).Tag }}"
+                  text: "${{ imageFrom(configMap('values').appImageUrl).Tag }}"
                   marks:
                   - type: code
               - type: paragraph
@@ -729,4 +705,4 @@ spec:
             labels:
             - promotion
             - "${{ ctx.stage }}"
-            - "release-${{ imageFrom(vars.imageRepo).Tag }}"
+            - "release-${{ imageFrom(configMap('values').appImageUrl).Tag }}"
