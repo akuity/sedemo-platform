@@ -21,10 +21,10 @@ spec:
         as: diff-link
         config:
           links:
-            - icon: faGithub
-              label: GitHub Diff
-              tooltip: GitHub Diff for ${{ ctx.targetFreight.name }}
-              url: https://github.com/akuity/sedemo-platform/commit/0692abf1731e72592d4beb8f0816746ab274da7f
+            - icon: fa-dog
+              label: See a long Doge
+              tooltip: Can use variables like name of freight, ${{ ctx.targetFreight.name }}
+              url: https://longdogechallenge.com/
       - task:
           name: require-release-note
       - uses: wait-for-approval
