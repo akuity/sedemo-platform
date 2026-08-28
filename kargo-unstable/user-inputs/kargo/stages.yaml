@@ -21,7 +21,7 @@ spec:
         as: diff-link
         config:
           links:
-            - icon: fa-dog
+            - icon: faDog
               label: See a long Doge
               tooltip: Can use variables like name of freight, ${{ ctx.targetFreight.name }}
               url: https://longdogechallenge.com/
