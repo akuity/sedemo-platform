@@ -20,11 +20,11 @@ spec:
       - uses: compose-output
         as: diff-link
         config:
-          link:
-            icon: faGithub
-            label: GitHub Diff
-            tooltip: GitHub Diff for ${{ ctx.targetFreight.name }}
-            url: https://github.com/akuity/sedemo-platform/commit/0692abf1731e72592d4beb8f0816746ab274da7f
+          links:
+            - icon: faGithub
+              label: GitHub Diff
+              tooltip: GitHub Diff for ${{ ctx.targetFreight.name }}
+              url: https://github.com/akuity/sedemo-platform/commit/0692abf1731e72592d4beb8f0816746ab274da7f
       - task:
           name: require-release-note
       - uses: wait-for-approval
