@@ -25,6 +25,14 @@ spec:
               label: See a long Doge
               tooltip: Can use variables like name of freight, ${{ ctx.targetFreight.name }}
               url: https://longdogechallenge.com/
+            - icon: faGithub
+              label: See a long Doge
+              tooltip: Can use variables like name of freight, ${{ ctx.targetFreight.name }}
+              url: https://longdogechallenge.com/
+            - icon: dog
+              label: See a long Doge
+              tooltip: Can use variables like name of freight, ${{ ctx.targetFreight.name }}
+              url: https://longdogechallenge.com/
       - task:
           name: require-release-note
       - uses: wait-for-approval
