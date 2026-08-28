@@ -10,18 +10,18 @@ spec:
       && imageFrom(configMap('values').appImageUrl).Annotations['org.opencontainers.image.revision'] == commitFrom(configMap('values').gitRepoUrl).ID
   subscriptions:
   - git:
-      repoURL: "${{ configMap('values').gitRepoUrl }}"
+      repoURL: "https://github.com/akuity/sedemo-monorepo"
       includePaths:
       - active-active
       - '.github/workflows/publish-active-active-app.yml'
   - image:
-      repoURL: ${{ configMap('values').appImageUrl }}
+      repoURL: ghcr.io/akuity/sedemo-monorepo-active-active
       discoveryLimit: 5
       imageSelectionStrategy: NewestBuild
       allowTagsRegexes:
       - ^\d*-[a-z]*$
   - image:
-      repoUrl: ${{ configMap('values').testImageUrl }}
+      repoUrl: ghcr.io/akuity/sedemo-monorepo-active-active-test
       discoveryLimit: 5
       imageSelectionStrategy: NewestBuild
       allowTagsRegexes:

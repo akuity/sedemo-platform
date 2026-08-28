@@ -322,8 +322,6 @@ spec:
   promotionTemplate:
     spec:
       vars:
-        - name: gitRepo
-          value: configMap('values').gitRepoUrl
         - name: path_src
           value: ./src
         - name: path_out
@@ -630,8 +628,6 @@ spec:
   promotionTemplate:
     spec:
       vars:
-        - name: gitRepo
-          value: configMap('values').gitRepoUrl
         - name: path_src
           value: ./src
         - name: path_out
