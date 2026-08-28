@@ -10,7 +10,7 @@ spec:
       && imageFrom(configMap('values').appImageUrl).Annotations['org.opencontainers.image.revision'] == commitFrom(configMap('values').gitRepoUrl).ID
   subscriptions:
   - git:
-      repoURL: ${{ configMap('values').gitRepoUrl }}
+      repoURL: "${{ configMap('values').gitRepoUrl }}"
       includePaths:
       - active-active
       - '.github/workflows/publish-active-active-app.yml'
