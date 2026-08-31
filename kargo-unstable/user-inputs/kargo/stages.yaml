@@ -66,5 +66,43 @@ spec:
       steps:
       - task:
           name: require-release-note
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: tofu
+  namespace: user-inputs
+  annotations:
+    kargo.akuity.io/color: blue
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: some-warehouse
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      steps:
+      - uses: file-write
+        config:
+          path: ./variables.tf
+          contents: |
+            variable "environment" {
+              type        = string
+              description = "The target environment name."
+              default     = "development"
+            }
+          overwrite: true
+      - uses: file-write
+        config:
+          path: ./output.tf
+          contents: |
+            output "formatted_env_name" {
+              value       = "env-${var.environment}"
+              description = "A formatted string containing the environment name."
+            }
+          overwrite: true
+      - uses: tofu-task
 
 
