@@ -3,7 +3,6 @@ kind: CustomPromotionStep
 metadata:
   name: tofu-task
 spec:
-  imagePullPolicy: Always
   image: ghcr.io/akuity/sedemo-platform-tasks:tofu
   command: [ "sh","-c", "${{ config.cmd}}" ]
   output:
