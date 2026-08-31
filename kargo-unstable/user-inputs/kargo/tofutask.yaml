@@ -6,7 +6,7 @@ spec:
   ## REQUIRED: image to execute the command in
   image: ghcr.io/akuity/sedemo-platform-tasks:tofu
   ## REQUIRED: command to run
-  command: ["${{ confif.cmd }}"]
+  command: ["${{ config.cmd }}"]
   ## OPTIONAL: additional environment to provide to the command
   #env:
    # - name: HELLO
