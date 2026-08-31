@@ -88,8 +88,8 @@ spec:
       - uses: tofu-task
         config:
           cmd: colors
-      - uses: tofu-task
-        config:
-          cmd: cp /workspace/*.tf . && tofu plan
+      # - uses: tofu-task
+      #   config:
+      #     cmd: cp /workspace/*.tf . && tofu plan
 
 
