@@ -4,9 +4,9 @@ metadata:
   name: tofu-task
 spec:
   ## REQUIRED: image to execute the command in
-  image: ghcr.io/opentofu/opentofu:latest
+  image: ghcr.io/akuity/sedemo-platform-tasks:tofu
   ## REQUIRED: command to run
-  command: ["plan"]
+  command: ["tofu plan"]
   ## OPTIONAL: additional environment to provide to the command
   #env:
    # - name: HELLO
