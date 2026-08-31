@@ -90,6 +90,6 @@ spec:
           cmd: colors
       - uses: tofu-task
         config:
-          cmd: tofu plan
+          cmd: cp /workspace/*.tf . && tofu plan
 
 
