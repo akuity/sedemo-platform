@@ -6,7 +6,7 @@ spec:
   ## REQUIRED: image to execute the command in
   image: ghcr.io/opentofu/opentofu:latest
   ## REQUIRED: command to run
-  command: ["tofu plan"]
+  command: ["plan"]
   ## OPTIONAL: additional environment to provide to the command
   #env:
    # - name: HELLO
