@@ -17,7 +17,7 @@ spec:
   output:
     source:
 ## One of Pipe | Stdout | Stderr | File, default is Pipe
-      type: Pipe
+      type: Stdout
 ## required when type is File, should be omitted if it's not
       #path: ""
 ## One of JSON | YAML | KeyValue | Text
