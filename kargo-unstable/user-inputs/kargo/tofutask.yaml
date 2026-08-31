@@ -3,7 +3,7 @@ kind: CustomPromotionStep
 metadata:
   name: tofu-task
 spec:
-  image: ghcr.io/akuity/sedemo-platform-tasks:tofu
+  image: ghcr.io/akuity/sedemo-platform-tasks:colors
   command: [ "sh","-c", "${{ config.cmd}}" ]
   output:
     source:
