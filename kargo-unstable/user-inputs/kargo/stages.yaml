@@ -75,6 +75,7 @@ metadata:
   annotations:
     kargo.akuity.io/color: blue
 spec:
+  shard: sedemo-primary
   requestedFreight:
   - origin:
       kind: Warehouse
