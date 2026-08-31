@@ -87,9 +87,9 @@ spec:
       steps:
       - uses: tofu-task
         config:
-          cmd: tofu plan
+          cmd: colors
       - uses: tofu-task
         config:
-          cmd: colors
+          cmd: tofu plan
 
 

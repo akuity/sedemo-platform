@@ -6,8 +6,10 @@ spec:
   ## REQUIRED: image to execute the command in
   image: ghcr.io/akuity/sedemo-platform-tasks:tofu
   ## REQUIRED: command to run
-  command: ${{ split(config.cmd,' ') }}
-  ## OPTIONAL: additional environment to provide to the command
+  command: ${{ asYaml(split(config.cmd,' ')) }}
+
+
+ ## OPTIONAL: additional environment to provide to the command
   #env:
    # - name: HELLO
    #   value: ${{ config.hello }}
