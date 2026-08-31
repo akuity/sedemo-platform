@@ -17,10 +17,10 @@ spec:
 ## One of Pipe | Stdout | Stderr | File, default is Pipe
       type: Pipe
 ## required when type is File, should be omitted if it's not
-      path: ""
+      #path: ""
 ## One of JSON | YAML | KeyValue | Text
 ## inferred from file extension when omitted, default is KeyValue
-      format: KeyValue
+      format: Text
 ## Apply expressions to output to reformat with different keys
 ## If omitted returns the parsed output as is
     #transform:
