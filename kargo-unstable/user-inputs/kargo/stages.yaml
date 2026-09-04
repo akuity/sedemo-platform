@@ -21,18 +21,10 @@ spec:
         as: diff-link
         config:
           links:
-            - icon: faDog
-              label: See a long Doge
-              tooltip: Can use variables like name of freight, ${{ ctx.targetFreight.name }}
-              url: https://longdogechallenge.com/
             - icon: faGithub
-              label: See a long Doge
-              tooltip: Can use variables like name of freight, ${{ ctx.targetFreight.name }}
-              url: https://longdogechallenge.com/
-            - icon: dog
-              label: See a long Doge
-              tooltip: Can use variables like name of freight, ${{ ctx.targetFreight.name }}
-              url: https://longdogechallenge.com/
+              label: Link to Diff in VCS
+              tooltip: Can use variables like name of freight, ${{ ctx.targetFreight.alias }}
+              url: https://github.com/akuity/sedemo-platform/commit/d7a90f2b6970e9650c7837b4d353b07f6ec85839
       - task:
           name: require-release-note
       - uses: wait-for-approval
@@ -66,30 +58,3 @@ spec:
       steps:
       - task:
           name: require-release-note
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: tofu
-  namespace: user-inputs
-  annotations:
-    kargo.akuity.io/color: blue
-spec:
-  shard: sedemo-primary
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: some-warehouse
-    sources:
-      direct: true
-  promotionTemplate:
-    spec:
-      steps:
-      - uses: tofu-task
-        config:
-          cmd: colors
-      # - uses: tofu-task
-      #   config:
-      #     cmd: cp /workspace/*.tf . && tofu plan
-
-
