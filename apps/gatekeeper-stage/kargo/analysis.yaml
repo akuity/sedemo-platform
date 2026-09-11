@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: image-exists
+  namespace: gatekeeper-stage
+spec:
+  args:
+  - name: commit-sha
+  metrics:
+  - name: image-exists
+    failureLimit: 0
+    provider:
+      job:
+        spec:
+          backoffLimit: 0
+          template:
+            spec:
+              restartPolicy: Never
+              containers:
+              - name: check
+                image: gcr.io/go-containerregistry/crane:debug
+                command:
+                - crane
+                - manifest
+                - ghcr.io/akuity/sedemo-monorepo-gatekeeper-app:{{ args.commit-sha }}
