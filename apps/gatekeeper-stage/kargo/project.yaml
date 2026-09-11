@@ -1,0 +1,17 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: gatekeeper-stage
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: gatekeeper-stage
+  namespace: gatekeeper-stage
+spec:
+  stageLinks:
+    - title: App UI
+      description: The gatekeeper-app instance running at this stage
+      url: 'http://gatekeeper-{{ .stage.metadata.name }}.akpdemoapps.link/'

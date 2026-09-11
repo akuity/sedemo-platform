@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: gatekeeper-stage
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - stage: gate
+      - stage: dev
+      - stage: prod
+  template:
+    metadata:
+      name: gatekeeper-stage-{{stage}}
+      annotations:
+        kargo.akuity.io/authorized-stage: gatekeeper-stage:{{stage}}
+    spec:
+      project: gatekeeper-stage
+      source:
+        repoURL: https://github.com/akuity/sedemo-monorepo
+        targetRevision: env-gatekeeper-stage/{{stage}}
+        path: .
+      destination:
+        name: sedemo-primary
+        namespace: gatekeeper-{{stage}}
+      syncPolicy:
+        automated:
+          prune: true
+          enabled: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
