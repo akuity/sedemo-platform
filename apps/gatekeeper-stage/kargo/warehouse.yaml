@@ -7,7 +7,7 @@ spec:
   subscriptions:
   - git:
       repoURL: https://github.com/akuity/sedemo-monorepo
-      commitSelectionStrategy: NewestCommit
+      commitSelectionStrategy: NewestFromBranch
       discoveryLimit: 20
       includePaths:
       - gatekeeper-app
