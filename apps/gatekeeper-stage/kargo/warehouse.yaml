@@ -15,3 +15,5 @@ spec:
       repoURL: ghcr.io/akuity/sedemo-monorepo-gatekeeper-app
       discoveryLimit: 20
       imageSelectionStrategy: NewestBuild
+      allowTagsRegexes:
+      - ^[0-9a-f]{40}$
