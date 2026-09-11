@@ -12,6 +12,6 @@ spec:
       includePaths:
       - gatekeeper-app
   - image:
-      repoURL: akuity/sedemo-monorepo-gatekeeper-app
+      repoURL: ghcr.io/akuity/sedemo-monorepo-gatekeeper-app
       discoveryLimit: 20
       imageSelectionStrategy: NewestBuild

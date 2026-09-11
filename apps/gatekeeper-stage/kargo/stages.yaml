@@ -24,7 +24,7 @@ spec:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
       - name: imageRepo
-        value: akuity/sedemo-monorepo-gatekeeper-app
+        value: ghcr.io/akuity/sedemo-monorepo-gatekeeper-app
       - name: path_src
         value: ./src
       - name: path_out
@@ -61,7 +61,7 @@ spec:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
       - name: imageRepo
-        value: akuity/sedemo-monorepo-gatekeeper-app
+        value: ghcr.io/akuity/sedemo-monorepo-gatekeeper-app
       - name: path_src
         value: ./src
       - name: path_out
@@ -116,7 +116,7 @@ spec:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
       - name: imageRepo
-        value: akuity/sedemo-monorepo-gatekeeper-app
+        value: ghcr.io/akuity/sedemo-monorepo-gatekeeper-app
       - name: path_src
         value: ./src
       - name: path_out
