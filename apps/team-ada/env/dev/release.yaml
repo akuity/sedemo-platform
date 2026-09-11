@@ -1,7 +1,7 @@
-chartVersion: 0.6.2
+chartVersion: 0.5.0
 values:
   image:
-    tag: v3.20.0
+    tag: v3.19.0
   akkoma:
     domain: akkoma-dev.example.com
     adminEmail: admin@example.com
