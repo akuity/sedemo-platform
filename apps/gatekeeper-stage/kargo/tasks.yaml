@@ -1,0 +1,60 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: prepare-workdir
+  namespace: gatekeeper-stage
+spec:
+  vars:
+  - name: gitRepo
+  - name: sourceBranch
+    value: main
+  - name: targetBranch
+    value: env-gatekeeper-stage/${{ ctx.stage }}
+  - name: path_src
+    value: ./src
+  - name: path_out
+    value: ./out
+  steps:
+    - uses: git-clone
+      config:
+        repoURL: ${{ vars.gitRepo }}
+        checkout:
+        - branch: ${{ vars.sourceBranch }}
+          path: ${{ vars.path_src }}
+        - branch: ${{ vars.targetBranch }}
+          create: true
+          path: ${{ vars.path_out }}
+    - uses: git-clear
+      config:
+        path: ${{ vars.path_out }}
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: push-manifests
+  namespace: gatekeeper-stage
+spec:
+  vars:
+  - name: gitRepo
+  - name: imageRepo
+  - name: targetBranch
+    value: env-gatekeeper-stage/${{ ctx.stage }}
+  - name: path_out
+    value: ./out
+  steps:
+    - uses: git-commit
+      as: commit
+      config:
+        path: ${{ vars.path_out }}
+        message: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }} [skip ci]"
+    - uses: git-push
+      as: push
+      config:
+        path: ${{ vars.path_out }}
+        targetBranch: ${{ vars.targetBranch }}
+    - uses: compose-output
+      as: output
+      config:
+        commit: ${{ task.outputs['push'].commit }}
+        branch: ${{ task.outputs['push'].branch }}
+        url: ${{ task.outputs['push'].commitURL }}

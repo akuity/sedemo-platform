@@ -1,0 +1,149 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: gate
+  namespace: gatekeeper-stage
+  annotations:
+    kargo.akuity.io/color: red
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: gatekeeper-stage
+    sources:
+      direct: true
+  verification:
+    analysisTemplates:
+    - name: image-exists
+    args:
+    - name: commit-sha
+      value: ${{ commitFrom("https://github.com/akuity/sedemo-monorepo").ID }}
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-monorepo
+      - name: imageRepo
+        value: akuity/sedemo-monorepo-gatekeeper-app
+      - name: path_src
+        value: ./src
+      - name: path_out
+        value: ./out
+      steps:
+      - task:
+          name: prepare-workdir
+      - uses: git-clear
+        config:
+          path: ${{ vars.path_out }}
+      - task:
+          name: push-manifests
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev
+  namespace: gatekeeper-stage
+  annotations:
+    kargo.akuity.io/color: amber
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: gatekeeper-stage
+    sources:
+      stages:
+      - gate
+      autoPromotionOptions:
+        selectionPolicy: MatchUpstream
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-monorepo
+      - name: imageRepo
+        value: akuity/sedemo-monorepo-gatekeeper-app
+      - name: path_src
+        value: ./src
+      - name: path_out
+        value: ./out
+      steps:
+      - task:
+          name: prepare-workdir
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ${{ vars.path_src }}/gatekeeper-app/deploy/chart
+          valuesFiles:
+          - ${{ vars.path_src }}/gatekeeper-app/deploy/chart/values.yaml
+          outPath: ${{ vars.path_out }}/manifests.yaml
+          namespace: gatekeeper-dev
+          setValues:
+            - key: image.tag
+              value: ${{ imageFrom(vars.imageRepo).Tag }}
+            - key: kargo.stage
+              value: ${{ ctx.stage }}
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+      - task:
+          name: push-manifests
+      - uses: argocd-update
+        continueOnError: true
+        config:
+          apps:
+          - name: gatekeeper-stage-dev
+            namespace: argocd
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod
+  namespace: gatekeeper-stage
+  annotations:
+    kargo.akuity.io/color: violet
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: gatekeeper-stage
+    sources:
+      stages:
+      - dev
+      autoPromotionOptions:
+        selectionPolicy: MatchUpstream
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-monorepo
+      - name: imageRepo
+        value: akuity/sedemo-monorepo-gatekeeper-app
+      - name: path_src
+        value: ./src
+      - name: path_out
+        value: ./out
+      steps:
+      - task:
+          name: prepare-workdir
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ${{ vars.path_src }}/gatekeeper-app/deploy/chart
+          valuesFiles:
+          - ${{ vars.path_src }}/gatekeeper-app/deploy/chart/values.yaml
+          outPath: ${{ vars.path_out }}/manifests.yaml
+          namespace: gatekeeper-prod
+          setValues:
+            - key: image.tag
+              value: ${{ imageFrom(vars.imageRepo).Tag }}
+            - key: kargo.stage
+              value: ${{ ctx.stage }}
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+      - task:
+          name: push-manifests
+      - uses: argocd-update
+        continueOnError: true
+        config:
+          apps:
+          - name: gatekeeper-stage-prod
+            namespace: argocd
