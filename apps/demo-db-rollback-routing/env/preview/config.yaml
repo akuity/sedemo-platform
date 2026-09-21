@@ -1,6 +1,19 @@
 stage: preview
 hostPrefix: dbr-preview
-replicaCount: 1
 # Change this in a PR branch (not on main) and label the PR `deploy-preview`
 # to see a config-only change land in the preview env: e.g. colorOverride: blue
 colorOverride: ""
+
+# PARKED 2026-09-20: pgweb CVE remediation (sosedoff/pgweb:0.16.2, 97 CVEs).
+# Everything in this namespace is scaled to zero and the public schema-viewer
+# Ingress is removed. replicaCount alone is NOT enough: postgres and pgweb
+# hardcode replicas, so each component is gated explicitly below.
+# Revert this block, then re-promote the stage so Flyway rebuilds the schema
+# (postgres uses emptyDir, so the data is gone until it does).
+replicaCount: 0
+pgweb:
+  enabled: false
+loadgen:
+  enabled: false
+postgres:
+  enabled: false

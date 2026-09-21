@@ -22,6 +22,13 @@ db:
   # Demo-only credential; matches secrets/flyway-db-secret.yaml.
   password: kargodemo1
 
+# Gates the whole of templates/postgres.yaml (Secret, Deployment, Service).
+# Default true; env/<stage>/config.yaml sets it false to park a stage with no
+# database at all. Nothing outside postgres.yaml and pgweb.yaml consumes
+# db-credentials, so disabling this leaves no dangling reference.
+postgres:
+  enabled: true
+
 pgweb:
   enabled: true
 

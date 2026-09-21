@@ -32,24 +32,31 @@ spec:
     description: The git commit carried by this Freight (includes its migrations)
     url: '{{ (index .freight.commits 0).repoURL }}/commit/{{ (index .freight.commits 0).id }}'
     if: freight.commits != nil && len(freight.commits) > 0
+  # PARKED 2026-09-20: pgweb CVE remediation. All auto-promotion is off and
+  # prod's autoRollback is removed while the app is scaled to zero. Without
+  # this, the chart change that gates Postgres mints Freight, the auto-promoted
+  # flyway-migrate step errors against the absent database, and prod's
+  # autoRollback re-promotes the last good Freight -- pinning prod back to a
+  # commit where the public pgweb Ingress still exists. Restore this block
+  # (autoPromotionEnabled true on dev/preview/staging, autoRollback on prod)
+  # only AFTER the env/ shutdown is reverted and Postgres is back.
   promotionPolicies:
   - stageSelector:
       name: dev
-    autoPromotionEnabled: true
+    autoPromotionEnabled: false
   - stageSelector:
       name: preview
-    autoPromotionEnabled: true
+    autoPromotionEnabled: false
   # autoRollback (Kargo 1.11): when a promotion fails/errors or verification
   # fails, Kargo automatically re-promotes the last good Freight. Empty object
   # enables all default triggers (onPromotion: Failed/Errored,
   # onVerification: Failed/Error).
   - stageSelector:
       name: staging
-    autoPromotionEnabled: true
+    autoPromotionEnabled: false
   - stageSelector:
       name: prod
     autoPromotionEnabled: false
-    autoRollback: {}
   # NOTE: no webhookReceivers on purpose. Warehouse discovery stays on the
   # polling path so `spec.interval` coalescing (routing demo, route 2) is
   # actually observable. Wiring webhooks would mint one Freight per push.

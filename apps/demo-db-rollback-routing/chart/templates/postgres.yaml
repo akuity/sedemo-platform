@@ -5,6 +5,7 @@
 # (Prometheus also runs with persistence disabled), so a PVC would stay
 # Pending forever. Tradeoff: a db pod restart wipes the schema; re-promote the
 # stage's current Freight and Flyway rebuilds it from scratch.
+{{- if .Values.postgres.enabled }}
 apiVersion: v1
 kind: Secret
 metadata:
@@ -76,3 +77,4 @@ spec:
     targetPort: 5432
   selector:
     app: db
+{{- end }}
