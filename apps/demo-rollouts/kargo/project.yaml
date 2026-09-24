@@ -18,9 +18,12 @@ spec:
     if: stage.metadata.name not in ["prod"]
   freightLinks:
   - title: Commit
-    description: The git commit carried by this Freight (includes its migrations)
+    description: The git commit carried by this Freight 
     url: '{{ (index .freight.commits 0).repoURL }}/commit/{{ (index .freight.commits 0).id }}'
     if: freight.commits != nil && len(freight.commits) > 0
+  - title: Docker Image 
+    description: The docker image carried by this Freight 
+    url: 'https://github.com/akuity/sedemo-monorepo/pkgs/container/sedemo-monorepo-rollouts-app/{{ (index .freight.images 0).Digest }}?tag={{ (index .freight.images 0).Tag }}'
   promotionPolicies:
   - stageSelector:
       name: "regex:prod.*"
