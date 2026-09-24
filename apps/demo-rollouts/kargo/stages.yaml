@@ -274,10 +274,18 @@ spec:
             - "${{ ctx.stage }}"
             - "release-${{ imageFrom(vars.imageRepo).Tag }}"
       - uses: compose-output
-        as: jira-link
+        as: info-link
         config:
-          url: https://eddiewebb.atlassian.net/jira/servicedesk/projects/CHANGE/queues/custom/21/${{ outputs['create-change-ticket'].key }}
-      
+          links:
+            - icon: faJira
+              label: "Custom Jira Link to ${{ outputs['create-change-ticket'].key }}"
+              tooltip: Custom Jira Link to ${{ outputs['create-change-ticket'].key }}
+              url: https://eddiewebb.atlassian.net/jira/servicedesk/projects/CHANGE/queues/custom/21/${{ outputs['create-change-ticket'].key }}
+    
+            - icon: faGithub
+              label: Link to Manifests in VCS
+              tooltip: See manifests for ${{ ctx.targetFreight.alias }} in Prod
+              url: https://github.com/akuity/sedemo-monorepo/commit/${{ outputs['push-manifests'].commit }}
     
       - uses: jira
         as: wait-for-approval

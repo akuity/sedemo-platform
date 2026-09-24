@@ -23,7 +23,7 @@ spec:
           links:
             - icon: faGithub
               label: Link to Diff in VCS
-              tooltip: Can use variables like name of freight, ${{ ctx.targetFreight.alias }}
+              tooltip: See diff for ${{ ctx.targetFreight.alias }}
               url: https://github.com/akuity/sedemo-platform/commit/d7a90f2b6970e9650c7837b4d353b07f6ec85839
       - task:
           name: require-release-note

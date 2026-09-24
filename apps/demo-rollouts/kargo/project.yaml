@@ -11,6 +11,16 @@ metadata:
   name: demo-rollouts
   namespace: demo-rollouts
 spec:
+  stageLinks:
+  - title: App UI
+    description: Rollouts demo app; the error dial here drives the auto-rollback beat
+    url: 'https://demo-{{ .stage.metadata.name }}.akpdemoapps.link'
+    if: stage.metadata.name not in ["prod"]
+  freightLinks:
+  - title: Commit
+    description: The git commit carried by this Freight (includes its migrations)
+    url: '{{ (index .freight.commits 0).repoURL }}/commit/{{ (index .freight.commits 0).id }}'
+    if: freight.commits != nil && len(freight.commits) > 0
   promotionPolicies:
   - stageSelector:
       name: "regex:prod.*"
