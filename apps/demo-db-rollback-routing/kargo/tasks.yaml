@@ -72,10 +72,15 @@ spec:
         Migrations applied: ${{ task.outputs['migrate'].migrationsApplied }}
   - if: ${{ ctx.targetFreight.origin.name == "main" }}
     uses: git-push
+    as: push
     config:
       path: ./out
       targetBranch: main
   # Main lane: pin the app to the commit just pushed (env file update).
+  # Use git-push's output, not git-commit's: when another stage's promotion
+  # pushes to main first, git-push rebases and the pushed SHA differs from the
+  # local commit. Pinning the pre-rebase SHA points Argo CD at a commit that
+  # never reached the remote ("not our ref") and the step times out.
   - if: ${{ ctx.targetFreight.origin.name == "main" }}
     uses: argocd-update
     config:
@@ -83,7 +88,7 @@ spec:
       - name: demo-db-rollback-routing-${{ ctx.stage }}
         sources:
         - repoURL: ${{ vars.gitRepo }}
-          desiredRevision: ${{ task.outputs['commit'].commit }}
+          desiredRevision: ${{ task.outputs['push'].commit }}
           updateTargetRevision: true
   # Preview lane: pin the app to the tagged PR commit itself, so the preview
   # renders the PR's chart and env files, not main's.
