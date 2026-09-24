@@ -35,12 +35,16 @@ main lane (image + migrations in one Freight)
 ```
 
 Each stage namespace on `sedemo-primary` runs: the rollouts demo app (its UI can
-dial in an error rate), a throwaway Postgres, pgweb for browsing
-`flyway_schema_history`, and a load generator that keeps traffic flowing through
-the ingress so verification always has samples.
+dial in an error rate), a throwaway Postgres, and a load generator that keeps
+traffic flowing through the ingress so verification always has samples.
 
-**URLs:** `dbr-{stage}.akpdemoapps.link` (app) and
-`dbr-{stage}-schema.akpdemoapps.link` (schema viewer).
+**URL:** `dbr-{stage}.akpdemoapps.link` (app). The database is never exposed
+outside the cluster; browse it with psql from inside the db pod:
+
+```sh
+kubectl -n demo-db-rollback-routing-{stage} exec -it deploy/db -- sh -c \
+  'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT version, description, installed_on FROM flyway_schema_history ORDER BY installed_rank"'
+```
 
 Every promotion runs: `git-clone` (Freight commit to `./src`, main to `./out`)
 -> `flyway-migrate` -> update `env/<stage>/image.yaml` -> commit/push ->
@@ -72,8 +76,8 @@ which is itself part of the story.
 1. **Main lane baseline.** Run
    `./db/demo-assets/new-migration.sh "Shipped loyalty tiers"` and push to
    main. New Freight appears, dev auto-promotes, and the new release_notes row
-   shows up in the dev schema viewer. Watch it land env by env as staging
-   auto-promotes and you promote prod.
+   shows up in dev's `release_notes` table (psql, above). Watch it land env by
+   env as staging auto-promotes and you promote prod.
 2. **Rapid freight honesty.** Generate and push three migrations as separate
    quick commits. Auto-promotion creates a Promotion per Freight and walks the
    queue in order. Intermediates are NOT skipped; converging on newest is the
@@ -136,9 +140,15 @@ which is itself part of the story.
   reads the project's own namespace (which GitOps cannot write to; the
   admission webhook blocks it) and silently returns an empty map when nothing
   is there. Also note the `eso-secret-store-kargo` Application has no automated
-  sync policy, so it needs a manual sync after changes. The password must match
-  `db.password` in chart values (still demo-grade plaintext there, since the
-  chart also provisions the throwaway Postgres it protects).
+  sync policy, so it needs a manual sync after changes. The chart's
+  `db-credentials` ExternalSecret reads the same Secrets Manager key, so the
+  per-stage Postgres always matches; no credential lives in git.
+- Flyway connects as `app`, a non-superuser role that owns `appdb`; the
+  bootstrap superuser's password (`admin_password`) only reaches the db pod.
+- The chart ships a NetworkPolicy limiting Postgres to the namespaces in
+  `db.allowedClientNamespaces` (default `akuity`, where the Kargo agent runs
+  promotion step pods). It is inert on `sedemo-primary` today: VPC CNI network
+  policy enforcement is off cluster-wide.
 - Verification error rate is measured at the nginx ingress per namespace, so it
   needs the loadgen (in the chart) or real traffic to be meaningful. No traffic
   evaluates as healthy (`or vector(0)`).

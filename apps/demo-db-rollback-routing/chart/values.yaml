@@ -6,8 +6,8 @@ image:
   pullPolicy: IfNotPresent
 
 # Per-env overrides live in env/<stage>/config.yaml.
-# App is served at <hostPrefix>.<rootDomain>, schema viewer at
-# <hostPrefix>-schema.<rootDomain>.
+# App is served at <hostPrefix>.<rootDomain>. There is no schema viewer
+# Ingress; browse the db with psql via kubectl exec (see README).
 hostPrefix: dbr-dev
 ingress:
   rootDomain: akpdemoapps.link
@@ -18,18 +18,22 @@ colorOverride: ""
 
 db:
   name: appdb
-  user: app
-  # Demo-only credential; matches secrets/flyway-db-secret.yaml.
-  password: kargodemo1
+  # AWS Secrets Manager key. Properties: username/password (the non-superuser
+  # app role, shared with the flyway-migrate step via
+  # secrets/flyway-db-secret.yaml) and admin_password (bootstrap superuser,
+  # this chart only). Never put credentials in values: this repo is public.
+  secretKey: kargo-flyway-db
+  # Namespaces whose pods may reach Postgres (NetworkPolicy). The Kargo agent
+  # on sedemo-primary runs promotion step pods, including flyway-migrate.
+  allowedClientNamespaces:
+  - akuity
 
-# Gates the whole of templates/postgres.yaml (Secret, Deployment, Service).
+# Gates the whole of templates/postgres.yaml (ExternalSecret, ConfigMap,
+# NetworkPolicy, Deployment, Service).
 # Default true; env/<stage>/config.yaml sets it false to park a stage with no
-# database at all. Nothing outside postgres.yaml and pgweb.yaml consumes
+# database at all. Nothing outside postgres.yaml consumes
 # db-credentials, so disabling this leaves no dangling reference.
 postgres:
-  enabled: true
-
-pgweb:
   enabled: true
 
 loadgen:

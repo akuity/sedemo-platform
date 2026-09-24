@@ -6,13 +6,78 @@
 # Pending forever. Tradeoff: a db pod restart wipes the schema; re-promote the
 # stage's current Freight and Flyway rebuilds it from scratch.
 {{- if .Values.postgres.enabled }}
-apiVersion: v1
-kind: Secret
+# Credentials come from the same AWS Secrets Manager key as the flyway-migrate
+# step (secrets/flyway-db-secret.yaml), so the two always match and nothing
+# sensitive lives in git. ESO materializes it as the db-credentials Secret.
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
 metadata:
   name: db-credentials
-stringData:
-  username: {{ .Values.db.user }}
-  password: {{ .Values.db.password }}
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: aws-secretsmanager
+    kind: ClusterSecretStore
+  target:
+    name: db-credentials
+  data:
+  - secretKey: username
+    remoteRef:
+      key: {{ .Values.db.secretKey }}
+      property: username
+  - secretKey: password
+    remoteRef:
+      key: {{ .Values.db.secretKey }}
+      property: password
+  # Bootstrap superuser password. Only this pod ever sees it; the flyway-db
+  # ExternalSecret deliberately does not map it.
+  - secretKey: admin-password
+    remoteRef:
+      key: {{ .Values.db.secretKey }}
+      property: admin_password
+---
+# The postgres image always makes POSTGRES_USER a superuser, so that account is
+# reserved for bootstrap and never leaves the pod. This init script (run once,
+# on the empty emptyDir, by the image entrypoint) creates the application role
+# Flyway uses as a plain login role that owns the database: enough for DDL in
+# the public schema (PG15+ grants it to the database owner), but no superuser,
+# so no COPY ... TO PROGRAM, no pg_authid, no server file access.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-init
+data:
+  10-app-role.sh: |
+    docker_process_sql \
+      --set=app_user="$APP_DB_USER" \
+      --set=app_password="$APP_DB_PASSWORD" \
+      --set=db="$POSTGRES_DB" <<'EOSQL'
+    CREATE ROLE :"app_user" LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD :'app_password';
+    ALTER DATABASE :"db" OWNER TO :"app_user";
+    EOSQL
+---
+# Only promotion step pods (flyway-migrate) need Postgres; nothing else in the
+# cluster, including this namespace's own app and loadgen, may connect.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: db
+spec:
+  podSelector:
+    matchLabels:
+      app: db
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    {{- range .Values.db.allowedClientNamespaces }}
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: {{ . }}
+    {{- end }}
+    ports:
+    - protocol: TCP
+      port: 5432
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -32,18 +97,29 @@ spec:
     spec:
       containers:
       - name: postgres
-        image: postgres:16-alpine
+        # Chainguard's free tier publishes only :latest (currently PG 18), rebuilt
+        # daily with zero known CVEs; postgres:16-alpine ships a CVE-laden gosu.
+        # Same docker-entrypoint env contract and PGDATA as the official image.
+        # Untagged-latest means k8s defaults imagePullPolicy to Always.
+        image: cgr.dev/chainguard/postgres:latest
         ports:
         - containerPort: 5432
         env:
         - name: POSTGRES_DB
           value: {{ .Values.db.name }}
         - name: POSTGRES_USER
+          value: postgres
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: admin-password
+        - name: APP_DB_USER
           valueFrom:
             secretKeyRef:
               name: db-credentials
               key: username
-        - name: POSTGRES_PASSWORD
+        - name: APP_DB_PASSWORD
           valueFrom:
             secretKeyRef:
               name: db-credentials
@@ -51,9 +127,13 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /var/lib/postgresql/data
+        # Chainguard's entrypoint reads init scripts from here, not the
+        # official image's /docker-entrypoint-initdb.d.
+        - name: init
+          mountPath: /var/lib/postgres/initdb
         readinessProbe:
           exec:
-            command: [pg_isready, -U, {{ .Values.db.user }}, -d, {{ .Values.db.name }}]
+            command: [sh, -c, 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"']
           initialDelaySeconds: 5
           periodSeconds: 5
         resources:
@@ -66,6 +146,9 @@ spec:
       - name: data
         emptyDir:
           sizeLimit: 256Mi
+      - name: init
+        configMap:
+          name: db-init
 ---
 apiVersion: v1
 kind: Service
