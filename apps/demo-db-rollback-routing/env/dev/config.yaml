@@ -1,14 +1,3 @@
 stage: dev
 hostPrefix: dbr-dev
-
-# PARKED 2026-09-20: pgweb CVE remediation (sosedoff/pgweb:0.16.2, 97 CVEs).
-# Everything in this namespace is scaled to zero and the public schema-viewer
-# Ingress is removed. replicaCount alone is NOT enough: postgres hardcodes
-# replicas, so each component is gated explicitly below.
-# Revert this block, then re-promote the stage so Flyway rebuilds the schema
-# (postgres uses emptyDir, so the data is gone until it does).
-replicaCount: 0
-loadgen:
-  enabled: false
-postgres:
-  enabled: false
+replicaCount: 1
