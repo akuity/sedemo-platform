@@ -24,7 +24,7 @@ spec:
   - title: Docker Image 
     description: The docker image carried by this Freight 
     #http://ghcr.io/akuity/sedemo-monorepo-rollouts-app:50-blue
-    url: '{{ (index .freight.images 0).repoURL }}:{{ (index .freight.images 0).tag }}'
+    url: 'https://{{ (index .freight.images 0).repoURL }}:{{ (index .freight.images 0).tag }}'
   promotionPolicies:
   - stageSelector:
       name: "regex:prod.*"
