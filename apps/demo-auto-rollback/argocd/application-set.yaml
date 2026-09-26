@@ -24,8 +24,8 @@ spec:
     spec:
       project: demo-auto-rollback
       source:
-        repoURL: https://github.com/akuity/sedemo-monorepo
-        targetRevision: env-auto-rollback/{{stage}}
+        repoURL: https://github.com/akuity/sedemo-platform
+        targetRevision: rendered/demo-auto-rollback/{{stage}}
         path: .
       destination:
         name: sedemo-primary
