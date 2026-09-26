@@ -7,10 +7,11 @@ spec:
   # Task-wide input variables
   vars:
   - name: gitRepo
+  - name: outRepo
   - name: sourceBranch
     value: main
   - name: targetBranch
-    value: env/${{ ctx.stage }}
+    value: rendered/demo-rollouts/${{ ctx.stage }}
   - name: path_src
     value: ./src
   - name: path_out
@@ -23,6 +24,10 @@ spec:
         checkout:
         - branch: ${{ vars.sourceBranch }}
           path: ${{ vars.path_src }}
+    - uses: git-clone
+      config:
+        repoURL: ${{ vars.outRepo }}
+        checkout:
         - branch: ${{ vars.targetBranch }}
           create: true
           path: ${{ vars.path_out }}
@@ -39,10 +44,11 @@ spec:
   # Task-wide input variables
   vars:
   - name: gitRepo
+  - name: outRepo
   - name: sourceBranch
     value: main
   - name: targetBranch
-    value: env/${{ ctx.stage }}
+    value: rendered/demo-rollouts/${{ ctx.stage }}
   - name: path_src
     value: ./src
   - name: path_out
@@ -79,7 +85,7 @@ spec:
       as: open-pr
       if: ${{ vars.asPR == "true" }}
       config:
-        repoURL: ${{ vars.gitRepo }}
+        repoURL: ${{ vars.outRepo }}
         description: "Promote ${{ imageFrom(vars.imageRepo).Tag }} to ${{ ctx.stage }}"
         createTargetBranch: true
         sourceBranch: ${{ task.outputs['pr-push'].branch }}

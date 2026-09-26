@@ -18,8 +18,8 @@ spec:
     spec:
       project: gatekeeper-stage
       source:
-        repoURL: https://github.com/akuity/sedemo-monorepo
-        targetRevision: env-gatekeeper-stage/{{stage}}
+        repoURL: https://github.com/akuity/sedemo-platform
+        targetRevision: rendered/gatekeeper-stage/{{stage}}
         path: .
       destination:
         name: sedemo-primary

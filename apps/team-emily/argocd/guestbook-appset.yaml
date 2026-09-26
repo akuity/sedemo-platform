@@ -20,7 +20,7 @@ spec:
       project: team-emily
       source:
         repoURL: https://github.com/akuity/sedemo-platform
-        targetRevision: stage/team-emily/{{stage}}
+        targetRevision: rendered/team-emily/{{stage}}
         path: .
       destination:
         name: sedemo-primary
