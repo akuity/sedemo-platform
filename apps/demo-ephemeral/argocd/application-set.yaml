@@ -1,5 +1,5 @@
 # Deploys the rendered manifests for each PR preview to the sedemo-primary cluster.
-# One ArgoCD Application per open PR, syncing from env-ephemeral/pr-<number>.
+# One ArgoCD Application per open PR, syncing from rendered/demo-ephemeral/review/pr-<number>.
 # Pruned automatically when the PR closes.
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
@@ -31,8 +31,8 @@ spec:
     spec:
       project: demo-ephemeral
       source:
-        repoURL: https://github.com/akuity/sedemo-monorepo
-        targetRevision: env-ephemeral/pr-{{number}}
+        repoURL: https://github.com/akuity/sedemo-platform
+        targetRevision: rendered/demo-ephemeral/review/pr-{{number}}
         path: .
       destination:
         name: sedemo-primary

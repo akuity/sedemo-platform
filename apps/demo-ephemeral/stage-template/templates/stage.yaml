@@ -16,12 +16,14 @@ spec:
       vars:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
+      - name: outRepo
+        value: https://github.com/akuity/sedemo-platform
       - name: platformRepo
         value: https://github.com/akuity/sedemo-platform
       - name: imageRepo
         value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
       - name: targetBranch
-        value: env-ephemeral/pr-{{ .Values.prNumber }}
+        value: rendered/demo-ephemeral/review/pr-{{ .Values.prNumber }}
       - name: previewURL
         value: https://pr-{{ .Values.prNumber }}.ephemeral.akpdemoapps.link
       steps:
@@ -33,10 +35,10 @@ spec:
           - branch: main
             path: ./src
 
-      # Clone sedemo-monorepo target branch for rendered manifest output
+      # Clone the target branch for rendered manifest output
       - uses: git-clone
         config:
-          repoURL: {{`${{ vars.gitRepo }}`}}
+          repoURL: {{`${{ vars.outRepo }}`}}
           checkout:
           - branch: {{`${{ vars.targetBranch }}`}}
             create: true
