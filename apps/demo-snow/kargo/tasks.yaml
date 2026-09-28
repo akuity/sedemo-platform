@@ -43,7 +43,6 @@ metadata:
 spec:
   # Task-wide input variables
   vars:
-  - name: gitRepo
   - name: outRepo
   - name: sourceBranch
     value: main

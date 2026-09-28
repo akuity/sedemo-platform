@@ -40,8 +40,6 @@ metadata:
   namespace: gatekeeper-stage
 spec:
   vars:
-  - name: gitRepo
-  - name: outRepo
   - name: imageRepo
   - name: targetBranch
     value: rendered/gatekeeper-stage/${{ ctx.stage }}
