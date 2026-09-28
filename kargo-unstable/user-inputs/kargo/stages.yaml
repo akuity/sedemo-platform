@@ -13,6 +13,46 @@ spec:
       name: some-warehouse
     sources:
       stages:
+      - staging
+  promotionTemplate:
+    spec:
+      steps:
+      - uses: compose-output
+        as: diff-link
+        config:
+          links:
+            - icon: faGithub
+              label: Link to Diff in VCS
+              tooltip: See diff for ${{ ctx.targetFreight.alias }}
+              url: https://github.com/akuity/sedemo-platform/commit/d7a90f2b6970e9650c7837b4d353b07f6ec85839
+      - task:
+          name: require-release-note
+      - uses: wait-for-approval
+        as: approve
+        config: {}            
+      - uses: record-audit-event
+        as: audit
+        retry:
+          errorThreshold: 3
+        config:
+          type: approved
+          message: "Release to ${{ ctx.stage }} approved by ${{ outputs.approve.responses[0].user }}."
+          actor: ${{ outputs.approve.responses[0].user }}
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: staging
+  namespace: user-inputs
+  annotations:
+    kargo.akuity.io/color: blue
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: some-warehouse
+    sources:
+      stages:
       - dev
   promotionTemplate:
     spec:

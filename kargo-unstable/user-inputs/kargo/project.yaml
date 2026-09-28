@@ -10,4 +10,13 @@ kind: ProjectConfig
 metadata:
   name: user-inputs
   namespace: user-inputs
-spec: {}
+spec: 
+  promotionWindows:
+  - name: us-offhours
+    stageSelector:
+      matchLabels:
+        environment: prod
+    kind: Allow
+    rrule: FREQ=DAILY
+    dtstart: TZID=America/New_York:20260101T220000
+    dtend: TZID=America/New_York:20260102T040000
