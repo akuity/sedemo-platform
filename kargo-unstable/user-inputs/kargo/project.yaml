@@ -14,8 +14,7 @@ spec:
   promotionWindows:
   - name: us-offhours
     stageSelector:
-      matchLabels:
-        environment: prod
+      name: prod
     kind: Allow
     rrule: FREQ=DAILY
     dtstart: TZID=America/New_York:20260101T220000
