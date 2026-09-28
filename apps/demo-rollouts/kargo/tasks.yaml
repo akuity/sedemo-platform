@@ -117,5 +117,5 @@ spec:
       as: wait-for-pr
       if: ${{ vars.asPR == "true" && status('open-pr') != 'Skipped' }}
       config:
-        repoURL: ${{ vars.gitRepo }}
+        repoURL: ${{ vars.outRepo }}
         prNumber: ${{ task.outputs['open-pr'].pr.id }}

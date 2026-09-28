@@ -85,7 +85,7 @@ spec:
       as: open-pr
       if: ${{ vars.asPR == "true" }}
       config:
-        repoURL: ${{ vars.gitRepo }}
+        repoURL: ${{ vars.outRepo }}
         createTargetBranch: true
         sourceBranch: ${{ task.outputs['pr-push'].branch }}
         targetBranch: ${{ vars.targetBranch }}
@@ -116,5 +116,5 @@ spec:
       as: wait-for-pr
       if: ${{ vars.asPR == "true" }}
       config:
-        repoURL: ${{ vars.gitRepo }}
+        repoURL: ${{ vars.outRepo }}
         prNumber: ${{ task.outputs['open-pr'].pr.id }}
