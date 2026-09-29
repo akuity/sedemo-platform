@@ -21,10 +21,12 @@ spec:
       vars:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
+      - name: outRepo
+        value: https://github.com/akuity/sedemo-platform
       - name: imageRepo
         value: argoproj/rollouts-demo
       - name: targetBranch
-        value: env-auto-rollback/dev 
+        value: rendered/demo-auto-rollback/dev
       - name: path_src
         value: ./src
       - name: path_out
@@ -76,10 +78,12 @@ spec:
       vars:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
+      - name: outRepo
+        value: https://github.com/akuity/sedemo-platform
       - name: imageRepo
         value: argoproj/rollouts-demo
       - name: targetBranch
-        value: env-auto-rollback/staging
+        value: rendered/demo-auto-rollback/staging
       - name: path_src
         value: ./src
       - name: path_out
@@ -106,7 +110,7 @@ spec:
           name: push-manifests
         vars:
         - name: targetBranch
-          value: env-auto-rollback/staging
+          value: rendered/demo-auto-rollback/staging
       - uses: argocd-update
         continueOnError: true
         config:
@@ -145,6 +149,8 @@ spec:
       vars:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
+      - name: outRepo
+        value: https://github.com/akuity/sedemo-platform
       - name: imageRepo
         value: argoproj/rollouts-demo
       - name: region
@@ -175,7 +181,7 @@ spec:
           name: push-manifests
         vars:
         - name: targetBranch
-          value: env-auto-rollback/prod-amer-east
+          value: rendered/demo-auto-rollback/prod-amer-east
       - uses: argocd-update
         continueOnError: true
         config:
@@ -213,6 +219,8 @@ spec:
       vars:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
+      - name: outRepo
+        value: https://github.com/akuity/sedemo-platform
       - name: imageRepo
         value: argoproj/rollouts-demo
       - name: region
@@ -243,7 +251,7 @@ spec:
           name: push-manifests
         vars:
         - name: targetBranch
-          value: env-auto-rollback/prod-amer-west
+          value: rendered/demo-auto-rollback/prod-amer-west
       - uses: argocd-update
         continueOnError: true
         config:

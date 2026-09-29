@@ -42,7 +42,7 @@ spec:
           checkout:
           - branch: {{ .Values.git.main }}
             path: ./src
-          - branch: env/{{ .Values.application.name }}-dev
+          - branch: rendered/{{ .Values.application.name }}/dev
             create: true
             path: ./out
       - uses: git-clear
@@ -99,7 +99,7 @@ spec:
       - uses: git-push
         config:
           path: ./out
-          targetBranch: env/{{ .Values.application.name }}-dev
+          targetBranch: rendered/{{ .Values.application.name }}/dev
       - uses: argocd-update
         continueOnError: true
         config:
@@ -145,7 +145,7 @@ spec:
           checkout:
           - branch: {{ .Values.git.main }}
             path: ./src
-          - branch: env/{{ .Values.application.name }}-staging
+          - branch: rendered/{{ .Values.application.name }}/staging
             create: true
             path: ./out
       - uses: git-clear
@@ -178,7 +178,7 @@ spec:
       - uses: git-push
         config:
           path: ./out
-          targetBranch: env/{{ .Values.application.name }}-staging
+          targetBranch: rendered/{{ .Values.application.name }}/staging
       - uses: argocd-update
         continueOnError: true
         config:
@@ -232,7 +232,7 @@ spec:
           checkout:
           - branch: {{ .Values.git.main }}
             path: ./src
-          - branch: env/{{ .Values.application.name }}-prod
+          - branch: rendered/{{ .Values.application.name }}/prod
             create: true
             path: ./out
       - uses: git-clear
@@ -273,7 +273,7 @@ spec:
           repoURL: {{ .Values.repoUrl }}
           createTargetBranch: true
           sourceBranch: {{`${{ outputs['push'].branch }}`}}
-          targetBranch: env/{{ .Values.application.name }}-prod
+          targetBranch: rendered/{{ .Values.application.name }}/prod
       {{ if .Values.notifications.slack.enabled }}
       - uses: send-message
         config:

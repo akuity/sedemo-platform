@@ -35,8 +35,8 @@ spec:
     spec:
       project: demo-snow
       source:
-        repoURL: https://github.com/akuity/sedemo-monorepo
-        targetRevision: env-snow-demo/{{stage}}
+        repoURL: https://github.com/akuity/sedemo-platform
+        targetRevision: rendered/demo-snow/{{stage}}
         path: "{{component}}"
       destination:
         name: sedemo-primary

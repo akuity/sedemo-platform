@@ -15,7 +15,7 @@ spec:
       checkout:
       - branch: main
         path: ./src
-      - branch: stage/team-emily/${{ ctx.stage }}
+      - branch: rendered/team-emily/${{ ctx.stage }}
         create: true
         path: ./out
   - uses: git-clear
@@ -41,7 +41,7 @@ spec:
   - uses: git-push
     config:
       path: ./out
-      targetBranch: stage/team-emily/${{ ctx.stage }}
+      targetBranch: rendered/team-emily/${{ ctx.stage }}
   - uses: argocd-update
     config:
       apps:

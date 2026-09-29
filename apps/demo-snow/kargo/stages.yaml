@@ -28,10 +28,12 @@ spec:
       vars:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
+      - name: outRepo
+        value: https://github.com/akuity/sedemo-platform
       - name: imageRepo
         value: ghcr.io/akuity/sedemo-monorepo-snow-demo
       - name: targetBranch
-        value: env-snow-demo/dev 
+        value: rendered/demo-snow/dev
       - name: path_src
         value: ./src
       - name: path_out
@@ -101,10 +103,12 @@ spec:
       vars:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
+      - name: outRepo
+        value: https://github.com/akuity/sedemo-platform
       - name: imageRepo
         value: ghcr.io/akuity/sedemo-monorepo-snow-demo
       - name: targetBranch
-        value: env-snow-demo/staging
+        value: rendered/demo-snow/staging
       - name: path_src
         value: ./src
       - name: path_out
@@ -164,10 +168,12 @@ spec:
       vars:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
+      - name: outRepo
+        value: https://github.com/akuity/sedemo-platform
       - name: imageRepo
         value: ghcr.io/akuity/sedemo-monorepo-snow-demo
       - name: targetBranch
-        value: env-snow-demo/prod
+        value: rendered/demo-snow/prod
       - name: path_src
         value: ./src
       - name: path_out
@@ -356,6 +362,8 @@ spec:
       vars:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
+      - name: outRepo
+        value: https://github.com/akuity/sedemo-platform
       - name: imageRepo
         value: ghcr.io/akuity/sedemo-monorepo-snow-demo
       - name: region
@@ -365,9 +373,9 @@ spec:
           name: prepare-workdir
         vars  :
         - name: sourceBranch
-          value: env-snow-demo/prod
+          value: rendered/demo-snow/prod
         - name: targetBranch
-          value: env-snow-demo/prod-${{ vars.region }}
+          value: rendered/demo-snow/prod-${{ vars.region }}
       - uses: copy
         config:
           inPath: ./src/prod-amer-east
@@ -380,9 +388,9 @@ spec:
           name: push-manifests
         vars:
         - name: sourceBranch
-          value: env-snow-demo/prod
+          value: rendered/demo-snow/prod
         - name: targetBranch
-          value: env-snow-demo/prod-${{ vars.region }}
+          value: rendered/demo-snow/prod-${{ vars.region }}
       - uses: argocd-update
         as: argocd-update
         continueOnError: true
@@ -435,6 +443,8 @@ spec:
       vars:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
+      - name: outRepo
+        value: https://github.com/akuity/sedemo-platform
       - name: imageRepo
         value: ghcr.io/akuity/sedemo-monorepo-snow-demo
       - name: region
@@ -444,9 +454,9 @@ spec:
           name: prepare-workdir
         vars:
         - name: sourceBranch
-          value: env-snow-demo/prod
+          value: rendered/demo-snow/prod
         - name: targetBranch
-          value: env-snow-demo/prod-${{ vars.region }}
+          value: rendered/demo-snow/prod-${{ vars.region }}
       - uses: copy
         config:
           inPath: ./src/prod-amer-west
@@ -459,9 +469,9 @@ spec:
           name: push-manifests
         vars:
         - name: sourceBranch
-          value: env-snow-demo/prod
+          value: rendered/demo-snow/prod
         - name: targetBranch
-          value: env-snow-demo/prod-${{ vars.region }}
+          value: rendered/demo-snow/prod-${{ vars.region }}
       - uses: argocd-update
         continueOnError: true
         config:
@@ -509,6 +519,8 @@ spec:
       vars:
       - name: gitRepo
         value: https://github.com/akuity/sedemo-monorepo
+      - name: outRepo
+        value: https://github.com/akuity/sedemo-platform
       - name: imageRepo
         value: ghcr.io/akuity/sedemo-monorepo-snow-demo
       - name: region
@@ -518,9 +530,9 @@ spec:
           name: prepare-workdir
         vars:
         - name: sourceBranch
-          value: env-snow-demo/prod
+          value: rendered/demo-snow/prod
         - name: targetBranch
-          value: env-snow-demo/prod-${{ vars.region }}
+          value: rendered/demo-snow/prod-${{ vars.region }}
       - uses: copy
         config:
           inPath: ./src/prod-emea
@@ -533,9 +545,9 @@ spec:
           name: push-manifests
         vars:
         - name: sourceBranch
-          value: env-snow-demo/prod
+          value: rendered/demo-snow/prod
         - name: targetBranch
-          value: env-snow-demo/prod-${{ vars.region }}
+          value: rendered/demo-snow/prod-${{ vars.region }}
       - uses: argocd-update
         continueOnError: true
         config:

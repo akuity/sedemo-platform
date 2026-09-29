@@ -122,7 +122,11 @@ spec:
           checkout:
           - branch: main
             path: ${{ vars.path_src }}
-          - branch: env-eddie/dev/${{ outputs['find-primary'].primaryCluster }}
+      - uses: git-clone
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          checkout:
+          - branch: rendered/team-eddie/dev-${{ outputs['find-primary'].primaryCluster }}
             create: true
             path: ${{ vars.path_out }}
       - uses: git-clear
@@ -156,7 +160,7 @@ spec:
         as: push
         config:
           path: ${{ vars.path_out }}
-          targetBranch: env-eddie/dev/${{ outputs['find-primary'].primaryCluster }}
+          targetBranch: rendered/team-eddie/dev-${{ outputs['find-primary'].primaryCluster }}
       # Now two conditional argocd-update steps to deploy the primary, using a conditional if
       - uses: argocd-update
         as: deploy-cluster-a
@@ -226,7 +230,11 @@ spec:
           checkout:
           - branch: main
             path: ${{ vars.path_src }}
-          - branch: env-eddie/dev/${{ outputs['find-secondary'].secondaryCluster }}
+      - uses: git-clone
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          checkout:
+          - branch: rendered/team-eddie/dev-${{ outputs['find-secondary'].secondaryCluster }}
             create: true
             path: ${{ vars.path_out }}
       - uses: git-clear
@@ -260,7 +268,7 @@ spec:
         as: push
         config:
           path: ${{ vars.path_out }}
-          targetBranch: env-eddie/dev/${{ outputs['find-secondary'].secondaryCluster }}
+          targetBranch: rendered/team-eddie/dev-${{ outputs['find-secondary'].secondaryCluster }}
       # Now two conditional argocd-update steps to deploy the secondary, using a conditional if
       - uses: argocd-update
         as: deploy-cluster-a
@@ -436,7 +444,11 @@ spec:
           checkout:
           - branch: main
             path: ${{ vars.path_src }}
-          - branch: env-eddie/staging/${{ outputs['find-primary'].primaryCluster }}
+      - uses: git-clone
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          checkout:
+          - branch: rendered/team-eddie/staging-${{ outputs['find-primary'].primaryCluster }}
             create: true
             path: ${{ vars.path_out }}
       - uses: git-clear
@@ -470,7 +482,7 @@ spec:
         as: push
         config:
           path: ${{ vars.path_out }}
-          targetBranch: env-eddie/staging/${{ outputs['find-primary'].primaryCluster }}
+          targetBranch: rendered/team-eddie/staging-${{ outputs['find-primary'].primaryCluster }}
       # Now two conditional argocd-update steps to deploy the primary, using a conditional if
       - uses: argocd-update
         as: deploy-cluster-a
@@ -532,7 +544,11 @@ spec:
           checkout:
           - branch: main
             path: ${{ vars.path_src }}
-          - branch: env-eddie/staging/${{ outputs['find-secondary'].secondaryCluster }}
+      - uses: git-clone
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          checkout:
+          - branch: rendered/team-eddie/staging-${{ outputs['find-secondary'].secondaryCluster }}
             create: true
             path: ${{ vars.path_out }}
       - uses: git-clear
@@ -566,7 +582,7 @@ spec:
         as: push
         config:
           path: ${{ vars.path_out }}
-          targetBranch: env-eddie/staging/${{ outputs['find-secondary'].secondaryCluster }}
+          targetBranch: rendered/team-eddie/staging-${{ outputs['find-secondary'].secondaryCluster }}
       # Now two conditional argocd-update steps to deploy the secondary, using a conditional if
       - uses: argocd-update
         as: deploy-cluster-a

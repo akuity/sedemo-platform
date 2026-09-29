@@ -14,7 +14,7 @@ spec:
   source:
   #pull custom values from team managed monorepo folder (rendered by Kargo)
     repoURL: '{{$.Values.repoUrl}}'
-    targetRevision: env/{{ $.Values.application.name }}-{{$key}}
+    targetRevision: rendered/{{ $.Values.application.name }}/{{$key}}
     path: .
   destination:
     name: sedemo-primary
