@@ -176,9 +176,46 @@ spec:
           path: ./out
           message: "Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }} to staging [skip ci]"
       - uses: git-push
+        as: push
         config:
           path: ./out
+          generateTargetBranch: true
+      - uses: git-open-pr
+        as: open-pr
+        config:
+          repoURL: {{ .Values.repoUrl }}
+          createTargetBranch: true
+          sourceBranch: {{`${{ outputs['push'].branch }}`}}
           targetBranch: env/{{ .Values.application.name }}-staging
+          description: "Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }} to staging\n"https://kargo.akpdemoapps.link/project/{{ .Values.application.name }}/promotion/{{`${{ ctx.promotion }}`}}""
+      {{ if .Values.notifications.slack.enabled }}
+      - uses: send-message
+        config:
+          channel:
+            kind: MessageChannel
+            name: kargo-notifications
+          message: |
+            blocks:
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: "*Kargo Approval Needed* :eyes:"
+              - type: section
+                fields:
+                  - type: mrkdwn
+                    text: "*Stage:* {{`${{ ctx.stage }}`}}"
+                  - type: mrkdwn
+                    text: "*Version:* {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}"
+                  - type: mrkdwn
+                    text: "*Pull Request:* <{{`${{ outputs['open-pr'].pr.url }}`}}|#{{`${{ outputs['open-pr'].pr.id }}`}}>"
+            icon_emoji: ":rocket:"
+          encodingType: yaml
+      {{ end }}
+      - uses: git-wait-for-pr
+        as: wait-for-pr
+        config:
+          repoURL: {{ .Values.repoUrl }}
+          prNumber: {{`${{ outputs['open-pr'].pr.id }}`}}
       - uses: argocd-update
         continueOnError: true
         config:
@@ -297,8 +334,24 @@ spec:
             icon_emoji: ":rocket:"
           encodingType: yaml
       {{ end }}
-      - uses: git-wait-for-pr
-        as: wait-for-pr
+
+      - uses: wait-for-approval
+        as: approve
+        config: 
+          approvers:
+          - claim: groups
+            value: sedemo-approvers
+            required: true
+
+      - uses: record-audit-event
+        as: audit
+        retry:
+          errorThreshold: 3
+        config:
+          type: approved
+          message: "Release to ${{ ctx.stage }} approved by ${{ outputs.approve.responses[0].user }}."
+          actor: ${{ outputs.approve.responses[0].user }}
+      - uses: git-merge-pr
         config:
           repoURL: {{ .Values.repoUrl }}
           prNumber: {{`${{ outputs['open-pr'].pr.id }}`}}
