@@ -325,7 +325,7 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/akuity/sedemo-monorepo
+        value: https://github.com/akuity/sedemo-platform
       - name: outRepo
         value: https://github.com/akuity/sedemo-platform
       - name: imageRepo
@@ -379,7 +379,7 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/akuity/sedemo-monorepo
+        value: https://github.com/akuity/sedemo-platform
       - name: outRepo
         value: https://github.com/akuity/sedemo-platform
       - name: imageRepo
@@ -433,7 +433,7 @@ spec:
     spec:
       vars:
       - name: gitRepo
-        value: https://github.com/akuity/sedemo-monorepo
+        value: https://github.com/akuity/sedemo-platform
       - name: outRepo
         value: https://github.com/akuity/sedemo-platform
       - name: imageRepo
