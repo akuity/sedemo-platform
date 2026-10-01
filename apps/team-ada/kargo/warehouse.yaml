@@ -19,7 +19,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
-  interval: 5m
+  interval: 5m0s
   # Chart and image are discovered independently; only create Freight when
   # both come from the same commit (same timestamp and sha). CI pushes the
   # image before the chart, so a mismatch is transient.
@@ -50,7 +50,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
-  interval: 5m
+  interval: 5m0s
   subscriptions:
   - chart:
       repoURL: oci://ghcr.io/adamancini/charts/akkoma
