@@ -3,7 +3,7 @@ values:
   image:
     tag: v3.20.0
   akkoma:
-    domain: akkoma-dev.example.com
+    domain: akkoma-dev.akpdemoapps.link
     adminEmail: admin@example.com
   externalSecret:
     name: team-ada-app-secrets

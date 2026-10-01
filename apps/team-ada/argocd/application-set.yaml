@@ -66,8 +66,16 @@ spec:
                 persistence:
                   enabled: false
                 size: 1Gi
+            # Host comes from akkoma.domain (akkoma-<stage>.akpdemoapps.link),
+            # served by the *.akpdemoapps.link wildcard record to
+            # sedemo-primary's nginx ingress; cert-manager issues the cert.
             ingress:
-              enabled: false
+              enabled: true
+              className: nginx
+              annotations:
+                cert-manager.io/cluster-issuer: letsencrypt-prod
+              tls:
+                enabled: true
             image:
               tag: '{{.values.image.tag}}'
             # Same demo-footprint reasoning as postgresql.resources above.

@@ -15,7 +15,17 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
+  stageLinks:
+  - title: Akkoma
+    description: The Akkoma instance running at this stage
+    url: 'https://akkoma-{{ .stage.metadata.name }}.akpdemoapps.link/'
+  # `release` and `prod` are deliberately absent: both are manual.
   promotionPolicies:
+  # Every commit on akkoma-helm main.
   - stageSelector:
       name: dev
+    autoPromotionEnabled: true
+  # Every new chart release. Blocks until QA moves the Jira ticket to UAT.
+  - stageSelector:
+      name: staging
     autoPromotionEnabled: true
