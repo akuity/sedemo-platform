@@ -7,6 +7,10 @@
 # Each metric takes 3 measurements 20s apart and tolerates one failure, so a
 # pod that only just turned Ready doesn't fail the verification.
 #
+# Caveat: some Argo Rollouts versions treat a 2xx response that isn't JSON as
+# a success without evaluating successCondition. Akkoma itself only returns
+# JSON on these paths; an HTML 200 from something in front of it could pass.
+#
 # yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/argoproj.io/analysistemplate_v1alpha1.json
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
@@ -47,8 +51,9 @@ spec:
         url: https://{{ args.domain }}/nodeinfo/2.0.json
         timeoutSeconds: 10
         jsonPath: '{$.software.name}'
-  # It runs the Akkoma version this Freight's image claims
-  # (nodeinfo reports e.g. 3.20.0-v3-20-0 for image v3.20.0).
+  # It runs the Akkoma version this Freight's image claims. nodeinfo reports
+  # e.g. 3.20.0-v3-20-0 for image v3.20.0; match the version exactly or
+  # followed by '-', so 3.20.1 doesn't accept 3.20.10.
   - name: nodeinfo-version
     initialDelay: 15s
     count: 3
@@ -56,7 +61,8 @@ spec:
     failureLimit: 1
     successCondition: >-
       '{{ args.akkoma-version }}' == 'any' ||
-      result startsWith '{{ args.akkoma-version }}'
+      result == '{{ args.akkoma-version }}' ||
+      result startsWith '{{ args.akkoma-version }}-'
     provider:
       web:
         url: https://{{ args.domain }}/nodeinfo/2.0.json
