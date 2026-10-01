@@ -19,3 +19,7 @@ spec:
   - stageSelector:
       name: dev
     autoPromotionEnabled: true
+  # Auto-promotions to staging block until QA moves the Jira ticket to UAT.
+  - stageSelector:
+      name: staging
+    autoPromotionEnabled: true

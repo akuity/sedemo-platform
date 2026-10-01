@@ -1,3 +1,21 @@
+# One Jira ticket follows each Freight through the whole pipeline:
+#
+#   dev      (QA) deploy, then create the ticket in CHANGE (status Open). The
+#            jira step stores the issue key in Freight metadata
+#            (`jira-issue-key`) automatically.
+#   staging  (UAT) auto-promoted; waits for QA to move the ticket to UAT
+#            ("Approve for Testing"), deploys, comments on the same ticket.
+#   prod     waits for the same ticket to be Approved (VP sign-off), deploys,
+#            comments.
+#
+# CHANGE workflow: Open -> UAT -> Approved, with Declined from anywhere.
+# `Approved` is a global transition, so a ticket approved straight from Open
+# never reaches UAT and the staging promotion keeps waiting -- move tickets
+# through UAT first.
+#
+# Kargo gates on the ticket's status, not on who set it -- the Jira workflow's
+# transition permissions decide who may approve.
+#
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -25,9 +43,39 @@ spec:
       value: ${{ imageFrom("ghcr.io/adamancini/akkoma").Tag }}
   promotionTemplate:
     spec:
+      vars:
+      - name: jiraProject
+        value: CHANGE
+      - name: jiraURL
+        value: https://eddiewebb.atlassian.net
+      - name: chartVersion
+        value: ${{ chartFrom("oci://ghcr.io/adamancini/charts/akkoma").Version }}
+      - name: imageTag
+        value: ${{ imageFrom("ghcr.io/adamancini/akkoma").Tag }}
       steps:
       - task:
           name: promote
+      - uses: jira
+        as: create-release-ticket
+        config:
+          credentials:
+            sharedSecretName: jira-access-secret
+          createIssue:
+            projectKey: ${{ vars.jiraProject }}
+            issueType: Task
+            summary: "[team-ada] Release akkoma chart ${{ vars.chartVersion }}, image ${{ vars.imageTag }}"
+            description: "Deployed to ${{ ctx.stage }} (QA). Approve for Testing to release to staging (UAT), then Approve to release to prod. Freight: ${{ ctx.targetFreight.name }}. Promotion: ${{ ctx.promotion }}."
+            labels:
+            - team-ada
+            - release-${{ vars.chartVersion }}
+      - uses: compose-output
+        as: links
+        config:
+          links:
+          - icon: faJira
+            label: ${{ outputs['create-release-ticket'].key }}
+            tooltip: Release ticket for this Freight
+            url: ${{ vars.jiraURL }}/browse/${{ outputs['create-release-ticket'].key }}
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
@@ -49,9 +97,30 @@ spec:
       - dev
   promotionTemplate:
     spec:
+      vars:
+      - name: approvedStatus
+        value: UAT
+      - name: issueKey
+        value: ${{ freightMetadata(ctx.targetFreight.name)['jira-issue-key'] }}
       steps:
+      - uses: jira
+        as: wait-for-qa-approval
+        config:
+          credentials:
+            sharedSecretName: jira-access-secret
+          waitForStatus:
+            issueKey: ${{ vars.issueKey }}
+            expectedStatus: ${{ vars.approvedStatus }}
+            pollInterval: 30s
       - task:
           name: promote
+      - uses: jira
+        config:
+          credentials:
+            sharedSecretName: jira-access-secret
+          commentOnIssue:
+            issueKey: ${{ vars.issueKey }}
+            body: "Deployed to ${{ ctx.stage }} (UAT) after QA approval. Promotion: ${{ ctx.promotion }}. Approve this ticket to release to prod."
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
@@ -73,6 +142,27 @@ spec:
       - staging
   promotionTemplate:
     spec:
+      vars:
+      - name: approvedStatus
+        value: Approved
+      - name: issueKey
+        value: ${{ freightMetadata(ctx.targetFreight.name)['jira-issue-key'] }}
       steps:
+      - uses: jira
+        as: wait-for-vp-approval
+        config:
+          credentials:
+            sharedSecretName: jira-access-secret
+          waitForStatus:
+            issueKey: ${{ vars.issueKey }}
+            expectedStatus: ${{ vars.approvedStatus }}
+            pollInterval: 30s
       - task:
           name: promote
+      - uses: jira
+        config:
+          credentials:
+            sharedSecretName: jira-access-secret
+          commentOnIssue:
+            issueKey: ${{ vars.issueKey }}
+            body: "Deployed to ${{ ctx.stage }} after VP approval. Promotion: ${{ ctx.promotion }}."
