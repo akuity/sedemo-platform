@@ -21,6 +21,17 @@ Warehouse: akkoma (chart + image)  →  dev (auto)  →  staging (auto, Jira QA 
 | `staging` | `team-ada-staging` | yes (blocks until the Jira ticket reaches `UAT`) |
 | `prod` | `team-ada-prod` | no |
 
+## URLs
+
+Each stage is served at `https://akkoma-<stage>.akpdemoapps.link/`:
+[dev](https://akkoma-dev.akpdemoapps.link/) ·
+[staging](https://akkoma-staging.akpdemoapps.link/) ·
+[prod](https://akkoma-prod.akpdemoapps.link/). The host comes from
+`akkoma.domain` in `env/<stage>/release.yaml`. The `*.akpdemoapps.link`
+wildcard record already points at `sedemo-primary`'s nginx ingress, and
+cert-manager's `letsencrypt-prod` issuer provisions the TLS certificate.
+Each Kargo stage card links to its instance via `stageLinks`.
+
 ## Jira approval gates
 
 One Jira ticket follows each Freight from dev to prod, using the `CHANGE`
