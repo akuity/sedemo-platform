@@ -45,12 +45,13 @@ spec:
       direct: true
   verification:
     analysisTemplates:
-    - name: akkoma-chart-lint-test
+    - name: akkoma-smoke-test
     args:
-    - name: chart-version
-      value: ${{ chartFrom("oci://ghcr.io/adamancini/charts/akkoma").Version }}
-    - name: image-tag
-      value: ${{ imageFrom("ghcr.io/adamancini/akkoma").Tag }}
+    - name: domain
+      value: akkoma-dev.akpdemoapps.link
+    # main-<ts>-<sha8> doesn't carry the Akkoma version; skip that check.
+    - name: akkoma-version
+      value: any
   promotionTemplate:
     spec:
       steps:
@@ -157,6 +158,15 @@ spec:
       name: akkoma-release
     sources:
       direct: true
+  verification:
+    analysisTemplates:
+    - name: akkoma-smoke-test
+    args:
+    - name: domain
+      value: akkoma-staging.akpdemoapps.link
+    # Release images are tagged with the Akkoma version (vX.Y.Z).
+    - name: akkoma-version
+      value: ${{ quote(trimPrefix(imageFrom("ghcr.io/adamancini/akkoma").Tag, 'v')) }}
   promotionTemplate:
     spec:
       vars:
@@ -261,6 +271,15 @@ spec:
     sources:
       stages:
       - staging
+  verification:
+    analysisTemplates:
+    - name: akkoma-smoke-test
+    args:
+    - name: domain
+      value: akkoma-prod.akpdemoapps.link
+    # Release images are tagged with the Akkoma version (vX.Y.Z).
+    - name: akkoma-version
+      value: ${{ quote(trimPrefix(imageFrom("ghcr.io/adamancini/akkoma").Tag, 'v')) }}
   promotionTemplate:
     spec:
       vars:

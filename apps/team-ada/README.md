@@ -34,6 +34,21 @@ akkoma-release  →  staging (auto, Jira QA gate)   →  prod (manual, Jira VP g
 | `staging` | `team-ada-staging` | yes (blocks until the Jira ticket reaches `UAT`) | `akkoma-release` |
 | `prod` | `team-ada-prod` | no | `akkoma-release`, via `staging` |
 
+## Verification
+
+After every promotion, Kargo runs [`akkoma-smoke-test`](./kargo/analysis-templates.yaml)
+against the stage's public URL:
+
+- `/api/v1/instance` answers and reports the stage's own host;
+- nodeinfo reports software `akkoma`;
+- on staging and prod, nodeinfo's version matches the Freight's `vX.Y.Z`
+  image. Dev's `main-<ts>-<sha8>` tag doesn't carry the version, so dev skips
+  this check.
+
+A Freight that fails it isn't verified in that stage, so it can't move on:
+dev → `release`, staging → prod. Chart lint, render and install tests run in
+akkoma-helm's CI on every PR.
+
 ## Cutting a release
 
 1. In Kargo, pick the dev-verified Freight you want to release and set its
