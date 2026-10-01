@@ -46,3 +46,29 @@ done
 
 Both should report `SecretSynced` once the AWS Secrets Manager entries
 exist and ESO has completed a refresh cycle (up to `refreshInterval: 1h`).
+
+## Kargo: dispatching akkoma-helm releases
+
+The `release` Stage runs `adamancini/akkoma-helm`'s `release.yml` through
+`gha-dispatch-workflow` / `gha-wait-for-workflow`. Those steps use the Git
+repository credentials Kargo has for that repo, which come from the
+`team-ada-akkoma-helm-creds` `ExternalSecret` in
+[`secrets/kargo-sync-secrets.yaml`](../../secrets/kargo-sync-secrets.yaml)
+(synced to Kargo's shared resources, so other projects can use it as well).
+
+Create a fine-grained GitHub PAT owned by `adamancini`, limited to the
+`adamancini/akkoma-helm` repository, with **Actions: Read and write** (no
+other permissions needed), then store it:
+
+```bash
+aws secretsmanager create-secret \
+  --region us-west-2 \
+  --name team-ada-akkoma-helm-gha \
+  --secret-string "{\"pat\":\"<token>\"}"
+```
+
+Until it exists, promotions to `release` fail at the dispatch step with an
+authentication error. Nothing else depends on it: dev, staging and prod keep
+working, and releases can still be cut by hand with
+`gh workflow run release.yml -f sha=<commit> -f version=X.Y.Z` in
+akkoma-helm.

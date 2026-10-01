@@ -1,12 +1,22 @@
-# One Jira ticket follows each Freight through the whole pipeline:
+# Two lanes (see warehouse.yaml):
 #
-#   dev      (QA) deploy, then create the ticket in CHANGE (status Open). The
-#            jira step stores the issue key in Freight metadata
-#            (`jira-issue-key`) automatically.
-#   staging  (UAT) auto-promoted; waits for QA to move the ticket to UAT
-#            ("Approve for Testing"), deploys, comments on the same ticket.
-#   prod     waits for the same ticket to be Approved (VP sign-off), deploys,
-#            comments.
+#   akkoma-main:     dev -> release
+#     dev      auto-promotes every commit on akkoma-helm main (dev chart +
+#              its image) and verifies it. No Jira ticket: that would be one
+#              per merge.
+#     release  manual. Cuts chart release X.Y.Z from the dev Freight's commit
+#              by dispatching akkoma-helm's release.yml and waiting for it.
+#              The version comes from the Freight's alias: rename it (e.g.
+#              v0.7.0) before promoting. Deploys nothing.
+#
+#   akkoma-release:  staging -> prod
+#     staging  (UAT) auto-promoted when a release appears. Creates the
+#              release's Jira ticket in CHANGE (status Open) -- the jira step
+#              stores its key in the Freight's metadata (`jira-issue-key`) --
+#              then waits for QA to move it to UAT ("Approve for Testing"),
+#              deploys, and comments.
+#     prod     waits for the same ticket to be Approved (VP sign-off),
+#              deploys, comments.
 #
 # CHANGE workflow: Open -> UAT -> Approved, with Declined from anywhere.
 # `Approved` is a global transition, so a ticket approved straight from Open
@@ -30,7 +40,7 @@ spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: akkoma
+      name: akkoma-main
     sources:
       direct: true
   verification:
@@ -43,39 +53,92 @@ spec:
       value: ${{ imageFrom("ghcr.io/adamancini/akkoma").Tag }}
   promotionTemplate:
     spec:
-      vars:
-      - name: jiraProject
-        value: CHANGE
-      - name: jiraURL
-        value: https://eddiewebb.atlassian.net
-      - name: chartVersion
-        value: ${{ chartFrom("oci://ghcr.io/adamancini/charts/akkoma").Version }}
-      - name: imageTag
-        value: ${{ imageFrom("ghcr.io/adamancini/akkoma").Tag }}
       steps:
       - task:
           name: promote
-      - uses: jira
-        as: create-release-ticket
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: release
+  namespace: team-ada
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    kargo.akuity.io/color: violet
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: akkoma-main
+    # Freight must have passed dev verification (or been manually approved
+    # for release) to be released.
+    sources:
+      stages:
+      - dev
+  promotionTemplate:
+    spec:
+      vars:
+      - name: chart
+        value: oci://ghcr.io/adamancini/charts/akkoma
+      - name: repoURL
+        value: https://github.com/adamancini/akkoma-helm
+      steps:
+      # Read the alias once: vars and ctx are re-evaluated on every step, so
+      # renaming the alias mid-release would otherwise change what gets
+      # recorded. TODO: replace with get-user-input (a form in the promotion)
+      # once the instance runs Kargo >= v1.12 on the Akuity Platform.
+      - uses: compose-output
+        as: rel
         config:
-          credentials:
-            sharedSecretName: jira-access-secret
-          createIssue:
-            projectKey: ${{ vars.jiraProject }}
-            issueType: Task
-            summary: "[team-ada] Release akkoma chart ${{ vars.chartVersion }}, image ${{ vars.imageTag }}"
-            description: "Deployed to ${{ ctx.stage }} (QA). Approve for Testing to release to staging (UAT), then Approve to release to prod. Freight: ${{ ctx.targetFreight.name }}. Promotion: ${{ ctx.promotion }}."
-            labels:
-            - team-ada
-            - release-${{ vars.chartVersion }}
+          alias: ${{ quote(ctx.targetFreight.alias) }}
+          version: ${{ quote(trimPrefix(ctx.targetFreight.alias, 'v')) }}
+          # dev chart version is 0.0.0-main.<ts>.g<sha8>. quote(): an
+          # all-digit sha would otherwise be turned into a number.
+          sha: ${{ quote(split(chartFrom(vars.chart).Version, '.g')[1]) }}
+      - uses: fail
+        if: ${{ !(outputs.rel.alias matches '^v?[0-9]+\\.[0-9]+\\.[0-9]+$') }}
+        config:
+          message: >-
+            Set this Freight's alias to the release version (e.g. v0.7.0)
+            before promoting it to release. Its alias is
+            '${{ outputs.rel.alias }}'.
+      # release.yml enforces the packaging rules (version newer than the last
+      # release, write-once image tag, ...) and fails the run if one is broken.
+      - uses: gha-dispatch-workflow
+        as: dispatch
+        config:
+          repoURL: ${{ vars.repoURL }}
+          workflowFile: release.yml
+          ref: main
+          inputs:
+            sha: ${{ quote(outputs.rel.sha) }}
+            version: ${{ quote(outputs.rel.version) }}
+          timeout: 120
+      - uses: gha-wait-for-workflow
+        config:
+          repoURL: ${{ vars.repoURL }}
+          runID: ${{ outputs.dispatch.runID }}
+          expectedConclusion: success
+          pollInterval: 30s
+      # The alias can be renamed later; this records what was released.
+      - uses: set-metadata
+        config:
+          updates:
+          - kind: Freight
+            name: ${{ ctx.targetFreight.name }}
+            values:
+              releasedAs: ${{ quote(outputs.rel.version) }}
+              releasedBy: ${{ ctx.meta.promotion.actor }}
+              releaseRun: ${{ vars.repoURL }}/actions/runs/${{ outputs.dispatch.runID }}
       - uses: compose-output
         as: links
         config:
           links:
-          - icon: faJira
-            label: ${{ outputs['create-release-ticket'].key }}
-            tooltip: Release ticket for this Freight
-            url: ${{ vars.jiraURL }}/browse/${{ outputs['create-release-ticket'].key }}
+          - icon: faGithub
+            label: chart ${{ outputs.rel.version }}
+            tooltip: GitHub release for this chart version
+            url: ${{ vars.repoURL }}/releases/tag/chart-v${{ outputs.rel.version }}
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
@@ -91,25 +154,75 @@ spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: akkoma
+      name: akkoma-release
     sources:
-      stages:
-      - dev
+      direct: true
   promotionTemplate:
     spec:
       vars:
+      - name: jiraProject
+        value: CHANGE
+      - name: jiraURL
+        value: https://eddiewebb.atlassian.net
       - name: approvedStatus
         value: UAT
-      - name: issueKey
-        value: ${{ freightMetadata(ctx.targetFreight.name)['jira-issue-key'] }}
+      - name: chartVersion
+        value: ${{ chartFrom("oci://ghcr.io/adamancini/charts/akkoma").Version }}
+      - name: imageTag
+        value: ${{ imageFrom("ghcr.io/adamancini/akkoma").Tag }}
       steps:
+      # Guard: akkoma-release discovers the newest chart and the newest
+      # vX.Y.Z image independently, and release.yml tags the image just
+      # before it pushes the chart. A discovery in between pairs the
+      # *previous* chart with the *new* image. Catch that before opening a
+      # ticket; the matching Freight follows on the next discovery.
+      - uses: oci-download
+        config:
+          imageRef: ghcr.io/adamancini/charts/akkoma:${{ vars.chartVersion }}
+          outPath: ./chart.tgz
+          mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
+      - uses: untar
+        config:
+          inPath: ./chart.tgz
+          outPath: ./chart
+      - uses: yaml-parse
+        as: chart-meta
+        config:
+          path: ./chart/akkoma/Chart.yaml
+          outputs:
+          - name: appVersion
+            fromExpression: appVersion
+      - uses: fail
+        if: ${{ outputs['chart-meta'].appVersion != vars.imageTag }}
+        config:
+          message: >-
+            Chart ${{ vars.chartVersion }} runs Akkoma
+            ${{ outputs['chart-meta'].appVersion }}, but this Freight pairs it
+            with image ${{ vars.imageTag }} -- it was discovered mid-release.
+            Promote the newer Freight with the matching chart instead.
+      # One ticket per release: skipped when this Freight already has one
+      # (e.g. re-promoting it after an aborted promotion).
+      - uses: jira
+        as: create-release-ticket
+        if: ${{ freightMetadata(ctx.targetFreight.name)?.['jira-issue-key'] == nil }}
+        config:
+          credentials:
+            sharedSecretName: jira-access-secret
+          createIssue:
+            projectKey: ${{ vars.jiraProject }}
+            issueType: Task
+            summary: "[team-ada] Release akkoma chart ${{ vars.chartVersion }}, image ${{ vars.imageTag }}"
+            description: "Chart ${{ vars.chartVersion }} is released and ready for UAT. Approve for Testing to deploy it to staging (UAT), then Approve to release to prod. Freight: ${{ ctx.targetFreight.name }}. Promotion: ${{ ctx.promotion }}."
+            labels:
+            - team-ada
+            - release-${{ vars.chartVersion }}
       - uses: jira
         as: wait-for-qa-approval
         config:
           credentials:
             sharedSecretName: jira-access-secret
           waitForStatus:
-            issueKey: ${{ vars.issueKey }}
+            issueKey: ${{ outputs['create-release-ticket']?.key ?? freightMetadata(ctx.targetFreight.name)['jira-issue-key'] }}
             expectedStatus: ${{ vars.approvedStatus }}
             pollInterval: 30s
       - task:
@@ -119,8 +232,16 @@ spec:
           credentials:
             sharedSecretName: jira-access-secret
           commentOnIssue:
-            issueKey: ${{ vars.issueKey }}
+            issueKey: ${{ outputs['create-release-ticket']?.key ?? freightMetadata(ctx.targetFreight.name)['jira-issue-key'] }}
             body: "Deployed to ${{ ctx.stage }} (UAT) after QA approval. Promotion: ${{ ctx.promotion }}. Approve this ticket to release to prod."
+      - uses: compose-output
+        as: links
+        config:
+          links:
+          - icon: faJira
+            label: ${{ outputs['create-release-ticket']?.key ?? freightMetadata(ctx.targetFreight.name)['jira-issue-key'] }}
+            tooltip: Release ticket for this Freight
+            url: ${{ vars.jiraURL }}/browse/${{ outputs['create-release-ticket']?.key ?? freightMetadata(ctx.targetFreight.name)['jira-issue-key'] }}
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
@@ -136,7 +257,7 @@ spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: akkoma
+      name: akkoma-release
     sources:
       stages:
       - staging
