@@ -1,7 +1,5 @@
-# prod: Helm values on top of ../values.yaml. Kargo's promote task sets
-# image.tag; release.yaml next to this file pins the chart version.
-image:
-  tag: v3.20.1
+# prod: Helm values on top of ../values.yaml. The chart version and image
+# tag are in release.yaml next to this file (set by Kargo's promote task).
 akkoma:
   domain: akkoma-prod.akpdemoapps.link
   adminEmail: admin@example.com

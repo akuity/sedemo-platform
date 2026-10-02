@@ -3,11 +3,14 @@
 Deploys [akkoma-helm](https://github.com/adamancini/akkoma-helm)'s
 published chart (`oci://ghcr.io/adamancini/charts/akkoma`) directly to
 `sedemo-primary` — nothing is vendored into this repo. Each environment's
-`env/<stage>/release.yaml` pins the chart version; Helm values live in
+`env/<stage>/release.yaml` pins what the stage runs -- the chart version and
+the image tag, both set by Kargo -- and the other Helm values live in
 [`env/values.yaml`](./env/values.yaml) (shared) and `env/<stage>/values.yaml`
-(image tag, domain, secret names). Argo CD's `files` generator reads
-`release.yaml` to build a multi-source Application: the chart with those two
-value files, plus this repo's own path for the stage's `ExternalSecret`s.
+(domain, secret names). Argo CD's `files` generator reads `release.yaml` to
+build a multi-source Application: the chart with those two value files and
+the image tag as a Helm parameter, plus this repo's own path for the stage's
+`ExternalSecret`s. Chart version and image tag deliberately share that one
+path, so a promotion is a single rollout.
 
 ## Pipeline
 
@@ -113,11 +116,25 @@ git-managed `ExternalSecret` in
 The project key and status names are stage `vars` in
 [`kargo/stages.yaml`](./kargo/stages.yaml).
 
+### When verification runs
+
+The ApplicationSet, not Kargo, writes `release.yaml` into each Application
+(it polls every 30s), so Kargo's own sync can happen before the new chart
+version arrives. The promote task's `argocd-update` therefore sets a
+`desiredRevision` on the chart source: the step keeps re-syncing (up to 10
+minutes) until the Application is synced to this release's chart version,
+then the Stage's health check waits for that rollout to be Healthy before
+the smoke test starts. Akkoma's DB migrations run in the `db-migrate` init
+container, so Healthy (pods Ready) implies migrated. A promotion that seems
+stuck at `argocd-update` with "sync result revisions ... do not match
+desired revisions" is waiting on the ApplicationSet refresh.
+
 ### What reviewers see
 
 - **Dev/QA, before UAT:** once staging opens the release ticket, it renders
   the release exactly as Argo CD will deploy it (the release chart with
-  [`env/values.yaml`](./env/values.yaml) + `env/staging/values.yaml`) to the
+  [`env/values.yaml`](./env/values.yaml) + `env/staging/values.yaml` and the
+  image tag from `env/staging/release.yaml`) to the
   `rendered/team-ada/staging` branch, and comments a GitHub compare link on
   the ticket: every manifest and value that changes, from what's running in
   staging to this release. (The very first render has no deployed baseline
