@@ -3,9 +3,11 @@
 Deploys [akkoma-helm](https://github.com/adamancini/akkoma-helm)'s
 published chart (`oci://ghcr.io/adamancini/charts/akkoma`) directly to
 `sedemo-primary` — nothing is vendored into this repo. Each environment's
-`env/<stage>/release.yaml` pins the chart version and stage values; Argo
-CD's `files` generator reads it to build a multi-source Application (chart
-+ this repo's own path for the stage's `ExternalSecret`s).
+`env/<stage>/release.yaml` pins the chart version; Helm values live in
+[`env/values.yaml`](./env/values.yaml) (shared) and `env/<stage>/values.yaml`
+(image tag, domain, secret names). Argo CD's `files` generator reads
+`release.yaml` to build a multi-source Application: the chart with those two
+value files, plus this repo's own path for the stage's `ExternalSecret`s.
 
 ## Pipeline
 
@@ -82,7 +84,7 @@ Each stage is served at `https://akkoma-<stage>.akpdemoapps.link/`:
 [dev](https://akkoma-dev.akpdemoapps.link/) ·
 [staging](https://akkoma-staging.akpdemoapps.link/) ·
 [prod](https://akkoma-prod.akpdemoapps.link/). The host comes from
-`akkoma.domain` in `env/<stage>/release.yaml`. The `*.akpdemoapps.link`
+`akkoma.domain` in `env/<stage>/values.yaml`. The `*.akpdemoapps.link`
 wildcard record already points at `sedemo-primary`'s nginx ingress, and
 cert-manager's `letsencrypt-prod` issuer provisions the TLS certificate.
 Each Kargo stage card links to its instance via `stageLinks`.
@@ -110,6 +112,28 @@ git-managed `ExternalSecret` in
 [`secrets/kargo-sync-secrets.yaml`](../../secrets/kargo-sync-secrets.yaml).
 The project key and status names are stage `vars` in
 [`kargo/stages.yaml`](./kargo/stages.yaml).
+
+### What reviewers see
+
+- **Dev/QA, before UAT:** once staging opens the release ticket, it renders
+  the release exactly as Argo CD will deploy it (the release chart with
+  [`env/values.yaml`](./env/values.yaml) + `env/staging/values.yaml`) to the
+  `rendered/team-ada/staging` branch, and comments a GitHub compare link on
+  the ticket: every manifest and value that changes, from what's running in
+  staging to this release. (The very first render has no deployed baseline
+  yet, so its link shows the whole render.) The same link is on the staging promotion in
+  Kargo. Review it, then Approve for Testing.
+- **VP, before prod:** the prod promotion first posts the chart's GitHub
+  release notes (the PRs merged since the last release), with links to the
+  chart release and the upstream Akkoma release, then waits for Approved.
+
+The rendered branch is for review only; nothing deploys from it. The diff
+baseline is the render recorded when staging last deployed (Stage metadata
+`renderedCommit`), so an aborted promotion's render never becomes the
+baseline. The render uses `main` as of the moment staging's promotion
+started: if `env/values.yaml` or `env/staging/values.yaml` change while the
+ticket waits for UAT, what deploys will include those changes too --
+re-promote to get a fresh diff.
 
 ### Operating notes
 
