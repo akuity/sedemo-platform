@@ -1,7 +1,7 @@
 # staging: Helm values on top of ../values.yaml. Kargo's promote task sets
 # image.tag; release.yaml next to this file pins the chart version.
 image:
-  tag: v3.20.0
+  tag: v3.20.1
 akkoma:
   domain: akkoma-staging.akpdemoapps.link
   adminEmail: admin@example.com
