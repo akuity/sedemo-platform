@@ -1,4 +1,4 @@
 # Chart version for dev, set by Kargo's promote task and read by the
 # ApplicationSet's git files generator. Values live in values.yaml here and
 # in ../values.yaml.
-chartVersion: 0.0.0-main.20261002130836.g70fa9931
+chartVersion: 0.0.0-main.20261002135909.gb5305eea
