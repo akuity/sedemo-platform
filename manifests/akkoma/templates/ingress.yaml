@@ -1,0 +1,31 @@
+---
+# Source: akkoma/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: team-ada-staging-akkoma
+  labels:
+    helm.sh/chart: akkoma-0.7.2
+    app.kubernetes.io/name: akkoma
+    app.kubernetes.io/instance: team-ada-staging
+    app.kubernetes.io/version: "v3.20.1"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - akkoma-staging.akpdemoapps.link
+    secretName: akkoma-tls
+  rules:
+  - host: akkoma-staging.akpdemoapps.link
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: team-ada-staging-akkoma
+            port:
+              number: 4000

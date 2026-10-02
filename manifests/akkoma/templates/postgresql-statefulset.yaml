@@ -1,0 +1,112 @@
+---
+# Source: akkoma/templates/postgresql-statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: team-ada-staging-akkoma-postgresql
+  labels:
+    helm.sh/chart: akkoma-0.7.2
+    app.kubernetes.io/name: akkoma
+    app.kubernetes.io/instance: team-ada-staging
+    app.kubernetes.io/version: "v3.20.1"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: database
+spec:
+  serviceName: team-ada-staging-akkoma-postgresql
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: akkoma
+      app.kubernetes.io/instance: team-ada-staging
+      app.kubernetes.io/component: database
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: akkoma
+        app.kubernetes.io/instance: team-ada-staging
+        app.kubernetes.io/component: database
+    spec:
+      securityContext:
+        fsGroup: 10001
+        runAsGroup: 10001
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: postgresql
+        image: postgres:15-alpine
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+        ports:
+        - name: postgresql
+          containerPort: 5432
+          protocol: TCP
+        env:
+        - name: POSTGRES_USER
+          value: akkoma
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: team-ada-postgresql
+              key: postgres-password
+        - name: POSTGRES_DB
+          value: akkoma
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        resources:
+          limits:
+            cpu: "1"
+            memory: 1Gi
+          requests:
+            cpu: 50m
+            memory: 256Mi
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+        - name: init-scripts
+          mountPath: /docker-entrypoint-initdb.d
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+        - name: run-postgresql
+          mountPath: /var/run/postgresql
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - pg_isready -U akkoma
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - pg_isready -U akkoma
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+      volumes:
+      - name: data
+        emptyDir: {}
+      - name: init-scripts
+        configMap:
+          name: team-ada-staging-akkoma-postgresql-init
+      # Writable paths for read-only root filesystem
+      - name: tmp
+        emptyDir:
+          medium: Memory
+          sizeLimit: 64Mi
+      - name: run-postgresql
+        emptyDir:
+          medium: Memory
+          sizeLimit: 8Mi

@@ -1,0 +1,22 @@
+---
+# Source: akkoma/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: team-ada-staging-akkoma
+  labels:
+    helm.sh/chart: akkoma-0.7.2
+    app.kubernetes.io/name: akkoma
+    app.kubernetes.io/instance: team-ada-staging
+    app.kubernetes.io/version: "v3.20.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+  - port: 4000
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app.kubernetes.io/name: akkoma
+    app.kubernetes.io/instance: team-ada-staging

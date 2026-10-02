@@ -1,0 +1,77 @@
+---
+# Source: akkoma/templates/configmap-akkoma.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: team-ada-staging-akkoma-config
+  labels:
+    helm.sh/chart: akkoma-0.7.2
+    app.kubernetes.io/name: akkoma
+    app.kubernetes.io/instance: team-ada-staging
+    app.kubernetes.io/version: "v3.20.1"
+    app.kubernetes.io/managed-by: Helm
+data:
+  prod.secret.exs: |
+    import Config
+
+    # Web endpoint configuration
+    config :pleroma, Pleroma.Web.Endpoint,
+      url: [host: "akkoma-staging.akpdemoapps.link", scheme: "https", port: 443],
+      http: [ip: {0, 0, 0, 0}, port: 4000],
+      secret_key_base: System.get_env("SECRET_KEY_BASE"),
+      signing_salt: System.get_env("SIGNING_SALT"),
+      secure_cookie_flag: true
+
+    # Instance configuration
+    config :pleroma, :instance,
+      name: "akkoma-staging.akpdemoapps.link",
+      email: "admin@example.com",
+      notify_email: "admin@example.com",
+      limit: 5000,
+      registrations_open: false,
+      upload_limit: 16000000,
+      static_dir: "/opt/akkoma/instance/static"
+
+    # Database configuration
+    config :pleroma, Pleroma.Repo,
+      adapter: Ecto.Adapters.Postgres,
+      username: System.get_env("DB_USER"),
+      password: System.get_env("DB_PASSWORD"),
+      database: System.get_env("DB_NAME"),
+      hostname: System.get_env("DB_HOST"),
+      pool_size: 10
+
+    # Allow admin-fe to manage configuration from the database
+    config :pleroma, configurable_from_database: true
+
+    # Frontend configuration
+    config :pleroma, :frontends,
+      primary: %{"name" => "pleroma-fe", "ref" => "stable"},
+      admin: %{"name" => "admin-fe", "ref" => "stable"}
+
+    # Upload configuration
+    config :pleroma, Pleroma.Upload,
+      uploader: Pleroma.Uploaders.Local,
+      base_url: "https://akkoma-staging.akpdemoapps.link/media/",
+      base_path: "/opt/akkoma/uploads"
+
+    # Media proxy configuration
+    config :pleroma, :media_proxy,
+      enabled: true,
+      proxy_opts: [
+        redirect_on_failure: true,
+        max_body_length: 16000000
+      ]
+    # HTTP security headers (hardening)
+    config :pleroma, :http_security,
+      enabled: true,
+      sts: true,
+      referrer_policy: "same-origin"
+
+    # Disable tzdata autoupdate (read-only root filesystem)
+    config :tzdata, :autoupdate, :disabled
+
+    # Logging configuration
+    config :logger, :console,
+      format: "$time $metadata[$level] $message\n",
+      metadata: [:request_id]

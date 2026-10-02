@@ -1,0 +1,304 @@
+---
+# Source: akkoma/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: team-ada-staging-akkoma
+  labels:
+    helm.sh/chart: akkoma-0.7.2
+    app.kubernetes.io/name: akkoma
+    app.kubernetes.io/instance: team-ada-staging
+    app.kubernetes.io/version: "v3.20.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1  # Single instance only
+  strategy:
+    type: Recreate  # Terminate old pod before starting new (single-instance pattern)
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: akkoma
+      app.kubernetes.io/instance: team-ada-staging
+  template:
+    metadata:
+      annotations:
+        # Force pod restart on config/secret changes
+        checksum/config: 22952d4f8fb4583c97ed20c7f31640eac310040aa1610f7d50ec02f520c50719
+        checksum/secret: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
+      labels:
+        app.kubernetes.io/name: akkoma
+        app.kubernetes.io/instance: team-ada-staging
+    spec:
+      # Security context: non-root, UID 1000, seccomp RuntimeDefault
+      securityContext:
+        fsGroup: 10001
+        runAsGroup: 10001
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+      # Wait for PostgreSQL to be ready before starting Akkoma
+      - name: wait-for-db
+        image: postgres:15-alpine
+        imagePullPolicy: IfNotPresent
+        command:
+        - sh
+        - -c
+        - |
+          echo "Waiting for PostgreSQL to be ready..."
+          until pg_isready -h team-ada-staging-akkoma-postgresql -p 5432 -U akkoma; do
+            echo "PostgreSQL is unavailable - sleeping"
+            sleep 2
+          done
+          echo "PostgreSQL is ready!"
+        env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: team-ada-postgresql
+              key: postgres-password
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+        resources:
+          limits:
+            cpu: 100m
+            memory: 32Mi
+          requests:
+            cpu: 10m
+            memory: 16Mi
+      # Run database migrations before starting Akkoma
+      - name: db-migrate
+        image: "ghcr.io/adamancini/akkoma:v3.20.1"
+        imagePullPolicy: IfNotPresent
+        command:
+        - sh
+        - -c
+        - |
+          echo "Running database migrations..."
+          /opt/akkoma/bin/pleroma_ctl migrate
+          echo "Migrations complete!"
+        env:
+        # Configuration file path
+        - name: PLEROMA_CONFIG_PATH
+          value: /etc/akkoma/prod.secret.exs
+        
+        - name: ERL_MAX_PORTS
+          value: "65536"
+        # BEAM VM writable paths for read-only root filesystem
+        - name: RELEASE_TMP
+          value: /tmp/akkoma-release
+        - name: ERL_CRASH_DUMP
+          value: /tmp/erl_crash.dump
+        # Application secrets (from generated or external secret)
+        - name: RELEASE_COOKIE
+          valueFrom:
+            secretKeyRef:
+              name: team-ada-app-secrets
+              key: release-cookie
+        - name: SECRET_KEY_BASE
+          valueFrom:
+            secretKeyRef:
+              name: team-ada-app-secrets
+              key: secret-key-base
+        - name: SIGNING_SALT
+          valueFrom:
+            secretKeyRef:
+              name: team-ada-app-secrets
+              key: signing-salt
+        # Database connection details
+        - name: DB_HOST
+          value: team-ada-staging-akkoma-postgresql
+        - name: DB_NAME
+          value: akkoma
+        - name: DB_USER
+          value: akkoma
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: team-ada-postgresql
+              key: postgres-password
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: 100m
+            memory: 1Gi
+        volumeMounts:
+        - name: config
+          mountPath: /etc/akkoma
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+      # Download and install frontends if not already present
+      - name: install-frontends
+        image: alpine:3.23
+        imagePullPolicy: IfNotPresent
+        command:
+        - sh
+        - -c
+        - |
+          set -e
+          PLEROMA_FE_REF="stable"
+          ADMIN_FE_REF="stable"
+          if [ -d "/frontends/pleroma-fe/${PLEROMA_FE_REF}" ] && [ -d "/frontends/admin-fe/${ADMIN_FE_REF}" ]; then
+            echo "Frontends already installed, skipping"
+            exit 0
+          fi
+          PLEROMA_FE_URL="https://akkoma-updates.s3-website.fr-par.scw.cloud/frontend/${PLEROMA_FE_REF}/akkoma-fe.zip"
+          ADMIN_FE_URL="https://akkoma-updates.s3-website.fr-par.scw.cloud/frontend/${ADMIN_FE_REF}/admin-fe.zip"
+          echo "Downloading pleroma-fe (akkoma-fe) ref=${PLEROMA_FE_REF}..."
+          wget -q "${PLEROMA_FE_URL}" -O /tmp/akkoma-fe.zip
+          mkdir -p /tmp/akkoma-fe
+          unzip -q -o /tmp/akkoma-fe.zip -d /tmp/akkoma-fe
+          mkdir -p "/frontends/pleroma-fe/${PLEROMA_FE_REF}"
+          mv /tmp/akkoma-fe/dist/* "/frontends/pleroma-fe/${PLEROMA_FE_REF}/" 2>/dev/null || mv /tmp/akkoma-fe/* "/frontends/pleroma-fe/${PLEROMA_FE_REF}/"
+          rm -rf /tmp/akkoma-fe /tmp/akkoma-fe.zip
+          echo "Downloading admin-fe ref=${ADMIN_FE_REF}..."
+          wget -q "${ADMIN_FE_URL}" -O /tmp/admin-fe.zip
+          mkdir -p /tmp/admin-fe
+          unzip -q -o /tmp/admin-fe.zip -d /tmp/admin-fe
+          mkdir -p "/frontends/admin-fe/${ADMIN_FE_REF}"
+          mv /tmp/admin-fe/dist/* "/frontends/admin-fe/${ADMIN_FE_REF}/" 2>/dev/null || mv /tmp/admin-fe/* "/frontends/admin-fe/${ADMIN_FE_REF}/"
+          rm -rf /tmp/admin-fe /tmp/admin-fe.zip
+          echo "Frontends installed!"
+          ls "/frontends/pleroma-fe/${PLEROMA_FE_REF}/" | head -5
+          ls "/frontends/admin-fe/${ADMIN_FE_REF}/" | head -5
+        volumeMounts:
+        - name: frontends
+          mountPath: /frontends
+        - name: tmp
+          mountPath: /tmp
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+        resources:
+          limits:
+            cpu: 250m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+      containers:
+      - name: akkoma
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        image: "ghcr.io/adamancini/akkoma:v3.20.1"
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 4000
+          protocol: TCP
+        # Startup probe: Allow 150s for initial startup and migrations
+        startupProbe:
+          httpGet:
+            path: /api/v1/instance
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 30  # 150s max startup time (30 * 5s)
+        # Liveness probe: Restart if unresponsive
+        livenessProbe:
+          httpGet:
+            path: /api/v1/instance
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        # Readiness probe: Remove from service if not ready
+        readinessProbe:
+          httpGet:
+            path: /api/v1/instance
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+        env:
+        # Configuration file path
+        - name: PLEROMA_CONFIG_PATH
+          value: /etc/akkoma/prod.secret.exs
+        
+        - name: ERL_MAX_PORTS
+          value: "65536"
+        # BEAM VM writable paths for read-only root filesystem
+        - name: RELEASE_TMP
+          value: /tmp/akkoma-release
+        - name: ERL_CRASH_DUMP
+          value: /tmp/erl_crash.dump
+        # Application secrets (from generated or external secret)
+        - name: RELEASE_COOKIE
+          valueFrom:
+            secretKeyRef:
+              name: team-ada-app-secrets
+              key: release-cookie
+        - name: SECRET_KEY_BASE
+          valueFrom:
+            secretKeyRef:
+              name: team-ada-app-secrets
+              key: secret-key-base
+        - name: SIGNING_SALT
+          valueFrom:
+            secretKeyRef:
+              name: team-ada-app-secrets
+              key: signing-salt
+        # Database connection details
+        - name: DB_HOST
+          value: team-ada-staging-akkoma-postgresql
+        - name: DB_NAME
+          value: akkoma
+        - name: DB_USER
+          value: akkoma
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: team-ada-postgresql
+              key: postgres-password
+        resources:
+          limits:
+            memory: 2Gi
+          requests:
+            cpu: 100m
+            memory: 512Mi
+        volumeMounts:
+        - name: config
+          mountPath: /etc/akkoma
+          readOnly: true
+        - name: uploads
+          mountPath: /opt/akkoma/uploads
+        - name: frontends
+          mountPath: /opt/akkoma/instance/static/frontends
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: config
+        configMap:
+          name: team-ada-staging-akkoma-config
+          defaultMode: 0640  # Remove world-readable permissions
+      - name: uploads
+        emptyDir: {}
+      - name: frontends
+        emptyDir: {}
+      # tmpfs volumes for read-only root filesystem
+      # BEAM VM requires writable /tmp for System.tmp_dir and release runtime
+      - name: tmp
+        emptyDir:
+          medium: Memory
+          sizeLimit: 64Mi

@@ -1,0 +1,4 @@
+# Chart version for staging, set by Kargo's promote task and read by the
+# ApplicationSet's git files generator. Values live in values.yaml here and
+# in ../values.yaml.
+chartVersion: 0.7.2

@@ -1,0 +1,67 @@
+# Helm values shared by every team-ada stage. Each stage adds
+# env/<stage>/values.yaml on top (image tag, domain, secret names). Argo CD
+# (argocd/application-set.yaml) and Kargo's staging render
+# (kargo/stages.yaml) both read exactly these two files, so the render diff
+# QA reviews is what Argo CD deploys.
+externalSecret:
+  enabled: true
+postgresql:
+  # sedemo-primary has no CSI driver / default StorageClass -- a PVC stays
+  # Pending forever (FailedScheduling: unbound immediate
+  # PersistentVolumeClaims). emptyDir instead: data is lost on pod
+  # restart/reschedule, fine for this demo app. storageSize stays set (inert
+  # while persistence is disabled) so it's ready if persistence is ever
+  # re-enabled.
+  persistence:
+    enabled: false
+  storageSize: 2Gi
+  # Chart defaults (250m/512Mi request) are sized for a real instance --
+  # three concurrent stages on sedemo-primary's small shared node pool
+  # couldn't all get scheduled (FailedScheduling: Insufficient cpu, no
+  # preemption victims). Limits are untouched; only requests shrink.
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+storage:
+  uploads:
+    persistence:
+      enabled: false
+    size: 5Gi
+  frontends:
+    persistence:
+      enabled: false
+    size: 1Gi
+# Host comes from akkoma.domain (akkoma-<stage>.akpdemoapps.link), served by
+# the *.akpdemoapps.link wildcard record to sedemo-primary's nginx ingress;
+# cert-manager issues the cert.
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  tls:
+    enabled: true
+# Same demo-footprint reasoning as postgresql.resources above. No CPU limit
+# here is deliberate (BEAM VM bursting) -- keep it.
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    memory: 2Gi
+initContainerResources:
+  dbMigrate:
+    requests:
+      # Memory NOT reduced -- this boots the same BEAM/OTP release as the
+      # main container just to run `pleroma_ctl migrate`; too little risks
+      # OOMKill before any migration work happens. Only CPU is safe to
+      # shrink.
+      cpu: 100m
+      memory: 1Gi
+    limits:
+      cpu: "1"
+      memory: 2Gi
