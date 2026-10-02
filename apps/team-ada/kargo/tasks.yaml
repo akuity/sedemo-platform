@@ -28,12 +28,7 @@ spec:
       updates:
       - key: chartVersion
         value: ${{ chartFrom(vars.chart).Version }}
-  - uses: yaml-update
-    as: update-image-tag
-    config:
-      path: ./src/apps/team-ada/env/${{ ctx.stage }}/values.yaml
-      updates:
-      - key: image.tag
+      - key: imageTag
         value: ${{ imageFrom(vars.image).Tag }}
   - uses: git-commit
     as: commit
@@ -44,7 +39,22 @@ spec:
     config:
       path: ./src
       targetBranch: main
+  # The ApplicationSet (not Kargo) applies release.yaml to the Application,
+  # so Kargo's first sync can run before the new chart version reaches it.
+  # With desiredRevision set, this step keeps re-syncing until the
+  # Application's sync result is this chart version, and only then
+  # succeeds; the Stage's health check then waits for that rollout to be
+  # Healthy (pods Ready, i.e. after db-migrate) before verification starts.
+  # updateTargetRevision stays false: the spec is the ApplicationSet's to
+  # write. 10m instead of the 5m default leaves room for the refresh.
   - uses: argocd-update
+    retry:
+      timeout: 10m
     config:
       apps:
       - name: team-ada-${{ ctx.stage }}
+        sources:
+        - repoURL: ghcr.io/adamancini/charts
+          chart: akkoma
+          desiredRevision: ${{ chartFrom(vars.chart).Version }}
+          updateTargetRevision: false

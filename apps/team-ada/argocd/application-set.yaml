@@ -15,6 +15,9 @@ spec:
       revision: HEAD
       files:
       - path: "apps/team-ada/env/*/release.yaml"
+      # Pick up Kargo's release.yaml commits within ~30s instead of the
+      # default ~3 minutes, so promotions don't sit waiting on the refresh.
+      requeueAfterSeconds: 30
   template:
     metadata:
       name: 'team-ada-{{.path.basename}}'
@@ -33,6 +36,11 @@ spec:
           valueFiles:
           - $values/apps/team-ada/env/values.yaml
           - $values/{{.path.path}}/values.yaml
+          # From release.yaml, like targetRevision above, so chart and image
+          # always change in the same refresh (one rollout, not two).
+          parameters:
+          - name: image.tag
+            value: '{{.imageTag}}'
       - repoURL: https://github.com/akuity/sedemo-platform
         targetRevision: HEAD
         path: '{{.path.path}}'

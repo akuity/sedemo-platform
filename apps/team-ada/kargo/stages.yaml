@@ -259,11 +259,7 @@ spec:
           updates:
           - key: chartVersion
             value: ${{ vars.chartVersion }}
-      - uses: yaml-update
-        config:
-          path: ./render-src/apps/team-ada/env/${{ ctx.stage }}/values.yaml
-          updates:
-          - key: image.tag
+          - key: imageTag
             value: ${{ vars.imageTag }}
       - uses: git-clear
         config:
@@ -277,6 +273,11 @@ spec:
           valuesFiles:
           - ./render-src/apps/team-ada/env/values.yaml
           - ./render-src/apps/team-ada/env/${{ ctx.stage }}/values.yaml
+          # Argo CD passes release.yaml's imageTag as the image.tag parameter.
+          setValues:
+          - key: image.tag
+            value: ${{ vars.imageTag }}
+            literal: true
           outPath: ./rendered/manifests
       # The inputs too, so the diff shows value changes alongside their
       # effect, plus the ExternalSecrets Argo CD applies next to the chart.
@@ -318,7 +319,23 @@ spec:
             sharedSecretName: jira-access-secret
           commentOnIssue:
             issueKey: ${{ outputs['create-release-ticket']?.key ?? freightMetadata(ctx.targetFreight.name)['jira-issue-key'] }}
-            body: "Rendered manifests for chart ${{ vars.chartVersion }}, image ${{ vars.imageTag }}, compared with what's running in ${{ ctx.stage }}: ${{ outputs.diff.url }} -- dev/QA: review the diff, then Approve for Testing to deploy."
+            # adfBody, not body: body is plain text, so URLs in it aren't links.
+            adfBody:
+              type: doc
+              version: 1
+              content:
+              - type: paragraph
+                content:
+                - type: text
+                  text: "Rendered manifests for chart ${{ vars.chartVersion }}, image ${{ vars.imageTag }}, compared with what's running in ${{ ctx.stage }}: "
+                - type: text
+                  text: rendered diff on GitHub
+                  marks:
+                  - type: link
+                    attrs:
+                      href: ${{ outputs.diff.url }}
+                - type: text
+                  text: ". Dev/QA: review the diff, then Approve for Testing to deploy."
       - uses: jira
         as: wait-for-qa-approval
         config:
@@ -344,7 +361,7 @@ spec:
             sharedSecretName: jira-access-secret
           commentOnIssue:
             issueKey: ${{ outputs['create-release-ticket']?.key ?? freightMetadata(ctx.targetFreight.name)['jira-issue-key'] }}
-            body: "Deployed to ${{ ctx.stage }} (UAT) after QA approval. Promotion: ${{ ctx.promotion }}. Approve this ticket to release to prod."
+            body: "Promoted to ${{ ctx.stage }} (UAT) after QA approval; it's verified once the rollout is healthy. Promotion: ${{ ctx.promotion }}. Approve this ticket to release to prod."
       - uses: compose-output
         as: links
         config:
@@ -424,16 +441,60 @@ spec:
           # Jira comments cap out at 32767 characters.
           - name: notes
             fromExpression: >-
-              len(response.body.body ?? '') > 20000
+              (response.body.body ?? '') == '' ? '(no release notes)'
+              : len(response.body.body) > 20000
               ? response.body.body[0:20000] + ' ... (truncated, see the full release)'
-              : (response.body.body ?? '(no release notes)')
+              : response.body.body
       - uses: jira
         config:
           credentials:
             sharedSecretName: jira-access-secret
           commentOnIssue:
             issueKey: ${{ vars.issueKey }}
-            body: "Prod sign-off requested for akkoma chart ${{ vars.chartVersion }} (Akkoma ${{ vars.imageTag }}).\n\nRelease notes:\n\n${{ outputs.release.notes }}\n\nChart release: ${{ outputs.release.url }}\nAkkoma ${{ vars.imageTag }} upstream: https://akkoma.dev/AkkomaGang/akkoma/releases/tag/${{ vars.imageTag }}\n\nApprove this ticket to release to prod."
+            # adfBody so the links are links. The notes are GitHub markdown,
+            # which Jira doesn't render: a code block keeps their layout.
+            adfBody:
+              type: doc
+              version: 1
+              content:
+              - type: paragraph
+                content:
+                - type: text
+                  text: "Prod sign-off requested for akkoma chart ${{ vars.chartVersion }} (Akkoma ${{ vars.imageTag }})."
+              - type: paragraph
+                content:
+                - type: text
+                  text: "Chart release: "
+                - type: text
+                  text: chart-v${{ vars.chartVersion }} on GitHub
+                  marks:
+                  - type: link
+                    attrs:
+                      href: ${{ outputs.release.url }}
+                - type: hardBreak
+                - type: text
+                  text: "Upstream Akkoma release: "
+                - type: text
+                  text: ${{ vars.imageTag }} on akkoma.dev
+                  marks:
+                  - type: link
+                    attrs:
+                      href: https://akkoma.dev/AkkomaGang/akkoma/releases/tag/${{ vars.imageTag }}
+              - type: heading
+                attrs:
+                  level: 3
+                content:
+                - type: text
+                  text: Release notes
+              - type: codeBlock
+                content:
+                - type: text
+                  # quote(): notes that look like JSON stay a string.
+                  text: ${{ quote(outputs.release.notes) }}
+              - type: paragraph
+                content:
+                - type: text
+                  text: Approve this ticket to release to prod.
       - uses: compose-output
         as: links
         config:

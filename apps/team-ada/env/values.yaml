@@ -1,8 +1,9 @@
 # Helm values shared by every team-ada stage. Each stage adds
-# env/<stage>/values.yaml on top (image tag, domain, secret names). Argo CD
+# env/<stage>/values.yaml on top (domain, secret names); the image tag comes
+# from env/<stage>/release.yaml as the image.tag parameter. Argo CD
 # (argocd/application-set.yaml) and Kargo's staging render
-# (kargo/stages.yaml) both read exactly these two files, so the render diff
-# QA reviews is what Argo CD deploys.
+# (kargo/stages.yaml) both use exactly these inputs, so the render diff QA
+# reviews is what Argo CD deploys.
 externalSecret:
   enabled: true
 postgresql:
