@@ -3,5 +3,5 @@
 # chart as the image.tag Helm parameter). Both travel through the same
 # generator refresh, so a promotion lands as a single rollout. Other Helm
 # values live in values.yaml here and in ../values.yaml.
-chartVersion: 0.0.0-main.20261002165750.gbb618a2e
-imageTag: main-20261002165750-bb618a2e
+chartVersion: 0.0.0-main.20261002171916.ga7c19cca
+imageTag: main-20261002171916-a7c19cca
