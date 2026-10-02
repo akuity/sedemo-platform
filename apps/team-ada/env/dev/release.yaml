@@ -1,7 +1,7 @@
-chartVersion: 0.0.0-main.20261001233301.gb5c4171d
+chartVersion: 0.0.0-main.20261002130836.g70fa9931
 values:
   image:
-    tag: main-20261001233301-b5c4171d
+    tag: main-20261002130836-70fa9931
   akkoma:
     domain: akkoma-dev.akpdemoapps.link
     adminEmail: admin@example.com
