@@ -5,7 +5,7 @@ kind: ConfigMap
 metadata:
   name: team-ada-staging-akkoma-config
   labels:
-    helm.sh/chart: akkoma-0.7.2
+    helm.sh/chart: akkoma-0.7.3
     app.kubernetes.io/name: akkoma
     app.kubernetes.io/instance: team-ada-staging
     app.kubernetes.io/version: "v3.20.1"
