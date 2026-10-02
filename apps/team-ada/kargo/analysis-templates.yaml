@@ -4,8 +4,13 @@
 # what only the real environment can show -- that the instance answers on its
 # public URL (ingress, TLS, DNS), is Akkoma, and runs the expected version.
 #
-# Each metric takes 3 measurements 20s apart and tolerates one failure, so a
-# pod that only just turned Ready doesn't fail the verification.
+# Each metric takes 3 measurements 20s apart and tolerates one failure.
+# Errors (connection refused, a 503 from the ingress while no Akkoma pod is
+# ready yet) don't count as failures but as errors: up to 15 in a row, about
+# 5 minutes after a 30s initial delay, so a slow first boot (image pull, DB
+# migration) doesn't fail verification. Argo CD can report the app Healthy
+# a minute or more before the instance serves traffic -- chart 0.7.2's first
+# boot on staging hit Rollouts' default limit of 4.
 #
 # Caveat: some Argo Rollouts versions treat a 2xx response that isn't JSON as
 # a success without evaluating successCondition. Akkoma itself only returns
@@ -29,10 +34,11 @@ spec:
   metrics:
   # The instance on this host answers, and knows itself by this host.
   - name: instance-api
-    initialDelay: 15s
+    initialDelay: 30s
     count: 3
     interval: 20s
     failureLimit: 1
+    consecutiveErrorLimit: 15
     successCondition: result == '{{ args.domain }}'
     provider:
       web:
@@ -41,10 +47,11 @@ spec:
         jsonPath: '{$.uri}'
   # It's Akkoma, not some other server behind the same host.
   - name: nodeinfo-software
-    initialDelay: 15s
+    initialDelay: 30s
     count: 3
     interval: 20s
     failureLimit: 1
+    consecutiveErrorLimit: 15
     successCondition: result == 'akkoma'
     provider:
       web:
@@ -55,10 +62,11 @@ spec:
   # e.g. 3.20.0-v3-20-0 for image v3.20.0; match the version exactly or
   # followed by '-', so 3.20.1 doesn't accept 3.20.10.
   - name: nodeinfo-version
-    initialDelay: 15s
+    initialDelay: 30s
     count: 3
     interval: 20s
     failureLimit: 1
+    consecutiveErrorLimit: 15
     successCondition: >-
       '{{ args.akkoma-version }}' == 'any' ||
       result == '{{ args.akkoma-version }}' ||
