@@ -28,7 +28,12 @@ spec:
       updates:
       - key: chartVersion
         value: ${{ chartFrom(vars.chart).Version }}
-      - key: values.image.tag
+  - uses: yaml-update
+    as: update-image-tag
+    config:
+      path: ./src/apps/team-ada/env/${{ ctx.stage }}/values.yaml
+      updates:
+      - key: image.tag
         value: ${{ imageFrom(vars.image).Tag }}
   - uses: git-commit
     as: commit

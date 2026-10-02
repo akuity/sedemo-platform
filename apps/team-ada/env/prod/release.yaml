@@ -1,11 +1,4 @@
+# Chart version for prod, set by Kargo's promote task and read by the
+# ApplicationSet's git files generator. Values live in values.yaml here and
+# in ../values.yaml.
 chartVersion: 0.7.1
-values:
-  image:
-    tag: v3.20.0
-  akkoma:
-    domain: akkoma-prod.akpdemoapps.link
-    adminEmail: admin@example.com
-  externalSecret:
-    name: team-ada-app-secrets
-  postgresql:
-    existingSecret: team-ada-postgresql

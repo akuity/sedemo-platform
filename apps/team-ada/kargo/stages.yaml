@@ -13,10 +13,14 @@
 #     staging  (UAT) auto-promoted when a release appears. Creates the
 #              release's Jira ticket in CHANGE (status Open) -- the jira step
 #              stores its key in the Freight's metadata (`jira-issue-key`) --
-#              then waits for QA to move it to UAT ("Approve for Testing"),
-#              deploys, and comments.
-#     prod     waits for the same ticket to be Approved (VP sign-off),
-#              deploys, comments.
+#              renders the release with staging's values to
+#              rendered/team-ada/staging and comments a GitHub compare link
+#              (running -> this release) for dev/QA, then waits for QA to
+#              move the ticket to UAT ("Approve for Testing"), deploys, and
+#              comments.
+#     prod     posts the chart's GitHub release notes on the same ticket for
+#              the VP, waits for it to be Approved (VP sign-off), deploys,
+#              comments.
 #
 # CHANGE workflow: Open -> UAT -> Approved, with Declined from anywhere.
 # `Approved` is a global transition, so a ticket approved straight from Open
@@ -180,6 +184,8 @@ spec:
         value: ${{ chartFrom("oci://ghcr.io/adamancini/charts/akkoma").Version }}
       - name: imageTag
         value: ${{ imageFrom("ghcr.io/adamancini/akkoma").Tag }}
+      - name: repoURL
+        value: https://github.com/akuity/sedemo-platform
       steps:
       # Guard: akkoma-release discovers the newest chart and the newest
       # vX.Y.Z image independently, and release.yml tags the image just
@@ -226,6 +232,93 @@ spec:
             labels:
             - team-ada
             - release-${{ vars.chartVersion }}
+      # Render what this promotion will deploy -- the release chart with
+      # staging's real values (env/values.yaml + env/staging/values.yaml,
+      # the same files Argo CD uses) -- commit it to
+      # rendered/team-ada/staging, and give dev/QA a GitHub compare link
+      # from what's running now to what this release changes, before they
+      # approve. Nothing is deployed from that branch; it's for review.
+      # Own clone path (./render-src): the promote task below clones main to
+      # ./src in this same promotion work dir, and git refuses to reuse a
+      # non-empty path.
+      - uses: git-clone
+        as: clone
+        config:
+          repoURL: ${{ vars.repoURL }}
+          checkout:
+          - branch: main
+            path: ./render-src
+            as: render-src
+          - branch: rendered/team-ada/${{ ctx.stage }}
+            create: true
+            path: ./rendered
+            as: rendered
+      - uses: yaml-update
+        config:
+          path: ./render-src/apps/team-ada/env/${{ ctx.stage }}/release.yaml
+          updates:
+          - key: chartVersion
+            value: ${{ vars.chartVersion }}
+      - uses: yaml-update
+        config:
+          path: ./render-src/apps/team-ada/env/${{ ctx.stage }}/values.yaml
+          updates:
+          - key: image.tag
+            value: ${{ vars.imageTag }}
+      - uses: git-clear
+        config:
+          path: ./rendered
+      # Same release name and namespace Argo CD uses for team-ada-<stage>.
+      - uses: helm-template
+        config:
+          path: ./chart/akkoma
+          releaseName: team-ada-${{ ctx.stage }}
+          namespace: team-ada-${{ ctx.stage }}
+          valuesFiles:
+          - ./render-src/apps/team-ada/env/values.yaml
+          - ./render-src/apps/team-ada/env/${{ ctx.stage }}/values.yaml
+          outPath: ./rendered/manifests
+      # The inputs too, so the diff shows value changes alongside their
+      # effect, plus the ExternalSecrets Argo CD applies next to the chart.
+      - uses: copy
+        config:
+          inPath: ./render-src/apps/team-ada/env/${{ ctx.stage }}
+          outPath: ./rendered/env/${{ ctx.stage }}
+      - uses: copy
+        config:
+          inPath: ./render-src/apps/team-ada/env/values.yaml
+          outPath: ./rendered/env/values.yaml
+      - uses: git-commit
+        config:
+          path: ./rendered
+          message: "team-ada/${{ ctx.stage }}: render akkoma chart ${{ vars.chartVersion }}, image ${{ vars.imageTag }} (Freight ${{ ctx.targetFreight.name }})"
+      - uses: git-push
+        as: render-push
+        config:
+          path: ./rendered
+          targetBranch: rendered/team-ada/${{ ctx.stage }}
+      # Diff base: the render recorded when staging last deployed (set
+      # below), so an aborted or rejected promotion's render never becomes
+      # the baseline. First time: the branch's previous head, if any.
+      - uses: compose-output
+        as: render
+        config:
+          base: ${{ quote(stageMetadata(ctx.stage)?.renderedCommit ?? outputs.clone.commits.rendered ?? '') }}
+          head: ${{ quote(outputs['render-push'].commit) }}
+      - uses: compose-output
+        as: diff
+        config:
+          url: >-
+            ${{ outputs.render.base == '' || outputs.render.base == outputs.render.head
+            ? vars.repoURL + '/tree/' + outputs.render.head
+            : vars.repoURL + '/compare/' + outputs.render.base + '...' + outputs.render.head }}
+      - uses: jira
+        config:
+          credentials:
+            sharedSecretName: jira-access-secret
+          commentOnIssue:
+            issueKey: ${{ outputs['create-release-ticket']?.key ?? freightMetadata(ctx.targetFreight.name)['jira-issue-key'] }}
+            body: "Rendered manifests for chart ${{ vars.chartVersion }}, image ${{ vars.imageTag }}, compared with what's running in ${{ ctx.stage }}: ${{ outputs.diff.url }} -- dev/QA: review the diff, then Approve for Testing to deploy."
       - uses: jira
         as: wait-for-qa-approval
         config:
@@ -237,6 +330,14 @@ spec:
             pollInterval: 30s
       - task:
           name: promote
+      # Baseline for the next staging diff: what's now actually deployed.
+      - uses: set-metadata
+        config:
+          updates:
+          - kind: Stage
+            name: ${{ ctx.stage }}
+            values:
+              renderedCommit: ${{ quote(outputs.render.head) }}
       - uses: jira
         config:
           credentials:
@@ -252,6 +353,10 @@ spec:
             label: ${{ outputs['create-release-ticket']?.key ?? freightMetadata(ctx.targetFreight.name)['jira-issue-key'] }}
             tooltip: Release ticket for this Freight
             url: ${{ vars.jiraURL }}/browse/${{ outputs['create-release-ticket']?.key ?? freightMetadata(ctx.targetFreight.name)['jira-issue-key'] }}
+          - icon: faGithub
+            label: rendered diff
+            tooltip: Rendered manifests, running vs this release
+            url: ${{ outputs.diff.url }}
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
@@ -287,7 +392,60 @@ spec:
         value: Approved
       - name: issueKey
         value: ${{ freightMetadata(ctx.targetFreight.name)['jira-issue-key'] }}
+      - name: chartVersion
+        value: ${{ chartFrom("oci://ghcr.io/adamancini/charts/akkoma").Version }}
+      - name: imageTag
+        value: ${{ imageFrom("ghcr.io/adamancini/akkoma").Tag }}
       steps:
+      # Release notes for the VP's sign-off: the chart's GitHub release
+      # (notes generated from the PRs merged since the last release, by
+      # akkoma-helm's release.yml), posted on the release ticket before the
+      # Approved gate. github-pr-token: sharedSecret() only exposes generic
+      # secrets, and this is a read of a public repo.
+      - uses: http
+        as: release
+        config:
+          method: GET
+          url: https://api.github.com/repos/adamancini/akkoma-helm/releases/tags/chart-v${{ vars.chartVersion }}
+          headers:
+          - name: Authorization
+            value: "Bearer ${{ sharedSecret('github-pr-token').token }}"
+          - name: Accept
+            value: application/vnd.github+json
+          - name: X-GitHub-Api-Version
+            value: "2022-11-28"
+          successExpression: response.status == 200
+          # Fail loudly (404, bad/expired token, rate limit) instead of
+          # polling forever.
+          failureExpression: response.status != 200
+          outputs:
+          - name: url
+            fromExpression: response.body.html_url
+          # Jira comments cap out at 32767 characters.
+          - name: notes
+            fromExpression: >-
+              len(response.body.body ?? '') > 20000
+              ? response.body.body[0:20000] + ' ... (truncated, see the full release)'
+              : (response.body.body ?? '(no release notes)')
+      - uses: jira
+        config:
+          credentials:
+            sharedSecretName: jira-access-secret
+          commentOnIssue:
+            issueKey: ${{ vars.issueKey }}
+            body: "Prod sign-off requested for akkoma chart ${{ vars.chartVersion }} (Akkoma ${{ vars.imageTag }}).\n\nRelease notes:\n\n${{ outputs.release.notes }}\n\nChart release: ${{ outputs.release.url }}\nAkkoma ${{ vars.imageTag }} upstream: https://akkoma.dev/AkkomaGang/akkoma/releases/tag/${{ vars.imageTag }}\n\nApprove this ticket to release to prod."
+      - uses: compose-output
+        as: links
+        config:
+          links:
+          - icon: faGithub
+            label: chart ${{ vars.chartVersion }} release notes
+            tooltip: GitHub release for this chart version
+            url: ${{ outputs.release.url }}
+          - icon: faJira
+            label: ${{ vars.issueKey }}
+            tooltip: Release ticket for this Freight
+            url: https://eddiewebb.atlassian.net/browse/${{ vars.issueKey }}
       - uses: jira
         as: wait-for-vp-approval
         config:
