@@ -41,6 +41,12 @@ spec:
           parameters:
           - name: image.tag
             value: '{{.imageTag}}'
+          # Pins the exact image the Freight recorded: a moved tag (vX.Y.Z
+          # re-pointed at a base-image rebuild) can't leave a node running
+          # its cached old copy. Takes effect with charts that support image.digest
+          # (akkoma-helm #47); older charts ignore it.
+          - name: image.digest
+            value: '{{.imageDigest}}'
       - repoURL: https://github.com/akuity/sedemo-platform
         targetRevision: HEAD
         path: '{{.path.path}}'
