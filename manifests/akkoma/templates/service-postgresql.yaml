@@ -5,7 +5,7 @@ kind: Service
 metadata:
   name: team-ada-staging-akkoma-postgresql
   labels:
-    helm.sh/chart: akkoma-0.7.3
+    helm.sh/chart: akkoma-0.8.0
     app.kubernetes.io/name: akkoma
     app.kubernetes.io/instance: team-ada-staging
     app.kubernetes.io/version: "v3.20.1"
