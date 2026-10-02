@@ -30,6 +30,8 @@ spec:
         value: ${{ chartFrom(vars.chart).Version }}
       - key: imageTag
         value: ${{ imageFrom(vars.image).Tag }}
+      - key: imageDigest
+        value: ${{ imageFrom(vars.image).Digest }}
   - uses: git-commit
     as: commit
     config:

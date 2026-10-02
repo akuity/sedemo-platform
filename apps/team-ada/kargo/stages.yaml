@@ -184,6 +184,8 @@ spec:
         value: ${{ chartFrom("oci://ghcr.io/adamancini/charts/akkoma").Version }}
       - name: imageTag
         value: ${{ imageFrom("ghcr.io/adamancini/akkoma").Tag }}
+      - name: imageDigest
+        value: ${{ imageFrom("ghcr.io/adamancini/akkoma").Digest }}
       - name: repoURL
         value: https://github.com/akuity/sedemo-platform
       steps:
@@ -261,6 +263,8 @@ spec:
             value: ${{ vars.chartVersion }}
           - key: imageTag
             value: ${{ vars.imageTag }}
+          - key: imageDigest
+            value: ${{ vars.imageDigest }}
       - uses: git-clear
         config:
           path: ./rendered
@@ -273,10 +277,14 @@ spec:
           valuesFiles:
           - ./render-src/apps/team-ada/env/values.yaml
           - ./render-src/apps/team-ada/env/${{ ctx.stage }}/values.yaml
-          # Argo CD passes release.yaml's imageTag as the image.tag parameter.
+          # Argo CD passes release.yaml's imageTag and imageDigest as the
+          # image.tag and image.digest parameters.
           setValues:
           - key: image.tag
             value: ${{ vars.imageTag }}
+            literal: true
+          - key: image.digest
+            value: ${{ vars.imageDigest }}
             literal: true
           outPath: ./rendered/manifests
       # The inputs too, so the diff shows value changes alongside their
