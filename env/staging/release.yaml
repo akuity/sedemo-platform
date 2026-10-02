@@ -1,7 +1,9 @@
 # What staging runs, set by Kargo's promote task and read by the ApplicationSet's
-# git files generator: the chart version and the image tag (passed to the
-# chart as the image.tag Helm parameter). Both travel through the same
-# generator refresh, so a promotion lands as a single rollout. Other Helm
-# values live in values.yaml here and in ../values.yaml.
-chartVersion: 0.8.1
+# git files generator: the chart version and the image tag and digest
+# (passed to the chart as the image.tag and image.digest Helm parameters).
+# All travel through the same generator refresh, so a promotion lands as a
+# single rollout. Other Helm values live in values.yaml here and in
+# ../values.yaml.
+chartVersion: 0.8.2
 imageTag: v3.20.1
+imageDigest: sha256:4c20dd6896300272c3bf04e1c46ae2d508f1a180cb5c41e133d2861a4a4293bd

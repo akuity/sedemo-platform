@@ -5,7 +5,7 @@ kind: Deployment
 metadata:
   name: team-ada-staging-akkoma
   labels:
-    helm.sh/chart: akkoma-0.8.1
+    helm.sh/chart: akkoma-0.8.2
     app.kubernetes.io/name: akkoma
     app.kubernetes.io/instance: team-ada-staging
     app.kubernetes.io/version: "v3.20.1"
@@ -22,7 +22,7 @@ spec:
     metadata:
       annotations:
         # Force pod restart on config/secret changes
-        checksum/config: 76efdb7280695a03773cbafc7e0174f98e52d7cf3b5d08ef4b2d5b9735c37485
+        checksum/config: 63121402e1e893ca16586db165192ab4398755c98970f29b3a8e463ba7e553e2
         checksum/secret: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
       labels:
         app.kubernetes.io/name: akkoma
@@ -71,7 +71,7 @@ spec:
             memory: 16Mi
       # Run database migrations before starting Akkoma
       - name: db-migrate
-        image: "ghcr.io/adamancini/akkoma:v3.20.1"
+        image: "ghcr.io/adamancini/akkoma:v3.20.1@sha256:4c20dd6896300272c3bf04e1c46ae2d508f1a180cb5c41e133d2861a4a4293bd"
         imagePullPolicy: IfNotPresent
         command:
         - sh
@@ -198,7 +198,7 @@ spec:
             drop:
             - ALL
           readOnlyRootFilesystem: true
-        image: "ghcr.io/adamancini/akkoma:v3.20.1"
+        image: "ghcr.io/adamancini/akkoma:v3.20.1@sha256:4c20dd6896300272c3bf04e1c46ae2d508f1a180cb5c41e133d2861a4a4293bd"
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
