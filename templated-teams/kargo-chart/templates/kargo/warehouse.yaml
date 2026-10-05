@@ -19,6 +19,9 @@ spec:
       repoURL: {{ .Values.repoUrl }}
       includePaths:
       - {{ .Values.project.path }}
+  freightCreationCriteria:
+    expression: |
+      imageFrom('{{ .Values.image.repository }}').Annotations['org.opencontainers.image.revision'] == commitFrom('{{ .Values.repoUrl }}').ID
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
