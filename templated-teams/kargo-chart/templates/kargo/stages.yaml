@@ -184,7 +184,6 @@ spec:
         as: open-pr
         config:
           repoURL: {{ .Values.repoUrl }}
-          createTargetBranch: true
           sourceBranch: {{`${{ outputs['push'].branch }}`}}
           targetBranch: rendered/{{ .Values.application.name }}/staging
           description: Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }} to staging\n"https://kargo.akpdemoapps.link/project/{{ .Values.application.name }}/promotion/{{`${{ ctx.promotion }}`}}"
@@ -308,7 +307,6 @@ spec:
         as: open-pr
         config:
           repoURL: {{ .Values.repoUrl }}
-          createTargetBranch: true
           sourceBranch: {{`${{ outputs['push'].branch }}`}}
           targetBranch: rendered/{{ .Values.application.name }}/prod
       {{ if .Values.notifications.slack.enabled }}
