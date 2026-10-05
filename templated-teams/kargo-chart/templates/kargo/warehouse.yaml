@@ -8,6 +8,7 @@ spec:
   - image:
       repoURL: {{ .Values.image.repository }}
       discoveryLimit: 5
+      strictSemVer: false
       imageSelectionStrategy: {{ .Values.image.selectionStrategy }}
       {{ if eq .Values.image.selectionStrategy "Digest" }}
       constraint: {{ .Values.image.tag }} 
