@@ -349,8 +349,8 @@ spec:
           errorThreshold: 3
         config:
           type: approved
-          message: "Release to ${{ ctx.stage }} approved by ${{ outputs.approve.responses[0].user }}."
-          actor: ${{ outputs.approve.responses[0].user }}
+          message: "Release to {{`${{ ctx.stage }}`}} approved by {{`${{ outputs.approve.responses[0].user }}`}}."
+          actor: {{`${{ outputs.approve.responses[0].user }}`}}
       - uses: git-merge-pr
         config:
           repoURL: {{ .Values.repoUrl }}
