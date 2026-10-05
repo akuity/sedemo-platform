@@ -7,7 +7,7 @@ spec:
   subscriptions:
   - image:
       repoURL: {{ .Values.image.repository }}
-      discoveryLimit: 5
+      discoveryLimit: 20
       strictSemvers: false
       imageSelectionStrategy: {{ .Values.image.selectionStrategy }}
       {{ if eq .Values.image.selectionStrategy "Digest" }}
