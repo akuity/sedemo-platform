@@ -187,7 +187,7 @@ spec:
           createTargetBranch: true
           sourceBranch: {{`${{ outputs['push'].branch }}`}}
           targetBranch: rendered/{{ .Values.application.name }}/staging
-          description: "Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }} to staging\n"https://kargo.akpdemoapps.link/project/{{ .Values.application.name }}/promotion/{{`${{ ctx.promotion }}`}}""
+          description: Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }} to staging\n"https://kargo.akpdemoapps.link/project/{{ .Values.application.name }}/promotion/{{`${{ ctx.promotion }}`}}"
       {{ if .Values.notifications.slack.enabled }}
       - uses: send-message
         config:
@@ -334,7 +334,6 @@ spec:
             icon_emoji: ":rocket:"
           encodingType: yaml
       {{ end }}
-
       - uses: wait-for-approval
         as: approve
         config: 
@@ -342,7 +341,6 @@ spec:
           - claim: groups
             value: sedemo-approvers
             required: true
-
       - uses: record-audit-event
         as: audit
         retry:

@@ -39,3 +39,8 @@ services:
 notifications:
   slack:
     enabled: false
+
+team:
+  role: admin
+
+repoUrl: boo
