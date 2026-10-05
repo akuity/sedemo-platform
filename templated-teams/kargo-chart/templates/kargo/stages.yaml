@@ -337,7 +337,7 @@ spec:
         config: 
           approvers:
           - claim: groups
-            value: sedemo-approvers
+            value: sedemo-approver
             required: true
       - uses: record-audit-event
         as: audit
