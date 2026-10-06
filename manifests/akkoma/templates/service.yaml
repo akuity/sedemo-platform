@@ -5,11 +5,12 @@ kind: Service
 metadata:
   name: team-ada-staging-akkoma
   labels:
-    helm.sh/chart: akkoma-0.8.2
+    helm.sh/chart: akkoma-0.8.3
     app.kubernetes.io/name: akkoma
     app.kubernetes.io/instance: team-ada-staging
     app.kubernetes.io/version: "v3.20.1"
     app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: akkoma
 spec:
   type: ClusterIP
   ports:
