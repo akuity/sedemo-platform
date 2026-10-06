@@ -7,9 +7,9 @@ spec:
     - /ko-app/kubectl-kyverno
     - apply
     - "--policy"
-    - "${{ config.policy-path }}"
+    - "${{ config.policy }}"
     - "--resource"
-    - "${{ config.resource-path }}"
+    - "${{ config.resource }}"
   image: ghcr.io/kyverno/kyverno-cli:66a2ff7afd893222113f938252dfbcf1b5eb2397
   output:
     source:
