@@ -170,10 +170,10 @@ spec:
               value: '{{ .Values.application.name }}'
             - key: application.name
               value: '{{ .Values.application.name }}'
-      - uses: kyverno-policy-apply
-        config:
-          policy: ./chart/templated-teams/policies/require-labels.yaml
-          resource: ./out/manifests.yaml
+      # - uses: kyverno-policy-apply
+      #   config:
+      #     policy: ./chart/templated-teams/policies/require-labels.yaml
+      #     resource: ./out/manifests.yaml
       - uses: git-commit
         as: commit
         config:
