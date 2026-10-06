@@ -172,7 +172,7 @@ spec:
               value: '{{ .Values.application.name }}'
       - uses: kyverno-policy-apply
         config:
-          policy-path: ./chart/templated-teams/apps-chart/policies/no-priv-containers.yaml
+          policy-path: ./chart/templated-teams/policies/no-priv-containers.yaml
           resource-path: ./out/manifests.yaml
       - uses: git-commit
         as: commit
