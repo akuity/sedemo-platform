@@ -9,12 +9,13 @@ spec:
     - "${{ config.policy }}"
     - "--resource"
     - "${{ config.resource }}"
+    - "--policy-report"
   image: ghcr.io/kyverno/kyverno-cli:66a2ff7afd893222113f938252dfbcf1b5eb2397
   output:
     source:
-      format: Text
+      format: YAML
       type: Stdout
-    #transform:
-    #  version: 'trim(output) == "" ? [] : split(trim(output), "\n")'
-
+    transform:
+      results: output.results
+      summary: output.summary
 

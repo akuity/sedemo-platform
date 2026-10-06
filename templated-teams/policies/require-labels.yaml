@@ -23,6 +23,8 @@ kind: ClusterPolicy
 metadata:
   name: require-rollout-labels
 spec:
+  # For initial rollout, use Audit mode to flag findings to users.  
+  # validationFailureAction: Audit
   validationFailureAction: Enforce
   rules:
   - name: check-purpose-label
