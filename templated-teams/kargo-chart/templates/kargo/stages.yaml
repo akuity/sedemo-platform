@@ -176,7 +176,7 @@ spec:
           resource: ./out/manifests.yaml
       - uses: wait-for-approval
         as: approve-kyverno-exception
-        if: "{{ `${{ outputs['kyverno-policy-apply'].summary.warn > 0 }}"
+        if: "{{ `${{ outputs['kyverno-policy-apply'].summary.warn > 0 }}` }}"
         config: 
           approvers:
           - claim: groups
