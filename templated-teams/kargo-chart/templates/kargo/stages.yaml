@@ -171,12 +171,13 @@ spec:
             - key: application.name
               value: '{{ .Values.application.name }}'
       - uses: kyverno-policy-apply
+        as: policy
         config:
           policy: ./chart/templated-teams/policies/require-labels.yaml
           resource: ./out/manifests.yaml
       - uses: wait-for-approval
         as: approve-kyverno-exception
-        if: "{{ `${{ outputs['kyverno-policy-apply'].summary.warn > 0 }}` }}"
+        if: "${% outputs['policy'].summary.warn > 0 %}"
         config: 
           approvers:
           - claim: groups
