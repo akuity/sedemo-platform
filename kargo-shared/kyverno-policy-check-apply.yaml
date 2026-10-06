@@ -6,7 +6,6 @@ spec:
   command:
     - /ko-app/kubectl-kyverno
     - apply
-    - "--policy"
     - "${{ config.policy }}"
     - "--resource"
     - "${{ config.resource }}"
