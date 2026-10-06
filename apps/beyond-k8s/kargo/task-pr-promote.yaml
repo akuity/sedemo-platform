@@ -81,7 +81,6 @@ spec:
     uses: git-open-pr
     as: open-pr
     config:
-      createTargetBranch: true
       repoURL: ${{ vars.repoURL }}
       sourceBranch: ${{ task.outputs.push.branch }}
       targetBranch: main

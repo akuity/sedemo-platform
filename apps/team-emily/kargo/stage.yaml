@@ -135,7 +135,6 @@ spec:
         as: open-pr
         config:
           repoURL: ${{ vars.gitRepo }}
-          createTargetBranch: true
           sourceBranch: ${{ outputs.push.branch }}
           targetBranch: rendered/team-emily/${{ ctx.stage }}
       - uses: git-merge-pr
@@ -261,7 +260,6 @@ spec:
         as: open-pr
         config:
           repoURL: ${{ vars.gitRepo }}
-          createTargetBranch: true
           sourceBranch: ${{ outputs.push.branch }}
           targetBranch: rendered/team-emily/${{ ctx.stage }}
       - uses: compose-output

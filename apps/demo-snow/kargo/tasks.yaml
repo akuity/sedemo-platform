@@ -85,7 +85,6 @@ spec:
       if: ${{ vars.asPR == "true" }}
       config:
         repoURL: ${{ vars.outRepo }}
-        createTargetBranch: true
         sourceBranch: ${{ task.outputs['pr-push'].branch }}
         targetBranch: ${{ vars.targetBranch }}
     - uses: send-message

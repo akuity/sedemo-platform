@@ -15,9 +15,10 @@ spec:
   template:
     metadata:
       labels:
-        app: "{{ .Values.application.name }}-app"
-        {{- range $key, $value := .Values.labels }} }}
-        {{ $key }}: "{{ $value }}"
+        app: "{{ .Values.application.name }}-app"        
+        
+        {{- with .Values.labels }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
       containers:
