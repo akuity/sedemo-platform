@@ -5,7 +5,7 @@ kind: Deployment
 metadata:
   name: team-ada-staging-akkoma
   labels:
-    helm.sh/chart: akkoma-0.8.3
+    helm.sh/chart: akkoma-0.8.4
     app.kubernetes.io/name: akkoma
     app.kubernetes.io/instance: team-ada-staging
     app.kubernetes.io/version: "v3.20.1"
@@ -23,7 +23,7 @@ spec:
     metadata:
       annotations:
         # Force pod restart on config/secret changes
-        checksum/config: 1c0ea0483a5f5bbc2da0ce962e96171026f0977355d192375692f794bbc8d4e1
+        checksum/config: d28450d8accd8faf8a615a959358ffae314ec31dd5bb2e81963876891c692b72
         checksum/secret: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
       labels:
         app.kubernetes.io/name: akkoma
