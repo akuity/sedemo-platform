@@ -56,16 +56,20 @@ akkoma-helm's CI on every PR.
 
 ## Cutting a release
 
-1. In Kargo, pick the dev-verified Freight you want to release and set its
-   **alias** to the release version, e.g. `v0.7.0`. In the UI that's
-   *Change alias* on the Freight; with the CLI:
-   `kargo update freight --project team-ada --name <freight> --new-alias v0.7.0`.
-2. Promote that Freight to **`release`**. The promotion:
-   - checks the alias is `X.Y.Z` / `vX.Y.Z`;
+1. In Kargo, promote the dev-verified Freight you want to release to
+   **`release`**.
+2. The promotion pauses on a **get-user-input** form asking for the release
+   version (`X.Y.Z` or `vX.Y.Z`; the form rejects anything else). Open the
+   promotion in the Kargo UI and submit it. Any signed-in user who can see the
+   promotion can respond. The promotion then:
    - dispatches akkoma-helm's `release.yml` with the Freight's commit and that
      version, and waits for the run to succeed;
-   - records `releasedAs`, `releasedBy` and the run URL in the Freight's
-     metadata, and links to the GitHub release.
+   - records `releasedAs`, `releasedBy` (whoever submitted the form) and the
+     run URL in the Freight's metadata, and links to the GitHub release;
+   - sets the Freight's **alias** to `vX.Y.Z`, so the release is easy to spot
+     in the `akkoma-main` lane. Aliases are unique per project: if another
+     Freight already has it, this step fails without failing the promotion
+     (the release is already out), and you rename the aliases by hand.
 
    `release.yml` refuses versions that aren't newer than the last release, and
    commits without a dev chart. It re-tags the exact image dev ran and
@@ -73,13 +77,14 @@ akkoma-helm's CI on every PR.
 3. A few minutes later `akkoma-release` picks up chart `X.Y.Z`, and staging
    auto-promotes it, opening the release's Jira ticket.
 
-Without Kargo, run step 2 by hand in akkoma-helm:
+A promotion waiting on the form holds the `release` Stage like any other
+waiting step; abort it to back out.
+
+Without Kargo, run the release by hand in akkoma-helm:
 `gh workflow run release.yml -f sha=<commit> -f version=0.7.0`. The result
 reaches staging the same way.
 
-The alias is a stand-in for a form: once the instance runs Kargo ≥ v1.12 on
-the Akuity Platform, the `get-user-input` step can ask for the version during
-the promotion instead.
+`get-user-input` is an Akuity Platform step (Kargo ≥ v1.12).
 
 ## URLs
 
