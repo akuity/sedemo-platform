@@ -6,11 +6,12 @@
 #              per merge.
 #     release  manual. Cuts chart release X.Y.Z from the dev Freight's commit
 #              by dispatching akkoma-helm's release.yml and waiting for it.
-#              The version comes from the Freight's alias: rename it (e.g.
-#              v0.7.0) before promoting. Deploys nothing.
+#              The promotion asks for the version in a get-user-input form.
+#              Deploys nothing.
 #
 #   akkoma-release:  staging -> prod
-#     staging  (UAT) auto-promoted when a release appears. Creates the
+#     staging  (UAT) auto-promoted when a release appears. Sets the
+#              Freight's alias to vX.Y.Z (its chart version). Creates the
 #              release's Jira ticket in CHANGE (status Open) -- the jira step
 #              stores its key in the Freight's metadata (`jira-issue-key`) --
 #              renders the release with staging's values to
@@ -89,25 +90,35 @@ spec:
       - name: repoURL
         value: https://github.com/adamancini/akkoma-helm
       steps:
-      # Read the alias once: vars and ctx are re-evaluated on every step, so
-      # renaming the alias mid-release would otherwise change what gets
-      # recorded. TODO: replace with get-user-input (a form in the promotion)
-      # once the instance runs Kargo >= v1.12 on the Akuity Platform.
+      # The promotion pauses on a form in the Kargo UI for the release
+      # version. The schema is validated on submit, so a malformed version
+      # never reaches release.yml. Submitted values are recorded on the step,
+      # so they stay fixed for the rest of the promotion.
+      - uses: get-user-input
+        as: input
+        config:
+          display: >-
+            Release Freight ${{ ctx.targetFreight.alias }} (akkoma-helm
+            ${{ split(chartFrom(vars.chart).Version, '.g')[1] }}) as chart
+            version X.Y.Z. It must be newer than the last release.
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+            - version
+            properties:
+              version:
+                type: string
+                title: Release version
+                description: SemVer for the chart release, e.g. 0.9.0 or v0.9.0
+                pattern: "^v?[0-9]+\\.[0-9]+\\.[0-9]+$"
       - uses: compose-output
         as: rel
         config:
-          alias: ${{ quote(ctx.targetFreight.alias) }}
-          version: ${{ quote(trimPrefix(ctx.targetFreight.alias, 'v')) }}
+          version: ${{ quote(trimPrefix(outputs.input.values.version, 'v')) }}
           # dev chart version is 0.0.0-main.<ts>.g<sha8>. quote(): an
           # all-digit sha would otherwise be turned into a number.
           sha: ${{ quote(split(chartFrom(vars.chart).Version, '.g')[1]) }}
-      - uses: fail
-        if: ${{ !(outputs.rel.alias matches '^v?[0-9]+\\.[0-9]+\\.[0-9]+$') }}
-        config:
-          message: >-
-            Set this Freight's alias to the release version (e.g. v0.7.0)
-            before promoting it to release. Its alias is
-            '${{ outputs.rel.alias }}'.
       # release.yml enforces the packaging rules (version newer than the last
       # release, write-once image tag, ...) and fails the run if one is broken.
       - uses: gha-dispatch-workflow
@@ -126,7 +137,7 @@ spec:
           runID: ${{ outputs.dispatch.runID }}
           expectedConclusion: success
           pollInterval: 30s
-      # The alias can be renamed later; this records what was released.
+      # Records what this dev Freight was released as.
       - uses: set-metadata
         config:
           updates:
@@ -134,7 +145,7 @@ spec:
             name: ${{ ctx.targetFreight.name }}
             values:
               releasedAs: ${{ quote(outputs.rel.version) }}
-              releasedBy: ${{ ctx.meta.promotion.actor }}
+              releasedBy: ${{ outputs.input.respondedBy }}
               releaseRun: ${{ vars.repoURL }}/actions/runs/${{ outputs.dispatch.runID }}
       - uses: compose-output
         as: links
@@ -218,6 +229,17 @@ spec:
             ${{ outputs['chart-meta'].appVersion }}, but this Freight pairs it
             with image ${{ vars.imageTag }} -- it was discovered mid-release.
             Promote the newer Freight with the matching chart instead.
+      # Name the release Freight after its chart version -- the SemVer entered
+      # in the release Stage's form -- so it's easy to identify through
+      # staging and prod. After the guard: a mismatched Freight carries the
+      # previous chart and would take that release's alias. Cosmetic, and
+      # aliases are unique per project, so a collision mustn't block the
+      # release; re-promoting the same Freight just sets it again.
+      - uses: set-freight-alias
+        continueOnError: true
+        config:
+          name: ${{ ctx.targetFreight.name }}
+          alias: v${{ vars.chartVersion }}
       # One ticket per release: skipped when this Freight already has one
       # (e.g. re-promoting it after an aborted promotion).
       - uses: jira
