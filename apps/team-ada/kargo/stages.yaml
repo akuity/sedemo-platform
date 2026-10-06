@@ -6,11 +6,12 @@
 #              per merge.
 #     release  manual. Cuts chart release X.Y.Z from the dev Freight's commit
 #              by dispatching akkoma-helm's release.yml and waiting for it.
-#              The promotion asks for the version in a get-user-input form,
-#              then sets the Freight's alias to vX.Y.Z. Deploys nothing.
+#              The promotion asks for the version in a get-user-input form.
+#              Deploys nothing.
 #
 #   akkoma-release:  staging -> prod
-#     staging  (UAT) auto-promoted when a release appears. Creates the
+#     staging  (UAT) auto-promoted when a release appears. Sets the
+#              Freight's alias to vX.Y.Z (its chart version). Creates the
 #              release's Jira ticket in CHANGE (status Open) -- the jira step
 #              stores its key in the Freight's metadata (`jira-issue-key`) --
 #              renders the release with staging's values to
@@ -136,7 +137,7 @@ spec:
           runID: ${{ outputs.dispatch.runID }}
           expectedConclusion: success
           pollInterval: 30s
-      # The alias can be renamed later; this records what was released.
+      # Records what this dev Freight was released as.
       - uses: set-metadata
         config:
           updates:
@@ -154,18 +155,6 @@ spec:
             label: chart ${{ outputs.rel.version }}
             tooltip: GitHub release for this chart version
             url: ${{ vars.repoURL }}/releases/tag/chart-v${{ outputs.rel.version }}
-      # Name the dev Freight after the version it shipped as, so it's easy to
-      # pick out in the akkoma-main lane. Last, and only after release.yml
-      # succeeds, so the alias never names a version that wasn't released and
-      # the release is already recorded above. Aliases are unique per
-      # project: if another Freight already has this one the step fails, but
-      # the chart is out and can't be re-released, so that mustn't fail the
-      # promotion -- rename the other Freight and set this alias by hand.
-      - uses: set-freight-alias
-        continueOnError: true
-        config:
-          name: ${{ ctx.targetFreight.name }}
-          alias: v${{ outputs.rel.version }}
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
@@ -240,6 +229,17 @@ spec:
             ${{ outputs['chart-meta'].appVersion }}, but this Freight pairs it
             with image ${{ vars.imageTag }} -- it was discovered mid-release.
             Promote the newer Freight with the matching chart instead.
+      # Name the release Freight after its chart version -- the SemVer entered
+      # in the release Stage's form -- so it's easy to identify through
+      # staging and prod. After the guard: a mismatched Freight carries the
+      # previous chart and would take that release's alias. Cosmetic, and
+      # aliases are unique per project, so a collision mustn't block the
+      # release; re-promoting the same Freight just sets it again.
+      - uses: set-freight-alias
+        continueOnError: true
+        config:
+          name: ${{ ctx.targetFreight.name }}
+          alias: v${{ vars.chartVersion }}
       # One ticket per release: skipped when this Freight already has one
       # (e.g. re-promoting it after an aborted promotion).
       - uses: jira

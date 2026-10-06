@@ -65,17 +65,16 @@ akkoma-helm's CI on every PR.
    - dispatches akkoma-helm's `release.yml` with the Freight's commit and that
      version, and waits for the run to succeed;
    - records `releasedAs`, `releasedBy` (whoever submitted the form) and the
-     run URL in the Freight's metadata, and links to the GitHub release;
-   - sets the Freight's **alias** to `vX.Y.Z`, so the release is easy to spot
-     in the `akkoma-main` lane. Aliases are unique per project: if another
-     Freight already has it, this step fails without failing the promotion
-     (the release is already out), and you rename the aliases by hand.
+     run URL in the Freight's metadata, and links to the GitHub release.
 
    `release.yml` refuses versions that aren't newer than the last release, and
    commits without a dev chart. It re-tags the exact image dev ran and
    repackages the exact chart dev ran.
 3. A few minutes later `akkoma-release` picks up chart `X.Y.Z`, and staging
-   auto-promotes it, opening the release's Jira ticket.
+   auto-promotes it. The promotion sets that Freight's **alias** to
+   `vX.Y.Z`, so the release is easy to identify through staging and prod,
+   then opens the release's Jira ticket. Dev Freight keeps its generated
+   alias.
 
 A promotion waiting on the form holds the `release` Stage like any other
 waiting step; abort it to back out.
