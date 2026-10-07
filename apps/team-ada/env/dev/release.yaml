@@ -4,6 +4,6 @@
 # All travel through the same generator refresh, so a promotion lands as a
 # single rollout. Other Helm values live in values.yaml here and in
 # ../values.yaml.
-chartVersion: 0.0.0-main.20261006132015.g6cfdb3e3
-imageTag: main-20261006132015-6cfdb3e3
+chartVersion: 0.0.0-main.20261007191005.g0b131ede
+imageTag: main-20261007191005-0b131ede
 imageDigest: sha256:4c20dd6896300272c3bf04e1c46ae2d508f1a180cb5c41e133d2861a4a4293bd
