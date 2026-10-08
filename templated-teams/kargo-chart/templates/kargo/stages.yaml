@@ -178,11 +178,11 @@ spec:
       - uses: wait-for-approval
         as: approve-kyverno-exception
         if: "${% outputs['policy'].summary.warn > 0 %}"
-          config: 
-            approvers:
-            - claim: groups
-              value: sedemo-approver
-              required: true
+        config: 
+          approvers:
+          - claim: groups
+            value: sedemo-approver
+            required: true
       - uses: git-commit
         as: commit
         config:
