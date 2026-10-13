@@ -96,6 +96,7 @@ spec:
                   #   TOKEN_SECRET, STAGE, EXPECTED_COUNT.
                   # Optional env: SMOKE (false), APP_VERSION (empty skips the semver check),
                   #   APP_PORT (8080), COLOR_SAMPLES (20), COLOR_MAX_ERROR_PCT (20),
+                  #   COLOR_TIMEOUT (2s per /color request),
                   #   DISCOVERY_TIMEOUT (300s), DISCOVERY_INTERVAL (10s), HTTP_ATTEMPTS (3),
                   #   HTTP_INTERVAL (5s).
                   set -u
@@ -110,6 +111,7 @@ spec:
                   APP_PORT="${APP_PORT:-8080}"
                   COLOR_SAMPLES="${COLOR_SAMPLES:-20}"
                   COLOR_MAX_ERROR_PCT="${COLOR_MAX_ERROR_PCT:-20}"
+                  COLOR_TIMEOUT="${COLOR_TIMEOUT:-2}"
                   DISCOVERY_TIMEOUT="${DISCOVERY_TIMEOUT:-300}"
                   DISCOVERY_INTERVAL="${DISCOVERY_INTERVAL:-10}"
                   HTTP_ATTEMPTS="${HTTP_ATTEMPTS:-3}"
@@ -236,16 +238,19 @@ spec:
                     fi
 
                     # /color is the app's real request path; ERROR_RATE makes it return 500s.
+                    # Stop as soon as the error budget for all COLOR_SAMPLES is exceeded: the
+                    # verdict can no longer change, and a slow bad config fails in seconds.
                     errors=0
                     i=0
                     while [ "$i" -lt "$COLOR_SAMPLES" ]; do
-                      c="$(curl -s --max-time 5 -o /dev/null -w '%{http_code}' "$base/color")" || c="000"
+                      c="$(curl -s --max-time "$COLOR_TIMEOUT" -o /dev/null -w '%{http_code}' "$base/color")" || c="000"
                       [ "$c" = "200" ] || errors=$((errors + 1))
                       i=$((i + 1))
+                      [ $((errors * 100)) -gt $((COLOR_MAX_ERROR_PCT * COLOR_SAMPLES)) ] && break
                     done
-                    rate=$((errors * 100 / COLOR_SAMPLES))
+                    rate=$((errors * 100 / i))
                     if [ $((errors * 100)) -gt $((COLOR_MAX_ERROR_PCT * COLOR_SAMPLES)) ]; then
-                      fail_vm "$vm" "/color error rate ${rate}% ($errors of $COLOR_SAMPLES non-200), limit ${COLOR_MAX_ERROR_PCT}%"
+                      fail_vm "$vm" "/color error rate ${rate}% ($errors of $i sampled non-200, timeout ${COLOR_TIMEOUT}s), limit ${COLOR_MAX_ERROR_PCT}% of $COLOR_SAMPLES"
                       continue
                     fi
 
