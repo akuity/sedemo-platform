@@ -1,0 +1,6 @@
+# Stage-specific values for the nav-config chart (sedemo-monorepo
+# vm-app/config-chart). Shared defaults live in the chart; only what differs
+# per stage belongs here. service.stage is set by the promotion.
+database:
+  host: navdb-qa.internal.example
+  name: nav

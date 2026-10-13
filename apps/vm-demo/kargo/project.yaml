@@ -1,0 +1,29 @@
+# Kargo project for the VM deployment demo. Every Stage runs on the
+# self-hosted `homelab` shard (see stages.yaml), which can reach the
+# Proxmox API and the VMs for verification.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: vm-demo
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: vm-demo
+  namespace: vm-demo
+spec:
+  promotionPolicies:
+  # dev auto-promotes new Freight. autoRollback: {} defaults to triggering on
+  # verification Failed only, so a bad config that fails /healthz re-promotes
+  # the last verified Freight with no human actor.
+  - stageSelector:
+      name: dev
+    autoPromotionEnabled: true
+    autoRollback: {}
+  - stageSelector:
+      name: qa
+    autoPromotionEnabled: true
+  # sit, uat and prod are manual. No autoRollback on prod: a re-promotion
+  # would block on the human PR and change-request gates.

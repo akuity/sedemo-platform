@@ -1,0 +1,11 @@
+# Deploy pin template. The promotion copies this file to the rendered branch
+# and fills in the empty fields from the Freight; converge.yml in
+# sedemo-vm-infra reads the rendered copy. Every key must exist here because
+# yaml-update only updates existing keys.
+stage: dev
+vm_count: 1
+app_version: ""
+artifact: ""
+base_template: ""
+base_vmid: 0
+freight: ""
