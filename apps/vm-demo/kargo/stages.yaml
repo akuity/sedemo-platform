@@ -61,6 +61,8 @@ spec:
       - task:
           name: vm-converge
         vars:
+        - name: release
+          value: "${{ outputs.render.appVersion }} on ${{ outputs.render.baseTemplate }}"
         - name: platformRef
           value: ${{ outputs.push.commit }}
 ---
@@ -113,6 +115,8 @@ spec:
       - task:
           name: vm-converge
         vars:
+        - name: release
+          value: "${{ outputs.render.appVersion }} on ${{ outputs.render.baseTemplate }}"
         - name: platformRef
           value: ${{ outputs.push.commit }}
 ---
@@ -164,6 +168,8 @@ spec:
       - task:
           name: vm-converge
         vars:
+        - name: release
+          value: "${{ outputs.render.appVersion }} on ${{ outputs.render.baseTemplate }}"
         - name: platformRef
           value: ${{ outputs.push.commit }}
 ---
@@ -238,9 +244,41 @@ spec:
         config:
           repoURL: https://github.com/akuity/sedemo-platform
           prNumber: ${{ outputs['open-pr'].pr.id }}
+      # Audit: who merged the SysOps PR (human input). GitHub's public API
+      # reports merged_by; the PR lives in this public repo.
+      - uses: http
+        as: pr-info
+        if: ${{ outputs.render.changed }}
+        retry:
+          errorThreshold: 3
+        config:
+          url: https://api.github.com/repos/akuity/sedemo-platform/pulls/${{ outputs['open-pr'].pr.id }}
+          headers:
+          - name: Accept
+            value: application/vnd.github+json
+          successExpression: response.status == 200
+          outputs:
+          - name: mergedBy
+            fromExpression: response.body.merged_by.login
+          - name: url
+            fromExpression: response.body.html_url
+      - uses: record-audit-event
+        as: audit-pr-merged
+        if: ${{ outputs.render.changed }}
+        retry:
+          errorThreshold: 3
+        config:
+          type: pr-merged
+          actor: github:${{ outputs['pr-info'].mergedBy }}
+          message: "Rendered config PR #${{ outputs['open-pr'].pr.id }} for ${{ ctx.stage }} merged by ${{ outputs['pr-info'].mergedBy }}"
+          data:
+            pr: ${{ outputs['pr-info'].url }}
+            mergeCommit: ${{ outputs.merged.commit }}
       - task:
           name: vm-converge
         vars:
+        - name: release
+          value: "${{ outputs.render.appVersion }} on ${{ outputs.render.baseTemplate }}"
         - name: platformRef
           value: "${{ outputs.render.changed ? outputs.merged?.commit : outputs.render.commit }}"
 ---
@@ -337,15 +375,72 @@ spec:
           waitForStatus:
             issueKey: ${{ outputs.change.key }}
             expectedStatus: Approved
+      # Audit: who approved the CHANGE issue (human input). The jira step's
+      # changelog names the user who moved it to Approved.
+      - uses: jira
+        as: approval
+        retry:
+          errorThreshold: 3
+        config:
+          credentials:
+            sharedSecretName: jira-access-secret
+          searchIssue:
+            jql: key = ${{ outputs.change.key }}
+            fields:
+            - status
+            expands:
+            - changelog
+      - uses: record-audit-event
+        as: audit-change-approved
+        retry:
+          errorThreshold: 3
+        config:
+          type: change-approved
+          actor: "jira:${{ last(filter(outputs.approval.issue.changelog.histories, any(.items, .field == 'status' && .toString == 'Approved')))?.author?.displayName ?? 'unknown' }}"
+          message: "${{ outputs.change.key }} approved by ${{ last(filter(outputs.approval.issue.changelog.histories, any(.items, .field == 'status' && .toString == 'Approved')))?.author?.displayName ?? 'unknown' }} for ${{ outputs.render.appVersion }} on ${{ outputs.render.baseTemplate }}"
+          data:
+            issue: https://eddiewebb.atlassian.net/browse/${{ outputs.change.key }}
       - uses: git-wait-for-pr
         as: merged
         if: ${{ outputs.render.changed }}
         config:
           repoURL: https://github.com/akuity/sedemo-platform
           prNumber: ${{ outputs['open-pr'].pr.id }}
+      # Audit: who merged the SysOps PR (human input). GitHub's public API
+      # reports merged_by; the PR lives in this public repo.
+      - uses: http
+        as: pr-info
+        if: ${{ outputs.render.changed }}
+        retry:
+          errorThreshold: 3
+        config:
+          url: https://api.github.com/repos/akuity/sedemo-platform/pulls/${{ outputs['open-pr'].pr.id }}
+          headers:
+          - name: Accept
+            value: application/vnd.github+json
+          successExpression: response.status == 200
+          outputs:
+          - name: mergedBy
+            fromExpression: response.body.merged_by.login
+          - name: url
+            fromExpression: response.body.html_url
+      - uses: record-audit-event
+        as: audit-pr-merged
+        if: ${{ outputs.render.changed }}
+        retry:
+          errorThreshold: 3
+        config:
+          type: pr-merged
+          actor: github:${{ outputs['pr-info'].mergedBy }}
+          message: "Rendered config PR #${{ outputs['open-pr'].pr.id }} for ${{ ctx.stage }} merged by ${{ outputs['pr-info'].mergedBy }}"
+          data:
+            pr: ${{ outputs['pr-info'].url }}
+            mergeCommit: ${{ outputs.merged.commit }}
       - task:
           name: vm-converge
         vars:
+        - name: release
+          value: "${{ outputs.render.appVersion }} on ${{ outputs.render.baseTemplate }}"
         - name: platformRef
           value: "${{ outputs.render.changed ? outputs.merged?.commit : outputs.render.commit }}"
       - uses: jira

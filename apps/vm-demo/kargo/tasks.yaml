@@ -83,6 +83,23 @@ spec:
       message: >-
         images/base.json at this base-image Freight has no template (not yet
         baked). Promote a Freight from a baked commit.
+  # Audit: who asked for this promotion (human input #1). Auto-promotions and
+  # auto-rollbacks have no human actor and are recorded as Kargo (automatic).
+  - uses: record-audit-event
+    as: audit-requested
+    retry:
+      errorThreshold: 3
+    config:
+      type: promotion-requested
+      message: >-
+        ${{ (ctx.meta.promotion.actor ?? '') != '' ? ctx.meta.promotion.actor : 'Kargo (automatic)' }}
+        promoted rollouts-app ${{ imageFrom(vars.artifactRepo, warehouse('app')).Tag }}
+        on base ${{ task.outputs.base.template }} to ${{ vars.stage }}
+      data:
+        stage: ${{ vars.stage }}
+        freight: ${{ ctx.targetFreight.name }}
+        appVersion: ${{ imageFrom(vars.artifactRepo, warehouse('app')).Tag }}
+        baseTemplate: ${{ task.outputs.base.template }}
   # Render-time gate: the chart marks its keys `required`, so a missing value
   # (e.g. `namespace` in env/<stage>/values.yaml) fails here, before any VM
   # is touched. color is the tag suffix after the first '-' (50-blue: blue),
@@ -162,6 +179,9 @@ spec:
   - name: stage
     value: ${{ ctx.stage }}
   - name: platformRef
+  # "<app tag> on <base template>", for the deployed audit event.
+  - name: release
+    value: ""
   - name: infraRepo
     value: https://github.com/akuity/sedemo-vm-infra
   steps:
@@ -186,3 +206,15 @@ spec:
       runID: ${{ task.outputs.dispatch.runID }}
       expectedConclusion: success
       pollInterval: 5s
+  # Audit: the outcome that closes this promotion's chain of custody.
+  - uses: record-audit-event
+    as: audit-deployed
+    retry:
+      errorThreshold: 3
+    config:
+      type: deployed
+      message: "${{ vars.release }} deployed to ${{ vars.stage }} and converged"
+      data:
+        stage: ${{ vars.stage }}
+        renderedCommit: ${{ vars.platformRef }}
+        convergeRun: https://github.com/akuity/sedemo-vm-infra/actions/runs/${{ task.outputs.dispatch.runID }}
