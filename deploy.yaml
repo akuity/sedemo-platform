@@ -4,8 +4,8 @@
 # yaml-update only updates existing keys.
 stage: dev
 vm_count: 1
-app_version: 49-green
-artifact: ghcr.io/akuity/sedemo-monorepo-rollouts-app:49-green
+app_version: 50-blue
+artifact: ghcr.io/akuity/sedemo-monorepo-rollouts-app:50-blue
 base_template: ubuntu-2404-base-202610130408
 base_vmid: 9103
-freight: a6386fcae241d77dd5878e90efacca0a5e11bffe
+freight: d035359442b6346a091703e6b28503266f4b100f
