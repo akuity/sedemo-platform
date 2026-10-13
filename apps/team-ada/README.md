@@ -120,6 +120,33 @@ git-managed `ExternalSecret` in
 The project key and status names are stage `vars` in
 [`kargo/stages.yaml`](./kargo/stages.yaml).
 
+### Audit events
+
+Every human decision in the pipeline is recorded with
+[`record-audit-event`](https://docs.kargo.io/user-guide/reference-docs/promotion-steps/record-audit-event)
+(Akuity Platform, Kargo ≥ v1.12). These events show up in the Akuity
+Platform's audit log and in the `team-ada` project's Events tab:
+
+| Stage | Event `type` | When | Attributed to |
+| ------- | -------------- | ------ | --------------- |
+| `release` | `release-requested` | the version form is submitted, before dispatch | whoever submitted the form |
+| `release` | `released` | `release.yml` succeeded | promotion's actor (requester in data) |
+| `release` | `release-failed` | any step failed | promotion's actor |
+| `staging` | `approval-requested` | ticket and rendered diff are posted | promotion's actor |
+| `staging` | `approved` | ticket reached `UAT` | promotion's actor (Jira approver in message/data) |
+| `staging` | `deployed` | promote task finished | promotion's actor |
+| `prod` | `approval-requested` | release notes are posted | whoever promoted to prod |
+| `prod` | `approved` | ticket reached `Approved` | whoever promoted to prod (Jira approver in message/data) |
+| `prod` | `deployed` | promote task finished | whoever promoted to prod |
+| `staging`, `prod` | `promotion-failed` | any step failed | promotion's actor |
+
+Jira's `waitForStatus` doesn't report who changed the status. To find the
+approver, the [`audit-jira-approval`](./kargo/tasks.yaml) task reads the
+ticket's changelog and takes the latest transition into the gate's status.
+That lookup is best-effort. If it fails, the event is still recorded, with
+the approver as "unknown". Aborted promotions record no event. Dev's
+per-commit auto-promotions involve no human input and record none either.
+
 ### When verification runs
 
 The ApplicationSet, not Kargo, writes `release.yaml` into each Application

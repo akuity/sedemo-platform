@@ -119,6 +119,25 @@ spec:
           # dev chart version is 0.0.0-main.<ts>.g<sha8>. quote(): an
           # all-digit sha would otherwise be turned into a number.
           sha: ${{ quote(split(chartFrom(vars.chart).Version, '.g')[1]) }}
+      # Audit the form submission -- who asked for which version of which
+      # commit -- before anything is dispatched, so it's on record even if
+      # the release fails.
+      - uses: record-audit-event
+        as: audit-requested
+        retry:
+          errorThreshold: 3
+        config:
+          type: release-requested
+          message: >-
+            ${{ outputs.input.respondedBy }} requested chart release
+            ${{ outputs.rel.version }} of Freight ${{ ctx.targetFreight.alias }}
+            (akkoma-helm ${{ outputs.rel.sha }}).
+          actor: ${{ quote(outputs.input.respondedBy) }}
+          data:
+            freight: ${{ ctx.targetFreight.name }}
+            version: ${{ quote(outputs.rel.version) }}
+            sha: ${{ quote(outputs.rel.sha) }}
+            respondedAt: ${{ quote(outputs.input.respondedAt) }}
       # release.yml enforces the packaging rules (version newer than the last
       # release, write-once image tag, ...) and fails the run if one is broken.
       - uses: gha-dispatch-workflow
@@ -147,6 +166,23 @@ spec:
               releasedAs: ${{ quote(outputs.rel.version) }}
               releasedBy: ${{ outputs.input.respondedBy }}
               releaseRun: ${{ vars.repoURL }}/actions/runs/${{ outputs.dispatch.runID }}
+      - uses: record-audit-event
+        as: audit-released
+        retry:
+          errorThreshold: 3
+        config:
+          type: released
+          message: >-
+            Released Freight ${{ ctx.targetFreight.alias }} as chart
+            ${{ outputs.rel.version }}, requested by
+            ${{ outputs.input.respondedBy }}. Release run:
+            ${{ vars.repoURL }}/actions/runs/${{ outputs.dispatch.runID }}
+          data:
+            freight: ${{ ctx.targetFreight.name }}
+            version: ${{ quote(outputs.rel.version) }}
+            sha: ${{ quote(outputs.rel.sha) }}
+            requestedBy: ${{ quote(outputs.input.respondedBy) }}
+            releaseRun: ${{ vars.repoURL }}/actions/runs/${{ outputs.dispatch.runID }}
       - uses: compose-output
         as: links
         config:
@@ -155,6 +191,27 @@ spec:
             label: chart ${{ outputs.rel.version }}
             tooltip: GitHub release for this chart version
             url: ${{ vars.repoURL }}/releases/tag/chart-v${{ outputs.rel.version }}
+      # Only runs when an earlier step failed, e.g. release.yml rejected the
+      # version or its run failed. An aborted promotion records nothing.
+      - uses: record-audit-event
+        as: audit-failed
+        if: ${{ failure() }}
+        retry:
+          errorThreshold: 3
+        config:
+          type: release-failed
+          message: >-
+            Release of Freight ${{ ctx.targetFreight.alias }} as chart
+            ${{ outputs.rel?.version ?? '(no version submitted)' }} failed.
+            Promotion: ${{ ctx.promotion }}
+          data:
+            freight: ${{ ctx.targetFreight.name }}
+            version: ${{ quote(outputs.rel?.version ?? '') }}
+            requestedBy: ${{ quote(outputs.input?.respondedBy ?? '') }}
+            # Same template as releaseRun above (string() could format the
+            # run ID as a float). Ends in /runs/ if release.yml was never
+            # dispatched.
+            releaseRun: ${{ vars.repoURL }}/actions/runs/${{ outputs.dispatch?.runID ?? '' }}
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
@@ -366,6 +423,27 @@ spec:
                       href: ${{ outputs.diff.url }}
                 - type: text
                   text: ". Dev/QA: review the diff, then Approve for Testing to deploy."
+      # Audit what QA was asked to approve: the ticket and the exact render.
+      - uses: record-audit-event
+        as: audit-approval-requested
+        retry:
+          errorThreshold: 3
+        config:
+          type: approval-requested
+          message: >-
+            Waiting for QA to move
+            ${{ outputs['create-release-ticket']?.key ?? freightMetadata(ctx.targetFreight.name)['jira-issue-key'] }}
+            to ${{ vars.approvedStatus }} to deploy chart ${{ vars.chartVersion }}
+            (image ${{ vars.imageTag }}) to ${{ ctx.stage }}. Rendered diff:
+            ${{ outputs.diff.url }}
+          data:
+            freight: ${{ ctx.targetFreight.name }}
+            chartVersion: ${{ quote(vars.chartVersion) }}
+            imageTag: ${{ quote(vars.imageTag) }}
+            imageDigest: ${{ vars.imageDigest }}
+            jiraIssue: ${{ outputs['create-release-ticket']?.key ?? freightMetadata(ctx.targetFreight.name)['jira-issue-key'] }}
+            renderedCommit: ${{ quote(outputs.render.head) }}
+            renderedDiff: ${{ outputs.diff.url }}
       - uses: jira
         as: wait-for-qa-approval
         config:
@@ -376,6 +454,16 @@ spec:
             expectedStatus: ${{ vars.approvedStatus }}
             pollInterval: 30s
       - task:
+          name: audit-jira-approval
+        as: qa-approval
+        vars:
+        - name: issueKey
+          value: ${{ outputs['create-release-ticket']?.key ?? freightMetadata(ctx.targetFreight.name)['jira-issue-key'] }}
+        - name: approvedStatus
+          value: ${{ vars.approvedStatus }}
+        - name: approver
+          value: QA
+      - task:
           name: promote
       # Baseline for the next staging diff: what's now actually deployed.
       - uses: set-metadata
@@ -385,6 +473,23 @@ spec:
             name: ${{ ctx.stage }}
             values:
               renderedCommit: ${{ quote(outputs.render.head) }}
+      - uses: record-audit-event
+        as: audit-deployed
+        retry:
+          errorThreshold: 3
+        config:
+          type: deployed
+          message: >-
+            Deployed chart ${{ vars.chartVersion }} (image ${{ vars.imageTag }})
+            to ${{ ctx.stage }} after QA approval on
+            ${{ outputs['create-release-ticket']?.key ?? freightMetadata(ctx.targetFreight.name)['jira-issue-key'] }}.
+          data:
+            freight: ${{ ctx.targetFreight.name }}
+            chartVersion: ${{ quote(vars.chartVersion) }}
+            imageTag: ${{ quote(vars.imageTag) }}
+            imageDigest: ${{ vars.imageDigest }}
+            jiraIssue: ${{ outputs['create-release-ticket']?.key ?? freightMetadata(ctx.targetFreight.name)['jira-issue-key'] }}
+            renderedCommit: ${{ quote(outputs.render.head) }}
       - uses: jira
         config:
           credentials:
@@ -404,6 +509,27 @@ spec:
             label: rendered diff
             tooltip: Rendered manifests, running vs this release
             url: ${{ outputs.diff.url }}
+      # Only runs when an earlier step failed, e.g. the chart/image guard, or
+      # the deploy. An aborted promotion (e.g. a ticket Declined while
+      # waiting) records nothing.
+      - uses: record-audit-event
+        as: audit-failed
+        if: ${{ failure() }}
+        retry:
+          errorThreshold: 3
+        config:
+          type: promotion-failed
+          message: >-
+            Promotion of chart ${{ vars.chartVersion }} (image
+            ${{ vars.imageTag }}) to ${{ ctx.stage }} failed. Promotion:
+            ${{ ctx.promotion }}
+          data:
+            freight: ${{ ctx.targetFreight.name }}
+            chartVersion: ${{ quote(vars.chartVersion) }}
+            imageTag: ${{ quote(vars.imageTag) }}
+            jiraIssue: >-
+              ${{ quote(outputs['create-release-ticket']?.key ??
+              freightMetadata(ctx.targetFreight.name)?.['jira-issue-key'] ?? '') }}
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
@@ -537,6 +663,25 @@ spec:
             label: ${{ vars.issueKey }}
             tooltip: Release ticket for this Freight
             url: https://eddiewebb.atlassian.net/browse/${{ vars.issueKey }}
+      # Audit what the VP was asked to sign off on. The actor is whoever
+      # promoted to prod.
+      - uses: record-audit-event
+        as: audit-approval-requested
+        retry:
+          errorThreshold: 3
+        config:
+          type: approval-requested
+          message: >-
+            Waiting for VP sign-off (${{ vars.issueKey }} to
+            ${{ vars.approvedStatus }}) to deploy chart ${{ vars.chartVersion }}
+            (image ${{ vars.imageTag }}) to ${{ ctx.stage }}. Release notes:
+            ${{ outputs.release.url }}
+          data:
+            freight: ${{ ctx.targetFreight.name }}
+            chartVersion: ${{ quote(vars.chartVersion) }}
+            imageTag: ${{ quote(vars.imageTag) }}
+            jiraIssue: ${{ vars.issueKey }}
+            releaseNotes: ${{ outputs.release.url }}
       - uses: jira
         as: wait-for-vp-approval
         config:
@@ -547,6 +692,16 @@ spec:
             expectedStatus: ${{ vars.approvedStatus }}
             pollInterval: 30s
       - task:
+          name: audit-jira-approval
+        as: vp-approval
+        vars:
+        - name: issueKey
+          value: ${{ vars.issueKey }}
+        - name: approvedStatus
+          value: ${{ vars.approvedStatus }}
+        - name: approver
+          value: VP
+      - task:
           name: promote
       - uses: jira
         config:
@@ -555,3 +710,35 @@ spec:
           commentOnIssue:
             issueKey: ${{ vars.issueKey }}
             body: "Deployed to ${{ ctx.stage }} after VP approval. Promotion: ${{ ctx.promotion }}."
+      - uses: record-audit-event
+        as: audit-deployed
+        retry:
+          errorThreshold: 3
+        config:
+          type: deployed
+          message: >-
+            Deployed chart ${{ vars.chartVersion }} (image ${{ vars.imageTag }})
+            to ${{ ctx.stage }} after VP approval on ${{ vars.issueKey }}.
+          data:
+            freight: ${{ ctx.targetFreight.name }}
+            chartVersion: ${{ quote(vars.chartVersion) }}
+            imageTag: ${{ quote(vars.imageTag) }}
+            jiraIssue: ${{ vars.issueKey }}
+      # Only runs when an earlier step failed, e.g. no GitHub release for
+      # this chart, or the deploy. An aborted promotion records nothing.
+      - uses: record-audit-event
+        as: audit-failed
+        if: ${{ failure() }}
+        retry:
+          errorThreshold: 3
+        config:
+          type: promotion-failed
+          message: >-
+            Promotion of chart ${{ vars.chartVersion }} (image
+            ${{ vars.imageTag }}) to ${{ ctx.stage }} failed. Promotion:
+            ${{ ctx.promotion }}
+          data:
+            freight: ${{ ctx.targetFreight.name }}
+            chartVersion: ${{ quote(vars.chartVersion) }}
+            imageTag: ${{ quote(vars.imageTag) }}
+            jiraIssue: ${{ quote(vars.issueKey ?? '') }}

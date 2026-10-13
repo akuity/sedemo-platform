@@ -60,3 +60,72 @@ spec:
           chart: akkoma
           desiredRevision: ${{ chartFrom(vars.chart).Version }}
           updateTargetRevision: false
+---
+# Audit event for a Jira approval gate, run right after the stage's
+# `waitForStatus` step. That step only waits for the status and doesn't say
+# who set it, so this looks it up in the ticket's changelog: the most recent
+# transition into the approved status. The lookup is best-effort: if it
+# fails, the event still gets recorded, with the approver as "unknown (see
+# the ticket's history)". The event's actor stays the promotion's (Jira
+# users aren't Kargo identities). The approver goes in the message and data.
+#
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/promotiontasks.kargo.akuity.io_v1alpha1.json
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: audit-jira-approval
+  namespace: team-ada
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  vars:
+  # Release ticket, e.g. CHANGE-123
+  - name: issueKey
+  # Status the gate waited for, e.g. UAT
+  - name: approvedStatus
+  # Who the gate is for, for the message, e.g. "QA" or "VP"
+  - name: approver
+  steps:
+  - uses: jira
+    as: issue
+    continueOnError: true
+    config:
+      credentials:
+        sharedSecretName: jira-access-secret
+      searchIssue:
+        jql: key = ${{ vars.issueKey }}
+        fields:
+        - status
+        expands:
+        - changelog
+  - uses: compose-output
+    as: approval
+    continueOnError: true
+    config:
+      transition: >-
+        ${{ last(sortBy(filter(task.outputs.issue.issue.changelog.histories,
+        any(.items, .field == 'status' && .toString == vars.approvedStatus)),
+        .created)) }}
+  - uses: record-audit-event
+    as: audit
+    retry:
+      errorThreshold: 3
+    config:
+      type: approved
+      message: >-
+        ${{ vars.approver }} approved chart
+        ${{ chartFrom("oci://ghcr.io/adamancini/charts/akkoma").Version }}
+        (image ${{ imageFrom("ghcr.io/adamancini/akkoma").Tag }}) for
+        ${{ ctx.stage }}: ${{ vars.issueKey }} moved to ${{ vars.approvedStatus }}
+        by ${{ task.outputs.approval?.transition?.author?.displayName ??
+        "unknown (see the ticket's history)" }}.
+      data:
+        stage: ${{ ctx.stage }}
+        freight: ${{ ctx.targetFreight.name }}
+        chartVersion: ${{ quote(chartFrom("oci://ghcr.io/adamancini/charts/akkoma").Version) }}
+        imageTag: ${{ quote(imageFrom("ghcr.io/adamancini/akkoma").Tag) }}
+        jiraIssue: ${{ vars.issueKey }}
+        jiraStatus: ${{ vars.approvedStatus }}
+        jiraApprover: ${{ quote(task.outputs.approval?.transition?.author?.displayName ?? '') }}
+        jiraApproverAccountId: ${{ quote(task.outputs.approval?.transition?.author?.accountId ?? '') }}
+        approvedAt: ${{ quote(task.outputs.approval?.transition?.created ?? '') }}
