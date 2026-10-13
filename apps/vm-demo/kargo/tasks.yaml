@@ -1,0 +1,188 @@
+# PromotionTask: vm-render
+#
+# Renders exactly what will land on the stage's VMs and commits it to the
+# working tree of branch rendered/vm-demo/<stage> (./out). It does NOT push:
+# the calling Stage decides between a direct push (dev, qa, sit) and a PR
+# (uat, prod).
+#
+#   ./platform  this repo at main            (env/<stage>/{values,deploy}.yaml)
+#   ./out       rendered/vm-demo/<stage>     (output: rollouts-demo.env, deploy.yaml)
+#   ./app       sedemo-monorepo @ Freight    (vm-app/config-chart)
+#   ./infra     sedemo-vm-infra @ Freight    (images/base.json)
+#
+# Outputs (via compose-output, read by the Stage as outputs.<task alias>.*):
+#   commit    HEAD of ./out after the commit step
+#   previous  HEAD of rendered/vm-demo/<stage> before this promotion
+#   changed   false when the render is identical to what is already on the
+#             branch (re-promoting the same Freight: autoRollback, retries).
+#             git-commit is a no-op then; PR stages skip the PR and converge
+#             the existing head.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: vm-render
+  namespace: vm-demo
+spec:
+  vars:
+  - name: stage
+    value: ${{ ctx.stage }}
+  - name: platformRepo
+    value: https://github.com/akuity/sedemo-platform
+  - name: appRepo
+    value: https://github.com/akuity/sedemo-monorepo
+  - name: infraRepo
+    value: https://github.com/akuity/sedemo-vm-infra
+  - name: artifactRepo
+    value: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+  steps:
+  - uses: git-clone
+    config:
+      repoURL: ${{ vars.platformRepo }}
+      checkout:
+      - branch: main
+        path: ./platform
+  - uses: git-clone
+    as: clone-out
+    config:
+      repoURL: ${{ vars.platformRepo }}
+      checkout:
+      - branch: rendered/vm-demo/${{ vars.stage }}
+        create: true
+        path: ./out
+        as: out
+  - uses: git-clone
+    config:
+      repoURL: ${{ vars.appRepo }}
+      checkout:
+      - commit: ${{ commitFrom(vars.appRepo, warehouse("app")).ID }}
+        path: ./app
+  - uses: git-clone
+    config:
+      repoURL: ${{ vars.infraRepo }}
+      checkout:
+      - commit: ${{ commitFrom(vars.infraRepo, warehouse("base-image")).ID }}
+        path: ./infra
+  - uses: git-clear
+    config:
+      path: ./out
+  # base.json is JSON, which is valid YAML, so yaml-parse reads it.
+  - uses: yaml-parse
+    as: base
+    config:
+      path: ./infra/images/base.json
+      outputs:
+      - name: template
+        fromExpression: template
+      - name: vmid
+        fromExpression: vmid
+  # images/base.json is a placeholder ({}) until the first bake; refuse that
+  # Freight instead of rendering a deploy pin with no template.
+  - uses: fail
+    if: ${{ (task.outputs.base.template ?? '') == '' }}
+    config:
+      message: >-
+        images/base.json at this base-image Freight has no template (not yet
+        baked). Promote a Freight from a baked commit.
+  # Render-time gate: the chart marks its keys `required`, so a missing value
+  # (e.g. `namespace` in env/<stage>/values.yaml) fails here, before any VM
+  # is touched. color is the tag suffix after the first '-' (50-blue: blue),
+  # semver the whole tag.
+  #
+  # The chart renders a systemd EnvironmentFile, not Kubernetes YAML.
+  # helm-template treats outPath as a single file only when it ends in
+  # .yaml/.yml (anything else is a directory), so render to a scratch .yaml
+  # outside ./out and copy it to rollouts-demo.env. Helm's leading `---` and
+  # `# Source:` lines stay; systemd ignores them.
+  - uses: helm-template
+    config:
+      releaseName: rollouts-demo
+      path: ./app/vm-app/config-chart
+      valuesFiles:
+      - ./platform/apps/vm-demo/env/${{ vars.stage }}/values.yaml
+      setValues:
+      - key: color
+        value: ${{ split(imageFrom(vars.artifactRepo, warehouse("app")).Tag, "-", 2)[1] }}
+      - key: semver
+        value: ${{ imageFrom(vars.artifactRepo, warehouse("app")).Tag }}
+      - key: stage
+        value: ${{ vars.stage }}
+      outPath: ./render/rollouts-demo.yaml
+  - uses: copy
+    config:
+      inPath: ./render/rollouts-demo.yaml
+      outPath: ./out/rollouts-demo.env
+  - uses: copy
+    config:
+      inPath: ./platform/apps/vm-demo/env/${{ vars.stage }}/deploy.yaml
+      outPath: ./out/deploy.yaml
+  - uses: yaml-update
+    config:
+      path: ./out/deploy.yaml
+      updates:
+      - key: app_version
+        value: ${{ imageFrom(vars.artifactRepo, warehouse("app")).Tag }}
+      - key: artifact
+        value: ${{ vars.artifactRepo }}:${{ imageFrom(vars.artifactRepo, warehouse("app")).Tag }}
+      - key: base_template
+        value: ${{ task.outputs.base.template }}
+      - key: base_vmid
+        value: ${{ task.outputs.base.vmid }}
+      - key: freight
+        value: ${{ ctx.targetFreight.name }}
+  # Skipped (no new commit) when nothing changed; its output is then the
+  # existing HEAD.
+  - uses: git-commit
+    as: commit
+    config:
+      path: ./out
+      message: "vm-demo: ${{ vars.stage }} app ${{ imageFrom(vars.artifactRepo, warehouse('app')).Tag }} base ${{ task.outputs.base.template }}"
+  - uses: compose-output
+    as: output
+    config:
+      commit: ${{ task.outputs.commit.commit }}
+      previous: ${{ task.outputs['clone-out'].commits.out }}
+      changed: ${{ task.outputs.commit.commit != task.outputs['clone-out'].commits.out }}
+      appVersion: ${{ imageFrom(vars.artifactRepo, warehouse("app")).Tag }}
+      baseTemplate: ${{ task.outputs.base.template }}
+---
+# PromotionTask: vm-converge
+#
+# Dispatches converge.yml in the private infra repo with the stage and the
+# rendered commit, then waits for it. converge.yml checks out that commit,
+# runs Terraform (VM lifecycle) and Ansible (app deploy), and serializes per
+# stage. It always runs, even when the render was a no-op, so re-promoting
+# known-good Freight re-converges the VMs.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: vm-converge
+  namespace: vm-demo
+spec:
+  vars:
+  - name: stage
+    value: ${{ ctx.stage }}
+  - name: platformRef
+  - name: infraRepo
+    value: https://github.com/akuity/sedemo-vm-infra
+  steps:
+  - uses: gha-dispatch-workflow
+    as: dispatch
+    config:
+      repoURL: ${{ vars.infraRepo }}
+      workflowFile: converge.yml
+      ref: main
+      inputs:
+        stage: ${{ vars.stage }}
+        platform_ref: ${{ vars.platformRef }}
+      # Seconds to wait for the run to be created (max 300).
+      timeout: 120
+  # A base-image promotion replaces the stage's VMs (prod: two, one at a
+  # time), so allow well past the 15m a single replacement needs.
+  - uses: gha-wait-for-workflow
+    retry:
+      timeout: 30m
+    config:
+      repoURL: ${{ vars.infraRepo }}
+      runID: ${{ task.outputs.dispatch.runID }}
+      expectedConclusion: success
+      pollInterval: 20s

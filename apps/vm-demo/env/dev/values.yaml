@@ -1,0 +1,4 @@
+# Stage-specific values for the rollouts-demo config chart (sedemo-monorepo
+# vm-app/config-chart). Shared defaults live in the chart; only what differs
+# per stage belongs here. color, semver and stage are set by the promotion.
+namespace: vm-dev
