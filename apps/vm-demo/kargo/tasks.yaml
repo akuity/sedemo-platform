@@ -185,4 +185,4 @@ spec:
       repoURL: ${{ vars.infraRepo }}
       runID: ${{ task.outputs.dispatch.runID }}
       expectedConclusion: success
-      pollInterval: 20s
+      pollInterval: 5s
