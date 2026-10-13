@@ -9,3 +9,6 @@ artifact: ""
 base_template: ""
 base_vmid: 0
 freight: ""
+app_revision: ""
+chart_commit: ""
+infra_commit: ""
