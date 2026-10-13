@@ -16,9 +16,9 @@ metadata:
 spec:
   promotionPolicies:
   # dev auto-promotes new Freight. autoRollback: {} defaults to triggering on
-  # verification Failed only, so a bad config (e.g. a chart errorRate that makes
-  # /color return 500s) that fails verification re-promotes
-  # the last verified Freight with no human actor.
+  # verification Failed only, so a bad config (e.g. a chart latency that makes
+  # every /color check time out) that fails verification re-promotes the last
+  # verified Freight with no human actor.
   - stageSelector:
       name: dev
     autoPromotionEnabled: true
