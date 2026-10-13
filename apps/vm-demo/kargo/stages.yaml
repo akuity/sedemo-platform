@@ -10,7 +10,7 @@
 #
 # dev, qa, sit push the render straight to rendered/vm-demo/<stage>.
 # uat, prod open a PR into that branch and wait for a human to merge it;
-# prod also waits on a ServiceNow change request.
+# prod also waits on a Jira CHANGE issue reaching Approved.
 #
 # When a re-promotion renders identical files (autoRollback, retries) the
 # commit is a no-op: direct stages push nothing new, PR stages skip the PR,
@@ -306,47 +306,37 @@ spec:
             - base template: `${{ outputs.render.baseTemplate }}`
             - promotion: https://kargo.akpdemoapps.link/project/${{ ctx.project }}/promotion/${{ ctx.promotion }}
 
-            Gated by a ServiceNow change request. Once the CR is in Implement
-            and this PR is merged, the promotion runs converge.yml for `prod`
+            Gated by a Jira CHANGE issue. Once the issue is Approved and this
+            PR is merged, the promotion runs converge.yml for `prod`
             (one VM at a time) against the merge commit.
-      - uses: snow-create
-        as: snowcreate
+      - uses: jira
+        as: change
         config:
           credentials:
-            sharedSecretName: kargo-step-snow
-            type: basic
-          tableName: change_request
-          template:
-            type: normal
-          parameters:
-            short_description: "vm-demo prod: rollouts-app ${{ outputs.render.appVersion }} on base ${{ outputs.render.baseTemplate }}"
-            impact: "3"
-            urgency: "3"
-            assignment_group: "Application Development"
-            implementation_plan: |
-              Rendered change (PR): ${{ outputs['open-pr']?.pr?.url ?? 'none, render identical to rendered/vm-demo/prod' }}
-              Kargo promotion: https://kargo.akpdemoapps.link/project/${{ ctx.project }}/promotion/${{ ctx.promotion }}
-              Deploy: converge.yml for prod, rolling vm-prod-1 then vm-prod-2; halts if vm-prod-1 fails its health check.
+            sharedSecretName: jira-access-secret
+          createIssue:
+            projectKey: CHANGE
+            issueType: Task
+            summary: "vm-demo prod: rollouts-app ${{ outputs.render.appVersion }} on base ${{ outputs.render.baseTemplate }}"
+            description: "Rendered change (PR): ${{ outputs['open-pr']?.pr?.url ?? 'none, render identical to rendered/vm-demo/prod' }}. Kargo promotion: https://kargo.akpdemoapps.link/project/${{ ctx.project }}/promotion/${{ ctx.promotion }}. Deploy: converge.yml for prod, rolling vm-prod-1 then vm-prod-2; halts if vm-prod-1 fails its health check. Move to Approved to release."
+            labels:
+            - vm-demo
       - uses: set-metadata
         config:
           updates:
           - kind: Freight
             name: ${{ ctx.targetFreight.name }}
             values:
-              snow-chg: ${{ outputs.snowcreate.number }}
-              snow-url: ${{ sharedSecret('kargo-step-snow').instanceURL }}/change_request.do?sys_id=${{ outputs.snowcreate.sys_id }}
+              jira-issue-key: ${{ outputs.change.key }}
               pr-url: ${{ outputs['open-pr']?.pr?.url ?? '' }}
-      # -1 is the Implement state of a ServiceNow change request.
-      - uses: snow-wait-for-condition
-        as: snow-implement
+      - uses: jira
+        as: change-approved
         config:
           credentials:
-            sharedSecretName: kargo-step-snow
-            type: basic
-          tableName: change_request
-          ticketId: ${{ outputs.snowcreate.sys_id }}
-          condition: state=-1
-          pollInterval: 20s
+            sharedSecretName: jira-access-secret
+          waitForStatus:
+            issueKey: ${{ outputs.change.key }}
+            expectedStatus: Approved
       - uses: git-wait-for-pr
         as: merged
         if: ${{ outputs.render.changed }}
@@ -358,15 +348,10 @@ spec:
         vars:
         - name: platformRef
           value: "${{ outputs.render.changed ? outputs.merged?.commit : outputs.render.commit }}"
-      # 0 is the Review state of a ServiceNow change request.
-      - uses: snow-update
-        as: snow-review
+      - uses: jira
         config:
           credentials:
-            sharedSecretName: kargo-step-snow
-            type: basic
-          tableName: change_request
-          ticketId: ${{ outputs.snowcreate.sys_id }}
-          parameters:
-            state: "0"
-            work_notes: "Deployed ${{ outputs.render.appVersion }} to vm-prod-1, vm-prod-2"
+            sharedSecretName: jira-access-secret
+          commentOnIssue:
+            issueKey: ${{ outputs.change.key }}
+            body: "Deployed ${{ outputs.render.appVersion }} on base ${{ outputs.render.baseTemplate }} to vm-prod-1, vm-prod-2 (rolling) and verified. Promotion: ${{ ctx.promotion }}."
