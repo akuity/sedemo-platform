@@ -8,7 +8,7 @@ app_version: 50-blue
 artifact: ghcr.io/akuity/sedemo-monorepo-rollouts-app:50-blue
 base_template: ubuntu-2404-base-202610131613
 base_vmid: 9106
-freight: e8ee65a3b1782f46e9266ce6908a8b81eaded46b
+freight: 5e08f536467cc16d7c4a398412e4a91ca4bdf5f1
 app_revision: 1f51cd6acd8073422458727a0cf34fcddf5dfab3
-chart_commit: b6a13351e5310f4f7011d7d871ecb1af8a5a5869
+chart_commit: 09c6a2d1690ff368ffddaf90ea8a12fb51330164
 infra_commit: fcfce16dfe365e65a74d08aa2b54e4f4a7b4b951
