@@ -29,7 +29,7 @@ rollback                PR      change request + PR
 | qa | auto | commit + push | same + smoke (`/` serves the HTML page) |
 | sit | manual | commit + push | same as dev |
 | uat | manual | PR into `rendered/vm-demo/uat`, wait for merge | same as dev |
-| prod | manual | change request (wait for Implement) + PR, then `snow-update` to Review | same, two VMs |
+| prod | manual | Jira CHANGE issue (wait for Approved) + PR, then a result comment on the issue | same, two VMs |
 
 All Stages run on the self-hosted `team-ada` shard, whose cluster can reach
 the Proxmox API and the VMs, so verification jobs run next to them.
@@ -77,7 +77,7 @@ There is no `argocd/` directory: nothing here runs on Kubernetes.
 - Secret `vm-demo-proxmox-verify` (keys `PROXMOX_URL`, `TOKEN_ID`,
   `TOKEN_SECRET`; a read-only Proxmox API token) in the namespace where the
   `team-ada` shard runs verification jobs. Never committed here.
-- Shared Kargo credentials for `kargo-step-snow` (prod change requests) and
+- Shared Kargo credentials for `jira-access-secret` (prod CHANGE issues) and
   GitHub access to the infra repo for the `gha-*` steps.
 
 ## Tests
