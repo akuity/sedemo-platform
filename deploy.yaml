@@ -4,11 +4,11 @@
 # yaml-update only updates existing keys.
 stage: sit
 vm_count: 1
-app_version: 50-blue
-artifact: ghcr.io/akuity/sedemo-monorepo-rollouts-app:50-blue
+app_version: 49-green
+artifact: ghcr.io/akuity/sedemo-monorepo-rollouts-app:49-green
 base_template: ubuntu-2404-base-202610131613
 base_vmid: 9106
-freight: 71df54a55583351d8c894ccafcccf2b1eae15d8b
-app_revision: 1f51cd6acd8073422458727a0cf34fcddf5dfab3
-chart_commit: b6a13351e5310f4f7011d7d871ecb1af8a5a5869
+freight: eb33b752e34cc39b9e7ed6325ea8cdc4006fc26d
+app_revision: 
+chart_commit: 8d71037e7fd8c44da550df0746f7cae5dfad3501
 infra_commit: fcfce16dfe365e65a74d08aa2b54e4f4a7b4b951
