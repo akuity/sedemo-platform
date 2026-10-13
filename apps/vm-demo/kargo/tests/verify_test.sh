@@ -2,12 +2,13 @@
 # Tests for apps/vm-demo/kargo/verify.sh (the vm-health verification script).
 #
 # Each case builds a fixture tree for a stub server that plays both the
-# Proxmox API (under /api2/json) and the VM's app endpoints (/healthz,
-# /version, /), runs verify.sh against it with POSIX sh, and checks the exit
+# Proxmox API (under /api2/json) and the rollouts-demo app on the VM (/env,
+# /color, /), runs verify.sh against it with POSIX sh, and checks the exit
 # code and output. The VM "IP" in the fixtures is 127.0.0.1, and APP_PORT
 # points at the stub, so app requests land on the same server.
 #
 # Requires: bash, python3, curl, jq, yq (mikefarah v4).
+# VERIFY_SH selects the shell that runs verify.sh (default: sh).
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -71,12 +72,16 @@ agent_down() {
   echo 500 > "$d/network-get-interfaces.status"
 }
 
-# app <healthz status> <version> <stage> [index body]
+# app <color error %> <semver> <stage> [index body] [index status]
+# The rollouts-demo app: /env reports namespace, semver and stage (same JSON
+# shape as the real app), /color returns 500 for the given percent of
+# requests (stub_server.py .error_rate), / serves the HTML page.
 app() {
-  echo ok > "$fx/healthz"
-  [ "$1" = 200 ] || { echo "pricing.feedUrl: scheme must be https" > "$fx/healthz"; echo "$1" > "$fx/healthz.status"; }
-  printf '{"version":"%s","stage":"%s","configHash":"0123456789ab"}\n' "$2" "$3" > "$fx/version"
-  printf '<html><body><h1>%s</h1></body></html>\n' "${4:-NAV Pricing}" > "$fx/_root"
+  echo '"blue"' > "$fx/color"
+  echo "$1" > "$fx/color.error_rate"
+  printf '{"namespace":"vm-%s","semver":"%s","stage":"%s"}' "$3" "$2" "$3" > "$fx/env"
+  printf '%s\n' "${4:-<html><head><title>Argo Rollouts Demo</title></head><body></body></html>}" > "$fx/_root"
+  if [ -n "${5:-}" ]; then echo "$5" > "$fx/_root.status"; fi
 }
 
 start_server() {
@@ -128,77 +133,91 @@ expect() { # <name> <want rc> [substring...]
 new_fixture healthy
 resources "[$(vm_entry 7101 vm-dev 'stage-dev;vm-demo')]"
 agent_ip 7101 127.0.0.1
-app 200 1.0.0 dev
-run_verify dev 1
-expect "1 VM healthy, expected 1 -> pass" 0 "vm-dev"
+app 0 50-blue dev
+run_verify dev 1 false 50-blue
+expect "1 VM healthy, expected 1 -> pass" 0 "ok vm-dev" "0%"
 
 new_fixture none
 resources "[$(vm_entry 7102 vm-qa 'stage-qa;vm-demo'),$(vm_entry 9105 ubuntu-2404-base-x 'stage-dev;vm-demo' 1)]"
 agent_ip 7102 127.0.0.1
-app 200 1.0.0 qa
+app 0 50-blue qa
 run_verify dev 1
 expect "0 VMs found (other stage, template ignored), expected 1 -> fail" 1 "found 0 of 1"
-
-new_fixture unhealthy
-resources "[$(vm_entry 7101 vm-dev 'stage-dev;vm-demo')]"
-agent_ip 7101 127.0.0.1
-app 500 1.0.0 dev
-run_verify dev 1
-expect "1 VM /healthz 500 -> fail naming the VM" 1 "vm-dev" "/healthz"
 
 new_fixture agent-down
 resources "[$(vm_entry 7101 vm-dev 'stage-dev;vm-demo')]"
 agent_down 7101
-app 200 1.0.0 dev
+app 0 50-blue dev
 run_verify dev 1
 expect "guest agent not reporting an IP -> fail, not vacuous pass" 1 "found 0 of 1" "vm-dev"
 
 new_fixture short
 resources "[$(vm_entry 7105 vm-prod-1 'stage-prod;vm-demo')]"
 agent_ip 7105 127.0.0.1
-app 200 1.0.0 prod
+app 0 50-blue prod
 run_verify prod 2
 expect "1 of 2 prod VMs found -> fail" 1 "found 1 of 2"
 
-new_fixture version
+new_fixture color-all-fail
 resources "[$(vm_entry 7101 vm-dev 'stage-dev;vm-demo')]"
 agent_ip 7101 127.0.0.1
-app 200 1.0.0 dev
-run_verify dev 1 false 1.1.0
-expect "/version mismatch with promoted version -> fail" 1 "vm-dev" "1.1.0"
+app 100 50-blue dev
+run_verify dev 1 false 50-blue
+expect "/color 100% errors -> fail naming the VM and rate" 1 "vm-dev" "/color" "100%"
 
-new_fixture version-ok
+new_fixture color-25
 resources "[$(vm_entry 7101 vm-dev 'stage-dev;vm-demo')]"
 agent_ip 7101 127.0.0.1
-app 200 1.1.0 dev
-run_verify dev 1 false 1.1.0
-expect "/version matches promoted version -> pass" 0
+app 25 50-blue dev
+run_verify dev 1 false 50-blue
+expect "/color 25% errors (> 20%) -> fail with rate" 1 "vm-dev" "25%"
+
+new_fixture color-20
+resources "[$(vm_entry 7101 vm-dev 'stage-dev;vm-demo')]"
+agent_ip 7101 127.0.0.1
+app 20 50-blue dev
+run_verify dev 1 false 50-blue
+expect "/color 20% errors (not > 20%) -> pass, rate printed" 0 "ok vm-dev" "20%"
+
+new_fixture semver
+resources "[$(vm_entry 7101 vm-dev 'stage-dev;vm-demo')]"
+agent_ip 7101 127.0.0.1
+app 0 50-blue dev
+run_verify dev 1 false 51-yellow
+expect "/env semver differs from promoted tag -> fail" 1 "vm-dev" "51-yellow"
+
+new_fixture stage
+resources "[$(vm_entry 7101 vm-dev 'stage-dev;vm-demo')]"
+agent_ip 7101 127.0.0.1
+app 0 50-blue qa
+run_verify dev 1 false 50-blue
+expect "/env stage differs from the Stage -> fail" 1 "vm-dev" "stage"
 
 new_fixture smoke-ok
 resources "[$(vm_entry 7102 vm-qa 'vm-demo;stage-qa')]"
 agent_ip 7102 127.0.0.1
-app 200 1.0.0 qa
-run_verify qa 1 true
-expect "qa smoke: page and stage OK -> pass" 0
-
-new_fixture smoke-stage
-resources "[$(vm_entry 7102 vm-qa 'vm-demo;stage-qa')]"
-agent_ip 7102 127.0.0.1
-app 200 1.0.0 dev
-run_verify qa 1 true
-expect "qa smoke: /version stage mismatch -> fail" 1 "vm-qa" "stage"
+app 0 50-blue qa
+run_verify qa 1 true 50-blue
+expect "qa smoke: / is HTML -> pass" 0 "ok vm-qa"
 
 new_fixture smoke-page
 resources "[$(vm_entry 7102 vm-qa 'vm-demo;stage-qa')]"
 agent_ip 7102 127.0.0.1
-app 200 1.0.0 qa "Hello"
-run_verify qa 1 true
-expect "qa smoke: page lacks NAV -> fail" 1 "vm-qa" "NAV"
+app 0 50-blue qa "Hello"
+run_verify qa 1 true 50-blue
+expect "qa smoke: / lacks <html -> fail" 1 "vm-qa" "<html"
+
+new_fixture smoke-500
+resources "[$(vm_entry 7102 vm-qa 'vm-demo;stage-qa')]"
+agent_ip 7102 127.0.0.1
+app 0 50-blue qa "" 500
+run_verify qa 1 true 50-blue
+expect "qa smoke: / returns 500 -> fail" 1 "vm-qa" "500"
 
 new_fixture prefix-tag
 resources "[$(vm_entry 7101 vm-dev 'stage-dev2;vm-demo')]"
 agent_ip 7101 127.0.0.1
-app 200 1.0.0 dev
+app 0 50-blue dev
 run_verify dev 1
 expect "tag stage-dev2 does not match stage dev" 1 "found 0 of 1"
 

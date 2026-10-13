@@ -1,9 +1,9 @@
 # Pipeline: dev -> qa -> sit -> uat -> prod.
 #
 # Every Stage:
-#   - runs on the self-hosted `homelab` shard, whose cluster can reach the
+#   - runs on the self-hosted `team-ada` shard, whose (homelab) cluster can reach the
 #     Proxmox API and the VMs (verification depends on that);
-#   - requests Freight from both Warehouses (nav-service, base-image);
+#   - requests Freight from both Warehouses (app, base-image);
 #   - renders with PromotionTask vm-render and converges with vm-converge
 #     (tasks.yaml);
 #   - verifies with AnalysisTemplate vm-health (analysis-template.yaml).
@@ -23,11 +23,11 @@ metadata:
   annotations:
     kargo.akuity.io/color: green
 spec:
-  shard: homelab
+  shard: team-ada
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: nav-service
+      name: app
     sources:
       direct: true
   - origin:
@@ -46,7 +46,7 @@ spec:
     - name: smoke
       value: "false"
     - name: appVersion
-      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-vm-app", warehouse("nav-service")).Tag }}
+      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-rollouts-app", warehouse("app")).Tag }}
   promotionTemplate:
     spec:
       steps:
@@ -72,11 +72,11 @@ metadata:
   annotations:
     kargo.akuity.io/color: teal
 spec:
-  shard: homelab
+  shard: team-ada
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: nav-service
+      name: app
     sources:
       stages:
       - dev
@@ -98,7 +98,7 @@ spec:
     - name: smoke
       value: "true"
     - name: appVersion
-      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-vm-app", warehouse("nav-service")).Tag }}
+      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-rollouts-app", warehouse("app")).Tag }}
   promotionTemplate:
     spec:
       steps:
@@ -124,11 +124,11 @@ metadata:
   annotations:
     kargo.akuity.io/color: amber
 spec:
-  shard: homelab
+  shard: team-ada
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: nav-service
+      name: app
     sources:
       stages:
       - qa
@@ -149,7 +149,7 @@ spec:
     - name: smoke
       value: "false"
     - name: appVersion
-      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-vm-app", warehouse("nav-service")).Tag }}
+      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-rollouts-app", warehouse("app")).Tag }}
   promotionTemplate:
     spec:
       steps:
@@ -175,11 +175,11 @@ metadata:
   annotations:
     kargo.akuity.io/color: orange
 spec:
-  shard: homelab
+  shard: team-ada
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: nav-service
+      name: app
     sources:
       stages:
       - sit
@@ -200,14 +200,14 @@ spec:
     - name: smoke
       value: "false"
     - name: appVersion
-      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-vm-app", warehouse("nav-service")).Tag }}
+      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-rollouts-app", warehouse("app")).Tag }}
   promotionTemplate:
     spec:
       steps:
       - task:
           name: vm-render
         as: render
-      # The PR diff is exactly what will land on the VM: config.yaml and the
+      # The PR diff is exactly what will land on the VM: rollouts-demo.env and the
       # deploy pin (app version, artifact, base template).
       - uses: git-push
         as: pr-push
@@ -252,11 +252,11 @@ metadata:
   annotations:
     kargo.akuity.io/color: red
 spec:
-  shard: homelab
+  shard: team-ada
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: nav-service
+      name: app
     sources:
       stages:
       - uat
@@ -278,7 +278,7 @@ spec:
     - name: smoke
       value: "false"
     - name: appVersion
-      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-vm-app", warehouse("nav-service")).Tag }}
+      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-rollouts-app", warehouse("app")).Tag }}
   promotionTemplate:
     spec:
       steps:
@@ -319,7 +319,7 @@ spec:
           template:
             type: normal
           parameters:
-            short_description: "vm-demo prod: nav-service ${{ outputs.render.appVersion }} on base ${{ outputs.render.baseTemplate }}"
+            short_description: "vm-demo prod: rollouts-app ${{ outputs.render.appVersion }} on base ${{ outputs.render.baseTemplate }}"
             impact: "3"
             urgency: "3"
             assignment_group: "Application Development"

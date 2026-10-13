@@ -1,9 +1,8 @@
-# Stage-specific values for the nav-config chart (sedemo-monorepo
+# Stage-specific values for the rollouts-demo config chart (sedemo-monorepo
 # vm-app/config-chart). Shared defaults live in the chart; only what differs
-# per stage belongs here. service.stage is set by the promotion.
-# Render-failure demo file: deleting database.host below makes the sit
+# per stage belongs here. color, semver and stage are set by the promotion.
+#
+# Render-failure demo file: deleting namespace below makes the sit
 # promotion fail at helm-template (the chart marks it required), before any
 # VM is touched. Restore it afterward.
-database:
-  host: navdb-sit.internal.example
-  name: nav
+namespace: vm-sit

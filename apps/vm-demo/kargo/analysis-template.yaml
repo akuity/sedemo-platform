@@ -1,12 +1,13 @@
 # vm-health: post-promotion verification for every vm-demo Stage.
 #
-# Runs as an Argo Rollouts Job on the homelab shard's cluster, which can reach
+# Runs as an Argo Rollouts Job on the team-ada shard's cluster, which can reach
 # the Proxmox API and the VMs. The script discovers the stage's VMs by Proxmox
 # tag (stage-<stage>) and guest-agent IPv4, retrying up to 5 minutes for VMs
-# that were just created or replaced, then checks /healthz on each (plus the
-# promoted /version, and for qa a smoke check). It fails, never passes
-# vacuously, when fewer than expectedCount VMs are found. On dev a failure
-# triggers autoRollback (ProjectConfig).
+# that were just created or replaced, then checks the rollouts-demo app on
+# each: /env semver and stage, the /color error rate over 20 requests (more
+# than 20% non-200 fails), and for qa a smoke check of the page. It fails,
+# never passes vacuously, when fewer than expectedCount VMs are found. On dev
+# a failure triggers autoRollback (ProjectConfig).
 #
 # The inline script is a copy of verify.sh (the tested source);
 # tests/verify_test.sh asserts the two are identical.
@@ -25,7 +26,7 @@ spec:
   - name: expectedCount
   - name: smoke
     value: "false"
-  # Promoted nav-service version; /version must report it. Empty skips.
+  # Promoted rollouts-app tag; /env semver must report it. Empty skips.
   - name: appVersion
     value: ""
   metrics:
@@ -82,14 +83,19 @@ spec:
                   #
                   # Discovers the stage's VMs through the Proxmox API (tag stage-<stage>,
                   # templates excluded), reads each VM's IPv4 from the QEMU guest agent, then
-                  # checks the app on every VM. Exits non-zero, naming the VM and the reason,
-                  # when fewer than EXPECTED_COUNT VMs report an IP within DISCOVERY_TIMEOUT
-                  # or any check fails. Never passes with zero VMs.
+                  # checks the rollouts-demo app on every VM:
+                  #   - GET /env: stage must equal STAGE, semver must equal APP_VERSION;
+                  #   - GET /color COLOR_SAMPLES times: fails when more than
+                  #     COLOR_MAX_ERROR_PCT percent are non-200 (the rate is printed);
+                  #   - SMOKE=true: GET / must return 200 and an HTML page.
+                  # Exits non-zero, naming the VM and the reason, when fewer than
+                  # EXPECTED_COUNT VMs report an IP within DISCOVERY_TIMEOUT or any check
+                  # fails. Never passes with zero VMs.
                   #
                   # Required env: PROXMOX_URL (https://host:8006), TOKEN_ID (user@realm!name),
                   #   TOKEN_SECRET, STAGE, EXPECTED_COUNT.
-                  # Optional env: SMOKE (true: also check "/" shows NAV and /version stage),
-                  #   APP_VERSION (non-empty: /version must report it), APP_PORT (8080),
+                  # Optional env: SMOKE (false), APP_VERSION (empty skips the semver check),
+                  #   APP_PORT (8080), COLOR_SAMPLES (20), COLOR_MAX_ERROR_PCT (20),
                   #   DISCOVERY_TIMEOUT (300s), DISCOVERY_INTERVAL (10s), HTTP_ATTEMPTS (3),
                   #   HTTP_INTERVAL (5s).
                   set -u
@@ -102,6 +108,8 @@ spec:
                   SMOKE="${SMOKE:-false}"
                   APP_VERSION="${APP_VERSION:-}"
                   APP_PORT="${APP_PORT:-8080}"
+                  COLOR_SAMPLES="${COLOR_SAMPLES:-20}"
+                  COLOR_MAX_ERROR_PCT="${COLOR_MAX_ERROR_PCT:-20}"
                   DISCOVERY_TIMEOUT="${DISCOVERY_TIMEOUT:-300}"
                   DISCOVERY_INTERVAL="${DISCOVERY_INTERVAL:-10}"
                   HTTP_ATTEMPTS="${HTTP_ATTEMPTS:-3}"
@@ -208,41 +216,52 @@ spec:
                   }
 
                   while read -r name ip; do
+                    vm="$name ($ip)"
                     base="http://$ip:$APP_PORT"
-                    if ! fetch "$base/healthz" "$tmp/healthz"; then
-                      fail_vm "$name ($ip)" "/healthz returned $code: $(head -c 300 "$tmp/healthz")"
+
+                    # /env reports what the VM is actually running.
+                    if ! fetch "$base/env" "$tmp/env"; then
+                      fail_vm "$vm" "/env returned $code: $(head -c 300 "$tmp/env")"
                       continue
                     fi
-                    version="" ; vstage=""
-                    if [ -n "$APP_VERSION" ] || [ "$SMOKE" = "true" ]; then
-                      if ! fetch "$base/version" "$tmp/version"; then
-                        fail_vm "$name ($ip)" "/version returned $code"
-                        continue
-                      fi
-                      version="$(jq -r '.version // ""' "$tmp/version" 2>/dev/null)"
-                      vstage="$(jq -r '.stage // ""' "$tmp/version" 2>/dev/null)"
-                    fi
-                    if [ -n "$APP_VERSION" ] && [ "$version" != "$APP_VERSION" ]; then
-                      fail_vm "$name ($ip)" "/version reports version '$version', expected promoted $APP_VERSION"
+                    semver="$(jq -r '.semver // ""' "$tmp/env" 2>/dev/null)"
+                    envstage="$(jq -r '.stage // ""' "$tmp/env" 2>/dev/null)"
+                    if [ "$envstage" != "$STAGE" ]; then
+                      fail_vm "$vm" "/env reports stage '$envstage', expected $STAGE"
                       continue
                     fi
-                    if [ "$SMOKE" = "true" ]; then
-                      if [ "$vstage" != "$STAGE" ]; then
-                        fail_vm "$name ($ip)" "/version reports stage '$vstage', expected $STAGE"
-                        continue
-                      fi
-                      if ! fetch "$base/" "$tmp/index"; then
-                        fail_vm "$name ($ip)" "/ returned $code"
-                        continue
-                      fi
-                      if ! grep -q "NAV" "$tmp/index"; then
-                        fail_vm "$name ($ip)" "/ page does not contain NAV"
-                        continue
-                      fi
+                    if [ -n "$APP_VERSION" ] && [ "$semver" != "$APP_VERSION" ]; then
+                      fail_vm "$vm" "/env reports semver '$semver', expected promoted $APP_VERSION"
+                      continue
                     fi
+
+                    # /color is the app's real request path; ERROR_RATE makes it return 500s.
+                    errors=0
+                    i=0
+                    while [ "$i" -lt "$COLOR_SAMPLES" ]; do
+                      c="$(curl -s --max-time 5 -o /dev/null -w '%{http_code}' "$base/color")" || c="000"
+                      [ "$c" = "200" ] || errors=$((errors + 1))
+                      i=$((i + 1))
+                    done
+                    rate=$((errors * 100 / COLOR_SAMPLES))
+                    if [ $((errors * 100)) -gt $((COLOR_MAX_ERROR_PCT * COLOR_SAMPLES)) ]; then
+                      fail_vm "$vm" "/color error rate ${rate}% ($errors of $COLOR_SAMPLES non-200), limit ${COLOR_MAX_ERROR_PCT}%"
+                      continue
+                    fi
+
                     smoked=""
-                    [ "$SMOKE" != "true" ] || smoked=", smoke ok"
-                    echo "ok $name ($ip): healthz 200${version:+, version $version}$smoked"
+                    if [ "$SMOKE" = "true" ]; then
+                      if ! fetch "$base/" "$tmp/index"; then
+                        fail_vm "$vm" "/ returned $code"
+                        continue
+                      fi
+                      if ! grep -qi "<html" "$tmp/index"; then
+                        fail_vm "$vm" "/ does not return an HTML page (no <html)"
+                        continue
+                      fi
+                      smoked=", smoke ok"
+                    fi
+                    echo "ok $vm: semver $semver, stage $envstage, /color error rate ${rate}% ($errors of $COLOR_SAMPLES)$smoked"
                   done < "$tmp/targets"
 
                   if [ "$failures" -gt 0 ]; then

@@ -2,20 +2,24 @@
 # separate Freight and can be promoted independently. Every Stage requests
 # Freight from both.
 #
-# nav-service: the application artifact (an ORAS-pushed tarball holding the
-# binary and its systemd unit, plain semver tags) plus the config chart that
-# renders /etc/nav-service/config.yaml.
+# app: the existing rollouts-app image (tags like 50-blue; the suffix is the
+# color the app paints) plus the config chart that renders the app's
+# systemd EnvironmentFile. The image is FROM scratch; converge extracts its
+# binary and assets and runs them natively on the VM. The demo promotes
+# already-published tags only.
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
-  name: nav-service
+  name: app
   namespace: vm-demo
 spec:
   interval: 5m0s
   subscriptions:
   - image:
-      repoURL: ghcr.io/akuity/sedemo-monorepo-vm-app
-      imageSelectionStrategy: SemVer
+      repoURL: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+      imageSelectionStrategy: NewestBuild
+      allowTagsRegexes:
+      - ^\d+-[a-z]+$
       discoveryLimit: 10
   - git:
       repoURL: https://github.com/akuity/sedemo-monorepo

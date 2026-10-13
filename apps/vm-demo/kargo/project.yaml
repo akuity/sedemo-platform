@@ -1,5 +1,5 @@
 # Kargo project for the VM deployment demo. Every Stage runs on the
-# self-hosted `homelab` shard (see stages.yaml), which can reach the
+# self-hosted `team-ada` shard (see stages.yaml), whose cluster can reach the
 # Proxmox API and the VMs for verification.
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Project
@@ -16,7 +16,8 @@ metadata:
 spec:
   promotionPolicies:
   # dev auto-promotes new Freight. autoRollback: {} defaults to triggering on
-  # verification Failed only, so a bad config that fails /healthz re-promotes
+  # verification Failed only, so a bad config (e.g. a chart errorRate that makes
+  # /color return 500s) that fails verification re-promotes
   # the last verified Freight with no human actor.
   - stageSelector:
       name: dev
