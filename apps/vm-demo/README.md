@@ -9,7 +9,7 @@ lifecycle) and Ansible (app deploy) against Proxmox.
 ## Pipeline
 
 ```
-Warehouse nav-service  (ORAS artifact ghcr.io/akuity/sedemo-monorepo-nav-service
+Warehouse nav-service  (ORAS artifact ghcr.io/akuity/sedemo-monorepo-vm-app
                         + sedemo-monorepo vm-app/config-chart)
 Warehouse base-image   (sedemo-vm-infra images/base.json, a Packer-baked template)
 

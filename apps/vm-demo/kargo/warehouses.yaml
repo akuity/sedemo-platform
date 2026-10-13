@@ -14,7 +14,7 @@ spec:
   interval: 5m0s
   subscriptions:
   - image:
-      repoURL: ghcr.io/akuity/sedemo-monorepo-nav-service
+      repoURL: ghcr.io/akuity/sedemo-monorepo-vm-app
       imageSelectionStrategy: SemVer
       discoveryLimit: 10
   - git:

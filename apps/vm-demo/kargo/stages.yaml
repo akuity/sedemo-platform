@@ -46,7 +46,7 @@ spec:
     - name: smoke
       value: "false"
     - name: appVersion
-      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-nav-service", warehouse("nav-service")).Tag }}
+      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-vm-app", warehouse("nav-service")).Tag }}
   promotionTemplate:
     spec:
       steps:
@@ -98,7 +98,7 @@ spec:
     - name: smoke
       value: "true"
     - name: appVersion
-      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-nav-service", warehouse("nav-service")).Tag }}
+      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-vm-app", warehouse("nav-service")).Tag }}
   promotionTemplate:
     spec:
       steps:
@@ -149,7 +149,7 @@ spec:
     - name: smoke
       value: "false"
     - name: appVersion
-      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-nav-service", warehouse("nav-service")).Tag }}
+      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-vm-app", warehouse("nav-service")).Tag }}
   promotionTemplate:
     spec:
       steps:
@@ -200,7 +200,7 @@ spec:
     - name: smoke
       value: "false"
     - name: appVersion
-      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-nav-service", warehouse("nav-service")).Tag }}
+      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-vm-app", warehouse("nav-service")).Tag }}
   promotionTemplate:
     spec:
       steps:
@@ -278,7 +278,7 @@ spec:
     - name: smoke
       value: "false"
     - name: appVersion
-      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-nav-service", warehouse("nav-service")).Tag }}
+      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-vm-app", warehouse("nav-service")).Tag }}
   promotionTemplate:
     spec:
       steps:

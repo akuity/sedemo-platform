@@ -33,7 +33,7 @@ spec:
   - name: infraRepo
     value: https://github.com/akuity/sedemo-vm-infra
   - name: artifactRepo
-    value: ghcr.io/akuity/sedemo-monorepo-nav-service
+    value: ghcr.io/akuity/sedemo-monorepo-vm-app
   steps:
   - uses: git-clone
     config:
