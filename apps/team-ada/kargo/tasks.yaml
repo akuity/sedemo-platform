@@ -103,7 +103,7 @@ spec:
     continueOnError: true
     config:
       transition: >-
-        ${{ last(sortBy(filter(task.outputs.issue.issue.changelog.histories,
+        ${{ last(sortBy(filter(task.outputs.issue.changelog.histories,
         any(.items, .field == 'status' && .toString == vars.approvedStatus)),
         .created)) }}
   - uses: record-audit-event
