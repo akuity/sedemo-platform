@@ -71,8 +71,6 @@ There is no `argocd/` directory: nothing here runs on Kubernetes.
   homelab shard runs verification jobs. Never committed here.
 - Shared Kargo credentials for `kargo-step-snow` (prod change requests) and
   GitHub access to the infra repo for the `gha-*` steps.
-- Branches `rendered/vm-demo/uat` and `rendered/vm-demo/prod` must exist
-  before the first uat/prod promotion (a PR needs a target branch).
 
 ## Tests
 

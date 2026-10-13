@@ -1,0 +1,372 @@
+# Pipeline: dev -> qa -> sit -> uat -> prod.
+#
+# Every Stage:
+#   - runs on the self-hosted `homelab` shard, whose cluster can reach the
+#     Proxmox API and the VMs (verification depends on that);
+#   - requests Freight from both Warehouses (nav-service, base-image);
+#   - renders with PromotionTask vm-render and converges with vm-converge
+#     (tasks.yaml);
+#   - verifies with AnalysisTemplate vm-health (analysis-template.yaml).
+#
+# dev, qa, sit push the render straight to rendered/vm-demo/<stage>.
+# uat, prod open a PR into that branch and wait for a human to merge it;
+# prod also waits on a ServiceNow change request.
+#
+# When a re-promotion renders identical files (autoRollback, retries) the
+# commit is a no-op: direct stages push nothing new, PR stages skip the PR,
+# and every stage still converges the branch head.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev
+  namespace: vm-demo
+  annotations:
+    kargo.akuity.io/color: green
+spec:
+  shard: homelab
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: nav-service
+    sources:
+      direct: true
+  - origin:
+      kind: Warehouse
+      name: base-image
+    sources:
+      direct: true
+  verification:
+    analysisTemplates:
+    - name: vm-health
+    args:
+    - name: stage
+      value: dev
+    - name: expectedCount
+      value: "1"
+    - name: smoke
+      value: "false"
+    - name: appVersion
+      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-nav-service", warehouse("nav-service")).Tag }}
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: vm-render
+        as: render
+      - uses: git-push
+        as: push
+        config:
+          path: ./out
+          targetBranch: rendered/vm-demo/dev
+      - task:
+          name: vm-converge
+        vars:
+        - name: platformRef
+          value: ${{ outputs.push.commit }}
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: qa
+  namespace: vm-demo
+  annotations:
+    kargo.akuity.io/color: teal
+spec:
+  shard: homelab
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: nav-service
+    sources:
+      stages:
+      - dev
+  - origin:
+      kind: Warehouse
+      name: base-image
+    sources:
+      stages:
+      - dev
+  verification:
+    analysisTemplates:
+    - name: vm-health
+    args:
+    - name: stage
+      value: qa
+    - name: expectedCount
+      value: "1"
+    # Cut order item 1: set to "false" to drop the qa smoke checks.
+    - name: smoke
+      value: "true"
+    - name: appVersion
+      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-nav-service", warehouse("nav-service")).Tag }}
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: vm-render
+        as: render
+      - uses: git-push
+        as: push
+        config:
+          path: ./out
+          targetBranch: rendered/vm-demo/qa
+      - task:
+          name: vm-converge
+        vars:
+        - name: platformRef
+          value: ${{ outputs.push.commit }}
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: sit
+  namespace: vm-demo
+  annotations:
+    kargo.akuity.io/color: amber
+spec:
+  shard: homelab
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: nav-service
+    sources:
+      stages:
+      - qa
+  - origin:
+      kind: Warehouse
+      name: base-image
+    sources:
+      stages:
+      - qa
+  verification:
+    analysisTemplates:
+    - name: vm-health
+    args:
+    - name: stage
+      value: sit
+    - name: expectedCount
+      value: "1"
+    - name: smoke
+      value: "false"
+    - name: appVersion
+      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-nav-service", warehouse("nav-service")).Tag }}
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: vm-render
+        as: render
+      - uses: git-push
+        as: push
+        config:
+          path: ./out
+          targetBranch: rendered/vm-demo/sit
+      - task:
+          name: vm-converge
+        vars:
+        - name: platformRef
+          value: ${{ outputs.push.commit }}
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: uat
+  namespace: vm-demo
+  annotations:
+    kargo.akuity.io/color: orange
+spec:
+  shard: homelab
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: nav-service
+    sources:
+      stages:
+      - sit
+  - origin:
+      kind: Warehouse
+      name: base-image
+    sources:
+      stages:
+      - sit
+  verification:
+    analysisTemplates:
+    - name: vm-health
+    args:
+    - name: stage
+      value: uat
+    - name: expectedCount
+      value: "1"
+    - name: smoke
+      value: "false"
+    - name: appVersion
+      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-nav-service", warehouse("nav-service")).Tag }}
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: vm-render
+        as: render
+      # The PR diff is exactly what will land on the VM: config.yaml and the
+      # deploy pin (app version, artifact, base template).
+      - uses: git-push
+        as: pr-push
+        if: ${{ outputs.render.changed }}
+        config:
+          path: ./out
+          generateTargetBranch: true
+      - uses: git-open-pr
+        as: open-pr
+        if: ${{ outputs.render.changed }}
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          sourceBranch: ${{ outputs['pr-push'].branch }}
+          targetBranch: rendered/vm-demo/uat
+          title: "vm-demo uat: ${{ outputs.render.appVersion }} / ${{ outputs.render.baseTemplate }}"
+          description: |
+            Kargo promotion of Freight `${{ ctx.targetFreight.name }}` to `uat`.
+
+            - app: `${{ outputs.render.appVersion }}`
+            - base template: `${{ outputs.render.baseTemplate }}`
+            - promotion: https://kargo.akpdemoapps.link/project/${{ ctx.project }}/promotion/${{ ctx.promotion }}
+
+            Merging this PR lets the promotion continue: it then runs
+            converge.yml for `uat` against the merge commit.
+      - uses: git-wait-for-pr
+        as: merged
+        if: ${{ outputs.render.changed }}
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          prNumber: ${{ outputs['open-pr'].pr.id }}
+      - task:
+          name: vm-converge
+        vars:
+        - name: platformRef
+          value: "${{ outputs.render.changed ? outputs.merged?.commit : outputs.render.commit }}"
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod
+  namespace: vm-demo
+  annotations:
+    kargo.akuity.io/color: red
+spec:
+  shard: homelab
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: nav-service
+    sources:
+      stages:
+      - uat
+  - origin:
+      kind: Warehouse
+      name: base-image
+    sources:
+      stages:
+      - uat
+  verification:
+    analysisTemplates:
+    - name: vm-health
+    args:
+    - name: stage
+      value: prod
+    # Cut order item 2: "1" if prod drops to a single VM.
+    - name: expectedCount
+      value: "2"
+    - name: smoke
+      value: "false"
+    - name: appVersion
+      value: ${{ imageFrom("ghcr.io/akuity/sedemo-monorepo-nav-service", warehouse("nav-service")).Tag }}
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: vm-render
+        as: render
+      - uses: git-push
+        as: pr-push
+        if: ${{ outputs.render.changed }}
+        config:
+          path: ./out
+          generateTargetBranch: true
+      - uses: git-open-pr
+        as: open-pr
+        if: ${{ outputs.render.changed }}
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          sourceBranch: ${{ outputs['pr-push'].branch }}
+          targetBranch: rendered/vm-demo/prod
+          title: "vm-demo prod: ${{ outputs.render.appVersion }} / ${{ outputs.render.baseTemplate }}"
+          description: |
+            Kargo promotion of Freight `${{ ctx.targetFreight.name }}` to `prod`.
+
+            - app: `${{ outputs.render.appVersion }}`
+            - base template: `${{ outputs.render.baseTemplate }}`
+            - promotion: https://kargo.akpdemoapps.link/project/${{ ctx.project }}/promotion/${{ ctx.promotion }}
+
+            Gated by a ServiceNow change request. Once the CR is in Implement
+            and this PR is merged, the promotion runs converge.yml for `prod`
+            (one VM at a time) against the merge commit.
+      - uses: snow-create
+        as: snowcreate
+        config:
+          credentials:
+            sharedSecretName: kargo-step-snow
+            type: basic
+          tableName: change_request
+          template:
+            type: normal
+          parameters:
+            short_description: "vm-demo prod: nav-service ${{ outputs.render.appVersion }} on base ${{ outputs.render.baseTemplate }}"
+            impact: "3"
+            urgency: "3"
+            assignment_group: "Application Development"
+            implementation_plan: |
+              Rendered change (PR): ${{ outputs['open-pr']?.pr?.url ?? 'none, render identical to rendered/vm-demo/prod' }}
+              Kargo promotion: https://kargo.akpdemoapps.link/project/${{ ctx.project }}/promotion/${{ ctx.promotion }}
+              Deploy: converge.yml for prod, rolling vm-prod-1 then vm-prod-2; halts if vm-prod-1 fails its health check.
+      - uses: set-metadata
+        config:
+          updates:
+          - kind: Freight
+            name: ${{ ctx.targetFreight.name }}
+            values:
+              snow-chg: ${{ outputs.snowcreate.number }}
+              snow-url: ${{ sharedSecret('kargo-step-snow').instanceURL }}/change_request.do?sys_id=${{ outputs.snowcreate.sys_id }}
+              pr-url: ${{ outputs['open-pr']?.pr?.url ?? '' }}
+      # -1 is the Implement state of a ServiceNow change request.
+      - uses: snow-wait-for-condition
+        as: snow-implement
+        config:
+          credentials:
+            sharedSecretName: kargo-step-snow
+            type: basic
+          tableName: change_request
+          ticketId: ${{ outputs.snowcreate.sys_id }}
+          condition: state=-1
+          pollInterval: 20s
+      - uses: git-wait-for-pr
+        as: merged
+        if: ${{ outputs.render.changed }}
+        config:
+          repoURL: https://github.com/akuity/sedemo-platform
+          prNumber: ${{ outputs['open-pr'].pr.id }}
+      - task:
+          name: vm-converge
+        vars:
+        - name: platformRef
+          value: "${{ outputs.render.changed ? outputs.merged?.commit : outputs.render.commit }}"
+      # 0 is the Review state of a ServiceNow change request.
+      - uses: snow-update
+        as: snow-review
+        config:
+          credentials:
+            sharedSecretName: kargo-step-snow
+            type: basic
+          tableName: change_request
+          ticketId: ${{ outputs.snowcreate.sys_id }}
+          parameters:
+            state: "0"
+            work_notes: "Deployed ${{ outputs.render.appVersion }} to vm-prod-1, vm-prod-2"
