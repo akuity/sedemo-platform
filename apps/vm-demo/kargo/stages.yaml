@@ -430,7 +430,7 @@ spec:
                     marks:
                     - type: link
                       attrs:
-                        href: "${{ outputs.render.prevAppRevision != '' ? 'https://github.com/akuity/sedemo-monorepo/compare/' + outputs.render.prevAppRevision + '...' + outputs.render.appRevision : 'https://github.com/akuity/sedemo-monorepo/commit/' + outputs.render.appRevision }}"
+                        href: "${{ outputs.render.appRevision == '' ? 'https://github.com/akuity/sedemo-monorepo/tree/main/rollouts-app' : (outputs.render.prevAppRevision != '' ? 'https://github.com/akuity/sedemo-monorepo/compare/' + outputs.render.prevAppRevision + '...' + outputs.render.appRevision : 'https://github.com/akuity/sedemo-monorepo/commit/' + outputs.render.appRevision) }}"
                   - type: text
                     text: ")"
                 - type: codeBlock
@@ -507,7 +507,8 @@ spec:
           waitForStatus:
             issueKey: ${{ outputs.change.key }}
             expectedStatus: Approved
-      # Audit: who approved the CHANGE issue (human input). The jira step's
+      # Audit: who approved the CHANGE issue (human input). searchIssue's
+      # output is the issue itself (outputs.approval.changelog...), and its
       # changelog names the user who moved it to Approved.
       - uses: jira
         as: approval
@@ -528,8 +529,8 @@ spec:
           errorThreshold: 3
         config:
           type: change-approved
-          actor: "jira:${{ last(filter(outputs.approval.issue.changelog.histories, any(.items, .field == 'status' && .toString == 'Approved')))?.author?.displayName ?? 'unknown' }}"
-          message: "${{ outputs.change.key }} approved by ${{ last(filter(outputs.approval.issue.changelog.histories, any(.items, .field == 'status' && .toString == 'Approved')))?.author?.displayName ?? 'unknown' }} for ${{ outputs.render.appVersion }} on ${{ outputs.render.baseTemplate }}"
+          actor: "jira:${{ last(filter(outputs.approval.changelog.histories, any(.items, .field == 'status' && .toString == 'Approved')))?.author?.displayName ?? 'unknown' }}"
+          message: "${{ outputs.change.key }} approved by ${{ last(filter(outputs.approval.changelog.histories, any(.items, .field == 'status' && .toString == 'Approved')))?.author?.displayName ?? 'unknown' }} for ${{ outputs.render.appVersion }} on ${{ outputs.render.baseTemplate }}"
           data:
             issue: https://eddiewebb.atlassian.net/browse/${{ outputs.change.key }}
       - uses: git-wait-for-pr
