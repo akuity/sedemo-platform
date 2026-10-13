@@ -62,17 +62,17 @@ spec:
     spec:
       containers:
       - name: guestbook
-        image: "ghcr.io/akuity/guestbook:v0.0.1"
+        image: "ghcr.io/akuity/guestbook:v0.0.2"
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
         resources:
           limits:
-            cpu: 1000m
-            memory: 1Gi
+            cpu: 100m
+            memory: 128Mi
           requests:
-            cpu: 500m
-            memory: 512Mi
+            cpu: 50m
+            memory: 64Mi
         envFrom:
         - configMapRef:
             name: customer-c-eu-west-config
