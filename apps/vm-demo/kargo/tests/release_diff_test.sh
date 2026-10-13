@@ -28,15 +28,21 @@ c2=$(commit rollouts-app/index.html v2 "app: new banner")
 printf 'base-files 13ubuntu10\nlinux-image-6.8.0-45-generic 6.8.0-45.45\nopenssl 3.0.13-0ubuntu3.4\ntelnet 0.17-44\n' > "$tmp/old.txt"
 printf 'base-files 13ubuntu10\nlinux-image-6.8.0-47-generic 6.8.0-47.47\nopenssl 3.0.13-0ubuntu3.5\njq 1.7.1-3build1\n' > "$tmp/new.txt"
 
-run() { out="$(sh "$script" "$repo" "$@" 2>"$tmp/err")"; rc=$?; }
-field() { jq -r --arg k "$1" '.[$k]' <<<"$out"; }
+# Restricted PATH: git and coreutils only. No jq, no apk (custom-step
+# containers run as non-root and cannot install packages).
+bin="$tmp/bin"; mkdir -p "$bin"
+for t in sh git awk sort cut grep head wc tr mktemp sed cat printf; do
+  p="$(command -v "$t")" && ln -s "$p" "$bin/$t"
+done
+run() { out="$(PATH="$bin" sh "$script" "$repo" "$@" 2>"$tmp/err")"; rc=$?; }
+field() { yq -r ".$1" <<<"$out"; }
 
 # --- release with app, chart and package changes ----------------------------
 run "$c0" "$c2" "$k0" "$k1" "$tmp/old.txt" "$tmp/new.txt"
-if [ $rc -ne 0 ] || ! jq -e . >/dev/null 2>&1 <<<"$out"; then
-  not_ok "prints valid JSON (exit $rc)" "$(cat "$tmp/err"; echo "$out")"
+if [ $rc -ne 0 ] || [ "$(yq -r 'keys | join(",")' <<<"$out" 2>/dev/null)" != "appLog,chartLog,packagesDiff,packagesSummary" ]; then
+  not_ok "prints a YAML map with appLog, chartLog, packagesDiff, packagesSummary (exit $rc)" "$(cat "$tmp/err"; echo "$out")"
 else
-  ok "prints valid JSON"
+  ok "prints a YAML map with appLog, chartLog, packagesDiff, packagesSummary"
   a="$(field appLog)"
   case "$a" in *"app: new banner"*"app: faster bubbles"*) ok "appLog lists app commits newest first" ;; *) not_ok "appLog lists app commits newest first" "$a" ;; esac
   case "$a" in *unrelated*|*"chart:"*|*initial*) not_ok "appLog excludes other paths and the previous release" "$a" ;; *) ok "appLog excludes other paths and the previous release" ;; esac

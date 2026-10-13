@@ -1,8 +1,10 @@
 #!/bin/sh
 # release-diff: what changed between the release a stage runs now and the one
 # being promoted, for the prod change ticket. Runs as the vm-release-diff
-# CustomPromotionStep (cwd = promotion work dir) and prints one JSON object
-# on stdout; everything else goes to stderr.
+# CustomPromotionStep (cwd = promotion work dir) and prints a YAML map of
+# block scalars on stdout; everything else goes to stderr. Needs only git and
+# POSIX tools: custom-step containers run as non-root and cannot install
+# packages.
 #
 # Usage: release-diff.sh <app repo URL or path> <prev app rev> <app rev>
 #                        <prev chart commit> <chart commit>
@@ -19,12 +21,7 @@ APP_PATH="rollouts-app"
 CHART_PATH="vm-app/config-chart"
 MAX_LINES=150
 
-need() {
-  command -v "$1" >/dev/null 2>&1 && return 0
-  apk add --no-cache -q "$1" >&2 || { echo "cannot install $1" >&2; exit 1; }
-}
-need git
-need jq
+command -v git >/dev/null 2>&1 || { echo "git is required in the step image" >&2; exit 1; }
 
 if [ -d "$REPO/.git" ] || [ -d "$REPO/objects" ]; then
   src="$REPO"
@@ -33,7 +30,6 @@ else
   git clone -q --filter=blob:none --no-checkout "$REPO" "$src" >&2 \
     || { echo "cannot clone $REPO" >&2; exit 1; }
 fi
-git config --global --add safe.directory '*' 2>/dev/null
 
 have() { git -C "$src" cat-file -e "$1^{commit}" 2>/dev/null; }
 
@@ -90,9 +86,12 @@ else
   fi
 fi
 
-jq -n \
-  --arg appLog "$(changes "$PREV_APP" "$APP" "$APP_PATH")" \
-  --arg chartLog "$(changes "$PREV_CHART" "$CHART" "$CHART_PATH")" \
-  --arg packagesDiff "$pkgs_diff" \
-  --arg packagesSummary "$pkgs_summary" \
-  '{appLog: $appLog, chartLog: $chartLog, packagesDiff: $packagesDiff, packagesSummary: $packagesSummary}'
+# One YAML block scalar per key: indenting every line needs no escaping.
+block() {
+  printf '%s: |-\n' "$1"
+  printf '%s\n' "$2" | sed 's/^/  /'
+}
+block appLog "$(changes "$PREV_APP" "$APP" "$APP_PATH")"
+block chartLog "$(changes "$PREV_CHART" "$CHART" "$CHART_PATH")"
+block packagesDiff "$pkgs_diff"
+block packagesSummary "$pkgs_summary"
