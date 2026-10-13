@@ -17,6 +17,12 @@
 #             branch (re-promoting the same Freight: autoRollback, retries).
 #             git-commit is a no-op then; PR stages skip the PR and converge
 #             the existing head.
+#   appVersion, baseTemplate, appRevision, chartCommit, infraCommit
+#             what this promotion deploys (tag, template, source commits)
+#   prevAppVersion, prevBaseTemplate, prevAppRevision, prevChartCommit,
+#   prevInfraCommit
+#             what the stage ran before, from its last deploy pin ('' when
+#             unknown); used for the release diff in the prod change ticket
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
@@ -62,6 +68,25 @@ spec:
       checkout:
       - commit: ${{ commitFrom(vars.infraRepo, warehouse("base-image")).ID }}
         path: ./infra
+  # What this stage runs now, read from the last rendered deploy pin before it
+  # is replaced. Used for the release diff in the prod change ticket. A brand
+  # new stage has no deploy.yaml yet, so this step may fail harmlessly.
+  - uses: yaml-parse
+    as: prev
+    continueOnError: true
+    config:
+      path: ./out/deploy.yaml
+      outputs:
+      - name: appVersion
+        fromExpression: app_version ?? ''
+      - name: baseTemplate
+        fromExpression: base_template ?? ''
+      - name: appRevision
+        fromExpression: app_revision ?? ''
+      - name: chartCommit
+        fromExpression: chart_commit ?? ''
+      - name: infraCommit
+        fromExpression: infra_commit ?? ''
   - uses: git-clear
     config:
       path: ./out
@@ -100,6 +125,14 @@ spec:
         freight: ${{ ctx.targetFreight.name }}
         appVersion: ${{ imageFrom(vars.artifactRepo, warehouse('app')).Tag }}
         baseTemplate: ${{ task.outputs.base.template }}
+      appRevision: ${{ imageFrom(vars.artifactRepo, warehouse("app")).Annotations['org.opencontainers.image.revision'] ?? '' }}
+      chartCommit: ${{ commitFrom(vars.appRepo, warehouse("app")).ID }}
+      infraCommit: ${{ commitFrom(vars.infraRepo, warehouse("base-image")).ID }}
+      prevAppVersion: ${{ task.outputs.prev?.appVersion ?? '' }}
+      prevBaseTemplate: ${{ task.outputs.prev?.baseTemplate ?? '' }}
+      prevAppRevision: ${{ task.outputs.prev?.appRevision ?? '' }}
+      prevChartCommit: ${{ task.outputs.prev?.chartCommit ?? '' }}
+      prevInfraCommit: ${{ task.outputs.prev?.infraCommit ?? '' }}
   # Render-time gate: the chart marks its keys `required`, so a missing value
   # (e.g. `namespace` in env/<stage>/values.yaml) fails here, before any VM
   # is touched. color is the tag suffix after the first '-' (50-blue: blue),
@@ -146,6 +179,15 @@ spec:
         value: ${{ task.outputs.base.vmid }}
       - key: freight
         value: ${{ ctx.targetFreight.name }}
+      # Exact sources, so the deploy pin (and the PR diff) shows which commits
+      # changed: the app image's source revision, the config chart commit,
+      # and the infra commit that recorded the base image.
+      - key: app_revision
+        value: ${{ imageFrom(vars.artifactRepo, warehouse("app")).Annotations['org.opencontainers.image.revision'] ?? '' }}
+      - key: chart_commit
+        value: ${{ commitFrom(vars.appRepo, warehouse("app")).ID }}
+      - key: infra_commit
+        value: ${{ commitFrom(vars.infraRepo, warehouse("base-image")).ID }}
   # Skipped (no new commit) when nothing changed; its output is then the
   # existing HEAD.
   - uses: git-commit

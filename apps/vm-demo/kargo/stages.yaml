@@ -347,6 +347,27 @@ spec:
             Gated by a Jira CHANGE issue. Once the issue is Approved and this
             PR is merged, the promotion runs converge.yml for `prod`
             (one VM at a time) against the merge commit.
+      # Release diff for the change ticket: what prod runs now (previous
+      # deploy pin) against what this promotion brings, for the app source,
+      # the config chart, and the base image's OS packages.
+      - uses: git-clone
+        as: infra-prev
+        if: ${{ outputs.render.prevInfraCommit != '' && outputs.render.prevInfraCommit != outputs.render.infraCommit }}
+        config:
+          repoURL: https://github.com/akuity/sedemo-vm-infra
+          checkout:
+          - commit: ${{ outputs.render.prevInfraCommit }}
+            path: ./infra-prev
+      - uses: vm-release-diff
+        as: diff
+        config:
+          repoURL: https://github.com/akuity/sedemo-monorepo
+          prevAppRevision: ${{ outputs.render.prevAppRevision }}
+          appRevision: ${{ outputs.render.appRevision }}
+          prevChartCommit: ${{ outputs.render.prevChartCommit }}
+          chartCommit: ${{ outputs.render.chartCommit }}
+          prevPackages: "${{ outputs.render.prevInfraCommit == outputs.render.infraCommit ? './infra/images/packages.txt' : './infra-prev/images/packages.txt' }}"
+          packages: ./infra/images/packages.txt
       - uses: jira
         as: change
         config:
@@ -356,9 +377,120 @@ spec:
             projectKey: CHANGE
             issueType: Task
             summary: "vm-demo prod: rollouts-app ${{ outputs.render.appVersion }} on base ${{ outputs.render.baseTemplate }}"
-            description: "Rendered change (PR): ${{ outputs['open-pr']?.pr?.url ?? 'none, render identical to rendered/vm-demo/prod' }}. Kargo promotion: https://kargo.akpdemoapps.link/project/${{ ctx.project }}/promotion/${{ ctx.promotion }}. Deploy: converge.yml for prod, rolling vm-prod-1 then vm-prod-2; halts if vm-prod-1 fails its health check. Move to Approved to release."
             labels:
             - vm-demo
+            adfDescription:
+              type: doc
+              version: 1
+              content:
+                - type: heading
+                  attrs:
+                    level: 3
+                  content:
+                  - type: text
+                    text: "Release to prod"
+                - type: paragraph
+                  content:
+                  - type: text
+                    text: "Rendered config PR (exactly what lands on vm-prod-1, vm-prod-2): "
+                  - type: text
+                    text: "${{ outputs['open-pr']?.pr?.url ?? 'none, render identical to prod' }}"
+                    marks:
+                    - type: link
+                      attrs:
+                        href: "${{ outputs['open-pr']?.pr?.url ?? 'https://github.com/akuity/sedemo-platform/tree/rendered/vm-demo/prod' }}"
+                  - type: text
+                    text: ". Kargo promotion: "
+                  - type: text
+                    text: "${{ ctx.promotion }}"
+                    marks:
+                    - type: link
+                      attrs:
+                        href: "https://kargo.akpdemoapps.link/project/${{ ctx.project }}/promotion/${{ ctx.promotion }}"
+                  - type: text
+                    text: ". Move this issue to Approved to release."
+                - type: heading
+                  attrs:
+                    level: 3
+                  content:
+                  - type: text
+                    text: "Application"
+                - type: paragraph
+                  content:
+                  - type: text
+                    text: "rollouts-app "
+                  - type: text
+                    text: "${{ ((outputs.render.prevAppVersion ?? '') != '' ? outputs.render.prevAppVersion : '(none)') }} -> ${{ outputs.render.appVersion }}"
+                    marks:
+                    - type: code
+                  - type: text
+                    text: " ("
+                  - type: text
+                    text: "source changes"
+                    marks:
+                    - type: link
+                      attrs:
+                        href: "${{ outputs.render.prevAppRevision != '' ? 'https://github.com/akuity/sedemo-monorepo/compare/' + outputs.render.prevAppRevision + '...' + outputs.render.appRevision : 'https://github.com/akuity/sedemo-monorepo/commit/' + outputs.render.appRevision }}"
+                  - type: text
+                    text: ")"
+                - type: codeBlock
+                  content:
+                  - type: text
+                    text: "${{ outputs.diff.appLog }}"
+                - type: heading
+                  attrs:
+                    level: 3
+                  content:
+                  - type: text
+                    text: "Configuration"
+                - type: paragraph
+                  content:
+                  - type: text
+                    text: "Config chart vm-app/config-chart ("
+                  - type: text
+                    text: "chart changes"
+                    marks:
+                    - type: link
+                      attrs:
+                        href: "${{ outputs.render.prevChartCommit != '' ? 'https://github.com/akuity/sedemo-monorepo/compare/' + outputs.render.prevChartCommit + '...' + outputs.render.chartCommit : 'https://github.com/akuity/sedemo-monorepo/commit/' + outputs.render.chartCommit }}"
+                  - type: text
+                    text: ")"
+                - type: codeBlock
+                  content:
+                  - type: text
+                    text: "${{ outputs.diff.chartLog }}"
+                - type: heading
+                  attrs:
+                    level: 3
+                  content:
+                  - type: text
+                    text: "Base image"
+                - type: paragraph
+                  content:
+                  - type: text
+                    text: "${{ ((outputs.render.prevBaseTemplate ?? '') != '' ? outputs.render.prevBaseTemplate : '(none)') }} -> ${{ outputs.render.baseTemplate }}"
+                    marks:
+                    - type: code
+                  - type: text
+                    text: ", OS packages: "
+                  - type: text
+                    text: "${{ outputs.diff.packagesSummary }}"
+                    marks:
+                    - type: strong
+                  - type: text
+                    text: " ("
+                  - type: text
+                    text: "image build changes"
+                    marks:
+                    - type: link
+                      attrs:
+                        href: "${{ outputs.render.prevInfraCommit != '' ? 'https://github.com/akuity/sedemo-vm-infra/compare/' + outputs.render.prevInfraCommit + '...' + outputs.render.infraCommit : 'https://github.com/akuity/sedemo-vm-infra/commit/' + outputs.render.infraCommit }}"
+                  - type: text
+                    text: ")"
+                - type: codeBlock
+                  content:
+                  - type: text
+                    text: "${{ outputs.diff.packagesDiff }}"
       - uses: set-metadata
         config:
           updates:
