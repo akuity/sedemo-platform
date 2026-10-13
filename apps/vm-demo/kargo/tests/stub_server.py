@@ -20,6 +20,7 @@ Usage: python3 stub_server.py <root> <portfile>
 import collections
 import http.server
 import os
+import time
 import sys
 import urllib.parse
 
@@ -52,6 +53,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             COUNTS[target] += 1
             if (n * rate) % 100 < rate:
                 status = 500
+        if os.path.isfile(target + ".delay"):
+            time.sleep(float(read_int(target + ".delay")))
         with open(target, "rb") as f:
             body = f.read()
         self.send_response(status)

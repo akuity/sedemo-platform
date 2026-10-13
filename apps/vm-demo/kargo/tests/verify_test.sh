@@ -163,14 +163,14 @@ resources "[$(vm_entry 7101 vm-dev 'stage-dev;vm-demo')]"
 agent_ip 7101 127.0.0.1
 app 100 50-blue dev
 run_verify dev 1 false 50-blue
-expect "/color 100% errors -> fail naming the VM and rate" 1 "vm-dev" "/color" "100%"
+expect "/color 100% errors -> fail fast after 5 samples, naming the VM and rate" 1 "vm-dev" "/color" "100%" "5 of 5 sampled"
 
 new_fixture color-25
 resources "[$(vm_entry 7101 vm-dev 'stage-dev;vm-demo')]"
 agent_ip 7101 127.0.0.1
 app 25 50-blue dev
 run_verify dev 1 false 50-blue
-expect "/color 25% errors (> 20%) -> fail with rate" 1 "vm-dev" "25%"
+expect "/color 25% errors (> 20%) -> fail with rate" 1 "vm-dev" "/color error rate"
 
 new_fixture color-20
 resources "[$(vm_entry 7101 vm-dev 'stage-dev;vm-demo')]"
@@ -178,6 +178,17 @@ agent_ip 7101 127.0.0.1
 app 20 50-blue dev
 run_verify dev 1 false 50-blue
 expect "/color 20% errors (not > 20%) -> pass, rate printed" 0 "ok vm-dev" "20%"
+
+new_fixture color-slow
+resources "[$(vm_entry 7101 vm-dev 'stage-dev;vm-demo')]"
+agent_ip 7101 127.0.0.1
+app 0 50-blue dev
+echo 3 > "$fx/color.delay"
+t0=$(date +%s)
+run_verify dev 1 false 50-blue
+elapsed=$(( $(date +%s) - t0 ))
+expect "/color slower than the 2s sample timeout -> fail" 1 "vm-dev" "/color" "5 of 5 sampled"
+if [ "$elapsed" -le 20 ]; then ok "slow /color fails fast (${elapsed}s <= 20s)"; else not_ok "slow /color fails fast (${elapsed}s > 20s)" ""; fi
 
 new_fixture semver
 resources "[$(vm_entry 7101 vm-dev 'stage-dev;vm-demo')]"
