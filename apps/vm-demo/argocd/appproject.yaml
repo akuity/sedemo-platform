@@ -1,0 +1,19 @@
+# AppProject for the Kargo resources of the VM demo. bootstrap/kargo-apps.yaml
+# sets each generated Application's project to the app directory name, so this
+# must exist even though the VM demo has no Kubernetes workloads.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: vm-demo
+  namespace: argocd
+spec:
+  description: Kargo promotions to Proxmox VMs (Ansible via GitHub Actions)
+  sourceRepos:
+    - https://github.com/akuity/sedemo-platform
+  destinations:
+    - name: kargo
+      server: '*'
+      namespace: '*'
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
