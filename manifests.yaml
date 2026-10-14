@@ -62,7 +62,7 @@ spec:
         checksum/config: a77fbefbae07059437afbb69449c8fc9f3de3d24bb8192de794e98cde29a4e32
     spec:
       containers:
-        - image: "ghcr.io/akuity/sedemo-monorepo-kargo-dashboard:3"
+        - image: "ghcr.io/akuity/sedemo-monorepo-kargo-dashboard:5"
           name: dashboard-app
           ports:
             - containerPort: 8080
@@ -106,6 +106,10 @@ spec:
             name: dashboard-svc
             port:
               number: 80
+  tls:
+    - hosts:
+        - "kargo-dashboard-demo.akpdemoapps.link"
+      secretName: tls-secret
 ---
 # Source: deploy/templates/external-secret.yaml
 # GitHub token for demo-ephemeral Kargo http step (posts PR comments)
