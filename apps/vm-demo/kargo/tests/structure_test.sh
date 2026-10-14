@@ -18,5 +18,13 @@ used="$(grep -oE 'outputs\.render\??\.[A-Za-z]+' "$dir"/stages.yaml | sed -E 's/
 missing="$(comm -23 <(printf '%s\n' "$used") <(printf '%s\n' "$composed"))"
 if [ -z "$missing" ]; then ok "every outputs.render.* used by Stages is composed by vm-render"; else not_ok "every outputs.render.* used by Stages is composed by vm-render" "missing: ${missing//$'\n'/ }"; fi
 
+# The rendered branch carries the image's package manifest, so the SysOps PR
+# shows OS package changes for base-image promotions.
+if yq 'select(.metadata.name == "vm-render") | .spec.steps[] | select(.uses == "copy") | .config.outPath' "$dir"/tasks.yaml | grep -qx './out/packages.txt'; then
+  ok "vm-render copies the base image package manifest to the rendered branch"
+else
+  not_ok "vm-render copies the base image package manifest to the rendered branch"
+fi
+
 echo "$pass passed, $fail failed"
 [ "$fail" -eq 0 ]

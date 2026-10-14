@@ -45,7 +45,21 @@ changes() {
   if [ "$1" = "$2" ]; then echo "(unchanged)"; return; fi
   if ! have "$1"; then echo "(previous revision $1 not found in repository)"; return; fi
   log="$(git -C "$src" log --format='%h %s' "$1..$2" -- "$3")"
-  if [ -z "$log" ]; then echo "(no changes under $3)"; return; fi
+  if [ -z "$log" ]; then
+    # Rollback: the promoted revision is an ancestor of the running one, so
+    # list what is being reverted instead of reporting no changes.
+    back="$(git -C "$src" log --format='%h %s' "$2..$1" -- "$3")"
+    if [ -n "$back" ] && git -C "$src" merge-base --is-ancestor "$2" "$1"; then
+      n="$(printf '%s\n' "$back" | wc -l | tr -d ' ')"
+      [ "$n" -eq 1 ] && unit=commit || unit=commits
+      echo "(rollback: reverting $n $unit)"
+      printf '%s\n' "$back" | head -n "$MAX_LINES"
+      [ "$n" -le "$MAX_LINES" ] || echo "... $((n - MAX_LINES)) more"
+      return
+    fi
+    echo "(no changes under $3)"
+    return
+  fi
   printf '%s\n' "$log" | head -n "$MAX_LINES"
   n="$(printf '%s\n' "$log" | wc -l | tr -d ' ')"
   [ "$n" -le "$MAX_LINES" ] || echo "... $((n - MAX_LINES)) more"

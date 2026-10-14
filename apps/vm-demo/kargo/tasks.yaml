@@ -157,6 +157,13 @@ spec:
     config:
       inPath: ./platform/apps/vm-demo/env/${{ vars.stage }}/deploy.yaml
       outPath: ./out/deploy.yaml
+  # The base image's package manifest, so the rendered-config PR shows OS
+  # package changes for base-image promotions (same content as the change
+  # ticket's package diff).
+  - uses: copy
+    config:
+      inPath: ./infra/images/packages.txt
+      outPath: ./out/packages.txt
   - uses: yaml-update
     config:
       path: ./out/deploy.yaml
