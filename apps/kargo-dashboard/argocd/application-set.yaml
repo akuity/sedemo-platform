@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: kargo-dashboard
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - stage: demo
+  template:
+    metadata:
+      name: kargo-dashboard-{{stage}}
+      annotations:
+        kargo.akuity.io/authorized-stage: kargo-dashboard:{{stage}}
+    spec:
+      project: kargo-dashboard
+      source:
+        repoURL: https://github.com/akuity/sedemo-platform
+        targetRevision: rendered/kargo-dashboard/{{stage}}
+        path: .
+      destination:
+        name: sedemo-primary
+        namespace: kargo-dashboard-{{stage}}
+      syncPolicy:
+        automated:
+          prune: true
+          enabled: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
