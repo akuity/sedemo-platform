@@ -53,7 +53,7 @@ spec:
           namespace: kargo-dashboard-${{ ctx.stage }}
           setValues:
           - key: image.tag
-            value: "${{ imageFrom(vars.imageRepo).Tag }}"
+            value: '${{ imageFrom(vars.imageRepo).Tag }}'
           - key: ingress.root_domain
             value: akpdemoapps.link
       - uses: git-commit
