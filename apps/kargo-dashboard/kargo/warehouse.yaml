@@ -1,0 +1,22 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: kargo-dashboard
+  namespace: kargo-dashboard
+spec:
+  subscriptions:
+  - image:
+      repoURL: ghcr.io/akuity/sedemo-monorepo-kargo-dashboard
+      discoveryLimit: 5
+      imageSelectionStrategy: NewestBuild
+      # the publish workflow tags images with the plain run number (and "latest")
+      allowTagsRegexes:
+      - ^\d+$
+  - git:
+      repoURL: https://github.com/akuity/sedemo-monorepo
+      includePaths:
+      - kargo-dashboard
+  # a commit comes before its image is published, so only create Freight once they match
+  freightCreationCriteria:
+    expression: |
+      imageFrom('ghcr.io/akuity/sedemo-monorepo-kargo-dashboard').Annotations['org.opencontainers.image.revision'] == commitFrom('https://github.com/akuity/sedemo-monorepo').ID
