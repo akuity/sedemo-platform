@@ -233,6 +233,12 @@ spec:
     value: ""
   - name: infraRepo
     value: https://github.com/akuity/sedemo-vm-infra
+  # The stage's VMIDs, mirroring terraform/stage-vms locals.vms in the infra
+  # repo; used to look up each VM's current (DHCP) address after converge.
+  - name: vmid1
+    value: "${{ {'dev': '7101', 'qa': '7102', 'sit': '7103', 'uat': '7104', 'prod': '7105'}[ctx.stage] }}"
+  - name: vmid2
+    value: "${{ ctx.stage == 'prod' ? '7106' : '' }}"
   steps:
   - uses: gha-dispatch-workflow
     as: dispatch
@@ -255,6 +261,43 @@ spec:
       runID: ${{ task.outputs.dispatch.runID }}
       expectedConclusion: success
       pollInterval: 5s
+  # App links: each VM's current address from the Proxmox guest agent
+  # (read-only token), so the promotion, the deployed audit event and the
+  # prod change ticket say where to look. DHCP addresses change when a
+  # base-image promotion replaces VMs.
+  - uses: http
+    as: vm1
+    retry:
+      errorThreshold: 3
+    config:
+      url: ${{ secret('vm-demo-proxmox-verify').PROXMOX_URL }}/api2/json/nodes/pve01/qemu/${{ vars.vmid1 }}/agent/network-get-interfaces
+      insecureSkipTLSVerify: true
+      headers:
+      - name: Authorization
+        value: PVEAPIToken=${{ secret('vm-demo-proxmox-verify').TOKEN_ID }}=${{ secret('vm-demo-proxmox-verify').TOKEN_SECRET }}
+      successExpression: response.status == 200
+      outputs:
+      - name: url
+        fromExpression: "'http://' + ((first(filter(flatten(map(filter(response.body.data.result, #.name != 'lo'), #['ip-addresses'] ?? [])), #['ip-address-type'] == 'ipv4' && !hasPrefix(#['ip-address'], '169.254.'))) ?? {})['ip-address'] ?? 'unknown') + ':8080/'"
+  - uses: http
+    as: vm2
+    if: ${{ vars.vmid2 != '' }}
+    retry:
+      errorThreshold: 3
+    config:
+      url: ${{ secret('vm-demo-proxmox-verify').PROXMOX_URL }}/api2/json/nodes/pve01/qemu/${{ vars.vmid2 }}/agent/network-get-interfaces
+      insecureSkipTLSVerify: true
+      headers:
+      - name: Authorization
+        value: PVEAPIToken=${{ secret('vm-demo-proxmox-verify').TOKEN_ID }}=${{ secret('vm-demo-proxmox-verify').TOKEN_SECRET }}
+      successExpression: response.status == 200
+      outputs:
+      - name: url
+        fromExpression: "'http://' + ((first(filter(flatten(map(filter(response.body.data.result, #.name != 'lo'), #['ip-addresses'] ?? [])), #['ip-address-type'] == 'ipv4' && !hasPrefix(#['ip-address'], '169.254.'))) ?? {})['ip-address'] ?? 'unknown') + ':8080/'"
+  - uses: compose-output
+    as: links
+    config:
+      appLinks: "${{ task.outputs.vm1.url + (vars.vmid2 != '' ? ' ' + task.outputs.vm2.url : '') }}"
   # Audit: the outcome that closes this promotion's chain of custody.
   - uses: record-audit-event
     as: audit-deployed
@@ -262,8 +305,9 @@ spec:
       errorThreshold: 3
     config:
       type: deployed
-      message: "${{ vars.release }} deployed to ${{ vars.stage }} and converged"
+      message: "${{ vars.release }} deployed to ${{ vars.stage }} and converged: ${{ task.outputs.links.appLinks }}"
       data:
         stage: ${{ vars.stage }}
+        appLinks: ${{ task.outputs.links.appLinks }}
         renderedCommit: ${{ vars.platformRef }}
         convergeRun: https://github.com/akuity/sedemo-vm-infra/actions/runs/${{ task.outputs.dispatch.runID }}
