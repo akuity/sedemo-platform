@@ -1,0 +1,127 @@
+---
+# Source: deploy/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboard-config
+data:
+  config.json: |
+    {
+      "kargo": {
+        "tokenEnv": "KARGO_TOKEN",
+        "url": "https://kargo.akpdemoapps.link"
+      },
+      "projects": {
+        "demo-rollouts": {
+          "displayName": "Rollouts Demo",
+          "warehouse": "demo-rollouts"
+        },
+        "demo-snow": {},
+        "gatekeeper-stage": {},
+        "sedemo-app-demo": {
+          "warehouse": "sedemo-app-demo"
+        },
+        "sedemo-app-oct": {},
+        "team-ada": {},
+        "team-daniel": {},
+        "team-eddie": {},
+        "team-emily": {},
+        "team-namho": {}
+      },
+      "refreshIntervalSeconds": 30
+    }
+---
+# Source: deploy/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard-svc
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: dashboard-app
+---
+# Source: deploy/templates/rollout.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dashboard-app
+  template:
+    metadata:
+      labels:
+        app: dashboard-app
+      annotations:
+        # The app reads its config once at startup; a config change rolls the pods.
+        checksum/config: a77fbefbae07059437afbb69449c8fc9f3de3d24bb8192de794e98cde29a4e32
+    spec:
+      containers:
+        - image: "ghcr.io/akuity/sedemo-monorepo-kargo-dashboard:1"
+          name: dashboard-app
+          ports:
+            - containerPort: 8080
+          env:
+            - name: CONFIG_PATH
+              value: /etc/kargo-dashboard/config.json
+            - name: KARGO_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: kargo-token      # Name of the K8s Secret
+                  key: token     # The key inside that Secret
+          volumeMounts:
+            - name: config
+              mountPath: /etc/kargo-dashboard
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: dashboard-config
+  minReadySeconds: 30
+---
+# Source: deploy/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: stable-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "kargo-dashboard-demo.akpdemoapps.link"
+    http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: dashboard-svc
+            port:
+              number: 80
+---
+# Source: deploy/templates/external-secret.yaml
+# GitHub token for demo-ephemeral Kargo http step (posts PR comments)
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: kargo-token
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: aws-secretsmanager
+    kind: ClusterSecretStore
+  target:
+    name: kargo-token
+    template:
+      engineVersion: v2
+      data:
+        token: "{{.token}}"
+  data:
+  - secretKey: token
+    remoteRef:
+      key: sedemo/kargo-dashboard
+      property: token
