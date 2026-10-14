@@ -57,6 +57,13 @@ else
   check "packagesSummary counts" "1 changed, 2 added, 2 removed" "$s"
 fi
 
+# --- rollback: the promoted revision is older than the running one ------------
+run "$c2" "$c0" "$k1" "$k0" "$tmp/new.txt" "$tmp/old.txt"
+a="$(field appLog)"
+case "$a" in "(rollback: reverting 2 commits)"*"app: new banner"*"app: faster bubbles"*) ok "rollback lists the app commits being reverted" ;; *) not_ok "rollback lists the app commits being reverted" "$a" ;; esac
+case "$(field chartLog)" in "(rollback: reverting 1 commit)"*"chart: tune latency default"*) ok "rollback lists the chart commits being reverted" ;; *) not_ok "rollback lists the chart commits being reverted" "$out" ;; esac
+case "$(field packagesDiff)" in *"~ openssl 3.0.13-0ubuntu3.5 -> 3.0.13-0ubuntu3.4"*) ok "rollback shows packages going back" ;; *) not_ok "rollback shows packages going back" "$out" ;; esac
+
 # --- unchanged release --------------------------------------------------------
 run "$c2" "$c2" "$k1" "$k1" "$tmp/new.txt" "$tmp/new.txt"
 check "same app revision -> (unchanged)" "(unchanged)" "$(field appLog)" "$out"
