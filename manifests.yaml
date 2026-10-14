@@ -21,9 +21,18 @@ data:
         "sedemo-app-demo": {
           "warehouse": "sedemo-app-demo"
         },
-        "sedemo-app-oct": {},
-        "team-ada": {},
-        "team-daniel": {},
+        "sedemo-app-oct": {
+          "warehouse": "sedemo-app-oct"
+        },
+        "team-ada": {
+          "warehouses": [
+            "akkoma-main",
+            "akkoma-release"
+          ]
+        },
+        "team-daniel": {
+          "warehouse": "features"
+        },
         "team-eddie": {},
         "team-emily": {},
         "team-namho": {}
@@ -59,10 +68,10 @@ spec:
         app: dashboard-app
       annotations:
         # The app reads its config once at startup; a config change rolls the pods.
-        checksum/config: a77fbefbae07059437afbb69449c8fc9f3de3d24bb8192de794e98cde29a4e32
+        checksum/config: 6572c16603666a103b32873eba2c6c2ce76d47fea44caca06293200652b0fcc9
     spec:
       containers:
-        - image: "ghcr.io/akuity/sedemo-monorepo-kargo-dashboard:5"
+        - image: "ghcr.io/akuity/sedemo-monorepo-kargo-dashboard:7"
           name: dashboard-app
           ports:
             - containerPort: 8080
