@@ -571,6 +571,7 @@ spec:
             mergeCommit: ${{ outputs.merged.commit }}
       - task:
           name: vm-converge
+        as: converge
         vars:
         - name: release
           value: "${{ outputs.render.appVersion }} on ${{ outputs.render.baseTemplate }}"
@@ -582,4 +583,4 @@ spec:
             sharedSecretName: jira-access-secret
           commentOnIssue:
             issueKey: ${{ outputs.change.key }}
-            body: "Deployed ${{ outputs.render.appVersion }} on base ${{ outputs.render.baseTemplate }} to vm-prod-1, vm-prod-2 (rolling) and verified. Promotion: ${{ ctx.promotion }}."
+            body: "Deployed ${{ outputs.render.appVersion }} on base ${{ outputs.render.baseTemplate }} to vm-prod-1, vm-prod-2 (rolling) and verified. App: ${{ outputs.converge.appLinks }}. Promotion: ${{ ctx.promotion }}."

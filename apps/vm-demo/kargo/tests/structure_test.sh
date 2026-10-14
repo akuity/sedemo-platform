@@ -26,5 +26,11 @@ else
   not_ok "vm-render copies the base image package manifest to the rendered branch"
 fi
 
+# Every outputs.converge.<key> a Stage uses must be composed by vm-converge.
+composed_c="$(yq 'select(.metadata.name == "vm-converge") | .spec.steps[] | select(.uses == "compose-output") | .config | keys | .[]' "$dir"/tasks.yaml | sort -u)"
+used_c="$(grep -oE 'outputs\.converge\??\.[A-Za-z]+' "$dir"/stages.yaml | sed -E 's/.*\.//' | sort -u)"
+missing_c="$(comm -23 <(printf '%s\n' "$used_c" | sed '/^$/d') <(printf '%s\n' "$composed_c" | sed '/^$/d'))"
+if [ -z "$missing_c" ]; then ok "every outputs.converge.* used by Stages is composed by vm-converge"; else not_ok "every outputs.converge.* used by Stages is composed by vm-converge" "missing: ${missing_c//$'\n'/ }"; fi
+
 echo "$pass passed, $fail failed"
 [ "$fail" -eq 0 ]
