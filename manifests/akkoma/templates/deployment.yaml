@@ -5,7 +5,7 @@ kind: Deployment
 metadata:
   name: team-ada-staging-akkoma
   labels:
-    helm.sh/chart: akkoma-0.8.7
+    helm.sh/chart: akkoma-0.8.8
     app.kubernetes.io/name: akkoma
     app.kubernetes.io/instance: team-ada-staging
     app.kubernetes.io/version: "v3.20.1"
@@ -13,6 +13,7 @@ metadata:
     app.kubernetes.io/part-of: akkoma
 spec:
   replicas: 1  # Single instance only
+  revisionHistoryLimit: 10
   strategy:
     type: Recreate  # Terminate old pod before starting new (single-instance pattern)
   selector:
@@ -23,7 +24,7 @@ spec:
     metadata:
       annotations:
         # Force pod restart on config/secret changes
-        checksum/config: ce08adbf3a95ea444f91085a2e02e3446a1cd51cc79c38d2b9b3764964b6b436
+        checksum/config: 804ca6a486ad442c35c17ffc4c47f6167b7c3387c60297bde257d2572cec19ef
         checksum/secret: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
       labels:
         app.kubernetes.io/name: akkoma
