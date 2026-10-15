@@ -7,35 +7,45 @@ metadata:
 data:
   config.json: |
     {
+      "dashboards": {
+        "eddies": {
+          "name": "Eddie's Dashboard",
+          "projects": {
+            "demo-rollouts": {
+              "displayName": "Rollouts Demo",
+              "warehouse": "demo-rollouts"
+            },
+            "sedemo-app-demo": {
+              "warehouse": "sedemo-app-demo"
+            },
+            "sedemo-app-oct": {
+              "warehouse": "sedemo-app-oct"
+            },
+            "team-eddie": {}
+          }
+        },
+        "shared": {
+          "name": "Shared",
+          "projects": {
+            "team-ada": {
+              "warehouses": [
+                "akkoma-main",
+                "akkoma-release"
+              ]
+            },
+            "team-daniel": {
+              "warehouse": "features"
+            },
+            "team-eddie": {},
+            "team-emily": {},
+            "team-namho": {}
+          }
+        }
+      },
+      "defaultDashboard": "shared",
       "kargo": {
         "tokenEnv": "KARGO_TOKEN",
         "url": "https://kargo.akpdemoapps.link"
-      },
-      "projects": {
-        "demo-rollouts": {
-          "displayName": "Rollouts Demo",
-          "warehouse": "demo-rollouts"
-        },
-        "demo-snow": {},
-        "gatekeeper-stage": {},
-        "sedemo-app-demo": {
-          "warehouse": "sedemo-app-demo"
-        },
-        "sedemo-app-oct": {
-          "warehouse": "sedemo-app-oct"
-        },
-        "team-ada": {
-          "warehouses": [
-            "akkoma-main",
-            "akkoma-release"
-          ]
-        },
-        "team-daniel": {
-          "warehouse": "features"
-        },
-        "team-eddie": {},
-        "team-emily": {},
-        "team-namho": {}
       },
       "refreshIntervalSeconds": 30
     }
@@ -68,10 +78,10 @@ spec:
         app: dashboard-app
       annotations:
         # The app reads its config once at startup; a config change rolls the pods.
-        checksum/config: 6572c16603666a103b32873eba2c6c2ce76d47fea44caca06293200652b0fcc9
+        checksum/config: 59a39a367f7dcd5565001cab728f3821c6fea343260e468e1941e29b9e16421c
     spec:
       containers:
-        - image: "ghcr.io/akuity/sedemo-monorepo-kargo-dashboard:7"
+        - image: "ghcr.io/akuity/sedemo-monorepo-kargo-dashboard:8"
           name: dashboard-app
           ports:
             - containerPort: 8080
