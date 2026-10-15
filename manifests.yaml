@@ -81,7 +81,7 @@ spec:
         checksum/config: 59a39a367f7dcd5565001cab728f3821c6fea343260e468e1941e29b9e16421c
     spec:
       containers:
-        - image: "ghcr.io/akuity/sedemo-monorepo-kargo-dashboard:8"
+        - image: "ghcr.io/akuity/sedemo-monorepo-kargo-dashboard:9"
           name: dashboard-app
           ports:
             - containerPort: 8080
