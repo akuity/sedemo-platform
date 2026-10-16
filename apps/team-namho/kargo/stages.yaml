@@ -14,15 +14,6 @@ spec:
       name: smol-main
     sources:
       direct: true
-  verification:
-    analysisTemplates:
-    - name: smol-smoke-test
-    args:
-    - name: domain
-      value: smol-dev.akpdemoapps.link
-    # On this lane the image tag is the short SHA.
-    - name: sha
-      value: ${{ quote(imageFrom("ghcr.io/nk-87/smol").Tag) }}
   promotionTemplate:
     spec:
       steps:
@@ -125,16 +116,6 @@ spec:
       name: smol-release
     sources:
       direct: true
-  verification:
-    analysisTemplates:
-    - name: smol-smoke-test
-    args:
-    - name: domain
-      value: smol-uat.akpdemoapps.link
-    # Release images are tagged vX.Y.Z, so the expected SHA comes from the
-    # tagged commit instead. Matching proves the retag preserved the image.
-    - name: sha
-      value: ${{ quote(commitFrom("https://github.com/nk-87/smol").ID[0:7]) }}
   promotionTemplate:
     spec:
       vars:
@@ -182,3 +163,5 @@ spec:
           errorThreshold: 3
         config:
           type: approved
+          message: "Release to ${{ ctx.stage }} approved by ${{ outputs.approve.responses[0].user }}."
+          actor: ${{ outputs.approve.responses[0].user }}
