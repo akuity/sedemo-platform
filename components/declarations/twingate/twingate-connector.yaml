@@ -8,6 +8,12 @@ kind: Application
 metadata:
   name: twingate-connector
   namespace: argocd
+  annotations:
+    # With ServerSideApply there is no last-applied annotation, so the default
+    # client-side diff reports the fields ESO's CRD defaults on each remoteRef
+    # (conversionStrategy, decodingStrategy, metadataPolicy) as drift. Diffing
+    # server-side includes those defaults.
+    argocd.argoproj.io/compare-options: ServerSideDiff=true
 spec:
   project: components
   sources:
