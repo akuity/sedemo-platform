@@ -1,0 +1,30 @@
+controller:
+  # Image pins carried over from the Terraform-managed release so adoption is a
+  # no-op (chart 4.15.1 with the v1.13.3 controller). Drop them to take the
+  # chart's default images.
+  image:
+    tag: "v1.13.3"
+    digest: sha256:1b044f6dcac3afbb59e05d98463f1dec6f3d3fb99940bc12ca5d80270358e3bd
+    digestChroot: sha256:27de15aea4ec7639f7cec6ae96bff11ce57bb1171040351a0b0eedf66655d0dd
+  admissionWebhooks:
+    patch:
+      image:
+        tag: v1.6.3
+        digest: sha256:3d671cf20a35cd94efc5dcd484970779eb21e7938c98fbc3673693b8a117cf39
+  allowSnippetAnnotations: true
+  resources:
+    requests:
+      cpu: 10m
+  metrics:
+    enabled: true
+    service:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "10254"
+  service:
+    annotations:
+      # external-dns points the demo domain at this Service's ELB, replacing the
+      # Route53 records Terraform used to create from the Service status.
+      external-dns.alpha.kubernetes.io/hostname: akpdemoapps.link,*.akpdemoapps.link
+      external-dns.alpha.kubernetes.io/set-identifier: sedemo-primary
+      external-dns.alpha.kubernetes.io/aws-weight: "100"

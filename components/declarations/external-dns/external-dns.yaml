@@ -1,0 +1,28 @@
+# Manages Route53 records for akpdemoapps.link from Service annotations
+# (sedemo-platform#184). Only touches records it owns (TXT registry, txtOwnerId),
+# so the argo./kargo. CNAMEs managed by sedemo-infra-iac akuity-bootstrap are safe.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-dns
+  namespace: argocd
+spec:
+  project: components
+  sources:
+  - repoURL: https://github.com/akuity/sedemo-platform.git
+    targetRevision: main
+    ref: localValues
+  - chart: external-dns
+    repoURL: https://kubernetes-sigs.github.io/external-dns/
+    targetRevision: 1.23.0
+    helm:
+      releaseName: external-dns
+      valueFiles:
+      - $localValues/components/value-overrides/external-dns-values.yaml
+  destination:
+    name: sedemo-primary
+    namespace: external-dns
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
+    - ServerSideApply=true

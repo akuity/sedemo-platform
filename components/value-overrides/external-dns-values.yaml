@@ -1,0 +1,28 @@
+provider:
+  name: aws
+env:
+- name: AWS_DEFAULT_REGION
+  value: us-west-2
+serviceAccount:
+  name: external-dns
+  annotations:
+    # Created by sedemo-infra-iac core-env/eks-clusters (output external_dns_role_arn)
+    eks.amazonaws.com/role-arn: arn:aws:iam::218691292270:role/sedemo-primary-irsa-role-external-dns
+sources:
+- service
+domainFilters:
+- akpdemoapps.link
+txtOwnerId: sedemo-primary
+# Ownership TXT records. Managing the apex needs a prefix that contains
+# %{record_type} and ends in a period, and the wildcard needs "*" replaced to
+# be a valid name: extdns-a.akpdemoapps.link, extdns-a.wildcard.akpdemoapps.link
+txtPrefix: "extdns-%{record_type}."
+extraArgs:
+- --txt-wildcard-replacement=wildcard
+policy: sync
+resources:
+  requests:
+    cpu: 20m
+    memory: 50Mi
+  limits:
+    memory: 50Mi
