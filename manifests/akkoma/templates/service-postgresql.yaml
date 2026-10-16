@@ -1,0 +1,25 @@
+---
+# Source: akkoma/templates/service-postgresql.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: team-ada-pr-52-akkoma-postgresql
+  labels:
+    helm.sh/chart: akkoma-0.6.2
+    app.kubernetes.io/name: akkoma
+    app.kubernetes.io/instance: team-ada-pr-52
+    app.kubernetes.io/version: "v3.20.1"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: akkoma
+    app.kubernetes.io/component: database
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5432
+    targetPort: postgresql
+    protocol: TCP
+    name: postgresql
+  selector:
+    app.kubernetes.io/name: akkoma
+    app.kubernetes.io/instance: team-ada-pr-52
+    app.kubernetes.io/component: database
