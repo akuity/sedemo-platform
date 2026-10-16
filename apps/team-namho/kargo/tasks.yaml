@@ -1,0 +1,56 @@
+# Rendered-manifest promotion, shared by dev, uat and prod.
+#
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/promotiontasks.kargo.akuity.io_v1alpha1.json
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: render
+  namespace: team-namho
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  vars:
+  - name: gitRepo
+    value: https://github.com/akuity/sedemo-platform
+  - name: image
+    value: ghcr.io/nk-87/smol
+  steps:
+  - uses: git-clone
+    config:
+      repoURL: ${{ vars.gitRepo }}
+      checkout:
+      - branch: main
+        path: ./src
+      - branch: rendered/team-namho/${{ ctx.stage }}
+        create: true
+        path: ./out
+  - uses: git-clear
+    config:
+      path: ./out
+  - uses: kustomize-set-image
+    as: set-image
+    config:
+      path: ./src/apps/team-namho/stages/${{ ctx.stage }}
+      images:
+      - image: ${{ vars.image }}
+        tag: ${{ imageFrom(vars.image).Tag }}
+  - uses: kustomize-build
+    config:
+      path: ./src/apps/team-namho/stages/${{ ctx.stage }}
+      outPath: ./out/manifests.yaml
+  - uses: git-commit
+    as: commit
+    config:
+      path: ./out
+      message: |
+        team-namho/${{ ctx.stage }}: ${{ task.outputs['set-image'].commitMessage }}
+  - uses: git-push
+    config:
+      path: ./out
+      targetBranch: rendered/team-namho/${{ ctx.stage }}
+  - uses: argocd-update
+    config:
+      apps:
+      - name: team-namho-${{ ctx.stage }}
+        sources:
+        - repoURL: ${{ vars.gitRepo }}

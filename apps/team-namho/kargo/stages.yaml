@@ -1,0 +1,179 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev
+  namespace: team-namho
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    kargo.akuity.io/color: green
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: smol-main
+    sources:
+      direct: true
+  verification:
+    analysisTemplates:
+    - name: smol-smoke-test
+    args:
+    - name: domain
+      value: smol-dev.akpdemoapps.link
+    # On this lane the image tag is the short SHA.
+    - name: sha
+      value: ${{ quote(imageFrom("ghcr.io/nk-87/smol").Tag) }}
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: render
+---
+# Cuts a release from a dev Freight by pushing its git tag. Deploys nothing,
+# so it has no Argo CD Application.
+#
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: release
+  namespace: team-namho
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    kargo.akuity.io/color: violet
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: smol-main
+    sources:
+      stages:
+      - dev
+  promotionTemplate:
+    spec:
+      vars:
+      - name: srcRepo
+        value: https://github.com/nk-87/smol
+      - name: image
+        value: ghcr.io/nk-87/smol
+      steps:
+      # The schema is checked on submit, so a malformed version never becomes
+      # a git tag, and the submitted value survives a retry.
+      - uses: get-user-input
+        as: input
+        config:
+          display: >-
+            Release Freight ${{ ctx.targetFreight.alias }}
+            (smol ${{ imageFrom(vars.image).Tag }}) as vX.Y.Z.
+            It must be newer than the last release.
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+            - version
+            properties:
+              version:
+                type: string
+                title: Release version
+                description: SemVer for the release, e.g. v0.1.0
+                pattern: "^v?[0-9]+\\.[0-9]+\\.[0-9]+$"
+      - uses: compose-output
+        as: rel
+        config:
+          # tag.yml fires on `v*` and tags the image with GITHUB_REF_NAME
+          # verbatim, so the leading v isn't optional downstream.
+          version: v${{ trimPrefix(outputs.input.values.version, 'v') }}
+      # The Freight's commit, not whatever main has moved on to.
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.srcRepo }}
+          checkout:
+          - commit: ${{ commitFrom(vars.srcRepo).ID }}
+            path: ./src
+      # Triggers tag.yml, which retags the existing image and fails if the
+      # digests differ. smol-release discovers the result within a minute.
+      - uses: git-push
+        config:
+          path: ./src
+          tag: ${{ outputs.rel.version }}
+      - uses: set-metadata
+        config:
+          updates:
+          - kind: Freight
+            name: ${{ ctx.targetFreight.name }}
+            values:
+              released-as: ${{ outputs.rel.version }}
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: uat
+  namespace: team-namho
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    kargo.akuity.io/color: blue
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: smol-release
+    sources:
+      direct: true
+  verification:
+    analysisTemplates:
+    - name: smol-smoke-test
+    args:
+    - name: domain
+      value: smol-uat.akpdemoapps.link
+    # Release images are tagged vX.Y.Z, so the expected SHA comes from the
+    # tagged commit instead. Matching proves the retag preserved the image.
+    - name: sha
+      value: ${{ quote(commitFrom("https://github.com/nk-87/smol").ID[0:7]) }}
+  promotionTemplate:
+    spec:
+      vars:
+      - name: image
+        value: ghcr.io/nk-87/smol
+      steps:
+      - uses: set-freight-alias
+        config:
+          name: ${{ ctx.targetFreight.name }}
+          alias: ${{ imageFrom(vars.image).Tag }}
+      - task:
+          name: render
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod
+  namespace: team-namho
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    kargo.akuity.io/color: pink
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: smol-release
+    sources:
+      stages:
+      - uat
+  promotionTemplate:
+    spec:
+      steps:
+      # Empty config lets any project member approve. Scope it to a group the
+      # promoter isn't in for real separation of duties -- see
+      # templated-teams/kargo-chart/templates/kargo/stages.yaml.
+      - uses: wait-for-approval
+        as: approve
+        config: {}
+      - task:
+          name: render
+      - uses: record-audit-event
+        as: audit
+        retry:
+          errorThreshold: 3
+        config:
+          type: approved

@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/projects.kargo.akuity.io_v1alpha1.json
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: team-namho
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/projectconfigs.kargo.akuity.io_v1alpha1.json
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: team-namho
+  namespace: team-namho
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  stageLinks:
+  - title: smol
+    description: The smol instance running at this stage
+    url: 'https://smol-{{ .stage.metadata.name }}.akpdemoapps.link/'
+  - title: Built from
+    description: The git SHA baked into the running image at build time
+    url: 'https://smol-{{ .stage.metadata.name }}.akpdemoapps.link/sha/'
+  # `release` and `prod` are deliberately absent: both are manual.
+  promotionPolicies:
+  - stageSelector:
+      name: dev
+    autoPromotionEnabled: true
+  - stageSelector:
+      name: uat
+    autoPromotionEnabled: true

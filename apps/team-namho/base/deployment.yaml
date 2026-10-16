@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smol
+  labels:
+    app: smol
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smol
+  template:
+    metadata:
+      labels:
+        app: smol
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: smol
+        # Rewritten by kustomize-set-image on every promotion; this value
+        # only matters to a bare `kustomize build`.
+        image: ghcr.io/nk-87/smol:v0.0.2
+        ports:
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            memory: 32Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL

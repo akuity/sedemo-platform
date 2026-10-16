@@ -1,0 +1,45 @@
+# Smoke test of a running stage, from outside the cluster.
+#
+# Errors (connection refused, a 503 from the ingress before a pod is ready)
+# count as errors rather than failures, so a cold start doesn't fail
+# verification.
+#
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/argoproj.io/analysistemplate_v1alpha1.json
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: smol-smoke-test
+  namespace: team-namho
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  args:
+  # Host this stage serves, e.g. smol-dev.akpdemoapps.link
+  - name: domain
+  # The 7-character git SHA the running image should have been built from.
+  - name: sha
+  metrics:
+  - name: responds
+    initialDelay: 15s
+    count: 3
+    interval: 20s
+    failureLimit: 1
+    consecutiveErrorLimit: 15
+    successCondition: result != ""
+    provider:
+      web:
+        url: https://{{ args.domain }}/
+        timeoutSeconds: 10
+  # /sha/ returns `git sha: <sha7>`, baked in at build time. A rebuild behind
+  # a reused tag would still deploy green; this is what catches it.
+  - name: built-from
+    initialDelay: 15s
+    count: 3
+    interval: 20s
+    failureLimit: 1
+    consecutiveErrorLimit: 15
+    successCondition: result contains "{{ args.sha }}"
+    provider:
+      web:
+        url: https://{{ args.domain }}/sha/
+        timeoutSeconds: 10

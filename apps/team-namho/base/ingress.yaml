@@ -1,0 +1,24 @@
+# Host is patched per stage to smol-<stage>.akpdemoapps.link.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: smol
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - smol.akpdemoapps.link
+    secretName: tls-smol
+  rules:
+  - host: smol.akpdemoapps.link
+    http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: smol
+            port:
+              number: 80
