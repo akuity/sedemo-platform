@@ -25,6 +25,8 @@ controller:
     annotations:
       # external-dns points the demo domain at this Service's ELB, replacing the
       # Route53 records Terraform used to create from the Service status.
-      external-dns.alpha.kubernetes.io/hostname: akpdemoapps.link,*.akpdemoapps.link
-      external-dns.alpha.kubernetes.io/set-identifier: sedemo-primary
-      external-dns.alpha.kubernetes.io/aws-weight: "100"
+      # external-dns v0.23 reads the external-dns.kubernetes.io/ prefix by default
+      # and silently ignores the old external-dns.alpha.kubernetes.io/ one.
+      external-dns.kubernetes.io/hostname: akpdemoapps.link,*.akpdemoapps.link
+      external-dns.kubernetes.io/set-identifier: sedemo-primary
+      external-dns.kubernetes.io/aws-weight: "100"
