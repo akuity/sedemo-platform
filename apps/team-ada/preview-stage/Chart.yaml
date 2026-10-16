@@ -1,0 +1,8 @@
+apiVersion: v2
+name: team-ada-preview-stage
+description: >-
+  Kargo Warehouse + Stage for one akkoma-helm PR preview. Rendered once per
+  PR labeled `preview` by the team-ada-preview-stages ApplicationSet
+  (argocd/preview-application-sets.yaml).
+type: application
+version: 0.1.0

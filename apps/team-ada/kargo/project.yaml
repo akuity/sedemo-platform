@@ -29,3 +29,8 @@ spec:
   - stageSelector:
       name: staging
     autoPromotionEnabled: true
+  # PR previews (preview-stage/): every new commit on a `preview`-labeled
+  # akkoma-helm PR.
+  - stageSelector:
+      name: regex:^pr-[0-9]+$
+    autoPromotionEnabled: true

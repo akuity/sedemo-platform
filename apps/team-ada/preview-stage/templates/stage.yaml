@@ -1,0 +1,152 @@
+{{- $pr := required "prNumber is required" .Values.prNumber -}}
+# Preview of one akkoma-helm PR, auto-promoted (ProjectConfig: regex
+# ^pr-[0-9]+$) on every new commit/image pair. Renders the PR's chart from
+# its own commit with the shared env/values.yaml + env/preview/values.yaml,
+# pushes that to rendered/team-ada/pr-<N> (deployed by the team-ada-pr-<N>
+# Application), waits for Argo CD to sync it, then runs the same smoke test
+# as dev. No Jira, no audit events: nothing here is a release decision.
+#
+# Everything from steps: down is a raw Helm string (no backticks inside it!),
+# so Kargo's expressions pass through untouched; PR-specific values come in
+# as vars. Helm parses comments too: no template braces in comments.
+#
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: pr-{{ $pr }}
+  namespace: team-ada
+  annotations:
+    kargo.akuity.io/color: sky
+    kargo.akuity.io/argocd-context: '[{"name":"team-ada-pr-{{ $pr }}","namespace":"argocd"}]'
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: akkoma-pr-{{ $pr }}
+    sources:
+      direct: true
+  verification:
+    analysisTemplates:
+    - name: akkoma-smoke-test
+    args:
+    - name: domain
+      value: akkoma-pr-{{ $pr }}.akpdemoapps.link
+    # <branch-slug>-<ts>-<sha8> doesn't carry the Akkoma version.
+    - name: akkoma-version
+      value: any
+  promotionTemplate:
+    spec:
+      vars:
+      - name: prNumber
+        value: {{ $pr | quote }}
+      - name: domain
+        value: akkoma-pr-{{ $pr }}.akpdemoapps.link
+      - name: chartRepo
+        value: https://github.com/adamancini/akkoma-helm
+      - name: image
+        value: ghcr.io/adamancini/akkoma
+      - name: repoURL
+        value: https://github.com/akuity/sedemo-platform
+{{`      steps:
+      # Three checkouts: the PR's commit (chart source), sedemo-platform main
+      # (team-ada's values and ExternalSecrets), and the rendered branch.
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.chartRepo }}
+          checkout:
+          - commit: ${{ commitFrom(vars.chartRepo).ID }}
+            path: ./chart-src
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.repoURL }}
+          checkout:
+          - branch: main
+            path: ./src
+          - branch: rendered/team-ada/${{ ctx.stage }}
+            create: true
+            path: ./out
+      - uses: git-clear
+        config:
+          path: ./out
+      # Same inputs as dev/staging/prod, plus the image this PR built. The
+      # chart's garage subchart is vendored, so no dependency build.
+      - uses: helm-template
+        config:
+          path: ./chart-src/charts/akkoma
+          releaseName: team-ada-${{ ctx.stage }}
+          namespace: team-ada-${{ ctx.stage }}
+          valuesFiles:
+          - ./src/apps/team-ada/env/values.yaml
+          - ./src/apps/team-ada/env/preview/values.yaml
+          setValues:
+          - key: akkoma.domain
+            value: ${{ vars.domain }}
+          - key: image.tag
+            value: ${{ imageFrom(vars.image).Tag }}
+            literal: true
+          - key: image.digest
+            value: ${{ imageFrom(vars.image).Digest }}
+            literal: true
+          outPath: ./out/manifests
+      # Namespace-less, so Argo CD puts them in team-ada-pr-<N>.
+      - uses: copy
+        config:
+          inPath: ./src/apps/team-ada/env/preview/externalsecret-app.yaml
+          outPath: ./out/manifests/externalsecret-app.yaml
+      - uses: copy
+        config:
+          inPath: ./src/apps/team-ada/env/preview/externalsecret-postgresql.yaml
+          outPath: ./out/manifests/externalsecret-postgresql.yaml
+      - uses: git-commit
+        config:
+          path: ./out
+          message: "team-ada/${{ ctx.stage }}: render akkoma-helm ${{ commitFrom(vars.chartRepo).ID[0:8] }}, image ${{ imageFrom(vars.image).Tag }}"
+      - uses: git-push
+        as: push
+        config:
+          path: ./out
+          targetBranch: rendered/team-ada/${{ ctx.stage }}
+      # Succeeds once the Application has synced this exact render; the
+      # Stage's health check then waits for the rollout (pods Ready, i.e.
+      # after db-migrate) before verification starts.
+      - uses: argocd-update
+        retry:
+          timeout: 10m
+        config:
+          apps:
+          - name: team-ada-${{ ctx.stage }}
+            sources:
+            - repoURL: ${{ vars.repoURL }}
+              desiredRevision: ${{ outputs.push.commit }}
+      # Best-effort: a missing or under-scoped token mustn't block the
+      # preview. Needs Pull requests: write on adamancini/akkoma-helm (see
+      # SECRETS.md).
+      - uses: http
+        as: pr-comment
+        continueOnError: true
+        config:
+          method: POST
+          url: https://api.github.com/repos/adamancini/akkoma-helm/issues/${{ vars.prNumber }}/comments
+          headers:
+          - name: Authorization
+            value: "Bearer ${{ sharedSecret('team-ada-akkoma-helm-pr-token').token }}"
+          - name: Accept
+            value: application/vnd.github+json
+          - name: X-GitHub-Api-Version
+            value: "2022-11-28"
+          successExpression: response.status == 201
+          failureExpression: response.status != 201
+          body: |
+            ${{ quote({
+              "body": "Preview deployed: https://" + vars.domain + "/\n\nCommit " + commitFrom(vars.chartRepo).ID[0:8] + ", image " + imageFrom(vars.image).Tag + ". Kargo verifies it with the smoke test next.\n\n_Kargo Stage team-ada/" + ctx.stage + ", promotion " + ctx.promotion + "_"
+            }) }}
+      - uses: compose-output
+        as: links
+        config:
+          links:
+          - icon: faGithub
+            label: PR #${{ vars.prNumber }}
+            tooltip: The akkoma-helm pull request this previews
+            url: ${{ vars.chartRepo }}/pull/${{ vars.prNumber }}
+`}}

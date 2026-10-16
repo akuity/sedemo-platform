@@ -1,0 +1,13 @@
+# PR previews (pr-<N> Stages): Helm values on top of ../values.yaml, which
+# also sets the (minimal) resource requests every stage uses.
+# akkoma.domain (akkoma-pr-<N>.akpdemoapps.link) and the image are set by the
+# Stage's helm-template step (preview-stage/templates/stage.yaml). There is
+# deliberately no release.yaml here: the team-ada ApplicationSet only builds
+# Applications for env/*/release.yaml, so this directory deploys nothing by
+# itself.
+akkoma:
+  adminEmail: admin@example.com
+externalSecret:
+  name: team-ada-app-secrets
+postgresql:
+  existingSecret: team-ada-postgresql

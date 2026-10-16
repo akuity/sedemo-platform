@@ -1,0 +1,125 @@
+# PR preview environments: every open adamancini/akkoma-helm PR labeled
+# `preview` gets its own Kargo Warehouse + Stage (`pr-<N>`) and Akkoma
+# instance at https://akkoma-pr-<N>.akpdemoapps.link/. Closing the PR (or
+# removing the label) deletes both Applications, and with them the Stage,
+# Warehouse and the preview's resources. The team-ada-pr-<N> namespace
+# itself stays (Argo CD never deletes namespaces made by CreateNamespace).
+# See the README's "PR previews" section.
+#
+# Opt-in by label: each preview is a full Akkoma + Postgres on
+# sedemo-primary's small shared node pool. Fork PRs push no image (no write
+# token), so they never get Freight.
+#
+# The PR generator lists PRs with `application-set-secret` (the shared PAT
+# demo-ephemeral uses); akkoma-helm is public, so any valid token can read it.
+#
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/argoproj.io/applicationset_v1alpha1.json
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: team-ada-preview-stages
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+  - pullRequest:
+      github:
+        owner: adamancini
+        repo: akkoma-helm
+        tokenRef:
+          secretName: application-set-secret
+          key: token
+        labels:
+        - preview
+      requeueAfterSeconds: 180
+  template:
+    metadata:
+      name: 'team-ada-preview-stage-pr-{{.number}}'
+      # Delete the Stage and Warehouse with the Application, not orphan them.
+      finalizers:
+      - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: team-ada
+      source:
+        repoURL: https://github.com/akuity/sedemo-platform
+        targetRevision: HEAD
+        path: apps/team-ada/preview-stage
+        helm:
+          parameters:
+          - name: prNumber
+            value: '{{.number}}'
+            forceString: true
+          # The chart derives the image tag's slug from this itself, the way
+          # akkoma-helm's CI does (Argo CD's branch_slug differs slightly).
+          - name: branch
+            value: '{{.branch}}'
+            forceString: true
+      destination:
+        name: kargo
+        namespace: team-ada
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+---
+# The preview itself: syncs what the pr-<N> Stage rendered to
+# rendered/team-ada/pr-<N> into namespace team-ada-pr-<N>. Until that Stage's
+# first promotion creates the branch, this Application reports a comparison
+# error; Kargo's argocd-update syncs it once the branch exists.
+#
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/argoproj.io/applicationset_v1alpha1.json
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: team-ada-previews
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+  - pullRequest:
+      github:
+        owner: adamancini
+        repo: akkoma-helm
+        tokenRef:
+          secretName: application-set-secret
+          key: token
+        labels:
+        - preview
+      requeueAfterSeconds: 180
+  template:
+    metadata:
+      name: 'team-ada-pr-{{.number}}'
+      annotations:
+        kargo.akuity.io/authorized-stage: 'team-ada:pr-{{.number}}'
+      # Delete the preview's resources with the Application.
+      finalizers:
+      - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: team-ada
+      source:
+        repoURL: https://github.com/akuity/sedemo-platform
+        targetRevision: 'rendered/team-ada/pr-{{.number}}'
+        path: manifests
+        directory:
+          recurse: true
+      destination:
+        name: sedemo-primary
+        namespace: 'team-ada-pr-{{.number}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        retry:
+          limit: 10
+          backoff:
+            duration: 15s
+            factor: 2
+            maxDuration: 5m
+        syncOptions:
+        - CreateNamespace=true

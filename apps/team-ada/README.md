@@ -38,6 +38,66 @@ akkoma-release  →  staging (auto, Jira QA gate)   →  prod (manual, Jira VP g
 | `release` | none (deploys nothing) | no | `akkoma-main`, verified in `dev` |
 | `staging` | `team-ada-staging` | yes (blocks until the Jira ticket reaches `UAT`) | `akkoma-release` |
 | `prod` | `team-ada-prod` | no | `akkoma-release`, via `staging` |
+| `pr-<N>` | `team-ada-pr-<N>` | yes | `akkoma-pr-<N>` (one per PR, see [PR previews](#pr-previews)) |
+
+## PR previews
+
+Add the **`preview`** label to an akkoma-helm PR to get a throwaway Akkoma
+instance at `https://akkoma-pr-<N>.akpdemoapps.link/`. It follows the PR's
+newest commit. When the PR closes or loses the label, its Stage, Warehouse
+and workloads are deleted. The empty namespace stays; see the operating
+notes.
+
+```text
+akkoma-helm PR #N labeled `preview`
+  → ApplicationSet team-ada-preview-stages (PR generator, polls every 3 min)
+      → Warehouse akkoma-pr-<N>: PR branch commits + that branch's images
+      → Stage pr-<N> (auto-promote):
+          helm-template the PR's chart (from its commit) with env/values.yaml
+          + env/preview/values.yaml → rendered/team-ada/pr-<N>
+          → argocd-update → akkoma-smoke-test → comment on the PR
+  → ApplicationSet team-ada-previews
+      → Application team-ada-pr-<N>: rendered/team-ada/pr-<N> → team-ada-pr-<N>
+```
+
+- **No chart is published for PRs**, so the Warehouse subscribes to the
+  PR branch's commits and to its image `<branch-slug>-<ts>-<sha8>`. Freight is only created when the
+  image was built from the selected commit, so a preview never runs one
+  commit's chart with another commit's image. The Warehouse computes the
+  tag's branch slug the way CI does. If the two ever disagree, the result
+  is no Freight, never wrong Freight.
+- **One Warehouse per PR**, so no preview can pick up another PR's image.
+  The image subscription picks the newest tag for the branch's slug. If two
+  open branches share a slug (`feat/x`, `feat-x`), the newer one's image
+  wins and the other PR gets no new Freight until it pushes again. The
+  same happens after a force-push to a commit with an older committer
+  date.
+- **Fork PRs never deploy**: CI doesn't push their images. Neither do PRs
+  that don't touch the chart or `Dockerfile`, since `build-image.yml`
+  doesn't run for them.
+- **Secrets**: previews reuse dev's AWS Secrets Manager entries (see
+  [`SECRETS.md`](./SECRETS.md)), but each has its own emptyDir database.
+- The Stage writes nothing to `main`. Its render is reviewable on the
+  `rendered/team-ada/pr-<N>` branch.
+
+Operating notes:
+
+- **Capacity**: like every team-ada stage, each preview requests only 20m
+  CPU and about 350Mi memory in total (Akkoma + Postgres). These requests
+  sit at measured idle usage and are set once in
+  [`env/values.yaml`](./env/values.yaml). Limits are unchanged, so pods
+  can still burst, but they're among the first evicted under node memory
+  pressure. This is a demo app; don't use any stage for load.
+- **First deploy**: the `team-ada-pr-<N>` Application reports a comparison
+  error until the Stage's first promotion creates its rendered branch. That
+  needs the PR's image (CI takes a few minutes) and the next Warehouse
+  discovery (every 5 minutes).
+- **Rendered branches and namespaces are not deleted** on PR close. Argo CD
+  never deletes a namespace it made with `CreateNamespace`. Delete stale
+  `rendered/team-ada/pr-*` branches and empty `team-ada-pr-*` namespaces
+  by hand. Reopening a PR reuses both.
+- **One PR comment per promotion**, so a busy PR gets one per push.
+- Each preview gets its own Let's Encrypt certificate.
 
 ## Verification
 

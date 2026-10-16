@@ -16,14 +16,11 @@ postgresql:
   persistence:
     enabled: false
   storageSize: 2Gi
-  # Chart defaults (250m/512Mi request) are sized for a real instance --
-  # three concurrent stages on sedemo-primary's small shared node pool
-  # couldn't all get scheduled (FailedScheduling: Insufficient cpu, no
-  # preemption victims). Limits are untouched; only requests shrink.
+  # Demo footprint, see "Resource requests" below.
   resources:
     requests:
-      cpu: 50m
-      memory: 256Mi
+      cpu: 10m
+      memory: 96Mi
     limits:
       cpu: "1"
       memory: 1Gi
@@ -46,23 +43,41 @@ ingress:
     cert-manager.io/cluster-issuer: letsencrypt-prod
   tls:
     enabled: true
-# Same demo-footprint reasoning as postgresql.resources above. No CPU limit
-# here is deliberate (BEAM VM bursting) -- keep it.
+# Resource requests: as small as feasible. Akkoma here is demo-only and
+# never under real use, and every stage (plus each PR preview) shares
+# sedemo-primary's small node pool with other teams. Chart defaults are sized
+# for a real instance. Memory requests sit at the measured idle working set
+# (sedemo-primary, 2026-10-16, all three stages: akkoma 14-17m CPU /
+# 232-246Mi, postgresql 16-17m / 68-72Mi), so the scheduler still sees
+# roughly what's used. CPU requests go to the minimum. Limits are unchanged,
+# so pods can still burst (BEAM boot, db-migrate); the trade-off is that
+# these pods are among the first evicted under node memory pressure.
+# Effective requests per stage: akkoma pod 10m / 256Mi (init containers run
+# one at a time, so the largest counts, not the sum), postgresql 10m / 96Mi.
+#
+# No CPU limit on akkoma is deliberate (BEAM VM bursting) -- keep it.
 resources:
   requests:
-    cpu: 100m
-    memory: 512Mi
+    cpu: 10m
+    memory: 256Mi
   limits:
     memory: 2Gi
 initContainerResources:
+  waitForDb:
+    requests:
+      cpu: 5m
+      memory: 16Mi
+  # db-migrate boots the same BEAM release as the main container to run
+  # `pleroma_ctl migrate`. What protects it from OOMKill is the 2Gi limit,
+  # kept as is; the request only reserves scheduling room for a few seconds.
   dbMigrate:
     requests:
-      # Memory NOT reduced -- this boots the same BEAM/OTP release as the
-      # main container just to run `pleroma_ctl migrate`; too little risks
-      # OOMKill before any migration work happens. Only CPU is safe to
-      # shrink.
-      cpu: 100m
-      memory: 1Gi
+      cpu: 10m
+      memory: 256Mi
     limits:
       cpu: "1"
       memory: 2Gi
+  installFrontends:
+    requests:
+      cpu: 5m
+      memory: 32Mi

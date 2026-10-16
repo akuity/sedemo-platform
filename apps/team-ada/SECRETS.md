@@ -68,7 +68,25 @@ aws secretsmanager create-secret \
 ```
 
 Until it exists, promotions to `release` fail at the dispatch step with an
-authentication error. Nothing else depends on it: dev, staging and prod keep
-working, and releases can still be cut by hand with
+authentication error. Dev, staging and prod keep working without it, and
+releases can still be cut by hand with
 `gh workflow run release.yml -f sha=<commit> -f version=X.Y.Z` in
 akkoma-helm.
+
+## Kargo: commenting on PR previews
+
+Each `pr-<N>` preview Stage comments the preview URL on its akkoma-helm PR.
+The comment step reads the same PAT through a second, *generic*
+`ExternalSecret`, `team-ada-akkoma-helm-pr-token`, in
+[`secrets/kargo-sync-secrets.yaml`](../../secrets/kargo-sync-secrets.yaml),
+because `sharedSecret()` only exposes generic secrets. To enable comments,
+add **Pull requests: Read and write** to the `team-ada-akkoma-helm-gha` PAT.
+No new AWS entry is needed.
+
+The comment is best-effort (`continueOnError`): without that permission
+the preview still deploys and verifies, and the comment step shows as
+errored in the promotion.
+
+PR previews need no other secrets. Their `ExternalSecret`s
+(`env/preview/`) reuse dev's `team-ada-akkoma-dev-{app,postgresql}`
+entries.
