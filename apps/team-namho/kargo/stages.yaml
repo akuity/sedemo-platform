@@ -90,6 +90,11 @@ spec:
           checkout:
           - commit: ${{ commitFrom(vars.srcRepo).ID }}
             path: ./src
+      - uses: git-tag
+        config:
+          path: ./src
+          tag: ${{ outputs.rel.version }}
+          message: Release ${{ outputs.rel.version }}
       # Triggers tag.yml, which retags the existing image and fails if the
       # digests differ. smol-release discovers the result within a minute.
       - uses: git-push
