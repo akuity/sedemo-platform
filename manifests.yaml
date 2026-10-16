@@ -15,7 +15,7 @@ spec:
         app: smol
     spec:
       containers:
-      - image: ghcr.io/nk-87/smol:143c2cd
+      - image: ghcr.io/nk-87/smol:422299f
         livenessProbe:
           httpGet:
             path: /
