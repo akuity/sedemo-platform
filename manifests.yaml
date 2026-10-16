@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: smol
+  name: smol
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smol
+  template:
+    metadata:
+      labels:
+        app: smol
+    spec:
+      containers:
+      - image: ghcr.io/nk-87/smol:b73131a
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+        name: smol
+        ports:
+        - containerPort: 8080
+          name: http
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+        resources:
+          limits:
+            memory: 32Mi
+          requests:
+            cpu: 10m
+            memory: 16Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: smol
+  name: smol
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+  selector:
+    app: smol
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  name: smol
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: smol-dev.akpdemoapps.link
+    http:
+      paths:
+      - backend:
+          service:
+            name: smol
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - smol-dev.akpdemoapps.link
+    secretName: tls-smol
