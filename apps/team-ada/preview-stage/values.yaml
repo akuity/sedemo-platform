@@ -1,0 +1,5 @@
+# Set per PR by the team-ada-preview-stages ApplicationSet's PR generator.
+# akkoma-helm PR number
+prNumber: ""
+# PR head branch, e.g. feat/foo_bar (images are tagged feat-foo-bar-<ts>-<sha8>)
+branch: ""

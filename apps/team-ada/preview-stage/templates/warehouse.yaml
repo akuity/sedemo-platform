@@ -1,0 +1,54 @@
+{{- $pr := required "prNumber is required" .Values.prNumber -}}
+{{- $branch := required "branch is required" .Values.branch -}}
+{{- /*
+  The image tag's branch slug, computed exactly like build-image.yml's
+  "Compute image tags" step (not Argo CD's branch_slug, which keeps
+  underscores): lowercase, runs of [^a-z0-9] to "-", no leading/trailing
+  "-", at most 50 chars, and "branch-" in front of slugs that would collide
+  with other tag families (main, latest, a bare number, inputs-*).
+*/ -}}
+{{- $slug := regexReplaceAll "[^a-z0-9]+" (lower $branch) "-" | trimPrefix "-" | trunc 50 | trimSuffix "-" -}}
+{{- if regexMatch "^(main|latest|[0-9]+|inputs(-.*)?)$" $slug -}}
+{{- $slug = printf "branch-%s" $slug -}}
+{{- end -}}
+# One Warehouse per PR, so pr-<N> can never pick up another PR's commit or
+# image. PRs publish no chart, so it follows the chart *source* on the PR
+# branch, plus the image build-image.yml pushed for that commit
+# (<branch-slug>-<ts>-<sha8>).
+#
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/warehouses.kargo.akuity.io_v1alpha1.json
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: akkoma-pr-{{ $pr }}
+  namespace: team-ada
+spec:
+  interval: 5m0s
+  # Commit and image are discovered independently: only create Freight when
+  # the image was built from this exact commit. CI pushes the image a few
+  # minutes after the commit, so a mismatch is transient. Two branches with
+  # the same slug (feat/x, feat-x) would share tags; the sha keeps their
+  # images apart.
+  freightCreationCriteria:
+    expression: |
+      imageFrom('ghcr.io/adamancini/akkoma').Tag endsWith
+        '-' + commitFrom('https://github.com/adamancini/akkoma-helm').ID[0:8]
+  subscriptions:
+  - git:
+      repoURL: https://github.com/adamancini/akkoma-helm
+      branch: {{ $branch | quote }}
+      commitSelectionStrategy: NewestFromBranch
+      # No includePaths: build-image.yml's pull_request path filter looks at
+      # the whole PR diff, so once a PR touches the chart (or Dockerfile),
+      # every push to it gets an image -- including docs-only commits. A PR
+      # that never touches those paths gets no image, and so no Freight.
+      discoveryLimit: 5
+  - image:
+      repoURL: ghcr.io/adamancini/akkoma
+      # Lexical, not NewestBuild: chart-only commits reuse the same image
+      # (same digest and build time), so only the timestamp in the tag
+      # orders them.
+      imageSelectionStrategy: Lexical
+      discoveryLimit: 5
+      allowTagsRegexes:
+      - '^{{ $slug }}-[0-9]{14}-[0-9a-f]{8}$'
