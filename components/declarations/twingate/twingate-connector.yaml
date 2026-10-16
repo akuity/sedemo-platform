@@ -1,7 +1,8 @@
 # Moved from sedemo-infra-iac core-env/eks-clusters (helm_release.twingate_connector)
 # (sedemo-platform#184). Same release name and namespace, so Argo CD adopts the
 # running connector. Tokens come from Secrets Manager (sedemo/twingate) via the
-# ExternalSecret in secrets/twingate-connector-tokens.yaml.
+# ExternalSecret in secrets/twingate-connector-tokens.yaml, which this app syncs
+# first (wave -1) so the Secret exists before the Deployment rolls.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -13,6 +14,12 @@ spec:
   - repoURL: https://github.com/akuity/sedemo-platform.git
     targetRevision: main
     ref: localValues
+  # Only the token ExternalSecret; eso-secret-store-kargo excludes this file.
+  - repoURL: https://github.com/akuity/sedemo-platform.git
+    targetRevision: main
+    path: secrets
+    directory:
+      include: twingate-connector-tokens.yaml
   - chart: connector
     repoURL: https://twingate.github.io/helm-charts
     targetRevision: 0.1.35
