@@ -85,8 +85,30 @@ No new AWS entry is needed.
 
 The comment is best-effort (`continueOnError`): without that permission
 the preview still deploys and verifies, and the comment step shows as
-errored in the promotion.
+errored in the promotion. An HTTP 401 there means the token secret is
+missing or empty (see below); 403 means the PAT lacks the permission.
 
 PR previews need no other secrets. Their `ExternalSecret`s
 (`env/preview/`) reuse dev's `team-ada-akkoma-dev-{app,postgresql}`
 entries.
+
+## Applying changes to `secrets/`
+
+Everything in [`secrets/`](../../secrets/), including
+`kargo-sync-secrets.yaml`, is applied by the `eso-secret-store-kargo` Argo
+CD Application, which is **synced manually**. Merging a new or changed
+`ExternalSecret` there does nothing until someone syncs it, so Kargo steps
+that use it fail (or, for the PR comment, send an empty token). Sync just
+the resource you changed, so you don't apply other teams' pending
+changes to shared secrets:
+
+```bash
+argocd app sync eso-secret-store-kargo \
+  --resource external-secrets.io:ExternalSecret:akuity/<name>
+```
+
+Then check that it reports `SecretSynced`:
+
+```bash
+kubectl -n akuity get externalsecret <name>
+```
