@@ -131,7 +131,9 @@ spec:
       - task:
           name: render
       # render ends on argocd-update, so the issue is only opened once UAT is
-      # actually serving the release QA is being asked to sign off on.
+      # actually serving the release QA is being asked to sign off on. The
+      # issue number lands in Freight metadata as `github-issue-number`,
+      # which is how prod picks it up.
       - uses: gh-create-issue
         as: qa-signoff
         config:
@@ -148,16 +150,14 @@ spec:
 
             To release to prod: add the `qa-approve` label, then close this
             issue. Closing it without the label will not promote.
-      # Blocks the promotion until QA signs off. prod auto-promotes from uat,
-      # so closing the issue with the label is what ships it.
-      - uses: gh-wait-for-issue-state
-        as: qa-gate
+      - uses: compose-output
+        as: links
         config:
-          repoURL: ${{ vars.gitRepo }}
-          issueNumber: ${{ outputs['qa-signoff'].number }}
-          successExpression: 'issue.state == "closed" and "qa-approve" in issue.labels'
-          failureExpression: '"qa-reject" in issue.labels'
-          pollInterval: 30s
+          links:
+          - icon: faGithub
+            label: QA sign-off #${{ outputs['qa-signoff'].number }}
+            tooltip: The sign-off issue QA must label and close
+            url: ${{ outputs['qa-signoff'].url }}
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
@@ -178,6 +178,30 @@ spec:
       - uat
   promotionTemplate:
     spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-platform
       steps:
+      # Emitted before the wait so the issue is one click away while the
+      # promotion is parked on qa-gate.
+      - uses: compose-output
+        as: links
+        config:
+          links:
+          - icon: faGithub
+            label: QA sign-off #${{ freightMetadata(ctx.targetFreight.name)['github-issue-number'] }}
+            tooltip: Waiting for the qa-approve label and this issue to close
+            url: ${{ vars.gitRepo }}/issues/${{ freightMetadata(ctx.targetFreight.name)['github-issue-number'] }}
+      # prod auto-promotes, so the promotion opens as soon as uat finishes and
+      # parks here until QA signs off: the gate shows on prod rather than
+      # hidden inside a finished uat promotion.
+      - uses: gh-wait-for-issue-state
+        as: qa-gate
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          issueNumber: ${{ freightMetadata(ctx.targetFreight.name)['github-issue-number'] }}
+          successExpression: 'issue.state == "closed" and "qa-approve" in issue.labels'
+          failureExpression: '"qa-reject" in issue.labels'
+          pollInterval: 30s
       - task:
           name: render
