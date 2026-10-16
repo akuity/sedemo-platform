@@ -73,8 +73,9 @@ akkoma-helm PR #N labeled `preview`
   same happens after a force-push to a commit with an older committer
   date.
 - **Fork PRs never deploy**: CI doesn't push their images. Neither do PRs
-  that don't touch the chart or `Dockerfile`, since `build-image.yml`
-  doesn't run for them.
+  that change none of `build-image.yml`'s trigger paths (`charts/`,
+  `Dockerfile`, `ct.yaml`, `.github/scripts/`, or `build-image.yml`
+  itself), since the workflow doesn't run for them.
 - **Secrets**: previews reuse dev's AWS Secrets Manager entries (see
   [`SECRETS.md`](./SECRETS.md)), but each has its own emptyDir database.
 - The Stage writes nothing to `main`. Its render is reviewable on the
