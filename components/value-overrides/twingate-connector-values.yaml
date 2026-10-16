@@ -2,5 +2,5 @@ connector:
   # Network slug only; the chart appends .twingate.com
   network: akuity
   existingSecret: twingate-connector-tokens
-  logLevel: debug
+  # logLevel unset: chart default (error). Real-time connection logs stay on.
   logAnalytics: v2
