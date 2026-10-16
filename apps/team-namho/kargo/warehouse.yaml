@@ -1,0 +1,61 @@
+# Two lanes: smol-main (every commit on main) feeds dev -> release,
+# smol-release (every vX.Y.Z tag) feeds uat -> prod. Freight never changes
+# Warehouse, so releasing creates new Freight rather than moving dev's.
+#
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/warehouses.kargo.akuity.io_v1alpha1.json
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: smol-main
+  namespace: team-namho
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  interval: 1m0s
+  # build.yml tags the image with the commit's first 7 characters. Without
+  # this, a commit whose build hasn't finished pairs with the previous image.
+  freightCreationCriteria:
+    expression: |
+      hasPrefix(commitFrom('https://github.com/nk-87/smol').ID,
+                imageFrom('ghcr.io/nk-87/smol').Tag)
+  subscriptions:
+  - git:
+      repoURL: https://github.com/nk-87/smol
+      commitSelectionStrategy: NewestFromBranch
+      branch: main
+  - image:
+      repoURL: ghcr.io/nk-87/smol
+      # Tag order is meaningless for SHAs; push time is the only ordering.
+      imageSelectionStrategy: NewestBuild
+      discoveryLimit: 10
+      allowTagsRegexes:
+      - '^[0-9a-f]{7}$'
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/warehouses.kargo.akuity.io_v1alpha1.json
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: smol-release
+  namespace: team-namho
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  interval: 1m0s
+  # tag.yml retags the image only after the tag lands in git, so for a brief
+  # window the git tag exists and the image tag doesn't.
+  freightCreationCriteria:
+    expression: |
+      commitFrom('https://github.com/nk-87/smol').Tag ==
+        imageFrom('ghcr.io/nk-87/smol').Tag
+  subscriptions:
+  - git:
+      repoURL: https://github.com/nk-87/smol
+      commitSelectionStrategy: NewestTag
+      allowTagsRegexes:
+      - '^v[0-9]+\.[0-9]+\.[0-9]+$'
+  - image:
+      repoURL: ghcr.io/nk-87/smol
+      imageSelectionStrategy: SemVer
+      discoveryLimit: 10
+      allowTagsRegexes:
+      - '^v[0-9]+\.[0-9]+\.[0-9]+$'

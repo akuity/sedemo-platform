@@ -1,0 +1,34 @@
+# One Application per deploying Stage; `release` deploys nothing. The rendered
+# branches don't exist until the first promotion, so until then each
+# Application reports a missing revision.
+#
+# No syncPolicy.automated: Kargo's argocd-update step drives every sync.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: team-namho
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - stage: dev
+      - stage: uat
+      - stage: prod
+  template:
+    metadata:
+      name: team-namho-{{stage}}
+      annotations:
+        kargo.akuity.io/authorized-stage: team-namho:{{stage}}
+    spec:
+      project: team-namho
+      source:
+        repoURL: https://github.com/akuity/sedemo-platform
+        targetRevision: rendered/team-namho/{{stage}}
+        path: .
+      destination:
+        name: sedemo-primary
+        namespace: team-namho-{{stage}}
+      syncPolicy:
+        syncOptions:
+        - CreateNamespace=true

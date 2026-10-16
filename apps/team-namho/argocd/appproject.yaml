@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: team-namho
+  namespace: argocd
+spec:
+  description: smol - two-lane promotion demo (main lane and release lane)
+  sourceRepos:
+  - '*'
+  destinations:
+  - server: '*'
+    name: '*'
+    namespace: '*'
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  namespaceResourceWhitelist:
+  - group: '*'
+    kind: '*'
