@@ -1,0 +1,31 @@
+# Moved from sedemo-infra-iac core-env/eks-clusters (helm_release.twingate_connector)
+# (sedemo-platform#184). Same release name and namespace, so Argo CD adopts the
+# running connector. Tokens come from Secrets Manager (sedemo/twingate) via ESO.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: twingate-connector
+  namespace: argocd
+spec:
+  project: components
+  sources:
+  - repoURL: https://github.com/akuity/sedemo-platform.git
+    targetRevision: main
+    ref: localValues
+  - repoURL: https://github.com/akuity/sedemo-platform.git
+    targetRevision: main
+    path: components/manifests/twingate-connector
+  - chart: connector
+    repoURL: https://twingate.github.io/helm-charts
+    targetRevision: 0.1.35
+    helm:
+      releaseName: twingate-connector
+      valueFiles:
+      - $localValues/components/value-overrides/twingate-connector-values.yaml
+  destination:
+    name: sedemo-primary
+    namespace: twingate
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
+    - ServerSideApply=true

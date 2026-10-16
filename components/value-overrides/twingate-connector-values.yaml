@@ -1,0 +1,6 @@
+connector:
+  # Network slug only; the chart appends .twingate.com
+  network: akuity
+  existingSecret: twingate-connector-tokens
+  logLevel: debug
+  logAnalytics: v2

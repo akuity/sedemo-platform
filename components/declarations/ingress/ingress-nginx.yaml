@@ -1,0 +1,29 @@
+# Moved from sedemo-infra-iac core-env/eks-clusters (helm_release.nginx_ingress)
+# so that Terraform no longer needs the cluster API (sedemo-platform#184).
+# Same release name and namespace as the Terraform-installed release, so Argo CD
+# adopts the running controller and its ELB instead of creating new ones.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ingress-nginx
+  namespace: argocd
+spec:
+  project: components
+  sources:
+  - repoURL: https://github.com/akuity/sedemo-platform.git
+    targetRevision: main
+    ref: localValues
+  - chart: ingress-nginx
+    repoURL: https://kubernetes.github.io/ingress-nginx
+    targetRevision: 4.15.1
+    helm:
+      releaseName: ingress-nginx
+      valueFiles:
+      - $localValues/components/value-overrides/ingress-nginx-values.yaml
+  destination:
+    name: sedemo-primary
+    namespace: ingress-nginx
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
+    - ServerSideApply=true
