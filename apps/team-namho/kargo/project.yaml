@@ -22,11 +22,15 @@ spec:
   - title: Built from
     description: The git SHA baked into the running image at build time
     url: 'https://smol-{{ .stage.metadata.name }}.akpdemoapps.link/sha/'
-  # `release` and `prod` are deliberately absent: both are manual.
+  # `release` is deliberately absent: cutting a release is manual. prod is
+  # automatic because the gate is QA closing the sign-off issue in uat.
   promotionPolicies:
   - stageSelector:
       name: dev
     autoPromotionEnabled: true
   - stageSelector:
       name: uat
+    autoPromotionEnabled: true
+  - stageSelector:
+      name: prod
     autoPromotionEnabled: true

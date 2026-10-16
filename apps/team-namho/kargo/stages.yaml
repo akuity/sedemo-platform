@@ -121,6 +121,8 @@ spec:
       vars:
       - name: image
         value: ghcr.io/nk-87/smol
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-platform
       steps:
       - uses: set-freight-alias
         config:
@@ -128,6 +130,34 @@ spec:
           alias: ${{ imageFrom(vars.image).Tag }}
       - task:
           name: render
+      # render ends on argocd-update, so the issue is only opened once UAT is
+      # actually serving the release QA is being asked to sign off on.
+      - uses: gh-create-issue
+        as: qa-signoff
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          title: "QA sign-off: smol ${{ imageFrom(vars.image).Tag }} in UAT"
+          body: |
+            smol `${{ imageFrom(vars.image).Tag }}` is deployed to UAT and
+            ready for regression testing.
+
+            - **Running at:** https://smol-uat.akpdemoapps.link/
+            - **Built from:** https://smol-uat.akpdemoapps.link/sha/
+            - **Freight:** ${{ ctx.targetFreight.alias }}
+            - **Promotion:** ${{ ctx.promotion }}
+
+            To release to prod: add the `qa-approve` label, then close this
+            issue. Closing it without the label will not promote.
+      # Blocks the promotion until QA signs off. prod auto-promotes from uat,
+      # so closing the issue with the label is what ships it.
+      - uses: gh-wait-for-issue-state
+        as: qa-gate
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          issueNumber: ${{ outputs['qa-signoff'].number }}
+          successExpression: 'issue.state == "closed" and "qa-approve" in issue.labels'
+          failureExpression: '"qa-reject" in issue.labels'
+          pollInterval: 30s
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
@@ -149,19 +179,5 @@ spec:
   promotionTemplate:
     spec:
       steps:
-      # Empty config lets any project member approve. Scope it to a group the
-      # promoter isn't in for real separation of duties -- see
-      # templated-teams/kargo-chart/templates/kargo/stages.yaml.
-      - uses: wait-for-approval
-        as: approve
-        config: {}
       - task:
           name: render
-      - uses: record-audit-event
-        as: audit
-        retry:
-          errorThreshold: 3
-        config:
-          type: approved
-          message: "Release to ${{ ctx.stage }} approved by ${{ outputs.approve.responses[0].user }}."
-          actor: ${{ outputs.approve.responses[0].user }}
