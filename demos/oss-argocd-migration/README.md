@@ -87,6 +87,12 @@ an OSS sync to restore its label.
 - In `argocd-rbac-cm`, a `*/*` object pattern matches apps (`project/app`) but not
   projects (`project`). That's why teardown leaves the `edge-site` AppProject in place.
 
+Known limitations of the scripts (fine for this demo, worth knowing):
+
+- The uptime count compares `HH:MM:SS` in UTC, so a run that crosses UTC midnight undercounts.
+- `step` evaluates command strings, so the checkout path must not contain spaces.
+- `04-verify.sh` hard-codes the `guestbook-ui` Deployment for the drift test.
+
 ## Reset
 
 ```bash

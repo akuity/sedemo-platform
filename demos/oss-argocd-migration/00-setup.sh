@@ -40,9 +40,12 @@ YAML
 
 echo "Waiting for OSS apps to be Synced/Healthy..."
 for app in edge-guestbook edge-helm-guestbook edge-kustomize-guestbook; do
-  until [[ "$(k -n argocd get app "$app" -o jsonpath='{.status.sync.status}/{.status.health.status}' 2>/dev/null)" == "Synced/Healthy" ]]; do
+  for _ in $(seq 1 60); do
+    [[ "$(k -n argocd get app "$app" -o jsonpath='{.status.sync.status}/{.status.health.status}' 2>/dev/null)" == "Synced/Healthy" ]] && break
     sleep 5
   done
+  [[ "$(k -n argocd get app "$app" -o jsonpath='{.status.sync.status}/{.status.health.status}')" == "Synced/Healthy" ]] \
+    || { echo "  $app not Synced/Healthy after 5 min; check Git reachability (see README)" >&2; exit 1; }
   echo "  $app Synced/Healthy"
 done
 k -n probe wait --for=condition=Ready pod/probe --timeout=120s
