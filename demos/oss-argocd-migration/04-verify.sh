@@ -5,7 +5,10 @@ source "$(dirname "$0")/env.sh"
 
 say "Pods now, compared to before the cutover"
 snapshot | tee "${OUT_DIR}/after.txt"
-if diff -u "${OUT_DIR}/before.txt" "${OUT_DIR}/after.txt"; then
+if [[ ! -s "${OUT_DIR}/before.txt" || ! -s "${OUT_DIR}/after.txt" ]]; then
+  echo ">>> Missing pod snapshot (run 01-before.sh first; check the kube context)." >&2
+  exit 1
+elif diff -u "${OUT_DIR}/before.txt" "${OUT_DIR}/after.txt"; then
   echo ">>> Identical: same pods, same UIDs, zero restarts. Adopted, not redeployed."
 else
   echo ">>> Pods differ (see diff above)."
@@ -23,5 +26,5 @@ for i in $(seq 1 20); do
   echo "  t+$((i * 3))s replicas=${r}"
   [[ "${r}" == "1" ]] && break
 done
-step "k -n argocd get app ${APP} -o jsonpath='OSS last sync: {.status.operationState.finishedAt}{\"\\n\"}'"
+step "k -n argocd get app ${APP} -o jsonpath='OSS last sync: {.status.operationState.finishedAt}{\"\\n\"}' 2>/dev/null || echo '  (OSS app already retired)'"
 say "Compare with the Akuity UI: ${APP} shows a fresh self-heal sync just now."

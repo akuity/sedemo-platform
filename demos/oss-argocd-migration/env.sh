@@ -21,7 +21,7 @@ k() { kubectl --context "${KCTX}" "$@"; }
 step() {
   printf '\n\033[1;36m$ %s\033[0m\n' "$*"
   if [[ "${PAUSE:-0}" == "1" ]]; then read -r -p "  [enter to run] " _; fi
-  eval "$@"
+  eval "$*"
 }
 
 say() { printf '\n\033[1;33m# %s\033[0m\n' "$*"; }
@@ -52,6 +52,5 @@ to_akuity() {
 # after cutover, nothing was redeployed.
 snapshot() {
   k get pods -A -l 'app in (guestbook-ui,helm-guestbook)' --sort-by=.metadata.namespace \
-    -o custom-columns='NAMESPACE:.metadata.namespace,POD:.metadata.name,UID:.metadata.uid,RESTARTS:.status.containerStatuses[0].restartCount,STARTED:.status.startTime' \
-    2>/dev/null || true
+    -o custom-columns='NAMESPACE:.metadata.namespace,POD:.metadata.name,UID:.metadata.uid,RESTARTS:.status.containerStatuses[0].restartCount,STARTED:.status.startTime'
 }

@@ -11,7 +11,7 @@ B="${OUT_DIR}/bulk.yaml"
 say "1. Export all AppProjects and Applications from OSS (sync policy kept as-is)"
 step "k -n argocd get appprojects -o yaml | yq '.items[] | select(.metadata.name != \"default\") | split_doc' | to_akuity > ${B}"
 step "echo --- >> ${B}"
-step "k -n argocd get applications -o yaml | EXCLUDE=\"${EXCLUDE}\" yq '.items[] | select(.metadata.name as \$n | strenv(EXCLUDE) | split(\" \") | contains([\$n]) | not) | split_doc' | to_akuity >> ${B}"
+step "k -n argocd get applications -o yaml | EXCLUDE=\"${EXCLUDE}\" yq '.items[] | select(.metadata.name as \$n | strenv(EXCLUDE) | split(\" \") | any_c(. == \$n) | not) | split_doc' | to_akuity >> ${B}"
 step "yq '[.kind, .metadata.name, (.spec.destination.name // \"\")] | join(\"  \")' ${B}"
 # Repo credentials live in Secrets labeled argocd.argoproj.io/secret-type;
 # export those too for private repos (they contain secrets: keep out/ local).

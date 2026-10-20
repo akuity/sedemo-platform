@@ -6,11 +6,17 @@ source "$(dirname "$0")/env.sh"
 
 APPS=(edge-guestbook edge-helm-guestbook edge-kustomize-guestbook)
 for app in "${APPS[@]}"; do
-  argocd --argocd-context "${ARGOCD_CONTEXT}" app delete "${app}" --cascade=false -y 2>/dev/null || true
+  argocd --argocd-context "${ARGOCD_CONTEXT}" app delete "${app}" --cascade=false -y || true
 done
 # `app delete --wait` never returns over grpc-web, so poll until they are gone.
 for app in "${APPS[@]}"; do
-  while argocd --argocd-context "${ARGOCD_CONTEXT}" app get "${app}" -o name >/dev/null 2>&1; do sleep 3; done
+  for _ in $(seq 1 40); do
+    argocd --argocd-context "${ARGOCD_CONTEXT}" app get "${app}" -o name >/dev/null 2>&1 || break
+    sleep 3
+  done
+  if argocd --argocd-context "${ARGOCD_CONTEXT}" app get "${app}" -o name >/dev/null 2>&1; then
+    echo "${app} still present on the instance after 2 min; delete it in the UI." >&2
+  fi
 done
 # The edge-site AppProject is left in place (re-applied each run). Deleting it
 # needs RBAC on `projects, delete, edge-site`; the instance's `*/*` object
