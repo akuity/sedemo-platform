@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Remove the demo apps and project from Akuity, unregister the cluster, delete the k3d cluster.
+# Needs an argocd CLI session on the instance: argocd login ${ARGOCD_CONTEXT} --sso --grpc-web
+set -euo pipefail
+source "$(dirname "$0")/env.sh"
+
+APPS=(edge-guestbook edge-helm-guestbook edge-kustomize-guestbook)
+for app in "${APPS[@]}"; do
+  argocd --argocd-context "${ARGOCD_CONTEXT}" app delete "${app}" --cascade=false -y 2>/dev/null || true
+done
+# `app delete --wait` never returns over grpc-web, so poll until they are gone.
+for app in "${APPS[@]}"; do
+  while argocd --argocd-context "${ARGOCD_CONTEXT}" app get "${app}" -o name >/dev/null 2>&1; do sleep 3; done
+done
+# The edge-site AppProject is left in place (re-applied each run). Deleting it
+# needs RBAC on `projects, delete, edge-site`; the instance's `*/*` object
+# pattern covers apps (project/app) but not projects. Remove it in the UI if needed.
+akuity argocd cluster delete "${AK_FLAGS[@]}" "${CLUSTER_NAME}" || true
+k3d cluster delete "${CLUSTER_NAME}"
+rm -f "${OUT_DIR}"/*.yaml "${OUT_DIR}"/*.txt "${OUT_DIR}"/t0
