@@ -100,14 +100,26 @@ Known limitations of the scripts (fine for this demo, worth knowing):
 ./00-setup.sh
 ```
 
+## Connecting an OSS site with State Replication on
+
+Tested on OSS v3.5.5 (`STATE_REPLICATION=1 ./02-connect.sh`): the SR agent installs
+its own `applications.argoproj.io` / `appprojects.argoproj.io` CRDs **over the OSS
+ones** (schema replaced; new field manager `kubectl-client-side-apply`). On matching
+versions the OSS apps stayed Synced/Healthy and its controller logged no errors.
+
+- Against an older OSS (2.x) the replaced CRDs may not match the old controller: untested.
+- **Retiring the old instance:** don't `kubectl delete -f install.yaml`. That deletes
+  the shared CRDs and with them every Application on the cluster, SR's local copies
+  included. Remove the OSS Deployments/StatefulSets, keep the CRDs.
+
+See `demos/edge-offline/` for what State Replication does during an outage.
+
 ## Not covered here; confirm before claiming
 
-- Agent behavior while a site is disconnected. The documented feature is **State
-  Replication** (`STATE_REPLICATION=1 ./02-connect.sh`, i.e. `cluster create
-  --state-replication`): "allows disconnecting the cluster from the Akuity Platform
-  without losing core Argo CD features", and it can **only be set at initial agent
-  deployment**, so decide per site before connecting. Not documented: which
-  features exactly, whether Git must be reachable from the site, reconnect behavior.
+- Agent behavior while a site is disconnected: **State Replication**
+  (`STATE_REPLICATION=1 ./02-connect.sh`, i.e. `cluster create --state-replication=true`)
+  can **only be set at initial agent deployment**, so decide per site before
+  connecting. Measured behavior with it off vs on: `demos/edge-offline/README.md`.
 - `get-agent-manifests --offline-installation` is for self-hosted / air-gapped
   installs, not for intermittently connected sites.
 - Private repos: repo credentials are Secrets labeled

@@ -8,7 +8,7 @@ say "Register this site with the hosted control plane"
 # STATE_REPLICATION=1: lets the site keep core Argo CD features while cut off
 # from the platform. Install-time only; it cannot be turned on later.
 SR_FLAG=""
-if [[ "${STATE_REPLICATION:-0}" == "1" ]]; then SR_FLAG=" --state-replication"; fi
+if [[ "${STATE_REPLICATION:-0}" == "1" ]]; then SR_FLAG=" --state-replication=true"; fi
 step "akuity argocd cluster create ${CLUSTER_NAME} ${AK_FLAGS[*]} --upsert --label migration-demo=true${SR_FLAG}"
 say "The agent install is one manifest, applied to the site cluster"
 step "akuity argocd cluster get-agent-manifests ${AK_FLAGS[*]} ${CLUSTER_NAME} > ${OUT_DIR}/agent.yaml"
