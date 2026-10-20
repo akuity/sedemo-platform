@@ -11,10 +11,10 @@ done
 # `app delete --wait` never returns over grpc-web, so poll until they are gone.
 for app in "${APPS[@]}"; do
   for _ in $(seq 1 40); do
-    argocd --argocd-context "${ARGOCD_CONTEXT}" app get "${app}" -o name >/dev/null 2>&1 || break
+    argocd --argocd-context "${ARGOCD_CONTEXT}" app get "${app}" -o json >/dev/null 2>&1 || break
     sleep 3
   done
-  if argocd --argocd-context "${ARGOCD_CONTEXT}" app get "${app}" -o name >/dev/null 2>&1; then
+  if argocd --argocd-context "${ARGOCD_CONTEXT}" app get "${app}" -o json >/dev/null 2>&1; then
     echo "${app} still present on the instance after 2 min; delete it in the UI." >&2
   fi
 done
