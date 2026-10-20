@@ -1,0 +1,78 @@
+# Offline-behaviour demo: the same two apps on a site with State Replication
+# off and a site with it on. -github pulls from GitHub; -local pulls from the
+# Gitea server inside the site cluster.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: edge-offline
+  namespace: argocd
+spec:
+  description: Edge sites for the offline-behaviour demo
+  sourceRepos: ['*']
+  destinations:
+    - {name: edge-sr-off, namespace: '*'}
+    - {name: edge-sr-on, namespace: '*'}
+  clusterResourceWhitelist:
+    - {group: '', kind: Namespace}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sr-off-github
+  namespace: argocd
+  annotations:
+    kargo.akuity.io/authorized-stage: edge-offline:central-sr-off
+  finalizers: [resources-finalizer.argocd.argoproj.io]
+spec:
+  project: edge-offline
+  source: {repoURL: https://github.com/argoproj/argocd-example-apps, targetRevision: HEAD, path: guestbook}
+  destination: {name: edge-sr-off, namespace: guestbook}
+  syncPolicy:
+    automated: {prune: true, selfHeal: true}
+    syncOptions: [CreateNamespace=true]
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sr-off-local
+  namespace: argocd
+  finalizers: [resources-finalizer.argocd.argoproj.io]
+spec:
+  project: edge-offline
+  source: {repoURL: http://gitea.gitea.svc:3000/demo/edge-app.git, targetRevision: HEAD, path: .}
+  destination: {name: edge-sr-off, namespace: edge-app}
+  syncPolicy:
+    automated: {prune: true, selfHeal: true}
+    syncOptions: [CreateNamespace=true]
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sr-on-github
+  namespace: argocd
+  annotations:
+    kargo.akuity.io/authorized-stage: edge-offline:central-sr-on
+  finalizers: [resources-finalizer.argocd.argoproj.io]
+spec:
+  project: edge-offline
+  source: {repoURL: https://github.com/argoproj/argocd-example-apps, targetRevision: HEAD, path: guestbook}
+  destination: {name: edge-sr-on, namespace: guestbook}
+  syncPolicy:
+    automated: {prune: true, selfHeal: true}
+    syncOptions: [CreateNamespace=true]
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sr-on-local
+  namespace: argocd
+  annotations:
+    kargo.akuity.io/authorized-stage: edge-offline:edge-sr-on-local
+  finalizers: [resources-finalizer.argocd.argoproj.io]
+spec:
+  project: edge-offline
+  source: {repoURL: http://gitea.gitea.svc:3000/demo/edge-app.git, targetRevision: HEAD, path: .}
+  destination: {name: edge-sr-on, namespace: edge-app}
+  syncPolicy:
+    automated: {prune: true, selfHeal: true}
+    syncOptions: [CreateNamespace=true]

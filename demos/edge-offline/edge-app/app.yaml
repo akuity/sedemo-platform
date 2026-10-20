@@ -1,0 +1,25 @@
+# Site-local app. `message` is what we change while the site is offline.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: edge-config
+data:
+  message: "v1"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edge-app
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: edge-app}}
+  template:
+    metadata: {labels: {app: edge-app}}
+    spec:
+      containers:
+        - name: app
+          image: gcr.io/google-samples/gb-frontend:v5
+          ports: [{containerPort: 80}]
+          env:
+            - name: MESSAGE
+              valueFrom: {configMapKeyRef: {name: edge-config, key: message}}

@@ -1,0 +1,101 @@
+# Kargo side of the offline demo.
+#  - central-*: Warehouse + Stages run by the instance's default (Akuity-managed)
+#    agent; they promote GitHub commits into the -github apps.
+#  - edge-*: Warehouse + Stage pinned to the self-hosted agent on edge-sr-on;
+#    the Warehouse watches the site's own Gitea, so the whole pipeline is local.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: edge-offline
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: central-example-apps
+  namespace: edge-offline
+spec:
+  subscriptions:
+    - git:
+        repoURL: https://github.com/argoproj/argocd-example-apps
+        branch: master
+        discoveryLimit: 5
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: central-sr-off
+  namespace: edge-offline
+spec:
+  requestedFreight:
+    - origin: {kind: Warehouse, name: central-example-apps}
+      sources: {direct: true}
+  promotionTemplate:
+    spec:
+      steps:
+        - uses: argocd-update
+          config:
+            apps:
+              - name: sr-off-github
+                namespace: argocd
+                sources:
+                  - repoURL: https://github.com/argoproj/argocd-example-apps
+                    desiredRevision: ${{ commitFrom("https://github.com/argoproj/argocd-example-apps").ID }}
+                    updateTargetRevision: true
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: central-sr-on
+  namespace: edge-offline
+spec:
+  requestedFreight:
+    - origin: {kind: Warehouse, name: central-example-apps}
+      sources: {direct: true}
+  promotionTemplate:
+    spec:
+      steps:
+        - uses: argocd-update
+          config:
+            apps:
+              - name: sr-on-github
+                namespace: argocd
+                sources:
+                  - repoURL: https://github.com/argoproj/argocd-example-apps
+                    desiredRevision: ${{ commitFrom("https://github.com/argoproj/argocd-example-apps").ID }}
+                    updateTargetRevision: true
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: edge-local-git
+  namespace: edge-offline
+spec:
+  shard: edge-sr-on
+  subscriptions:
+    - git:
+        repoURL: http://gitea.gitea.svc:3000/demo/edge-app.git
+        branch: main
+        discoveryLimit: 5
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: edge-sr-on-local
+  namespace: edge-offline
+spec:
+  shard: edge-sr-on
+  requestedFreight:
+    - origin: {kind: Warehouse, name: edge-local-git}
+      sources: {direct: true}
+  promotionTemplate:
+    spec:
+      steps:
+        - uses: argocd-update
+          config:
+            apps:
+              - name: sr-on-local
+                namespace: argocd
+                sources:
+                  - repoURL: http://gitea.gitea.svc:3000/demo/edge-app.git
+                    desiredRevision: ${{ commitFrom("http://gitea.gitea.svc:3000/demo/edge-app.git").ID }}
+                    updateTargetRevision: true
