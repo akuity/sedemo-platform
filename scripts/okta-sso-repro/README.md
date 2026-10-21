@@ -36,7 +36,9 @@ argocd account get-user-info --grpc-web
 ./okta-sso-repro.sh down    # delete everything the script created
 ```
 
-`up` and `fix` print the instance host and the commands to run next.
+`up` and `fix` print the instance host and the commands to run next. Both are safe to re-run.
+Running `up` after `fix` keeps the fix; run `down` and then `up` to get the broken state back.
+If `down` fails partway, fix the cause and run it again; it resumes where it stopped.
 
 | Variable | Default | Purpose |
 |---|---|---|
