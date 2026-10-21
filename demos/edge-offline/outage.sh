@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Simulate a site outage inside one k3d cluster's node, without touching the host.
 #
-#   outage.sh <site> link-down   drop traffic to the Akuity control plane only (Git, registries still reachable)
+#   outage.sh <site> link-down   drop traffic to the Akuity control planes (Argo CD + Kargo) only;
+#                                Git, registries and in-site services stay reachable
 #   outage.sh <site> offline     drop everything leaving the site (internet gone; in-site traffic still works)
 #   outage.sh <site> restore     remove all outage rules
 #   outage.sh <site> status
@@ -15,7 +16,8 @@
 set -euo pipefail
 SITE="${1:?site, e.g. edge-sr-on}"; MODE="${2:?link-down|offline|restore|status}"
 NODE="k3d-${SITE}-server-0"
-: "${AKUITY_HOSTS:=e96rrp7fide5qg83-agentsvr.cdsvcs.akuity.cloud e96rrp7fide5qg83-cplane.cdsvcs.akuity.cloud}"
+# shellcheck source=lib.sh
+source "$(cd "$(dirname "$0")" && pwd)/lib.sh"
 
 ipt() { docker exec "${NODE}" iptables -t raw "$@"; }
 reset_chain() {
@@ -27,8 +29,11 @@ reset_chain() {
 
 case "${MODE}" in
   link-down)
+    # shellcheck disable=SC2086 # AKUITY_HOSTS is a space-separated list
+    ips=$(for h in ${AKUITY_HOSTS}; do dig +short "$h" | grep -E '^[0-9.]+$'; done | sort -u)
+    [[ -n "${ips}" ]] || { echo "could not resolve any of: ${AKUITY_HOSTS}" >&2; exit 1; }
     reset_chain
-    for ip in $(for h in ${AKUITY_HOSTS}; do dig +short "$h" | grep -E '^[0-9.]+$'; done | sort -u); do
+    for ip in ${ips}; do
       ipt -A EDGE-OUTAGE -d "${ip}" -j DROP
     done
     ;;

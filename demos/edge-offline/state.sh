@@ -2,9 +2,9 @@
 # Both views of each site: what the Akuity control plane reports, and what is
 # actually running inside the site.
 set -uo pipefail
-: "${ARGOCD_CONTEXT:=argo.akpdemoapps.link}"
+# shellcheck source=lib.sh
+source "$(cd "$(dirname "$0")" && pwd)/lib.sh"
 SITES=("${@:-edge-sr-off edge-sr-on}"); read -r -a SITES <<< "${SITES[*]}"
-F=(--organization-name demo --instance-name se-demo-iac)
 
 for site in "${SITES[@]}"; do
   short="${site#edge-}"
@@ -13,7 +13,7 @@ for site in "${SITES[@]}"; do
     && { docker exec "k3d-${site}-server-0" iptables -t raw -S EDGE-OUTAGE | grep -q -- '-j RETURN' && echo "[OFFLINE]" || echo "[CLOUD LINK DOWN]"; } \
     || echo "[online]"
   echo "  Akuity says:"
-  akuity argocd cluster get "${F[@]}" "${site}" -o json 2>/dev/null \
+  akuity argocd cluster get "${CD[@]}" "${site}" -o json 2>/dev/null \
     | jq -r '"    cluster: \(.healthStatus.code | sub("STATUS_CODE_"; "")) - \(.healthStatus.message) (status observed \(.agentState.observeTime[11:19])Z)"'
   for app in "${short}-github" "${short}-local"; do
     argocd --argocd-context "${ARGOCD_CONTEXT}" app get "${app}" -o json 2>/dev/null \

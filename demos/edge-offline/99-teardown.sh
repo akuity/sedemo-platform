@@ -3,15 +3,27 @@
 # Needs `argocd login argo.akpdemoapps.link --sso --grpc-web` and
 # `kargo login https://kargo.akpdemoapps.link --sso`.
 set -uo pipefail
-: "${ARGOCD_CONTEXT:=argo.akpdemoapps.link}"
 DIR="$(cd "$(dirname "$0")" && pwd)"
-CD=(--organization-name demo --instance-name se-demo-iac)
-KG=(--organization-name demo --instance-name se-demo-iac-kargo)
+# shellcheck source=lib.sh
+source "${DIR}/lib.sh"
 
 for site in edge-sr-off edge-sr-on; do "${DIR}/outage.sh" "${site}" restore >/dev/null 2>&1; done
 
-# Kargo: delete only this demo's project (never `akuity kargo apply --prune`).
-kargo delete project edge-offline || echo "Delete Kargo project edge-offline in the UI if this failed."
+# Kargo: delete only this demo's project (never `akuity kargo apply --prune`), and
+# wait until it is gone: the edge-sr-on agent clears the finalizers on the sharded
+# Warehouse/Stage, so it must still be running while the project terminates.
+if kargo get project edge-offline >/dev/null 2>&1; then
+  kargo delete project edge-offline
+  for _ in $(seq 1 60); do
+    kargo get project edge-offline >/dev/null 2>&1 || break
+    sleep 5
+  done
+  if kargo get project edge-offline >/dev/null 2>&1; then
+    echo "Kargo project edge-offline is still terminating after 5 min; leaving the" >&2
+    echo "edge-sr-on agent and clusters in place. Check the Kargo UI, then re-run." >&2
+    exit 1
+  fi
+fi
 akuity kargo agent delete "${KG[@]}" edge-sr-on || true
 
 APPS=(sr-off-github sr-off-local sr-on-github sr-on-local)
