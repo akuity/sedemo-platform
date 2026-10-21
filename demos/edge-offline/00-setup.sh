@@ -2,10 +2,11 @@
 # Two edge sites, identical except for Argo CD State Replication, each running
 # the same two apps (one from GitHub, one from an in-site Gitea), plus a Kargo
 # project with central-agent stages and a self-hosted Kargo agent on edge-sr-on.
+# Safe to re-run: existing clusters, agents and the seeded repo are kept.
 set -euo pipefail
 DIR="$(cd "$(dirname "$0")" && pwd)"; OUT="${DIR}/out"; mkdir -p "${OUT}"
-CD=(--organization-name demo --instance-name se-demo-iac)
-KG=(--organization-name demo --instance-name se-demo-iac-kargo)
+# shellcheck source=lib.sh
+source "${DIR}/lib.sh"
 
 for site in edge-sr-off edge-sr-on; do
   k3d cluster get "${site}" >/dev/null 2>&1 \
@@ -25,32 +26,31 @@ for site in edge-sr-off edge-sr-on; do
   k() { kubectl --context "k3d-${site}" "$@"; }
   k apply -f "${DIR}/manifests/gitea.yaml" -f "${DIR}/manifests/netcheck.yaml" >/dev/null
   k -n gitea rollout status deploy/gitea --timeout=300s
-  k -n gitea exec deploy/gitea -- su git -c "gitea admin user create --username demo \
-    --password demo-pass-123 --email demo@example.com --admin --must-change-password=false" 2>/dev/null || true
+  k -n gitea exec deploy/gitea -- su git -c "gitea admin user list" | grep -qw demo \
+    || k -n gitea exec deploy/gitea -- su git -c "gitea admin user create --username demo \
+         --password ${GITEA_AUTH#demo:} --email demo@example.com --admin --must-change-password=false"
   k wait --for=condition=Ready pod/netcheck --timeout=180s
 done
 
-echo "== Seed edge-app repo in each Gitea"
+echo "== Seed edge-app repo in each Gitea (skipped if it already exists)"
 for site in edge-sr-off edge-sr-on; do
-  R="${OUT}/edge-app-repo-${site}"; rm -rf "${R}"; mkdir -p "${R}"
-  cp "${DIR}/edge-app/app.yaml" "${R}/"
-  git -C "${R}" init -q -b main && git -C "${R}" add . \
-    && git -C "${R}" -c user.name=demo -c user.email=demo@example.com commit -q -m "edge-app v1"
-  port=$((13000 + RANDOM % 1000))
-  kubectl --context "k3d-${site}" -n gitea port-forward svc/gitea "${port}:3000" >/dev/null 2>&1 & pf=$!
-  sleep 3
-  git -C "${R}" push -q "http://demo:demo-pass-123@localhost:${port}/demo/edge-app.git" main 2>&1 | grep -v '^remote:' || true
-  kill "${pf}"
+  gitea_open "${site}"
+  if curl -sf -o /dev/null "${GITEA_API}/repos/demo/edge-app"; then
+    echo "  ${site}: repo exists"
+  else
+    R="${OUT}/edge-app-seed-${site}"; rm -rf "${R}"; mkdir -p "${R}"
+    cp "${DIR}/edge-app/app.yaml" "${R}/"
+    git -C "${R}" init -q -b main && git -C "${R}" add . \
+      && git -C "${R}" -c user.name=demo -c user.email=demo@example.com commit -q -m "edge-app v1"
+    git -C "${R}" push -q "${GITEA_URL}" main
+    echo "  ${site}: repo seeded"
+  fi
+  gitea_close
 done
 
 echo "== Wait for both Argo CD agents"
 for site in edge-sr-off edge-sr-on; do
-  for _ in $(seq 1 60); do
-    h=$(akuity argocd cluster get "${CD[@]}" "${site}" -o json 2>/dev/null | jq -r '.healthStatus.code // empty' || true)
-    [[ "${h}" == "STATUS_CODE_HEALTHY" ]] && break
-    sleep 10
-  done
-  echo "  ${site}: ${h:-unknown}"
+  wait_healthy "argocd agent ${site}" akuity argocd cluster get "${CD[@]}" "${site}"
 done
 
 echo "== Self-hosted Kargo agent on edge-sr-on"
@@ -58,12 +58,7 @@ akuity kargo agent create edge-sr-on "${KG[@]}" --upsert --self-hosted=true \
   --akuity-argocd-name se-demo-iac --label offline-demo=true
 akuity kargo agent get-manifests "${KG[@]}" edge-sr-on > "${OUT}/kargo-agent-edge-sr-on.yaml"
 kubectl --context k3d-edge-sr-on apply -f "${OUT}/kargo-agent-edge-sr-on.yaml" >/dev/null
-for _ in $(seq 1 60); do
-  h=$(akuity kargo agent get "${KG[@]}" edge-sr-on -o json 2>/dev/null | jq -r '.healthStatus.code // empty' || true)
-  [[ "${h}" == "STATUS_CODE_HEALTHY" ]] && break
-  sleep 10
-done
-echo "  kargo agent edge-sr-on: ${h:-unknown}"
+wait_healthy "kargo agent edge-sr-on" akuity kargo agent get "${KG[@]}" edge-sr-on
 
 echo "== Apps and Kargo resources"
 akuity argocd apply --organization-name demo --name se-demo-iac -f "${DIR}/manifests/apps.yaml"

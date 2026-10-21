@@ -13,9 +13,10 @@
 set -uo pipefail
 MODE="${1:-offline}"; MINUTES="${2:-9}"
 DIR="$(cd "$(dirname "$0")" && pwd)"; cd "${DIR}" || exit 1
+# shellcheck source=lib.sh
+source "${DIR}/lib.sh"
 SITES=(edge-sr-off edge-sr-on)
-TAG="x$(date +%H%M)"
-CD=(--organization-name demo --instance-name se-demo-iac)
+TAG="x$(date +%H%M%S)"
 
 k() { kubectl --context "k3d-$1" --request-timeout=8s "${@:2}"; }
 line() {
@@ -24,7 +25,7 @@ line() {
     local ready akuity reach hook
     ready=$(k "$s" -n akuity get pods -l app.kubernetes.io/name=argocd-application-controller --no-headers 2>/dev/null | awk '{print $2}')
     akuity=$(akuity argocd cluster get "${CD[@]}" "$s" -o json 2>/dev/null | jq -r '.healthStatus.code // "?" | sub("STATUS_CODE_"; "")')
-    reach=$(k "$s" exec netcheck -- curl -s -o /dev/null -m 3 -w '%{http_code}' https://e96rrp7fide5qg83-agentsvr.cdsvcs.akuity.cloud 2>/dev/null)
+    reach=$(k "$s" exec netcheck -- curl -s -o /dev/null -m 3 -w '%{http_code}' https://${AGENT_HOST} 2>/dev/null)
     hook=$(docker exec "k3d-$s-server-0" iptables -t raw -S PREROUTING 2>/dev/null | sed -n 2p | grep -q EDGE-OUTAGE && echo first || echo none)
     out+=" ${s#edge-}: replicas=$(k "$s" -n edge-app get deploy edge-app -o jsonpath='{.spec.replicas}') msg=$(k "$s" -n edge-app get cm edge-config -o jsonpath='{.data.message}') ctrl=${ready:-?} akuity=${akuity} cplane=$([[ ${reach:-000} == 000 ]] && echo blocked || echo REACHABLE) hook=${hook} |"
   done
@@ -39,8 +40,9 @@ for m in $(seq 1 "${MINUTES}"); do
   case "$m" in
     1) for s in "${SITES[@]}"; do k "$s" -n edge-app scale deploy edge-app --replicas=3 >/dev/null; done
        sleep 20; line "t+1m drift: scaled edge-app to 3 (+20s)" ;;
-    2) for s in "${SITES[@]}"; do ./push.sh "$s" "${TAG}" >/dev/null; done
-       line "t+2m pushed msg=${TAG} to in-site Git" ;;
+    2) pushed=""
+       for s in "${SITES[@]}"; do ./push.sh "$s" "${TAG}" >/dev/null && pushed+="${s#edge-} " || pushed+="${s#edge-}=FAILED "; done
+       line "t+2m pushed msg=${TAG} to in-site Git (${pushed% })" ;;
     3) if [[ "${RESTART:-1}" == "1" ]]; then
          for s in "${SITES[@]}"; do k "$s" -n akuity delete pod -l app.kubernetes.io/name=argocd-application-controller --wait=false >/dev/null; done
          line "t+3m restarted app controllers"
