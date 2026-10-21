@@ -14,6 +14,8 @@
 # The Web app's client secret goes from Okta into a mode-600 temp file for `akuity argocd apply`
 # and is never printed.
 set -euo pipefail
+# without this, a failed API call inside $(...) is ignored and its empty output gets used
+shopt -s inherit_errexit
 
 : "${OKTA_DOMAIN:?set OKTA_DOMAIN, e.g. integrator-1234567.okta.com}"
 OKTA_TOKEN_PASS="${OKTA_TOKEN_PASS:-$OKTA_DOMAIN/api-token}"
@@ -53,6 +55,10 @@ state_set() { # jq-path value
   [[ -f "$STATE" ]] || echo '{}' >"$STATE"
   jq --arg v "$2" "$1 = \$v" "$STATE" >"$STATE.tmp" && mv "$STATE.tmp" "$STATE"
 }
+state_del() { # jq-path
+  [[ -f "$STATE" ]] || return 0
+  jq "del($1)" "$STATE" >"$STATE.tmp" && mv "$STATE.tmp" "$STATE"
+}
 
 instance_json() { akuity argocd instance get --organization-name "$AKUITY_ORG" "$INSTANCE_NAME" -o json 2>/dev/null; }
 
@@ -68,8 +74,9 @@ ensure_instance() {
   fi
   local host health
   for _ in $(seq 60); do
-    host=$(instance_json | jq -r '.hostname // empty')
-    health=$(instance_json | jq -r '.healthStatus.code')
+    # a failed poll is retried, not fatal
+    host=$( (instance_json || true) | jq -r '.hostname // empty')
+    health=$( (instance_json || true) | jq -r '.healthStatus.code // empty')
     [[ -n "$host" && "$health" == STATUS_CODE_HEALTHY ]] && break
     sleep 10
   done
@@ -79,40 +86,48 @@ ensure_instance() {
 }
 
 ensure_group() {
-  local id me
+  local id me members
   id=$(okta GET "/api/v1/groups?q=$GROUP_NAME" | jq -r --arg n "$GROUP_NAME" '.[] | select(.profile.name==$n) | .id')
   if [[ -z "$id" ]]; then
     id=$(okta POST /api/v1/groups "$(jq -nc --arg n "$GROUP_NAME" '{profile:{name:$n,description:"Argo CD SSO repro admins"}}')" | jq -r .id)
     state_set .group "$id"
   fi
-  # the API token's owner becomes the test user
+  # the API token's owner becomes the test user; record the membership only if we added it
   me=$(okta GET /api/v1/users/me | jq -r .id)
-  okta PUT "/api/v1/groups/$id/users/$me" >/dev/null
+  members=$(okta GET "/api/v1/groups/$id/users?limit=200")
+  if ! jq -e --arg u "$me" 'any(.[]; .id==$u)' <<<"$members" >/dev/null; then
+    okta PUT "/api/v1/groups/$id/users/$me" >/dev/null
+    [[ -n "$(state_get .group)" ]] || state_set .membership "$id/$me"
+  fi
   echo "$id"
 }
 
 ensure_groups_claim_and_scope() {
-  local type id
+  local type id claims scopes
+  # fetch before testing, so a failed GET aborts instead of reading as "missing"
+  claims=$(okta GET "/api/v1/authorizationServers/$AUTHZ_SERVER/claims")
+  scopes=$(okta GET "/api/v1/authorizationServers/$AUTHZ_SERVER/scopes")
   for type in IDENTITY RESOURCE; do
-    okta GET "/api/v1/authorizationServers/$AUTHZ_SERVER/claims" |
-      jq -e --arg t "$type" '.[] | select(.name=="groups" and .claimType==$t)' >/dev/null && continue
+    jq -e --arg t "$type" 'any(.[]; .name=="groups" and .claimType==$t)' <<<"$claims" >/dev/null && continue
     id=$(okta POST "/api/v1/authorizationServers/$AUTHZ_SERVER/claims" "$(jq -nc --arg t "$type" \
       '{name:"groups",status:"ACTIVE",claimType:$t,valueType:"GROUPS",group_filter_type:"REGEX",value:".*",alwaysIncludeInToken:true,conditions:{scopes:[]}}')" | jq -r .id)
     state_set ".claims.$type" "$id"
   done
   # Argo CD requests the "groups" scope by default
-  okta GET "/api/v1/authorizationServers/$AUTHZ_SERVER/scopes" | jq -e '.[] | select(.name=="groups")' >/dev/null && return
+  jq -e 'any(.[]; .name=="groups")' <<<"$scopes" >/dev/null && return
   id=$(okta POST "/api/v1/authorizationServers/$AUTHZ_SERVER/scopes" '{"name":"groups","consent":"IMPLICIT","metadataPublish":"ALL_CLIENTS"}' | jq -r .id)
   state_set .scope "$id"
 }
 
 ensure_access_policy() {
   # Okta denies every token request from a client no policy covers. Leave existing policies alone.
-  [[ $(okta GET "/api/v1/authorizationServers/$AUTHZ_SERVER/policies" | jq 'length') -gt 0 ]] && {
+  local count pid
+  [[ -z "$(state_get .policy)" ]] || return 0
+  count=$(okta GET "/api/v1/authorizationServers/$AUTHZ_SERVER/policies" | jq 'length')
+  if [[ "$count" -gt 0 ]]; then
     log "auth server '$AUTHZ_SERVER' already has access policies; make sure they cover the $PREFIX apps"
     return
-  }
-  local pid
+  fi
   pid=$(okta POST "/api/v1/authorizationServers/$AUTHZ_SERVER/policies" "$(jq -nc --arg n "$PREFIX" \
     '{type:"OAUTH_AUTHORIZATION_POLICY",name:$n,description:"All clients",priority:1,status:"ACTIVE",conditions:{clients:{include:["ALL_CLIENTS"]}}}')" | jq -r .id)
   state_set .policy "$pid"
@@ -166,11 +181,10 @@ data:
     g, $GROUP_NAME, role:admin
   scopes: "[groups, email]"
 EOF
-  if [[ -z "${2:-}" ]]; then
-    local sec
-    sec=$(okta GET "/api/v1/apps/$1/credentials/secrets" | jq -r '[.[] | select(.status=="ACTIVE")][0].client_secret')
-    [[ -n "$sec" && "$sec" != null ]] || die "no active client secret on Okta app $1"
-    (umask 077; cat >"$work/argocd-secret.yaml" <<EOF
+  local sec
+  sec=$(okta GET "/api/v1/apps/$1/credentials/secrets" | jq -r '[.[] | select(.status=="ACTIVE")][0].client_secret')
+  [[ -n "$sec" && "$sec" != null ]] || die "no active client secret on Okta app $1"
+  (umask 077; cat >"$work/argocd-secret.yaml" <<EOF
 apiVersion: v1
 kind: Secret
 metadata:
@@ -180,11 +194,14 @@ stringData:
   oidc.okta.clientSecret: "$sec"
 EOF
 )
-    unset sec
-    akuity argocd apply --organization-name "$AKUITY_ORG" --name "$INSTANCE_NAME" -f "$m" -f "$work/argocd-secret.yaml" >/dev/null
-  else
-    akuity argocd apply --organization-name "$AKUITY_ORG" --name "$INSTANCE_NAME" -f "$m/argocd-cm.yaml" >/dev/null
-  fi
+  unset sec
+  akuity argocd apply --organization-name "$AKUITY_ORG" --name "$INSTANCE_NAME" -f "$m" -f "$work/argocd-secret.yaml" >/dev/null
+}
+
+okta_delete() { # path; a 404 means it is already gone
+  local code
+  code=$(curl -sS -o /dev/null -w '%{http_code}' -X DELETE "$OKTA$1" -H @"$hdr" -H 'Accept: application/json')
+  [[ "$code" == 204 || "$code" == 200 || "$code" == 404 ]] || die "DELETE $1 returned $code"
 }
 
 wait_for_settings() { # jq-filter expected
@@ -207,9 +224,12 @@ cmd_up() {
     web=$(create_app "$PREFIX-web" web client_secret_basic "[\"https://$host/auth/callback\"]" "[\"https://$host/\"]" "$gid")
     state_set .webApp "$web"
   fi
-  log "applying oidc.config (Web app $web only), RBAC, and client secret"
-  apply_argocd "$web"
+  # re-running up after fix keeps the fix; run down then up for a fresh broken state
+  local cli; cli=$(state_get .cliApp)
+  log "applying oidc.config (Web app $web${cli:+, cliClientID $cli}), RBAC, and client secret"
+  apply_argocd "$web" "$cli"
   wait_for_settings .oidcConfig.clientID "$web"
+  [[ -z "$cli" ]] || { log "fix already applied; the CLI login should succeed"; return; }
   cat <<EOF
 
 Broken state ready. Expect browser login to work and the CLI to fail with an Okta 400:
@@ -258,24 +278,49 @@ cmd_status() {
 
 cmd_down() {
   [[ -f "$STATE" ]] || { echo "nothing created for $INSTANCE_NAME"; return; }
-  local id type host
+  # each state key is cleared as soon as its object is gone, so a failed down can be re-run
+  local id key host
+  okta_auth
   host=$(state_get .host)
   if [[ -n "$(state_get .instance)" ]]; then
-    log "deleting instance $INSTANCE_NAME"
-    akuity argocd instance delete --organization-name "$AKUITY_ORG" "$INSTANCE_NAME" >/dev/null
-    [[ -n "$host" ]] && argocd context --delete "$host" >/dev/null 2>&1 || true
+    if instance_json >/dev/null; then
+      log "deleting instance $INSTANCE_NAME"
+      akuity argocd instance delete --organization-name "$AKUITY_ORG" "$INSTANCE_NAME" >/dev/null
+    fi
+    if [[ -n "$host" ]]; then argocd context --delete "$host" >/dev/null 2>&1 || true; fi
+    state_del .instance
   fi
-  for id in $(state_get .webApp) $(state_get .cliApp); do
+  for key in .webApp .cliApp; do
+    id=$(state_get "$key"); [[ -n "$id" ]] || continue
     log "deleting Okta app $id"
-    okta POST "/api/v1/apps/$id/lifecycle/deactivate" >/dev/null || true
-    okta DELETE "/api/v1/apps/$id" >/dev/null
+    okta POST "/api/v1/apps/$id/lifecycle/deactivate" >/dev/null 2>&1 || true
+    okta_delete "/api/v1/apps/$id"; state_del "$key"
   done
-  id=$(state_get .policy); [[ -n "$id" ]] && { log "deleting access policy $PREFIX"; okta DELETE "/api/v1/authorizationServers/$AUTHZ_SERVER/policies/$id" >/dev/null; }
-  for type in IDENTITY RESOURCE; do
-    id=$(state_get ".claims.$type"); [[ -n "$id" ]] && { log "deleting groups claim ($type)"; okta DELETE "/api/v1/authorizationServers/$AUTHZ_SERVER/claims/$id" >/dev/null; }
+  id=$(state_get .policy)
+  if [[ -n "$id" ]]; then
+    log "deleting access policy $PREFIX"
+    okta_delete "/api/v1/authorizationServers/$AUTHZ_SERVER/policies/$id"; state_del .policy
+  fi
+  for key in .claims.IDENTITY .claims.RESOURCE; do
+    id=$(state_get "$key"); [[ -n "$id" ]] || continue
+    log "deleting groups claim ${key#.claims.}"
+    okta_delete "/api/v1/authorizationServers/$AUTHZ_SERVER/claims/$id"; state_del "$key"
   done
-  id=$(state_get .scope); [[ -n "$id" ]] && { log "deleting groups scope"; okta DELETE "/api/v1/authorizationServers/$AUTHZ_SERVER/scopes/$id" >/dev/null; }
-  id=$(state_get .group); [[ -n "$id" ]] && { log "deleting group $GROUP_NAME"; okta DELETE "/api/v1/groups/$id" >/dev/null; }
+  id=$(state_get .scope)
+  if [[ -n "$id" ]]; then
+    log "deleting groups scope"
+    okta_delete "/api/v1/authorizationServers/$AUTHZ_SERVER/scopes/$id"; state_del .scope
+  fi
+  id=$(state_get .membership)
+  if [[ -n "$id" ]]; then
+    log "removing the token owner from pre-existing group $GROUP_NAME"
+    okta_delete "/api/v1/groups/${id%/*}/users/${id#*/}"; state_del .membership
+  fi
+  id=$(state_get .group)
+  if [[ -n "$id" ]]; then
+    log "deleting group $GROUP_NAME"
+    okta_delete "/api/v1/groups/$id"; state_del .group
+  fi
   rm -f "$STATE"
   log "done; the Okta tenant and API token are untouched"
 }
