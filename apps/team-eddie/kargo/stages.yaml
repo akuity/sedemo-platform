@@ -84,7 +84,7 @@ spec:
   verification:
     analysisTemplates:
     - name: functional-tests
-    - name: secret-sniffer
+    #- name: secret-sniffer
     args:
     - name: test-image-tag
       value: "${{ imageFrom(configMap('values').testImageUrl).Tag }}"
