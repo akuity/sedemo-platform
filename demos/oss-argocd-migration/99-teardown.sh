@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Remove the demo apps and project from Akuity, unregister the cluster, delete the k3d cluster.
+# Remove the demo apps and project from Akuity, unregister the cluster, delete the kind cluster.
 # Needs an argocd CLI session on the instance: argocd login ${ARGOCD_CONTEXT} --sso --grpc-web
 set -euo pipefail
 source "$(dirname "$0")/env.sh"
@@ -22,5 +22,5 @@ done
 # needs RBAC on `projects, delete, edge-site`; the instance's `*/*` object
 # pattern covers apps (project/app) but not projects. Remove it in the UI if needed.
 akuity argocd cluster delete "${AK_FLAGS[@]}" "${CLUSTER_NAME}" || true
-k3d cluster delete "${CLUSTER_NAME}"
+kind delete cluster --name "${CLUSTER_NAME}"
 rm -f "${OUT_DIR}"/*.yaml "${OUT_DIR}"/*.txt "${OUT_DIR}"/t0

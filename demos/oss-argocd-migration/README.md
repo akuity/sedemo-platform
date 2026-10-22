@@ -1,6 +1,6 @@
 # OSS Argo CD → Akuity: zero-downtime migration demo
 
-A local k3d cluster stands in for an on-prem site running its own self-hosted
+A local kind cluster (on OrbStack) stands in for an on-prem site running its own self-hosted
 Argo CD. We connect it to the hosted Akuity instance with the agent, hand the
 apps over, and prove nothing was redeployed and the service never dropped a
 request.
@@ -16,7 +16,7 @@ The whole migration, per app:
 
 ## Prerequisites
 
-- `k3d`, `kubectl`, `yq` (mikefarah v4), `jq`, `akuity`, `argocd` CLIs
+- `kind` (Docker context `orbstack`), `kubectl`, `yq` (mikefarah v4), `jq`, `akuity`, `argocd` CLIs
 - `akuity login` (Akuity org `demo`, instance `se-demo-iac`)
 - `argocd login argo.akpdemoapps.link --sso --grpc-web` (teardown only)
 
@@ -25,7 +25,7 @@ Settings live in `env.sh`; override with env vars (`CLUSTER_NAME`, `OSS_ARGOCD_V
 ## Before the call
 
 ```bash
-./00-setup.sh        # k3d cluster edge-site-1 + OSS Argo CD + 3 apps + uptime probe (~3 min)
+./00-setup.sh        # kind cluster edge-site-1 + OSS Argo CD + 3 apps + uptime probe (~3 min)
 akuity whoami        # token still valid? (it expires daily: akuity login)
 for i in 1 2 3 4 5; do git ls-remote https://github.com/argoproj/argocd-example-apps HEAD; done
 ```
@@ -37,7 +37,7 @@ The app then shows sync `Unknown` with a Git timeout while health stays
 `Healthy` and the workloads are untouched; it recovers on its own.
 
 Open three windows: the Akuity UI (Applications, filter `edge-`), the OSS UI
-(`kubectl --context k3d-edge-site-1 -n argocd port-forward svc/argocd-server 8080:443`,
+(`kubectl --context kind-edge-site-1 -n argocd port-forward svc/argocd-server 8080:443`,
 password printed by setup), and a terminal in this directory.
 
 Fallback if the network is bad: run `./02-connect.sh` before the call, so the
@@ -96,7 +96,7 @@ Known limitations of the scripts (fine for this demo, worth knowing):
 ## Reset
 
 ```bash
-./99-teardown.sh     # Akuity apps (non-cascade), cluster registration, k3d cluster
+./99-teardown.sh     # Akuity apps (non-cascade), cluster registration, kind cluster
 ./00-setup.sh
 ```
 

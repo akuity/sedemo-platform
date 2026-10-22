@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Pre-demo: a k3d (k3s) cluster standing in for an on-prem site, running a
+# Pre-demo: a kind cluster standing in for an on-prem site, running a
 # self-hosted OSS Argo CD that manages three apps. Run this before the call.
 set -euo pipefail
 source "$(dirname "$0")/env.sh"
 
-if ! k3d cluster get "${CLUSTER_NAME}" >/dev/null 2>&1; then
-  k3d cluster create "${CLUSTER_NAME}" --no-lb --k3s-arg '--disable=traefik@server:0' --wait
+if ! kind get clusters 2>/dev/null | grep -qx "${CLUSTER_NAME}"; then
+  kind create cluster --name "${CLUSTER_NAME}" --wait 120s
 fi
 
 k create namespace argocd --dry-run=client -o yaml | k apply -f -

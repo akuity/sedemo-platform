@@ -2,8 +2,13 @@
 # Shared settings for the OSS Argo CD -> Akuity migration demo.
 # Override any of these in the environment before running a script.
 
-: "${CLUSTER_NAME:=edge-site-1}"                 # k3d cluster AND Akuity cluster name
-: "${KCTX:=k3d-${CLUSTER_NAME}}"                # kube context for the k3d cluster
+: "${CLUSTER_NAME:=edge-site-1}"                 # kind cluster AND Akuity cluster name
+: "${KCTX:=kind-${CLUSTER_NAME}}"               # kube context for the kind cluster
+# Pin the container engine and the host architecture: kind only sees the active
+# Docker context, and an inherited DOCKER_DEFAULT_PLATFORM=linux/amd64 on Apple
+# Silicon pulls an emulated node image that times out in kubeadm.
+: "${DOCKER_CONTEXT:=orbstack}"; export DOCKER_CONTEXT
+DOCKER_DEFAULT_PLATFORM="linux/$(uname -m | sed 's/x86_64/amd64/; s/aarch64/arm64/')"; export DOCKER_DEFAULT_PLATFORM
 : "${OSS_ARGOCD_VERSION:=v3.5.5}"                # use a v2.x tag to rehearse label tracking
 : "${AKUITY_ORG:=demo}"
 : "${AKUITY_INSTANCE:=se-demo-iac}"
