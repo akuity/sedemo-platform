@@ -50,7 +50,8 @@ spec:
                 command:
                 - /bin/sh
                 - -c
-                args: |
+                args: 
+                - |
                   printenv
                   # 1. Define the internal API server address and secret name
                   APISERVER="https://default.svc"
