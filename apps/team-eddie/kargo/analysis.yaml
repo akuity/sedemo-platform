@@ -54,7 +54,7 @@ spec:
                 - |
                   printenv
                   # 1. Define the internal API server address and secret name
-                  APISERVER="https://default.svc"
+                  APISERVER="https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT"
                   SECRET_NAME="kargo-step-snow"
 
                   # 2. Read the mounted token and namespace path
