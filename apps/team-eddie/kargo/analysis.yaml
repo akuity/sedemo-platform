@@ -35,6 +35,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
   name: secret-sniffer
+  namespace: team-eddie
 spec:
   metrics:
   - name: secret-sniffer
