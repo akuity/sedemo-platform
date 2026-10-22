@@ -18,7 +18,7 @@ source "${DIR}/lib.sh"
 SITES=(edge-sr-off edge-sr-on)
 TAG="x$(date +%H%M%S)"
 
-k() { kubectl --context "k3d-$1" --request-timeout=8s "${@:2}"; }
+k() { kubectl --context "$(kctx "$1")" --request-timeout=8s "${@:2}"; }
 line() {
   local out; out="$(date -u +%H:%M:%S)Z $1 |"
   for s in "${SITES[@]}"; do
@@ -26,7 +26,7 @@ line() {
     ready=$(k "$s" -n akuity get pods -l app.kubernetes.io/name=argocd-application-controller --no-headers 2>/dev/null | awk '{print $2}')
     akuity=$(akuity argocd cluster get "${CD[@]}" "$s" -o json 2>/dev/null | jq -r '.healthStatus.code // "?" | sub("STATUS_CODE_"; "")')
     reach=$(k "$s" exec netcheck -- curl -s -o /dev/null -m 3 -w '%{http_code}' https://${AGENT_HOST} 2>/dev/null)
-    hook=$(docker exec "k3d-$s-server-0" iptables -t raw -S PREROUTING 2>/dev/null | sed -n 2p | grep -q EDGE-OUTAGE && echo first || echo none)
+    hook=$(docker exec "$(knode "$s")" iptables -t raw -S PREROUTING 2>/dev/null | sed -n 2p | grep -q EDGE-OUTAGE && echo first || echo none)
     out+=" ${s#edge-}: replicas=$(k "$s" -n edge-app get deploy edge-app -o jsonpath='{.spec.replicas}') msg=$(k "$s" -n edge-app get cm edge-config -o jsonpath='{.data.message}') ctrl=${ready:-?} akuity=${akuity} cplane=$([[ ${reach:-000} == 000 ]] && echo blocked || echo REACHABLE) hook=${hook} |"
   done
   echo "${out}"

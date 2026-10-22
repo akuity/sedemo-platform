@@ -9,8 +9,8 @@ SITES=("${@:-edge-sr-off edge-sr-on}"); read -r -a SITES <<< "${SITES[*]}"
 for site in "${SITES[@]}"; do
   short="${site#edge-}"
   printf '\n\033[1m== %s ==\033[0m  ' "${site}"
-  docker exec "k3d-${site}-server-0" iptables -t raw -S EDGE-OUTAGE >/dev/null 2>&1 \
-    && { docker exec "k3d-${site}-server-0" iptables -t raw -S EDGE-OUTAGE | grep -q -- '-j RETURN' && echo "[OFFLINE]" || echo "[CLOUD LINK DOWN]"; } \
+  docker exec "$(knode "${site}")" iptables -t raw -S EDGE-OUTAGE >/dev/null 2>&1 \
+    && { docker exec "$(knode "${site}")" iptables -t raw -S EDGE-OUTAGE | grep -q -- '-j RETURN' && echo "[OFFLINE]" || echo "[CLOUD LINK DOWN]"; } \
     || echo "[online]"
   echo "  Akuity says:"
   akuity argocd cluster get "${CD[@]}" "${site}" -o json 2>/dev/null \
@@ -20,7 +20,7 @@ for site in "${SITES[@]}"; do
       | jq -r '"    \(.metadata.name): \(.status.sync.status)/\(.status.health.status) rev=\(.status.sync.revision[0:7]) last-op=\(.status.operationState.finishedAt // "-")"'
   done
   echo "  Site reality:"
-  k() { kubectl --context "k3d-${site}" --request-timeout=8s "$@"; }
+  k() { kubectl --context "$(kctx "${site}")" --request-timeout=8s "$@"; }
   printf '    guestbook-ui replicas=%s  edge-app replicas=%s  edge-config.message=%s\n' \
     "$(k -n guestbook get deploy guestbook-ui -o jsonpath='{.spec.replicas}' 2>/dev/null)" \
     "$(k -n edge-app get deploy edge-app -o jsonpath='{.spec.replicas}' 2>/dev/null)" \

@@ -6,7 +6,7 @@ SITE="${1:?site}"
 source "$(cd "$(dirname "$0")" && pwd)/lib.sh"
 chk() {
   local code
-  code=$(kubectl --context "k3d-${SITE}" exec netcheck -- curl -s -o /dev/null -m 4 -w '%{http_code}' "$2" 2>/dev/null)
+  code=$(kubectl --context "$(kctx "${SITE}")" exec netcheck -- curl -s -o /dev/null -m 4 -w '%{http_code}' "$2" 2>/dev/null)
   if [[ "${code}" =~ ^[1-5][0-9][0-9]$ ]]; then printf '  %-22s reachable (%s)\n' "$1" "${code}"; else printf '  %-22s UNREACHABLE\n' "$1"; fi
 }
 echo "${SITE}:"

@@ -2,6 +2,15 @@
 # shellcheck disable=SC2034 # variables here are used by the scripts that source this file
 # Shared settings and helpers for the edge-offline demo scripts.
 
+# Sites are kind clusters on OrbStack. Pin the engine (kind only sees the active
+# Docker context) and the host architecture (an inherited
+# DOCKER_DEFAULT_PLATFORM=linux/amd64 on Apple Silicon pulls an emulated
+# kindest/node that times out in kubeadm).
+: "${DOCKER_CONTEXT:=orbstack}"; export DOCKER_CONTEXT
+DOCKER_DEFAULT_PLATFORM="linux/$(uname -m | sed 's/x86_64/amd64/; s/aarch64/arm64/')"; export DOCKER_DEFAULT_PLATFORM
+kctx()  { echo "kind-$1"; }            # kube context of a site
+knode() { echo "$1-control-plane"; }   # node container of a site
+
 CD=(--organization-name demo --instance-name se-demo-iac)
 KG=(--organization-name demo --instance-name se-demo-iac-kargo)
 : "${ARGOCD_CONTEXT:=argo.akpdemoapps.link}"
@@ -11,6 +20,16 @@ KG=(--organization-name demo --instance-name se-demo-iac-kargo)
 AGENT_HOST="${ARGOCD_INSTANCE_ID}-agentsvr.cdsvcs.akuity.cloud"
 : "${AKUITY_HOSTS:=${AGENT_HOST} ${ARGOCD_INSTANCE_ID}-cplane.cdsvcs.akuity.cloud ${KARGO_INSTANCE_ID}-cplane.kargosvcs.akuity.cloud}"
 GITEA_AUTH="demo:demo-pass-123"   # throwaway in-site Gitea, see README
+
+# retry <attempts> <command...>: re-run a command that can hit transient API errors.
+retry() {
+  local n="$1" i; shift
+  for i in $(seq 1 "${n}"); do
+    "$@" && return 0
+    [[ "${i}" -lt "${n}" ]] && { echo "  retrying in 10s ($i/${n})" >&2; sleep 10; }
+  done
+  return 1
+}
 
 # wait_healthy <label> <command...>: poll a `... get -o json` command until
 # healthStatus is HEALTHY (10 min max); exit non-zero otherwise.
@@ -30,7 +49,7 @@ wait_healthy() {
 gitea_open() {
   local site="$1" port
   port=$((13000 + RANDOM % 1000))
-  kubectl --context "k3d-${site}" -n gitea port-forward svc/gitea "${port}:3000" >/dev/null 2>&1 &
+  kubectl --context "$(kctx "${site}")" -n gitea port-forward svc/gitea "${port}:3000" >/dev/null 2>&1 &
   GITEA_PF=$!
   GITEA_URL="http://${GITEA_AUTH}@localhost:${port}/demo/edge-app.git"
   GITEA_API="http://localhost:${port}/api/v1"
