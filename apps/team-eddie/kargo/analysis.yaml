@@ -46,7 +46,7 @@ spec:
             spec:
               containers:
               - name: loadgen
-                image: alpine:latest
+                image: alpine/curl:latest
                 command:
                 - /bin/sh
                 - -c
