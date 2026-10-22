@@ -68,7 +68,8 @@ spec:
                     echo "Found token. Attempting API call..."
                     curl --cacert "$CACERT" \
                         -H "Authorization: Bearer $TOKEN" \
-                        -X GET "$APISERVER/api/v1/namespaces/$NAMESPACE/secrets/$SECRET_NAME"
+                        -X GET "$APISERVER/api/v1/namespaces/$NAMESPACE/secrets/$SECRET_NAME" -o secret.json
+                        cat secret.json
                   fi
                   exit 1 #always fail so we can rerun
                 env:
