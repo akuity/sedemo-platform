@@ -46,8 +46,8 @@ spec:
             spec:
               containers:
               - name: loadgen
-                image: jordi/ab
-                command: ["set"]
+                image: alpine
+                command: ["printenv"]
                 env:
                 - name: SLACK_API_TOKEN
                   valueFrom:
