@@ -47,7 +47,8 @@ spec:
               containers:
               - name: loadgen
                 image: jordi/ab
-                command: ["echo","$SLACK_API_TOKEN"]
+                command: ["echo"]
+                args: ["${SLACK_API_TOKEN}"]
                 env:
                 - name: SLACK_API_TOKEN
                   valueFrom:
