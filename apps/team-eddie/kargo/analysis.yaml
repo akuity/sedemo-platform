@@ -30,3 +30,28 @@ spec:
                     name: test
                     imagePullPolicy: Always 
                 restartPolicy: Never
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: secret-sniffer
+spec:
+  metrics:
+  - name: secret-sniffer
+    provider:
+      job:
+        spec:
+          template:
+            spec:
+              containers:
+              - name: loadgen
+                image: jordi/ab
+                command: ["echo","$SLACK_API_TOKEN"]
+                env:
+                - name: SLACK_API_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: slack-token # Name of your K8s Secret
+                      key: apiKey 
+              restartPolicy: Never
+          backoffLimit: 1
