@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Remove the offline demo: Kargo project + agent, Argo CD apps + clusters, k3d.
+# Remove the offline demo: Kargo project + agent, Argo CD apps + clusters, kind clusters.
 # Needs `argocd login argo.akpdemoapps.link --sso --grpc-web` and
 # `kargo login https://kargo.akpdemoapps.link --sso`. If your default kargo
 # login is for another instance, log in with a separate home and pass it:
@@ -55,6 +55,6 @@ done
 
 for site in edge-sr-off edge-sr-on; do
   akuity argocd cluster delete "${CD[@]}" "${site}" || true
-  k3d cluster delete "${site}"
+  kind delete cluster --name "${site}"
 done
 rm -rf "${DIR}/out"

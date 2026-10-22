@@ -9,8 +9,8 @@ DIR="$(cd "$(dirname "$0")" && pwd)"; OUT="${DIR}/out"; mkdir -p "${OUT}"
 source "${DIR}/lib.sh"
 
 for site in edge-sr-off edge-sr-on; do
-  k3d cluster get "${site}" >/dev/null 2>&1 \
-    || k3d cluster create "${site}" --no-lb --k3s-arg '--disable=traefik@server:0' --wait
+  kind get clusters 2>/dev/null | grep -qx "${site}" \
+    || kind create cluster --name "${site}" --wait 120s
 done
 
 echo "== Register sites with Argo CD (State Replication is install-time only)"
@@ -18,12 +18,12 @@ akuity argocd cluster create edge-sr-off "${CD[@]}" --upsert --label offline-dem
 akuity argocd cluster create edge-sr-on "${CD[@]}" --upsert --label offline-demo=true --state-replication=true
 for site in edge-sr-off edge-sr-on; do
   akuity argocd cluster get-agent-manifests "${CD[@]}" "${site}" > "${OUT}/agent-${site}.yaml"
-  kubectl --context "k3d-${site}" apply -f "${OUT}/agent-${site}.yaml" >/dev/null
+  kubectl --context "$(kctx "${site}")" apply -f "${OUT}/agent-${site}.yaml" >/dev/null
 done
 
 echo "== In-site Gitea + netcheck pod (images must be pulled while online)"
 for site in edge-sr-off edge-sr-on; do
-  k() { kubectl --context "k3d-${site}" "$@"; }
+  k() { kubectl --context "$(kctx "${site}")" "$@"; }
   k apply -f "${DIR}/manifests/gitea.yaml" -f "${DIR}/manifests/netcheck.yaml" >/dev/null
   k -n gitea rollout status deploy/gitea --timeout=300s
   k -n gitea exec deploy/gitea -- su git -c "gitea admin user list" | grep -qw demo \
@@ -57,11 +57,12 @@ echo "== Self-hosted Kargo agent on edge-sr-on"
 akuity kargo agent create edge-sr-on "${KG[@]}" --upsert --self-hosted=true \
   --akuity-argocd-name se-demo-iac --label offline-demo=true
 akuity kargo agent get-manifests "${KG[@]}" edge-sr-on > "${OUT}/kargo-agent-edge-sr-on.yaml"
-kubectl --context k3d-edge-sr-on apply -f "${OUT}/kargo-agent-edge-sr-on.yaml" >/dev/null
+kubectl --context "$(kctx edge-sr-on)" apply -f "${OUT}/kargo-agent-edge-sr-on.yaml" >/dev/null
 wait_healthy "kargo agent edge-sr-on" akuity kargo agent get "${KG[@]}" edge-sr-on
 
 echo "== Apps and Kargo resources"
-akuity argocd apply --organization-name demo --name se-demo-iac -f "${DIR}/manifests/apps.yaml"
-akuity kargo apply --organization-name demo --name se-demo-iac-kargo -f "${DIR}/manifests/kargo.yaml"
+# Applies occasionally fail with a transient "internal error" from the API.
+retry 3 akuity argocd apply --organization-name demo --name se-demo-iac -f "${DIR}/manifests/apps.yaml"
+retry 3 akuity kargo apply --organization-name demo --name se-demo-iac-kargo -f "${DIR}/manifests/kargo.yaml"
 
 echo; echo "Setup done. Check with ./state.sh (apps take ~1 min to go Synced/Healthy)."

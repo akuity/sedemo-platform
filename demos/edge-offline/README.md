@@ -1,6 +1,6 @@
 # Edge sites offline: Argo CD State Replication off vs on, and Kargo
 
-Two k3d clusters stand in for on-prem sites with unreliable connectivity. They
+Two kind clusters (on OrbStack) stand in for on-prem sites with unreliable connectivity. They
 are identical except for one install-time setting on the Akuity Argo CD agent:
 
 | Site | State Replication |
@@ -22,8 +22,8 @@ Kargo (`se-demo-iac-kargo`, project `edge-offline`) has:
   `edge-sr-on`**; the Warehouse watches the site's own Gitea, so the whole pipeline
   is local to the site
 
-`outage.sh` simulates two kinds of outage inside one site's k3d node (iptables
-`raw` table; nothing on the laptop changes, and `kubectl` keeps working):
+`outage.sh` simulates two kinds of outage inside one site's kind node (iptables /
+ip6tables `raw` table; nothing on the laptop changes, and `kubectl` keeps working):
 
 | Mode | Blocks | Still reachable |
 |---|---|---|
@@ -36,7 +36,7 @@ Kargo (`se-demo-iac-kargo`, project `edge-offline`) has:
 akuity login
 argocd login argo.akpdemoapps.link --sso --grpc-web
 kargo login https://kargo.akpdemoapps.link --sso     # teardown and scripted promotions
-./00-setup.sh        # ~8 min: 2 k3d sites, agents, Gitea, apps, Kargo agent + project
+./00-setup.sh        # ~5 min: 2 kind sites, agents, Gitea, apps, Kargo agent + project
 ./state.sh           # both views of each site: what Akuity says, what's really running
 ```
 
@@ -51,18 +51,18 @@ kargo login https://kargo.akpdemoapps.link --sso     # teardown and scripted pro
 | `experiment.sh [offline\|link-down] [min]` | the full scripted run below, one log line per minute, re-checking the outage is real on every line |
 
 The in-site Gitea uses a fixed `demo` / `demo-pass-123` login: it exists only inside
-the throwaway k3d cluster and is reachable only through `kubectl port-forward`.
+the throwaway kind cluster and is reachable only through `kubectl port-forward`.
 
 ## Live demo (about 5 minutes)
 
 ```bash
 ./outage.sh edge-sr-off offline; ./outage.sh edge-sr-on offline
 ./netcheck.sh edge-sr-on                          # Akuity + GitHub unreachable, local Git fine
-kubectl --context k3d-edge-sr-off -n edge-app scale deploy edge-app --replicas=3
-kubectl --context k3d-edge-sr-on  -n edge-app scale deploy edge-app --replicas=3
+kubectl --context kind-edge-sr-off -n edge-app scale deploy edge-app --replicas=3
+kubectl --context kind-edge-sr-on  -n edge-app scale deploy edge-app --replicas=3
 sleep 20; ./state.sh                               # SR on: back to 1. SR off: still 3.
-kubectl --context k3d-edge-sr-off -n akuity delete pod -l app.kubernetes.io/name=argocd-application-controller
-kubectl --context k3d-edge-sr-on  -n akuity delete pod -l app.kubernetes.io/name=argocd-application-controller
+kubectl --context kind-edge-sr-off -n akuity delete pod -l app.kubernetes.io/name=argocd-application-controller
+kubectl --context kind-edge-sr-on  -n akuity delete pod -l app.kubernetes.io/name=argocd-application-controller
 sleep 60; ./state.sh                               # "node reboot": SR off controller 2/3, SR on 3/3
 ./outage.sh edge-sr-off restore; ./outage.sh edge-sr-on restore
 sleep 45; ./state.sh                               # SR off catches up: drift reverted
@@ -76,7 +76,7 @@ restart. When the link returns, the control plane's view wins."
 
 ## Results (Argo CD v3.5.5-ak, agent v0.5.10x, Kargo v1.12.4-ak, 2026-10-20)
 
-From `experiment.sh` runs on both sites at once (`offline` and `link-down`, with and
+Reproduced on k3d (Docker Desktop) and on kind (OrbStack). From `experiment.sh` runs on both sites at once (`offline` and `link-down`, with and
 without the controller restart), with the outage verified on every logged line,
 plus the targeted UI/CLI tests noted. Both outage modes gave the same results.
 
@@ -88,7 +88,7 @@ plus the targeted UI/CLI tests noted. Both outage modes gave the same results.
 | New commit in reachable Git (in-site Gitea) | not applied | **applied within 2.7 min** (normal poll; verified with no controller restart) |
 | Sync clicked in the UI / CLI | rejected immediately ("error resolving repo revision") | same |
 | App edited in the UI / CLI | rejected (validation can't reach the cluster); `--validate=false` forces it | same; the site keeps its local copy until reconnect |
-| On reconnect | catches up within 15-35 s: drift reverted, new commits applied | **control plane wins**: an edited spec replaces the local copy |
+| On reconnect | catches up within 15-70 s: drift reverted, new commits applied | **control plane wins**: an edited spec replaces the local copy |
 | Akuity cluster health | lagged the outage by **2.5 to 10 min** across runs (HEALTHY, then DEGRADED or UNKNOWN); PROGRESSING ~60 s after reconnect | same lag |
 
 Kargo, both sites fully offline for 8 min (promotions requested from the Kargo
@@ -125,11 +125,11 @@ What State Replication changes in the cluster:
 
 ## Caveats
 
-- Earlier runs used filter-table rules, which **kube-router silently bypassed**: it
+- Earlier runs (on k3d) used filter-table rules, which **kube-router silently bypassed**: it
   re-inserts its FORWARD jump above other rules and ACCEPTs traffic for pods that
   have any NetworkPolicy (all agent pods). Results from those runs were discarded or
   re-run; `outage.sh` now uses the `raw` table and checks its hook position.
-- k3d on a laptop, one node per site, one instance; not a scale or soak test.
+- kind on a laptop, one node per site, one instance; not a scale or soak test.
 
 ## Teardown
 
