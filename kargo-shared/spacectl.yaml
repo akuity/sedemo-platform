@@ -4,6 +4,7 @@ metadata:
   name: spacectl
 spec:
   command:
+    - /usr/local/bin/spacectl
     - help
     - --output json
   image: ghcr.io/spacelift-io/spacectl
