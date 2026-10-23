@@ -1,0 +1,19 @@
+# Long-running pod used to test reachability from inside the site. It carries an
+# ingress-only NetworkPolicy, like the Akuity/Kargo agent pods, so it sees the
+# network exactly as they do (some CNIs treat policy-selected pods differently).
+apiVersion: v1
+kind: Pod
+metadata: {name: netcheck, namespace: default, labels: {app: netcheck}}
+spec:
+  containers:
+    - name: curl
+      image: quay.io/curl/curl:8.11.1
+      command: [sleep, infinity]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: netcheck, namespace: default}
+spec:
+  podSelector: {matchLabels: {app: netcheck}}
+  policyTypes: [Ingress]
+  ingress: [{}]

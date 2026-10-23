@@ -1,0 +1,45 @@
+# In-site Git server: stands in for a local mirror at a site that can lose all
+# internet. Public repos, push-to-create, single replica on local-path storage.
+apiVersion: v1
+kind: Namespace
+metadata: {name: gitea}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: {name: gitea-data, namespace: gitea}
+spec:
+  accessModes: [ReadWriteOnce]
+  resources: {requests: {storage: 1Gi}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: gitea, namespace: gitea}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: gitea}}
+  template:
+    metadata: {labels: {app: gitea}}
+    spec:
+      containers:
+        - name: gitea
+          image: gitea/gitea:1.22.6
+          ports: [{containerPort: 3000}]
+          env:
+            - {name: GITEA__security__INSTALL_LOCK, value: "true"}
+            - {name: GITEA__server__ROOT_URL, value: "http://gitea.gitea.svc:3000/"}
+            - {name: GITEA__repository__ENABLE_PUSH_CREATE_USER, value: "true"}
+            - {name: GITEA__repository__DEFAULT_PUSH_CREATE_PRIVATE, value: "false"}
+            - {name: GITEA__service__DISABLE_REGISTRATION, value: "true"}
+          volumeMounts: [{name: data, mountPath: /data}]
+          readinessProbe: {httpGet: {path: /api/healthz, port: 3000}}
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: gitea-data}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: gitea, namespace: gitea}
+spec:
+  selector: {app: gitea}
+  ports: [{port: 3000, targetPort: 3000}]
