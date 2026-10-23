@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 # Both views of each site: what the Akuity control plane reports, and what is
-# actually running inside the site.
+# actually running inside the site.  `state.sh --brief` prints one line per site.
 set -uo pipefail
 # shellcheck source=lib.sh
 source "$(cd "$(dirname "$0")" && pwd)/lib.sh"
+if [[ "${1:-}" == "--brief" ]]; then
+  shift; sites=("$@"); [[ ${#sites[@]} -gt 0 ]] || sites=(edge-sr-off edge-sr-on)
+  for site in "${sites[@]}"; do site_brief "${site}"; done; exit 0
+fi
 SITES=("${@:-edge-sr-off edge-sr-on}"); read -r -a SITES <<< "${SITES[*]}"
 
 for site in "${SITES[@]}"; do
