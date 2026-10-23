@@ -44,6 +44,8 @@ spec:
     spec:
       steps:
       - uses: spacectl
+        config:
+          task: plan
       - task:
           name: promote
 ---

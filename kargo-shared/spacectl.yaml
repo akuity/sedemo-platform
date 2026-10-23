@@ -4,10 +4,105 @@ metadata:
   name: spacectl
 spec:
   command:
-    - /usr/local/bin/spacectl
-    - help
-    - --output json
-  image: ghcr.io/spacelift-io/spacectl
+    - sh -c
+  args:
+    - |
+      SPC_TASK={{config.task}}
+      case; $SPC_TASK in
+      # PLAN TASK
+        plan)
+      cat << EOF
+      {
+        "spacelift": {
+          "commit": {
+            "author": "octocat",
+            "branch": "main",
+            "created_at": 1711234567000000000,
+            "hash": "0123456789abcdef0123456789abcdef01234567",
+            "message": "Update infrastructure resources",
+            "tag": null,
+            "url": "https://github.com"
+          },
+          "request": {
+            "timestamp_ns": 1711234568000000000
+          },
+          "run": {
+            "based_on_local_workspace": false,
+            "branch": "main",
+            "changes": [
+              {
+                "action": "added",
+                "entity": {
+                  "address": "aws_s3_bucket.example",
+                  "name": "example",
+                  "type": "aws_s3_bucket",
+                  "entity_vendor": "terraform",
+                  "entity_type": "aws_s3_bucket",
+                  "data": {
+                    "bucket": "my-sample-bucket-12345"
+                  }
+                },
+                "phase": "plan"
+              }
+            ],
+            "commit": {
+              "author": "octocat",
+              "branch": "main",
+              "created_at": 1711234567000000000,
+              "hash": "0123456789abcdef0123456789abcdef01234567",
+              "message": "Update infrastructure resources",
+              "tag": null,
+              "url": "https://github.com"
+            },
+            "created_at": 1711234568000000000,
+            "creator_session": {
+              "admin": true,
+              "creator_ip": "192.0.2.1",
+              "identity": {
+                "ulid": "01GQ29K8SYXKZVHPZ4HG00BK2E",
+                "federations": {}
+              },
+              "login": "octocat",
+              "name": "Mona Octocat",
+              "teams": ["devops"],
+              "machine": false
+            },
+            "drift_detection": false,
+            "flags": [],
+            "force_apply_mode": "DISABLED",
+            "id": "01H123456789ABCDEFGHJKLM01",
+            "promoted": false,
+            "runtime_config": {
+              "before_init": [],
+              "project_root": "",
+              "runner_image": "public.ecr.aws/spacelift/runner:latest",
+              "terraform_version": "1.7.0"
+            },
+            "state": "FINISHED",
+            "trigger": null,
+            "triggered_by": "octocat",
+            "type": "PROPOSED",
+            "updated_at": 1711234600000000000,
+            "user_provided_metadata": []
+          },
+          "stack": {
+            "administrative": false,
+            "id": "prod-infra-stack",
+            "name": "Production Infrastructure",
+            "namespace": "my-org",
+            "project_root": "",
+            "state": "CLOSED"
+          }
+        }
+      }
+      EOF
+          ;;
+        *)
+          echo "Unknown task: $SPC_TASK"
+          exit 1
+          ;;
+      esac
+  image: alpine
   output:
     source:
       format: JSON
