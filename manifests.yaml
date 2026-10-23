@@ -27,6 +27,7 @@ data:
         "shared": {
           "name": "Shared",
           "projects": {
+            "beyond-k8s": {},
             "team-ada": {
               "warehouses": [
                 "akkoma-main",
@@ -78,10 +79,10 @@ spec:
         app: dashboard-app
       annotations:
         # The app reads its config once at startup; a config change rolls the pods.
-        checksum/config: 59a39a367f7dcd5565001cab728f3821c6fea343260e468e1941e29b9e16421c
+        checksum/config: 74b3697d5fdf4d8adf84df362a66bd42d7c3d3f7c34bade84e5b5c7cf168e4c1
     spec:
       containers:
-        - image: "ghcr.io/akuity/sedemo-monorepo-kargo-dashboard:9"
+        - image: "ghcr.io/akuity/sedemo-monorepo-kargo-dashboard:10"
           name: dashboard-app
           ports:
             - containerPort: 8080
