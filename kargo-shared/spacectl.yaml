@@ -4,7 +4,8 @@ metadata:
   name: spacectl
 spec:
   command:
-    - /bin/sh -c
+    - /bin/sh
+    - -c
     - |
       SPC_TASK={{config.task}}
       case; $SPC_TASK in
