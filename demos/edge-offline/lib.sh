@@ -61,3 +61,26 @@ gitea_open() {
   gitea_close; return 1
 }
 gitea_close() { kill "${GITEA_PF:-}" 2>/dev/null || true; }
+
+# site_brief <site>: one line per site, what's running vs what Git says.
+# Git is read from the site's own Gitea via the in-site netcheck pod, so this
+# works while the site is offline.
+site_brief() {
+  local site="$1" k net akuity reps msg gmsg ctrl ok bad
+  k=(kubectl --context "$(kctx "${site}")" --request-timeout=8s)
+  if docker exec "$(knode "${site}")" iptables -t raw -S EDGE-OUTAGE >/dev/null 2>&1; then
+    docker exec "$(knode "${site}")" iptables -t raw -S EDGE-OUTAGE | grep -q -- '-j RETURN' && net="OFFLINE  " || net="LINK DOWN"
+  else net="online   "; fi
+  akuity=$(akuity argocd cluster get "${CD[@]}" "${site}" -o json 2>/dev/null | jq -r '.healthStatus.code // "?" | sub("STATUS_CODE_"; "")')
+  reps=$("${k[@]}" -n edge-app get deploy edge-app -o jsonpath='{.spec.replicas}' 2>/dev/null)
+  msg=$("${k[@]}" -n edge-app get cm edge-config -o jsonpath='{.data.message}' 2>/dev/null)
+  gmsg=$("${k[@]}" exec netcheck -- curl -s -m 4 http://gitea.gitea.svc:3000/demo/edge-app/raw/branch/main/app.yaml 2>/dev/null \
+    | awk '/message:/ {gsub(/"/, "", $2); print $2; exit}')
+  ctrl=$("${k[@]}" -n akuity get pods -l app.kubernetes.io/name=argocd-application-controller --no-headers 2>/dev/null | awk '{print $2; exit}')
+  ok=$'\033[32m'; bad=$'\033[31m'
+  printf '  %-12s %s  akuity: %-11s  replicas %s%s\033[0m (git 1)  message %s%s\033[0m (git %s)  controller %s%s\033[0m\n' \
+    "${site}" "${net}" "${akuity}" \
+    "$([[ "${reps}" == 1 ]] && echo "${ok}" || echo "${bad}")" "${reps:-?}" \
+    "$([[ "${msg}" == "${gmsg}" ]] && echo "${ok}" || echo "${bad}")" "${msg:-?}" "${gmsg:-?}" \
+    "$([[ "${ctrl}" == 3/3 ]] && echo "${ok}" || echo "${bad}")" "${ctrl:-?}"
+}

@@ -53,7 +53,30 @@ kargo login https://kargo.akpdemoapps.link --sso     # teardown and scripted pro
 The in-site Gitea uses a fixed `demo` / `demo-pass-123` login: it exists only inside
 the throwaway kind cluster and is reachable only through `kubectl port-forward`.
 
-## Live demo (about 5 minutes)
+## Short demo (recommended): sites already offline
+
+```bash
+./stage-offline.sh       # 10+ min before: both sites offline; waits until the dashboard shows them down
+./demo-offline.sh        # live, ~4 min: drift, new release in local Git, node reboot, recovery
+PAUSE=1 ./demo-offline.sh   # same, waiting for Enter before each step
+./state.sh --brief       # one line per site: running vs Git, at any time
+```
+
+`demo-offline.sh` prints each step, the point to make, and a one-line-per-site view
+(green = matches Git, red = doesn't). It waits on real conditions, not fixed sleeps,
+and leaves both sites online at the end. Talk track per step:
+
+1. **Manual change**: "Nothing enforces Git at the site without State Replication; with it, the site puts it back on its own."
+2. **New release in local Git**: "Argo CD polls Git every few minutes; to save time we ask each site to check now, locally. The SR site refreshes its local copy and deploys from its mirror, no control plane involved. The other site has no local copy to ask." (Unprompted pickup takes 2-6 min: poll interval plus repo-server revision cache.)
+3. **Node reboot**: "Without SR the controller can't even load its config. With SR it starts from the local copy."
+4. **Link back**: "SR off catches up in about a minute; SR on was already right; the dashboard turns green last."
+
+Run `./stage-offline.sh` again before each rehearsal or call (each run of
+`demo-offline.sh` ends with the sites online). It first resets the `-local` apps to
+track Git HEAD: a Kargo promotion to `edge-sr-on-local` pins `sr-on-local` to a
+commit (`updateTargetRevision`), and a pinned app correctly ignores new commits.
+
+## Live demo, step by step (about 5 minutes)
 
 ```bash
 ./outage.sh edge-sr-off offline; ./outage.sh edge-sr-on offline
