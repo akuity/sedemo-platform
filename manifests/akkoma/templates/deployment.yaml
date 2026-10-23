@@ -5,7 +5,7 @@ kind: Deployment
 metadata:
   name: team-ada-staging-akkoma
   labels:
-    helm.sh/chart: akkoma-0.8.8
+    helm.sh/chart: akkoma-0.9.0
     app.kubernetes.io/name: akkoma
     app.kubernetes.io/instance: team-ada-staging
     app.kubernetes.io/version: "v3.20.1"
@@ -24,7 +24,7 @@ spec:
     metadata:
       annotations:
         # Force pod restart on config/secret changes
-        checksum/config: 804ca6a486ad442c35c17ffc4c47f6167b7c3387c60297bde257d2572cec19ef
+        checksum/config: e2a4d3bd1b3eae0c16c8023fa60837ef585395e9af13cc4b7abe57b6722d9d94
         checksum/secret: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
       labels:
         app.kubernetes.io/name: akkoma
@@ -69,7 +69,7 @@ spec:
             cpu: 100m
             memory: 32Mi
           requests:
-            cpu: 10m
+            cpu: 5m
             memory: 16Mi
       # Run database migrations before starting Akkoma
       - name: db-migrate
@@ -127,8 +127,8 @@ spec:
             cpu: "1"
             memory: 2Gi
           requests:
-            cpu: 100m
-            memory: 1Gi
+            cpu: 10m
+            memory: 256Mi
         volumeMounts:
         - name: config
           mountPath: /etc/akkoma
@@ -190,8 +190,8 @@ spec:
             cpu: 250m
             memory: 128Mi
           requests:
-            cpu: 50m
-            memory: 64Mi
+            cpu: 5m
+            memory: 32Mi
       containers:
       - name: akkoma
         securityContext:
@@ -277,8 +277,8 @@ spec:
           limits:
             memory: 2Gi
           requests:
-            cpu: 100m
-            memory: 512Mi
+            cpu: 10m
+            memory: 256Mi
         volumeMounts:
         - name: config
           mountPath: /etc/akkoma
