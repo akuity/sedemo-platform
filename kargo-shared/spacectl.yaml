@@ -5,7 +5,6 @@ metadata:
 spec:
   command:
     - sh -c
-  args:
     - |
       SPC_TASK={{config.task}}
       case; $SPC_TASK in
