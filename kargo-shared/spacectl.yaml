@@ -6,6 +6,7 @@ spec:
   command:
     - help
     - --output json
+  image: ghcr.io/akuity/spacectl
   output:
     source:
       format: JSON
