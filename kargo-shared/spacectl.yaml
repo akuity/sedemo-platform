@@ -7,7 +7,7 @@ spec:
     - /bin/sh
     - -c
     - |
-      SPC_TASK={{config.task}}
+      SPC_TASK=${{config.task}}
       case $SPC_TASK in
       # PLAN TASK
         plan)
