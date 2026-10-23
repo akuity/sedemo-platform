@@ -1,0 +1,13 @@
+apiVersion: ee.kargo.akuity.io/v1alpha1
+kind: CustomPromotionStep
+metadata:
+  name: spacectl
+spec:
+  command:
+    - help
+    - --output json
+  output:
+    source:
+      format: JSON
+      type: Stdout
+    
