@@ -27,7 +27,7 @@ metadata: {name: probe}
 spec:
   containers:
     - name: curl
-      image: curlimages/curl:8.11.1
+      image: quay.io/curl/curl:8.11.1
       command: [sh, -c]
       args:
         - |
