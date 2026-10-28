@@ -321,11 +321,15 @@ spec:
       # approve. Nothing is deployed from that branch; it's for review.
       # Own clone path (./render-src): the promote task below clones main to
       # ./src in this same promotion work dir, and git refuses to reuse a
-      # non-empty path.
+      # non-empty path. Signed like the promote task's commit.
       - uses: git-clone
         as: clone
         config:
           repoURL: ${{ vars.repoURL }}
+          author:
+            name: Ada Mancini
+            email: ada.mancini@akuity.io
+            signingKey: ${{ sharedSecret('team-ada-kargo-signing-key').signingKey }}
           checkout:
           - branch: main
             path: ./render-src

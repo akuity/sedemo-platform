@@ -15,9 +15,15 @@ spec:
   - name: image
     value: ghcr.io/adamancini/akkoma
   steps:
+  # GPG-signs the promotion commit. name/email must match the key's UID --
+  # see apps/team-ada/SECRETS.md.
   - uses: git-clone
     config:
       repoURL: ${{ vars.repoURL }}
+      author:
+        name: Ada Mancini
+        email: ada.mancini@akuity.io
+        signingKey: ${{ sharedSecret('team-ada-kargo-signing-key').signingKey }}
       checkout:
       - branch: main
         path: ./src

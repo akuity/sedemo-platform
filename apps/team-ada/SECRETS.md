@@ -92,6 +92,52 @@ PR previews need no other secrets. Their `ExternalSecret`s
 (`env/preview/`) reuse dev's `team-ada-akkoma-dev-{app,postgresql}`
 entries.
 
+## Kargo: signing promotion commits
+
+team-ada's commit-making `git-clone` steps (the `promote` task, staging's
+render to `rendered/team-ada/staging`, and the `pr-<N>` previews) set
+`author.signingKey` from the generic `team-ada-kargo-signing-key`
+`ExternalSecret` in
+[`secrets/kargo-sync-secrets.yaml`](../../secrets/kargo-sync-secrets.yaml).
+Kargo imports the key with `gpg --import` and signs non-interactively, so:
+
+- it must be an ASCII-armored GPG **private** key with **no passphrase**
+- its UID must match the steps' `author.name`/`author.email`
+  (`Ada Mancini <ada.mancini@akuity.io>`)
+- GitHub shows the commits as **Verified** only if the public key is on a
+  GitHub account where that email is verified. A customer would use a bot
+  account here instead of a person.
+
+Generate the key in a throwaway keyring, so it never lands in your own:
+
+```bash
+export GNUPGHOME=$(mktemp -d)
+gpg --batch --passphrase '' --quick-gen-key \
+  'Ada Mancini <ada.mancini@akuity.io>' ed25519 sign 1y
+gpg --armor --export ada.mancini@akuity.io > kargo-signing.pub.asc
+gh gpg-key add kargo-signing.pub.asc --title "Kargo team-ada"  # needs write:gpg_key scope
+
+aws secretsmanager create-secret \
+  --region us-west-2 \
+  --name team-ada-kargo-signing-key \
+  --secret-string "$(gpg --armor --export-secret-keys ada.mancini@akuity.io \
+    | jq -Rs '{"signing-key": .}')"
+
+rm -rf "$GNUPGHOME" kargo-signing.pub.asc; unset GNUPGHOME
+```
+
+The key expires after a year (`1y`). After that gpg refuses to sign and
+every team-ada promotion fails at its commit step, so rerun the above
+(`put-secret-value` instead of `create-secret`) before then.
+
+Create the secret and sync the `ExternalSecret` (below) before merging the
+Stage changes: without it `sharedSecret()` returns no key, and the
+promotions' commits are at best unsigned. Check a promotion's commit with:
+
+```bash
+gh api repos/akuity/sedemo-platform/commits/<sha> --jq .commit.verification
+```
+
 ## Applying changes to `secrets/`
 
 Everything in [`secrets/`](../../secrets/), including

@@ -57,9 +57,14 @@ spec:
           checkout:
           - commit: ${{ commitFrom(vars.chartRepo).ID }}
             path: ./chart-src
+      # Signed like the promote task's commit.
       - uses: git-clone
         config:
           repoURL: ${{ vars.repoURL }}
+          author:
+            name: Ada Mancini
+            email: ada.mancini@akuity.io
+            signingKey: ${{ sharedSecret('team-ada-kargo-signing-key').signingKey }}
           checkout:
           - branch: main
             path: ./src
