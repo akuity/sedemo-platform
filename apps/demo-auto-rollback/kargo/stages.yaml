@@ -197,14 +197,6 @@ metadata:
   annotations:
     kargo.akuity.io/color: violet
 spec:
-  verification:
-    analysisTemplates:
-    - name: success-rate
-    - name: response-time
-    - name: loadgen
-    args:
-    - name: namespace
-      value: demo-rollbacks-prod-amer-west
   requestedFreight:
   - origin:
       kind: Warehouse
@@ -258,3 +250,6 @@ spec:
           apps:
           - name: demo-auto-rollback-prod-${{ vars.region }}
             namespace: argocd
+      - uses: fail
+        as: some-ft-job
+        if: ${{ imageFrom(vars.imageRepo).Tag startsWith "bad" }}
