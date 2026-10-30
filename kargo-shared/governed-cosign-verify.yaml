@@ -1,0 +1,24 @@
+# Signature check for the governed-teams prod controls (governed-teams/
+# kargo-chart/templates/_prod-controls.tpl). Verifies a cosign keyless
+# signature made by an approved CI workflow; fails the step if the image isn't
+# signed by that identity. Turned on in governed-teams/kargo-chart/
+# platform-controls.yaml (checks.signature.enabled).
+apiVersion: ee.kargo.akuity.io/v1alpha1
+kind: CustomPromotionStep
+metadata:
+  name: cosign-verify
+spec:
+  command:
+    - /ko-app/cosign
+    - verify
+    - --certificate-identity-regexp=${{ config.identityRegexp }}
+    - --certificate-oidc-issuer=${{ config.issuer }}
+    - --output=text
+    - ${{ config.image }}
+  image: ghcr.io/sigstore/cosign/cosign:v2.4.1
+  output:
+    source:
+      format: Text
+      type: Stdout
+    transform:
+      verified: 'trim(output) != ""'

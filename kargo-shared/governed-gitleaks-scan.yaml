@@ -1,0 +1,27 @@
+# Secret scan for the governed-teams prod controls (governed-teams/kargo-chart/
+# templates/_prod-controls.tpl). Scans a folder for committed secrets with
+# gitleaks and fails the step if it finds any. Tenants may also use it in dev
+# and staging.
+apiVersion: ee.kargo.akuity.io/v1alpha1
+kind: CustomPromotionStep
+metadata:
+  name: gitleaks-scan
+spec:
+  command:
+    - gitleaks
+    - detect
+    - --no-git
+    - --no-banner
+    - --redact
+    - --exit-code=1
+    - --source=${{ config.path }}
+    - --report-format=json
+    - --report-path=/tmp/gitleaks.json
+  image: ghcr.io/gitleaks/gitleaks:v8.18.4
+  output:
+    source:
+      format: YAML
+      path: /tmp/gitleaks.json
+      type: File
+    transform:
+      findings: 'output == nil ? 0 : len(output)'
