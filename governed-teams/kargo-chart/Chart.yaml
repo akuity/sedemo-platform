@@ -1,0 +1,9 @@
+apiVersion: v2
+name: governed-kargo
+description: Kargo project for a governed tenant. Tenants customize dev and staging; prod runs the platform's locked controls.
+
+type: application
+
+version: 0.1.0
+
+appVersion: "1.0.0"

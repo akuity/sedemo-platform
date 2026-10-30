@@ -1,0 +1,78 @@
+# The prod release policy. Only the platform team edits this file.
+# Change a line, merge, and every tenant's prod picks it up on the next sync.
+
+# Checks every prod release must pass. Turn one off and it's skipped for all.
+checks:
+  # Trivy image scan; blocks on CRITICAL CVEs. Stand-in for the customer's
+  # own scanner (e.g. Snyk).
+  imageScan: true
+  # Kyverno CLI runs policies/prod-policies.yaml against the rendered prod
+  # manifests. Skipped for tenants that deploy with GitHub Actions.
+  policyCheck: true
+  # The image's source commit passed CI: every GitHub check run on that commit
+  # finished successfully. No check runs means no evidence, which blocks.
+  ciEvidence:
+    enabled: true
+    # Only look at check runs with this name (e.g. the image build job). Empty
+    # means all of them. In a monorepo, set it: otherwise another team's
+    # failing workflow on the same commit blocks this release.
+    checkName: ""
+  # gitleaks on the source the image was built from.
+  secretScan:
+    enabled: true
+    # Folder of the source repo to scan (the app the image is built from).
+    path: rollouts-app
+  # cosign keyless signature from the CI workflow. Off until CI signs images:
+  # see ../ci/sign-images.yaml.
+  signature:
+    enabled: false
+    identityRegexp: '^https://github\.com/akuity/sedemo-monorepo/\.github/workflows/.+$'
+    issuer: https://token.actions.githubusercontent.com
+
+# How a normal prod release gets its change approval.
+#   approval    someone in groups.approvers approves in Kargo
+#   servicenow  a ServiceNow change request is raised and must reach Implement
+changeGate: approval
+
+# Emergency releases ("break glass"). Someone in groups.breakGlass authorizes;
+# the checks still run and are recorded but don't block; an audit event and a
+# Freight record mark the release for review afterwards.
+breakGlass:
+  enabled: true
+  # audit       audit event and Freight record only
+  # servicenow  also raise a ServiceNow incident
+  incident: audit
+
+# SSO groups (Kargo checks the "groups" claim).
+groups:
+  # Who may start a prod release and fill in its release type (with breakGlass).
+  releasers: sedemo-admin
+  approvers: sedemo-approver
+  breakGlass: sedemo-breakglass
+
+# Shared secrets the platform's steps use. Tenants can't read shared secrets.
+integrations:
+  githubTokenSecret: github-pr-token     # read access to GitHub check runs
+  serviceNowSecret: kargo-step-snow      # used when changeGate or incident is servicenow
+
+# What tenants may use (enforced by the guardrails).
+approvedRegistries:
+- ghcr.io/akuity/
+# Repos whose GitHub Actions workflows may deploy a tenant (deploy.method: github-actions).
+approvedDeployRepos:
+- https://github.com/akuity/
+# Steps tenants may add below prod. Nothing here writes to Git or Argo CD or
+# triggers a deployment workflow.
+allowedTenantSteps:
+- http
+- trivy-image
+- grype
+- opa-test
+- kyverno-policy-apply
+- gitleaks-scan
+- extract-images
+- hello-world
+- random-number
+- teams-notify
+- send-message
+- wait-for-approval

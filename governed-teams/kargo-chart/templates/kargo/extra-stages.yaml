@@ -1,0 +1,98 @@
+{{- /*
+Tenant stages, from pipeline.extraStages (up to 5):
+  deploy: true   a real environment with its own namespace and Argo CD app
+  deploy: false  a test gate that only runs the team's steps
+Prod only takes Freight from staging, so no tenant stage is a path to prod.
+*/ -}}
+{{- $method := include "governed.deployMethod" . }}
+{{- range $st := .Values.pipeline.extraStages }}
+{{- $app := $.Values.application.name }}
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: {{ $st.name }}
+  namespace: {{ $app }}
+  labels:
+    tier: tenant
+  annotations:
+    kargo.akuity.io/color: {{ if $st.deploy }}blue{{ else }}gray{{ end }}
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: {{ $app }}
+    sources:
+      stages:
+      - {{ $st.after | default "staging" }}
+  - origin:
+      kind: Warehouse
+      name: '{{ $app }}-chart'
+    sources:
+      stages:
+      - {{ $st.after | default "staging" }}
+  promotionTemplate:
+    spec:
+      steps:
+      {{- if and $st.deploy (eq $method "github-actions") }}
+      # ---- the tenant's GitHub Actions workflow deploys this environment ----
+      {{- include "governed.ghaDeploy" (dict "root" $ "stage" $st.name) | nindent 6 }}
+      {{- else if $st.deploy }}
+      # ---- platform deploy steps for a tenant environment ----
+      - uses: git-clone
+        as: clone-base-chart
+        config:
+          repoURL: {{ $.Values.chartUrl }}
+          checkout:
+          - branch: {{ $.Values.platform.branch }}
+            path: ./chart
+      - uses: git-clone
+        as: clone-app-team-values
+        config:
+          repoURL: {{ $.Values.repoUrl }}
+          checkout:
+          - branch: {{ $.Values.git.main }}
+            path: ./src
+          - branch: rendered/{{ $app }}/{{ $st.name }}
+            create: true
+            path: ./out
+      - uses: git-clear
+        config:
+          path: ./out
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ./chart/{{ $.Values.chartPath }}
+          valuesFiles:
+          - ./src/{{ $.Values.project.path }}/platform/app-values.yaml
+          outPath: ./out/manifests.yaml
+          namespace: '{{ $app }}-{{ $st.name }}'
+          setValues:
+            - key: image.tag
+              value: "\"{{ printf "${{ imageFrom('%s').Tag }}" $.Values.image.repository }}\""
+            - key: kargo.stage
+              value: {{ $st.name }}
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+            - key: project.name
+              value: '{{ $app }}'
+            - key: application.name
+              value: '{{ $app }}'
+      - uses: git-commit
+        as: commit
+        config:
+          path: ./out
+          message: "Promote {{ printf "${{ imageFrom('%s').Tag }}" $.Values.image.repository }} to {{ $st.name }} [skip ci]"
+      - uses: git-push
+        as: push
+        config:
+          path: ./out
+          targetBranch: rendered/{{ $app }}/{{ $st.name }}
+      - uses: argocd-update
+        config:
+          apps:
+          - name: {{ $app }}-{{ $st.name }}
+            namespace: argocd
+      {{- end }}
+      {{- include "governed.tenantSteps" (dict "where" (printf "pipeline.extraStages[%s]" $st.name) "steps" $st.steps) | nindent 6 }}
+{{- end }}

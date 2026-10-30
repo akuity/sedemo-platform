@@ -1,0 +1,41 @@
+# Backstop: prod images must be signed by CI, whether or not they went through Kargo.
+# Starts in Audit. Switch to Enforce once CI signs images (../ci/) and
+# checks.signature.enabled is on in platform-controls.yaml.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: governed-prod-verify-images
+  annotations:
+    policies.kyverno.io/title: Prod images are signed by CI
+spec:
+  validationFailureAction: Audit
+  webhookTimeoutSeconds: 30
+  background: false
+  rules:
+  - name: ci-signature
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+          namespaces:
+          - gov-*-prod
+      - resources:
+          kinds:
+          - Pod
+          namespaceSelector:
+            matchLabels:
+              tier: prod
+    verifyImages:
+    - imageReferences:
+      - "ghcr.io/akuity/*"
+      attestors:
+      - entries:
+        - keyless:
+            subjectRegExp: '^https://github\.com/akuity/sedemo-monorepo/\.github/workflows/.+$'
+            issuer: https://token.actions.githubusercontent.com
+            rekor:
+              url: https://rekor.sigstore.dev
+      mutateDigest: false
+      verifyDigest: false
+      required: true

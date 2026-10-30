@@ -1,0 +1,9 @@
+# REJECTED (deploy-allowlist): a GitHub Actions tenant points at a workflow outside the approved org.
+image:
+  repository: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+deploy:
+  method: github-actions
+  githubActions:
+    repo: https://github.com/someone-else/deploy-anything
+    workflow: deploy.yaml
+    ref: main

@@ -1,0 +1,7 @@
+# REJECTED (registry-allowlist): an image from an unapproved registry.
+image:
+  repository: docker.io/someuser/payments-api
+ingress:
+  custom_prefix: rejected-gov
+labels:
+  purpose: demo

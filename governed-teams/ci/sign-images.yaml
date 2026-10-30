@@ -1,0 +1,24 @@
+# Signs images with cosign keyless. Merge into the monorepo's image build job, after the push
+# (it needs the digest: steps.<id>.outputs.digest).
+# Turns on the prod signature check and lets cluster-policies/prod-verify-images.yaml enforce.
+# For scene 3's unsigned image, push one tag without this step.
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write        # cosign keyless signing uses the workflow's OIDC token
+
+jobs:
+  build:
+    steps:
+      # ... existing checkout, login and build-push steps; give the build step
+      # id: build so its digest is available ...
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign the image
+        env:
+          IMAGE: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: cosign sign --yes "${IMAGE}@${DIGEST}"

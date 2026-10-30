@@ -1,0 +1,114 @@
+# Chart defaults. Tenants don't edit this file: they set the TENANT values below in their
+# own app-values.yaml. Prod isn't a value; it's driven by platform-controls.yaml.
+
+# ============================================================================
+# PLATFORM: set by governed-teams/project-templates (valuesObject), which
+# overrides anything a tenant puts in app-values.yaml. Defaults here only make
+# a local `helm template` work.
+# ============================================================================
+application:
+  name: gov-template
+
+project:
+  name: governed-template
+  group: akuityio:demo
+  path: governed/template
+
+platform:
+  repoUrl: https://github.com/akuity/sedemo-platform
+  branch: main
+  dir: governed-teams
+
+repoUrl: https://github.com/akuity/sedemo-monorepo.git
+chartUrl: https://github.com/akuity/sedemo-platform
+chartPath: governed-teams/apps-chart/
+
+team:
+  role: sedemo
+
+kargo:
+  stage: dev
+
+git:
+  main: main
+  outPath: out
+  srcPth: src
+
+# ============================================================================
+# TENANT tier 1: settings
+# ============================================================================
+image:
+  # Must start with an approved registry (guardrail: registry-allowlist).
+  repository: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+  pullPolicy: IfNotPresent
+  tag: 218-yellow
+  selectionStrategy: NewestBuild
+  tagRegex: '^\d*-[a-z]*$'
+
+rollouts:
+  enabled: true
+
+environments:
+  # Required. Every release goes through staging before prod
+  # (guardrail: locked-setting).
+  staging: true
+
+services:
+  s3:
+    enabled: false
+
+notifications:
+  slack:
+    enabled: false
+
+# How this tenant deploys (guardrail: deploy-allowlist).
+#   argocd          (default) Kargo renders manifests and Argo CD syncs them
+#   github-actions  Kargo runs the team's own workflow for each stage, with
+#                   inputs environment (the stage) and version (the image tag).
+#                   For teams that don't use Argo CD. Prod still runs the same
+#                   prod-controls first.
+deploy:
+  method: argocd
+  # githubActions:
+  #   repo: https://github.com/akuity/sedemo-platform    # must be an approved deploy repo
+  #   workflow: example-github-action.yaml               # file in .github/workflows
+  #   ref: main
+
+# ============================================================================
+# TENANT tiers 2 and 3: change the pipeline below prod
+# ============================================================================
+pipeline:
+  # Tier 2: extra steps. They run after the manifests are rendered and before
+  # anything is committed, so a failing step stops the promotion.
+  # Only steps on the allowlist in templates/_governed.tpl are accepted.
+  dev:
+    extraSteps: []
+  staging:
+    extraSteps: []
+    # Which stages staging waits for. Default: dev. List your own dev-side
+    # stages here to put them in front of staging, e.g. [qa]. With more than
+    # one, Freight has to pass all of them.
+    after: [dev]
+  # Tier 3: up to 5 stages of the team's own.
+  #   name         lowercase; can't be dev, staging, prod or contain "prod"
+  #   after        dev, staging, or a stage listed above it (default: staging)
+  #   deploy       true: a real environment with its own namespace, Argo CD app
+  #                and URL (<name>.<ingress prefix>.akpdemoapps.link); steps run
+  #                after the deploy. false (default): steps only.
+  #   autoPromote  true: new Freight is promoted automatically
+  #   steps        allowlisted steps, as in extraSteps
+  # Prod never takes Freight from a tenant stage, so none of these can become
+  # a path to prod.
+  #
+  #   extraStages:
+  #   - name: qa
+  #     after: dev
+  #     deploy: true
+  #     autoPromote: true
+  #   - name: smoke-test
+  #     after: staging
+  #     steps:
+  #     - uses: http
+  #       config: { method: GET, url: https://..., successExpression: response.status == 200 }
+  extraStages: []
+  # There is no pipeline.prod. Setting it is rejected (guardrail: prod-locked).

@@ -1,0 +1,60 @@
+# Creates every governed tenant: one set of apps per folder in sedemo-monorepo/governed/*.
+# Like templated-teams/appset.yaml, but every name is prefixed gov-/governed- so nothing collides.
+# Testing from a fork or branch? Run demo/use-branch.sh.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: governed-team-projects
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/akuity/sedemo-monorepo
+        revision: main
+        directories:
+        - path: governed/*
+  template:
+    metadata:
+      name: 'gov-{{.path.basename}}-appsets'
+      namespace: argocd
+      finalizers:
+      - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: templated-apps
+      sources:
+      # The tenant's own values file, in the team-managed monorepo folder.
+      - repoURL: https://github.com/akuity/sedemo-monorepo.git
+        targetRevision: main
+        ref: appValues
+      # Platform-owned chart that creates the tenant's Argo CD and Kargo objects.
+      - repoURL: https://github.com/akuity/sedemo-platform
+        targetRevision: main            # <- your branch, when testing
+        path: governed-teams/project-templates/
+        helm:
+          valueFiles:
+          - '$appValues/governed/{{.path.basename}}/platform/app-values.yaml'
+          # valuesObject wins over valueFiles, so tenants can't override these.
+          valuesObject:
+            repoUrl: https://github.com/akuity/sedemo-monorepo.git
+            platform:
+              repoUrl: https://github.com/akuity/sedemo-platform
+              branch: main              # <- your branch, when testing
+              dir: governed-teams
+              cluster: sedemo-primary      # <- your cluster, when testing
+            project:
+              path: governed/{{.path.basename}}
+              name: 'governed-{{.path.basename}}'
+            application:
+              name: 'gov-{{.path.basename}}'
+            isStandalone: false
+      destination:
+        name: in-cluster
+      syncPolicy:
+        automated:
+          prune: true
+          enabled: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true

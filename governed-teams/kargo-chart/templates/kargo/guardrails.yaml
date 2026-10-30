@@ -1,0 +1,4 @@
+{{- /*
+Runs the guardrails (_governed.tpl) before anything renders. Creates nothing.
+*/ -}}
+{{- include "governed.guardrails" . -}}

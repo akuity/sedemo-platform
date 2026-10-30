@@ -1,0 +1,14 @@
+# REJECTED (prod-locked): a tenant tries to add its own step to prod.
+image:
+  repository: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+ingress:
+  custom_prefix: rejected-gov
+labels:
+  purpose: demo
+pipeline:
+  prod:
+    extraSteps:
+    - uses: http
+      config:
+        method: POST
+        url: https://example.com/skip-checks

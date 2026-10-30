@@ -1,0 +1,12 @@
+# What governed-teams/project-templates passes to kargo-chart as valuesObject
+# for a tenant folder named "<name>". verify.sh applies it last, so it wins
+# over the tenant file, the same way valuesObject does in Argo CD.
+repoUrl: https://github.com/akuity/sedemo-monorepo.git
+chartUrl: https://github.com/akuity/sedemo-platform
+chartPath: governed-teams/apps-chart/
+platform:
+  repoUrl: https://github.com/akuity/sedemo-platform
+  branch: main
+  dir: governed-teams
+team:
+  role: sedemo
