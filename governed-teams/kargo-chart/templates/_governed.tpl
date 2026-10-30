@@ -132,7 +132,7 @@ dev staging prod
 {{- end -}}
 {{- range $key, $_ := $p -}}
   {{- if eq $key "prod" -}}
-    {{- fail "GUARDRAIL [prod-locked]: pipeline.prod can't be set. The prod pipeline is the same for every tenant and only the platform team changes it. To propose a new prod check, open a PR to governed-teams." -}}
+    {{- fail "GUARDRAIL [prod-locked]: pipeline.prod can't be set. The prod pipeline is the same for every tenant and only the platform team changes it. Prod checks are set in the platform's policy, not in your file." -}}
   {{- else if not (has $key (list "dev" "staging" "extraStages")) -}}
     {{- fail (printf "GUARDRAIL [pipeline-shape]: pipeline.%s isn't a setting. Use pipeline.dev, pipeline.staging or pipeline.extraStages." $key) -}}
   {{- end -}}
