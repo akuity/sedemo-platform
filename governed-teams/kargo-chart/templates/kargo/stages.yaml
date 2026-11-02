@@ -217,7 +217,7 @@ spec:
         config:
           approvers:
           - claim: groups
-            value: sedemo-approver
+            value: {{ (.Files.Get "platform-controls.yaml" | fromYaml).groups.approvers }}
             required: true
       {{- include "governed.tenantSteps" (dict "where" "pipeline.staging.extraSteps" "steps" .Values.pipeline.staging.extraSteps) | nindent 6 }}
       - uses: git-commit
