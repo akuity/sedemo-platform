@@ -25,17 +25,18 @@ Kargo is the paved road through the lock; Kyverno and GitHub are the lock.
 | Tenant developer (`sedemo-team`) (not implemented yet) | Promote to dev and the team's own stages. Change the team's `app-values.yaml`. |
 | QA (`sedemo-qa`) (not implemented yet)| Promote to staging |
 | SRE (`sedemo-admin`) | Promote anywhere; start prod releases and fill in their release type |
-| Approver (`sedemo-approver`) | Approve prod releases |
+| Approver (`sedemo-admin`) | Approve prod releases |
 | Break glass (`sedemo-breakglass`) | Authorize emergency prod releases |
 
-You need three logins, one browser profile each, so nobody on screen
-approves their own release:
+You need two logins, one browser profile each:
 
 | Login | Groups | Plays |
 | --- | --- | --- |
-| Tenant developer | `sedemo-team` | The team that built the change. Gets denied in scenes 2 and 4. |
-| Releaser | `sedemo-admin` | Starts prod releases and picks the release type (scenes 2, 3, 5). |
-| Approver | `sedemo-approver`, `sedemo-breakglass` | Approves normal releases and authorizes break glass (scenes 2, 5). |
+| Tenant developer | `sedemo-user` | The team that built the change. Gets denied in scenes 2 and 4. |
+| Releaser | `sedemo-admin` | Starts prod releases, picks the release type and approves normal releases (scenes 2, 3, 5). Can't authorize break glass. |
+
+Here the releaser also approves normal releases, because `groups.approvers` is
+`sedemo-admin`. Say so: in a real setup, approvals go to a separate group.
 
 ## Before the demo
 
@@ -44,7 +45,7 @@ The day before:
 - [ ] `governed-teams/tests/verify.sh` passes
 - [ ] The `governed-team-projects` ApplicationSet is registered and `payments`, `checkout`, `reports` are in `sedemo-monorepo/governed/` (`demo/reset-tenants.sh`)
 - [ ] `gitleaks-scan` and `cosign-verify` exist in Kargo (they deploy from `kargo-shared/` on merge)
-- [ ] The groups above exist and all three logins are in the right ones
+- [ ] The groups above exist and both logins are in the right ones
 - [ ] One Freight per tenant is already through staging, so prod promotions are ready to go
 - [ ] One full normal prod release and one break-glass release have worked end to end
 - [ ] If `changeGate` or `breakGlass.incident` is `servicenow`: the ServiceNow instance is awake (developer instances hibernate)
@@ -106,8 +107,8 @@ on your branch, sync, and show both tenants' `prod-controls` changed. Set it bac
    Only releasers and break glass can answer it; the tenant developer can't.
 3. The checks run: image scan, policy check, CI evidence, secret scan.
 4. It stops at **change-approval** and waits. Nothing has been written to the prod branch.
-5. As the tenant developer: try to approve. Denied (not in `sedemo-approver`). 
-6. Rerun the freight and as the approver: approve with a note. It continues: PR opened and merged on
+5. As the tenant developer: try to approve. Denied (not in `sedemo-admin`). 
+6. Rerun the freight and as the releaser: approve with a note. It continues: PR opened and merged on
    `rendered/gov-payments/prod`, approve the PR and Argo CD syncs.
 
 Something like: "Without an approved change, it's blocked and waiting. The team that
@@ -233,9 +234,10 @@ emergencies go through break glass."
 1. As the releaser: in `gov-payments`, promote to prod and choose
    **emergency**, reason "Hotfix for payment outage INC-123".
 2. The checks still run but only report.
-3. It waits for **break-glass-approval**. As the approver (in
-   `sedemo-breakglass`), authorize.
-4. It releases. Show the Freight: `prod-release: emergency`,
+3. It waits for **break-glass-approval**. As the releaser, try to authorize.
+   You can't: break glass needs `sedemo-breakglass`. That's the point; normal
+   approval and break glass are different groups.
+4. Once someone in `sedemo-breakglass` authorizes, it releases. Show the Freight: `prod-release: emergency`,
    `break-glass-requested-by`, `-authorized-by`, `-reason`,
    `break-glass-review: pending`.
 5. The audit log: a `break-glass` event. With `incident: servicenow`, the

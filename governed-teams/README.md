@@ -65,7 +65,7 @@ branch until the task finishes.
 | **ci-evidence** | Every GitHub check run on the image's source commit succeeded; none at all blocks | `checks.ciEvidence` |
 | **secret-scan** | gitleaks on the source the image was built from | `checks.secretScan` |
 | **signature** | cosign keyless signature from CI (off until CI signs images) | `checks.signature` |
-| **change gate** | Approval by `sedemo-approver`, or a ServiceNow change that must reach Implement | `changeGate` |
+| **change gate** | Approval by `groups.approvers` (`sedemo-admin`), or a ServiceNow change that must reach Implement | `changeGate` |
 | **evidence** | Audit event, plus who/what/which checks recorded on the Freight | always |
 | **break glass** | Emergency: checks report but don't block, `sedemo-breakglass` authorizes, audit event + Freight record (+ ServiceNow incident) | `breakGlass` |
 
@@ -149,9 +149,9 @@ All three need Helm 3 (`brew install helm`).
    `kargo-shared/governed-cosign-verify.yaml` define the `gitleaks-scan` and
    `cosign-verify` steps. They deploy with the existing `kargo-shared` app.
    They're new names, so they don't change any other demo.
-2. **Groups.** `sedemo-approver` exists. `sedemo-breakglass` probably doesn't:
-   ask for it, or point `groups.breakGlass` in `platform-controls.yaml` at an
-   existing group for the demo.
+2. **Groups.** The demo SSO has `sedemo-admin` and `sedemo-user`. Approvals go to
+   `sedemo-admin` (`groups.approvers`). `sedemo-breakglass` probably doesn't exist,
+   so break glass shows as blocked until someone is added.
 3. **Register the ApplicationSet.** `templated-teams/appset.yaml` isn't applied
    from this repo (probably from `sedemo-infra-iac`). Either ask Daniel to add
    `governed-teams/appset.yaml` the same way, apply it with
@@ -194,14 +194,11 @@ against Kargo yet. Watch these:
 - **Tenant environments:** a test-only stage should pass Freight on once its
   steps succeed; new URLs like `qa.checkout-gov.akpdemoapps.link` need DNS and
   a certificate like the others.
-- **New Freight:** the Warehouse only creates Freight when the image's source
-  commit matches the latest commit to the tenant's folder, so the image build
-  in sedemo-monorepo has to run for commits that touch `governed/**` (check
-  its path filter). Otherwise, assemble Freight by hand in the Kargo UI.
+- **New Freight:** the Warehouse makes Freight from the newest image and the
+  latest commit to the tenant's folder.
 - **`ctx.meta.promotion.actor`** should show who started the promotion
   (`prod-promoted-by` on the Freight).
-- **Requester ≠ approver** (spike S2) is still open: someone in both
-  `sedemo-admin` and `sedemo-approver` could approve their own release.
+- **Requester ≠ approver** (spike S2) is still open: with approvals set to sedemo-admin, the person who starts a release can also approve it.
 
 ## Folder map
 

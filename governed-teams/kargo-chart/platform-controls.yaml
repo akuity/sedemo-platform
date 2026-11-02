@@ -47,7 +47,7 @@ breakGlass:
 groups:
   # Who may start a prod release and fill in its release type (with breakGlass).
   releasers: sedemo-admin
-  approvers: sedemo-approver
+  approvers: sedemo-admin
   breakGlass: sedemo-breakglass
 
 # Shared secrets the platform's steps use. Tenants can't read shared secrets.
