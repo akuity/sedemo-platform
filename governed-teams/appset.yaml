@@ -22,7 +22,7 @@ spec:
       finalizers:
       - resources-finalizer.argocd.argoproj.io
     spec:
-      project: templated-apps
+      project: governed-apps
       sources:
       # The tenant's own values file, in the team-managed monorepo folder.
       - repoURL: https://github.com/akuity/sedemo-monorepo.git
