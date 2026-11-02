@@ -1,0 +1,9 @@
+# REJECTED (locked-setting): a tenant tries to switch off the prod image scan.
+image:
+  repository: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+ingress:
+  custom_prefix: rejected-gov
+labels:
+  purpose: demo
+prodControls:
+  imageScan: false

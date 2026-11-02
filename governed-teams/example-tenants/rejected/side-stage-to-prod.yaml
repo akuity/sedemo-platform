@@ -1,0 +1,15 @@
+# REJECTED (prod-source-fixed): a "side stage" that is really a second route to prod.
+image:
+  repository: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+ingress:
+  custom_prefix: rejected-gov
+labels:
+  purpose: demo
+pipeline:
+  extraStages:
+  - name: prod-hotfix
+    after: dev
+    steps:
+    - uses: hello-world
+      config:
+        message: deploying to prod without the controls

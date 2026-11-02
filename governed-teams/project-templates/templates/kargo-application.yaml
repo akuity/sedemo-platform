@@ -1,0 +1,47 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: '{{.Values.application.name}}-kargo'
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: '{{.Values.project.name}}'
+  sources:
+  # The tenant's own values file.
+  - repoURL: {{.Values.repoUrl}}
+    targetRevision: main
+    ref: appValues
+  # Platform-owned Kargo chart. If the guardrails in kargo-chart reject the
+  # tenant's values, this Application shows the error and nothing reaches Kargo.
+  - repoURL: {{ .Values.platform.repoUrl }}
+    targetRevision: {{ .Values.platform.branch }}
+    path: {{ .Values.platform.dir }}/kargo-chart/
+    helm:
+      valueFiles:
+      - '$appValues/{{.Values.project.path}}/platform/app-values.yaml'
+      # valuesObject wins over valueFiles: tenants can't override these.
+      valuesObject:
+        chartUrl: {{ .Values.platform.repoUrl }}
+        chartPath: {{ .Values.platform.dir }}/apps-chart/
+        repoUrl: {{.Values.repoUrl}}
+        platform:
+          repoUrl: {{ .Values.platform.repoUrl }}
+          branch: {{ .Values.platform.branch }}
+          dir: {{ .Values.platform.dir }}
+        project:
+          path: '{{.Values.project.path }}'
+          name: '{{.Values.project.name}}'
+        application:
+          name: '{{.Values.application.name}}'
+        team:
+          role: '{{ .Values.team.role }}'
+  destination:
+    name: kargo
+  syncPolicy:
+    automated:
+      prune: true
+      enabled: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

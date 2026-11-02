@@ -1,0 +1,9 @@
+apiVersion: v2
+name: governed-appset-template
+description: Templates the Argo CD project, per-environment applications and Kargo application for a governed tenant
+
+type: application
+
+version: 0.1.0
+
+appVersion: "1.0.0"

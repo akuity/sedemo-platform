@@ -1,0 +1,43 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-pod-labels
+spec:
+  validationFailureAction: Enforce
+  rules:
+  - name: check-purpose-label
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: "The label 'purpose' is required on pods."
+      pattern:
+        metadata:
+          labels:
+            purpose: "?*"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-rollout-labels
+spec:
+  # For initial rollout, use Audit mode to flag findings to users.  
+  validationFailureAction: Audit
+  #validationFailureAction: Enforce
+  rules:
+  - name: check-purpose-label
+    match:
+      any:
+      - resources:
+          kinds:
+          - argoproj.io/v1alpha1/Rollout
+    validate:
+      message: "The label 'purpose' is required on Rollout template spec."
+      pattern:
+        spec:
+          template:
+            metadata:
+              labels:
+                purpose: "?*"

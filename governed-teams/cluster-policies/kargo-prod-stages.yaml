@@ -1,0 +1,52 @@
+# Self-hosted Kargo only: every prod Stage must be labeled tier: prod and run
+# prod-controls, even if someone creates it with kubectl.
+# On Akuity-hosted Kargo, the guardrails and tenant RBAC do this job instead.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: governed-kargo-prod-stages
+  annotations:
+    policies.kyverno.io/title: Prod Stages run prod-controls
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+  - name: prod-stage-has-controls
+    match:
+      any:
+      # Only governed tenants' projects (gov-*), so other demos' prod Stages
+      # aren't affected. CREATE and UPDATE only: deletes must always work.
+      - resources:
+          kinds:
+          - kargo.akuity.io/v1alpha1/Stage
+          names:
+          - prod
+          namespaces:
+          - gov-*
+          operations:
+          - CREATE
+          - UPDATE
+      - resources:
+          kinds:
+          - kargo.akuity.io/v1alpha1/Stage
+          selector:
+            matchLabels:
+              tier: prod
+          namespaces:
+          - gov-*
+          operations:
+          - CREATE
+          - UPDATE
+    validate:
+      message: >-
+        A prod Stage must be labeled tier: prod and run the platform's
+        prod-controls task.
+      deny:
+        conditions:
+          any:
+          - key: "{{ request.object.metadata.labels.tier || '' }}"
+            operator: NotEquals
+            value: prod
+          - key: prod-controls
+            operator: AnyNotIn
+            value: "{{ request.object.spec.promotionTemplate.spec.steps[].task.name || `[]` }}"

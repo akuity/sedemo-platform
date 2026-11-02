@@ -1,0 +1,71 @@
+# Prod policies, run by prod-controls on the rendered prod manifests. One violation blocks the release.
+# The purpose-label rule also runs in staging (require-labels.yaml), where it only warns.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: prod-require-purpose-label
+spec:
+  validationFailureAction: Enforce
+  rules:
+  - name: purpose-label-on-workloads
+    match:
+      any:
+      - resources:
+          kinds:
+          - Deployment
+          - argoproj.io/v1alpha1/Rollout
+    validate:
+      message: "Prod workloads need a 'purpose' label on the pod template. Set labels.purpose in app-values.yaml."
+      pattern:
+        spec:
+          template:
+            metadata:
+              labels:
+                purpose: "?*"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: prod-approved-registries
+spec:
+  validationFailureAction: Enforce
+  rules:
+  - name: images-from-approved-registries
+    match:
+      any:
+      - resources:
+          kinds:
+          - Deployment
+          - argoproj.io/v1alpha1/Rollout
+    validate:
+      message: "Prod images must come from an approved registry (ghcr.io/akuity/*)."
+      pattern:
+        spec:
+          template:
+            spec:
+              containers:
+              - image: "ghcr.io/akuity/*"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: prod-disallow-privileged
+spec:
+  validationFailureAction: Enforce
+  rules:
+  - name: no-privileged-containers
+    match:
+      any:
+      - resources:
+          kinds:
+          - Deployment
+          - argoproj.io/v1alpha1/Rollout
+    validate:
+      message: "Privileged containers aren't allowed in prod."
+      pattern:
+        spec:
+          template:
+            spec:
+              containers:
+              - =(securityContext):
+                  =(privileged): "false"

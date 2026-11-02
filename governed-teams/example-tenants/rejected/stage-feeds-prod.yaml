@@ -1,0 +1,13 @@
+# REJECTED (prod-source-fixed): a tenant stage that tries to feed prod directly.
+image:
+  repository: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+ingress:
+  custom_prefix: rejected-gov
+labels:
+  purpose: demo
+pipeline:
+  extraStages:
+  - name: hotfix
+    after: dev
+    deploy: true
+    feeds: prod

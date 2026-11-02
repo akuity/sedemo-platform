@@ -1,0 +1,91 @@
+{{- /*
+One Argo CD Application per environment (dev, staging, prod) and per tenant stage
+with deploy: true. Namespaces get a tier label so cluster policies can find prod.
+GitHub Actions tenants get none: their workflow deploys.
+Always all three environments, whatever the tenant file says: a file that turns
+staging off is rejected by kargo-chart's guardrails, and it mustn't delete the
+staging app on its way to being rejected.
+*/}}
+{{- if ne (.Values.deploy.method | default "argocd") "github-actions" }}
+{{ range $key := list "dev" "staging" "prod" }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: '{{$.Values.application.name}}-{{$key}}'
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  annotations:
+    kargo.akuity.io/authorized-stage: '{{$.Values.application.name}}:{{$key}}'
+spec:
+  project: '{{$.Values.project.name}}'
+  source:
+  #pull custom values from team managed monorepo folder (rendered by Kargo)
+    repoURL: '{{$.Values.repoUrl}}'
+    targetRevision: rendered/{{ $.Values.application.name }}/{{$key}}
+    path: .
+  destination:
+    name: '{{ $.Values.platform.cluster }}'
+    namespace: {{ $.Values.application.name }}-{{$key}}
+  syncPolicy:
+    automated:
+      prune: true
+      enabled: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        tier: {{ $key }}
+        governed.akuity.io/tenant: {{ $.Values.application.name }}
+    retry:
+      limit: 2
+---
+{{ end }}
+{{- /*
+Tenant environments: one Application per pipeline.extraStages entry with
+deploy: true. The name check mirrors kargo-chart's guardrails, so a stage the
+guardrails would reject never gets an Application.
+*/}}
+{{- range $st := .Values.pipeline.extraStages }}
+{{- if kindIs "map" $st }}
+{{- $name := get $st "name" | toString }}
+{{- if and (get $st "deploy") (regexMatch "^[a-z0-9]([a-z0-9-]{0,38}[a-z0-9])?$" $name) (not (has $name (list "dev" "staging" "prod"))) (not (contains "prod" $name)) }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: '{{ $.Values.application.name }}-{{ $name }}'
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  annotations:
+    kargo.akuity.io/authorized-stage: '{{ $.Values.application.name }}:{{ $name }}'
+  labels:
+    tier: tenant
+spec:
+  project: '{{ $.Values.project.name }}'
+  source:
+    repoURL: '{{ $.Values.repoUrl }}'
+    targetRevision: rendered/{{ $.Values.application.name }}/{{ $name }}
+    path: .
+  destination:
+    name: '{{ $.Values.platform.cluster }}'
+    namespace: {{ $.Values.application.name }}-{{ $name }}
+  syncPolicy:
+    automated:
+      prune: true
+      enabled: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        tier: tenant
+        governed.akuity.io/tenant: {{ $.Values.application.name }}
+    retry:
+      limit: 2
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

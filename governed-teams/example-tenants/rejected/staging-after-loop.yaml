@@ -1,0 +1,14 @@
+# REJECTED (pipeline-shape): staging waits for a stage that comes after staging, a loop.
+image:
+  repository: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+ingress:
+  custom_prefix: rejected-gov
+labels:
+  purpose: demo
+pipeline:
+  staging:
+    after: [uat]
+  extraStages:
+  - name: uat
+    after: staging
+    deploy: true

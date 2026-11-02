@@ -1,0 +1,426 @@
+{{- /*
+dev, staging and prod for every governed tenant:
+  dev      tenant extra steps
+  staging  required: platform policy check (warn), tenant steps, team PR review
+  prod     platform-owned: runs prod-controls, takes Freight only from staging
+Tenant stages are in extra-stages.yaml. GitHub Actions tenants deploy with their workflow.
+*/ -}}
+{{- $method := include "governed.deployMethod" . }}
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev
+  namespace: {{ .Values.application.name }}
+  labels:
+    tier: dev
+  annotations:
+    kargo.akuity.io/color: red
+spec:
+{{- if .Values.services.s3.enabled }}
+  # if using s3 service, we need access to IRSA role with permission to AWS.
+  shard: sedemo-primary
+{{- end }}
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: {{ .Values.application.name }}
+    sources:
+      direct: true
+  - origin:
+      kind: Warehouse
+      name: '{{ .Values.application.name }}-chart'
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      steps:
+      {{- if eq $method "github-actions" }}
+      # GitHub Actions tenant: the team's steps, then its workflow deploys dev.
+      {{- include "governed.tenantSteps" (dict "where" "pipeline.dev.extraSteps" "steps" .Values.pipeline.dev.extraSteps) | nindent 6 }}
+      {{- include "governed.ghaDeploy" (dict "root" . "stage" "dev") | nindent 6 }}
+      {{- else }}
+      - uses: git-clone
+        as: clone-base-chart
+        config:
+          repoURL: {{ .Values.chartUrl }}
+          checkout:
+          - branch: {{ .Values.platform.branch }}
+            path: ./chart
+      - uses: git-clone
+        as: clone-app-team-values
+        config:
+          repoURL: {{ .Values.repoUrl }}
+          checkout:
+          - branch: {{ .Values.git.main }}
+            path: ./src
+          - branch: rendered/{{ .Values.application.name }}/dev
+            create: true
+            path: ./out
+      - uses: git-clear
+        config:
+          path: ./out
+      {{- if .Values.services.s3.enabled }}
+      - uses: tf-apply
+        config:
+          dir: ./chart/{{ .Values.chartPath }}/terraform
+          env:
+          - name: AWS_REGION
+            value: us-west-2
+          - name: TF_VAR_app_name
+            value: "{{ .Values.application.name }}"
+          - name: TF_VAR_stage
+            value: dev
+          - name: AWS_ACCESS_KEY_ID
+            value: {{`${{ sharedSecret('kargo-terraform-steps').AWS_ACCESS_KEY_ID }}`}}
+          - name: AWS_SECRET_ACCESS_KEY
+            value: {{`${{ sharedSecret('kargo-terraform-steps').AWS_SECRET_ACCESS_KEY }}`}}
+      - uses: git-clear
+        config:
+          path: ./chart/{{ .Values.chartPath }}/terraform/.terraform
+      {{- end }}
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ./chart/{{ .Values.chartPath }}
+          valuesFiles:
+          - ./src/{{ .Values.project.path }}/platform/app-values.yaml
+          outPath: ./out/manifests.yaml
+          namespace: '{{ .Values.application.name }}-dev'
+          setValues:
+            - key: image.tag
+              value: "\"{{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}\""
+            - key: kargo.stage
+              value: dev
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+            - key: project.name
+              value: '{{ .Values.application.name }}'
+            - key: application.name
+              value: '{{ .Values.application.name }}'
+            {{- if .Values.services.s3.enabled }}
+            - key: services.s3.bucketName
+              value: "{{ .Values.application.name }}-dev-bucket"
+            {{- end }}
+      {{- include "governed.tenantSteps" (dict "where" "pipeline.dev.extraSteps" "steps" .Values.pipeline.dev.extraSteps) | nindent 6 }}
+      - uses: git-commit
+        as: commit
+        config:
+          path: ./out
+          message: "Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }} to dev [skip ci]"
+      - uses: git-push
+        as: push
+        config:
+          path: ./out
+          targetBranch: rendered/{{ .Values.application.name }}/dev
+      - uses: argocd-update
+        continueOnError: true
+        config:
+          apps:
+          - name: {{ .Values.application.name }}-dev
+            namespace: argocd
+      {{- end }}
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: staging
+  namespace: {{ .Values.application.name }}
+  labels:
+    tier: staging
+  annotations:
+    kargo.akuity.io/color: amber
+spec:
+  # Staging waits for dev by default. A tenant can put its own stages in front
+  # of staging with pipeline.staging.after (e.g. [qa]); with more than one,
+  # Freight must pass all of them.
+  {{- $stagingAfter := .Values.pipeline.staging.after | default (list "dev") }}
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: {{ .Values.application.name }}
+    sources:
+      stages:
+      {{- range $stagingAfter }}
+      - {{ . }}
+      {{- end }}
+      {{- if gt (len $stagingAfter) 1 }}
+      availabilityStrategy: All
+      {{- end }}
+  - origin:
+      kind: Warehouse
+      name: '{{ .Values.application.name }}-chart'
+    sources:
+      stages:
+      {{- range $stagingAfter }}
+      - {{ . }}
+      {{- end }}
+      {{- if gt (len $stagingAfter) 1 }}
+      availabilityStrategy: All
+      {{- end }}
+  promotionTemplate:
+    spec:
+      steps:
+      {{- if eq $method "github-actions" }}
+      # GitHub Actions tenant: the team's steps, then its workflow deploys staging.
+      {{- include "governed.tenantSteps" (dict "where" "pipeline.staging.extraSteps" "steps" .Values.pipeline.staging.extraSteps) | nindent 6 }}
+      {{- include "governed.ghaDeploy" (dict "root" . "stage" "staging") | nindent 6 }}
+      {{- else }}
+      - uses: git-clone
+        as: clone-base-chart
+        config:
+          repoURL: {{ .Values.chartUrl }}
+          checkout:
+          - branch: {{ .Values.platform.branch }}
+            path: ./chart
+      - uses: git-clone
+        as: clone-app-team-values
+        config:
+          repoURL: {{ .Values.repoUrl }}
+          checkout:
+          - branch: {{ .Values.git.main }}
+            path: ./src
+          - branch: rendered/{{ .Values.application.name }}/staging
+            create: true
+            path: ./out
+      - uses: git-clear
+        config:
+          path: ./out
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ./chart/{{ .Values.chartPath }}
+          valuesFiles:
+          - ./src/{{ .Values.project.path }}/platform/app-values.yaml
+          outPath: ./out/manifests.yaml
+          namespace: '{{ .Values.application.name }}-staging'
+          setValues:
+            - key: image.tag
+              value: "\"{{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}\""
+            - key: kargo.stage
+              value: staging
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+            - key: project.name
+              value: '{{ .Values.application.name }}'
+            - key: application.name
+              value: '{{ .Values.application.name }}'
+      # Platform policy check in warn mode: teams see policy problems here,
+      # before prod blocks on them. A warning needs an approver's exception.
+      - uses: kyverno-policy-apply
+        as: policy
+        config:
+          policy: ./chart/{{ .Values.platform.dir }}/policies/require-labels.yaml
+          resource: ./out/manifests.yaml
+      - uses: wait-for-approval
+        as: approve-kyverno-exception
+        if: {{`"${{ outputs['policy'].summary.warn > 0 }}"`}}
+        config:
+          approvers:
+          - claim: groups
+            value: sedemo-approver
+            required: true
+      {{- include "governed.tenantSteps" (dict "where" "pipeline.staging.extraSteps" "steps" .Values.pipeline.staging.extraSteps) | nindent 6 }}
+      - uses: git-commit
+        as: commit
+        config:
+          path: ./out
+          message: "Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }} to staging [skip ci]"
+      - uses: git-push
+        as: push
+        config:
+          path: ./out
+          generateTargetBranch: true
+      # Team-level review: the tenant's own team approves staging changes.
+      - uses: git-open-pr
+        as: open-pr
+        config:
+          repoURL: {{ .Values.repoUrl }}
+          sourceBranch: {{`${{ outputs['push'].branch }}`}}
+          targetBranch: rendered/{{ .Values.application.name }}/staging
+          description: Promote {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }} to staging\n"https://kargo.akpdemoapps.link/project/{{ .Values.application.name }}/promotion/{{`${{ ctx.promotion }}`}}"
+      {{- if .Values.notifications.slack.enabled }}
+      - uses: send-message
+        # Only when a PR was opened: the message links to it.
+        if: {{`"${{ success() && outputs['open-pr']?.pr != nil }}"`}}
+        config:
+          channel:
+            kind: MessageChannel
+            name: kargo-notifications
+          message: |
+            blocks:
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: "*Kargo Approval Needed* :eyes:"
+              - type: section
+                fields:
+                  - type: mrkdwn
+                    text: "*Stage:* {{`${{ ctx.stage }}`}}"
+                  - type: mrkdwn
+                    text: "*Version:* {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}"
+                  - type: mrkdwn
+                    text: "*Pull Request:* <{{`${{ outputs['open-pr'].pr.url }}`}}|#{{`${{ outputs['open-pr'].pr.id }}`}}>"
+            icon_emoji: ":rocket:"
+          encodingType: yaml
+      {{- end }}
+      - uses: git-wait-for-pr
+        as: wait-for-pr
+        # Skip when there was nothing to change (no PR opened).
+        if: {{`"${{ success() && outputs['open-pr']?.pr != nil }}"`}}
+        config:
+          repoURL: {{ .Values.repoUrl }}
+          prNumber: {{`${{ outputs['open-pr'].pr.id }}`}}
+      - uses: argocd-update
+        continueOnError: true
+        config:
+          apps:
+          - name: '{{ .Values.application.name }}-staging'
+            namespace: argocd
+      {{- end }}
+---
+# PROD: platform-owned. Identical for every governed tenant; nothing in a
+# tenant's app-values.yaml can add, remove or reorder these steps.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod
+  namespace: {{ .Values.application.name }}
+  labels:
+    tier: prod
+  annotations:
+    kargo.akuity.io/color: violet
+spec:
+  requestedFreight:
+  # Prod's source is fixed: Freight only arrives from staging.
+  - origin:
+      kind: Warehouse
+      name: {{ .Values.application.name }}
+    sources:
+      stages:
+      - staging
+  - origin:
+      kind: Warehouse
+      name: '{{ .Values.application.name }}-chart'
+    sources:
+      stages:
+      - staging
+  promotionTemplate:
+    spec:
+      steps:
+      {{- if eq $method "github-actions" }}
+      # GitHub Actions tenant: the same prod-controls task (no manifests, so no
+      # policy check), then its workflow deploys prod.
+      - task:
+          name: prod-controls
+        as: prod-controls
+        vars:
+        - name: imageRepo
+          value: {{ .Values.image.repository }}
+        - name: manifests
+          value: ""
+      {{- include "governed.ghaDeploy" (dict "root" . "stage" "prod") | nindent 6 }}
+      {{- else }}
+      - uses: git-clone
+        as: clone-base-chart
+        config:
+          repoURL: {{ .Values.chartUrl }}
+          checkout:
+          - branch: {{ .Values.platform.branch }}
+            path: ./chart
+      - uses: git-clone
+        as: clone-app-team-values
+        config:
+          repoURL: {{ .Values.repoUrl }}
+          checkout:
+          - branch: {{ .Values.git.main }}
+            path: ./src
+          - branch: rendered/{{ .Values.application.name }}/prod
+            create: true
+            path: ./out
+      - uses: git-clear
+        config:
+          path: ./out
+      - uses: helm-template
+        config:
+          releaseName: deploy
+          path: ./chart/{{ .Values.chartPath }}
+          valuesFiles:
+          - ./src/{{ .Values.project.path }}/platform/app-values.yaml
+          outPath: ./out/manifests.yaml
+          namespace: '{{ .Values.application.name }}-prod'
+          setValues:
+            - key: image.tag
+              value: "\"{{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}\""
+            - key: kargo.stage
+              value: prod
+            - key: ingress.root_domain
+              value: akpdemoapps.link
+            - key: project.name
+              value: '{{ .Values.application.name }}'
+            - key: application.name
+              value: '{{ .Values.application.name }}'
+      # The platform's release controls (templates/kargo/prod-controls.yaml):
+      # image scan, prod policy check, change approval, audit record.
+      - task:
+          name: prod-controls
+        as: prod-controls
+        vars:
+        - name: imageRepo
+          value: {{ .Values.image.repository }}
+      - uses: git-commit
+        as: commit
+        config:
+          path: ./out
+          message: "Promote {{ printf "%s ${{ imageFrom('%s').Tag }}" .Values.application.name .Values.image.repository }} to prod [skip ci]"
+      - uses: git-push
+        as: push
+        config:
+          path: ./out
+          generateTargetBranch: true
+      - uses: git-open-pr
+        as: open-pr
+        config:
+          repoURL: {{ .Values.repoUrl }}
+          sourceBranch: {{`${{ outputs['push'].branch }}`}}
+          targetBranch: rendered/{{ .Values.application.name }}/prod
+          description: Approved prod release of {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}. Prod controls passed.\n"https://kargo.akpdemoapps.link/project/{{ .Values.application.name }}/promotion/{{`${{ ctx.promotion }}`}}"
+      {{- if .Values.notifications.slack.enabled }}
+      - uses: send-message
+        # Only when a PR was opened: the message links to it.
+        if: {{`"${{ success() && outputs['open-pr']?.pr != nil }}"`}}
+        config:
+          channel:
+            kind: MessageChannel
+            name: kargo-notifications
+          message: |
+            blocks:
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: "*Prod release approved* :white_check_mark:"
+              - type: section
+                fields:
+                  - type: mrkdwn
+                    text: "*Stage:* {{`${{ ctx.stage }}`}}"
+                  - type: mrkdwn
+                    text: "*Version:* {{ printf "${{ imageFrom('%s').Tag }}" .Values.image.repository }}"
+                  - type: mrkdwn
+                    text: "*Pull Request:* <{{`${{ outputs['open-pr'].pr.url }}`}}|#{{`${{ outputs['open-pr'].pr.id }}`}}>"
+            icon_emoji: ":rocket:"
+          encodingType: yaml
+      {{- end }}
+      - uses: git-merge-pr
+        # Skip when there was nothing to change (no PR opened).
+        if: {{`"${{ success() && outputs['open-pr']?.pr != nil }}"`}}
+        config:
+          repoURL: {{ .Values.repoUrl }}
+          prNumber: {{`${{ outputs['open-pr'].pr.id }}`}}
+          # GitHub needs a few seconds to decide a new PR is mergeable; wait
+          # instead of failing straight away.
+          wait: true
+      - uses: argocd-update
+        config:
+          apps:
+          - name: '{{ .Values.application.name }}-prod'
+            namespace: argocd
+      {{- end }}

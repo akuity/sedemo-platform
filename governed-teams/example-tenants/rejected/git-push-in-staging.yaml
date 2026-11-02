@@ -1,0 +1,14 @@
+# REJECTED (step-allowlist): a staging step that pushes straight to the prod branch in an attempt to bypass guardrails.
+image:
+  repository: ghcr.io/akuity/sedemo-monorepo-rollouts-app
+ingress:
+  custom_prefix: rejected-gov
+labels:
+  purpose: demo
+pipeline:
+  staging:
+    extraSteps:
+    - uses: git-push
+      config:
+        path: ./out
+        targetBranch: rendered/gov-rejected/prod

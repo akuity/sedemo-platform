@@ -1,0 +1,239 @@
+{{- /*
+prod-controls: the checklist every governed tenant's prod release runs.
+Built from ../../platform-controls.yaml. Tenants can't edit either.
+Nothing is written to the prod branch until it finishes.
+*/ -}}
+{{- $c := .Files.Get "platform-controls.yaml" | fromYaml -}}
+{{- $bg := $c.breakGlass.enabled -}}
+{{- $normal := ternary "task.outputs['release-type'].values.type != 'emergency'" "true" $bg -}}
+{{- $emergency := "task.outputs['release-type'].values.type == 'emergency'" -}}
+{{- /* A step with an if: runs even after an earlier step failed, so every
+       condition starts with success(). Report-only (continueOnError) failures
+       don't count against success(). */ -}}
+{{- $ifNormal := printf "${{ success() && (%s) }}" $normal -}}
+{{- $ifEmergency := printf "${{ success() && (%s) }}" $emergency -}}
+{{- $snow := printf "sharedSecretName: %s" $c.integrations.serviceNowSecret -}}
+{{- $repoPath := .Values.repoUrl | trimSuffix ".git" | trimPrefix "https://github.com/" -}}
+{{- $checks := include "governed.checkNames" $c -}}
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: prod-controls
+  namespace: {{ .Values.application.name }}
+  labels:
+    tier: prod
+spec:
+  vars:
+  - name: imageRepo
+  # Rendered prod manifests for the policy check. Empty for tenants that deploy
+  # with GitHub Actions, which skips the policy check.
+  - name: manifests
+    value: ./out/manifests.yaml
+  - name: policy
+    value: ./chart/{{ .Values.platform.dir }}/policies/prod-policies.yaml
+  # Where the image's source lives (for CI evidence and the secret scan).
+  - name: sourceRepo
+    value: {{ .Values.repoUrl }}
+  - name: ciApi
+    value: https://api.github.com/repos/{{ $repoPath }}
+  steps:
+  {{- if $bg }}
+  # 0. Every prod release says what kind it is and why.
+  - uses: get-user-input
+    as: release-type
+    config:
+      # Only people who may release to prod answer this.
+      responders:
+      - claim: groups
+        value: {{ $c.groups.releasers }}
+      - claim: groups
+        value: {{ $c.groups.breakGlass }}
+      display: >-
+        {{ `Prod release of Freight ${{ ctx.targetFreight.alias }}
+        (${{ imageFrom(vars.imageRepo).Tag }}). Choose "normal" for the usual
+        checks and change approval. Choose "emergency" only to break glass:
+        the checks still run but don't block, someone in the break-glass group
+        must authorize it, and it is recorded for review.` }}
+      schema:
+        type: object
+        additionalProperties: false
+        required:
+        - type
+        - note
+        properties:
+          type:
+            type: string
+            title: Release type
+            enum:
+            - normal
+            - emergency
+            default: normal
+          note:
+            type: string
+            title: Note
+            description: What this release changes, or for an emergency, why the controls must be bypassed.
+            minLength: 3
+  {{- end }}
+
+  # ---- normal release: every check blocks ----------------------------------
+  {{- include "governed.prodChecks" (dict "c" $c "cond" $normal "suffix" "" "reportOnly" false) | nindent 2 }}
+
+  {{- if eq $c.changeGate "servicenow" }}
+  # Change gate: raise a ServiceNow change request and wait until it's approved
+  # (state Implement). Approvers act in ServiceNow.
+  - uses: snow-create
+    as: change-request
+    if: {{ $ifNormal | quote }}
+    config:
+      credentials:
+        {{ $snow }}
+        type: basic
+      tableName: change_request
+      template:
+        type: normal
+      parameters:
+        short_description: {{ printf "Prod release of %s ${{ imageFrom(vars.imageRepo).Tag }}" .Values.application.name | quote }}
+        description: {{ `"${{ task.outputs['release-type']?.values?.note ?? 'Prod release' }} (Kargo promotion ${{ ctx.promotion }})"` }}
+        implementation_plan: {{ `"https://kargo.akpdemoapps.link/project/${{ ctx.project }}/promotion/${{ ctx.promotion }}"` }}
+        impact: "3"
+        urgency: "3"
+  - uses: snow-wait-for-condition
+    as: change-approved
+    if: {{ $ifNormal | quote }}
+    config:
+      credentials:
+        {{ $snow }}
+        type: basic
+      tableName: change_request
+      ticketId: {{ `${{ task.outputs['change-request'].sys_id }}` }}
+      condition: state=-1
+  - uses: record-audit-event
+    as: audit-approved
+    if: {{ $ifNormal | quote }}
+    retry:
+      errorThreshold: 3
+    config:
+      type: approved
+      message: >-
+        {{ printf "Prod release of Freight ${{ ctx.targetFreight.alias }} approved through change ${{ task.outputs['change-request'].number }}. Checks passed: %s." $checks }}
+  {{- else }}
+  # Change gate: someone in the approvers group approves. Tenant developers
+  # aren't in that group.
+  - uses: wait-for-approval
+    as: change-approval
+    if: {{ $ifNormal | quote }}
+    config:
+      approvers:
+      - claim: groups
+        value: {{ $c.groups.approvers }}
+        required: true
+  - uses: record-audit-event
+    as: audit-approved
+    if: {{ $ifNormal | quote }}
+    retry:
+      errorThreshold: 3
+    config:
+      type: approved
+      message: >-
+        {{ printf "Prod release of Freight ${{ ctx.targetFreight.alias }} approved by ${{ task.outputs['change-approval'].responses[0].user }} [${{ task.outputs['change-approval'].responses[0]?.message ?? '' }}]. Checks passed: %s." $checks }}
+      actor: {{ `${{ task.outputs['change-approval'].responses[0].user }}` }}
+  {{- end }}
+  # Evidence on the Freight itself, shown in the Kargo UI.
+  - uses: set-metadata
+    as: evidence
+    if: {{ $ifNormal | quote }}
+    config:
+      updates:
+      - kind: Freight
+        name: {{ `${{ ctx.targetFreight.name }}` }}
+        values:
+          prod-release: normal
+          prod-promotion: {{ `${{ ctx.promotion }}` }}
+          prod-checks-passed: {{ $checks | quote }}
+          prod-promoted-by: {{ `${{ ctx.meta.promotion.actor }}` }}
+          {{- if $bg }}
+          prod-note: {{ `${{ quote(task.outputs['release-type'].values.note) }}` }}
+          {{- end }}
+          {{- if eq $c.changeGate "servicenow" }}
+          prod-change: {{ `${{ task.outputs['change-request'].number }}` }}
+          {{- else }}
+          prod-approved-by: {{ `${{ task.outputs['change-approval'].responses[0].user }}` }}
+          {{- end }}
+          {{- if $c.checks.ciEvidence.enabled }}
+          prod-ci-check-runs: {{ `${{ quote(task.outputs['ci-evidence'].checkRuns) }}` }}
+          {{- end }}
+
+  {{- if $bg }}
+
+  # ---- emergency release (break glass): checks report, nothing blocks -------
+  {{- include "governed.prodChecks" (dict "c" $c "cond" $emergency "suffix" "-bg" "reportOnly" true) | nindent 2 }}
+  - uses: wait-for-approval
+    as: break-glass-approval
+    if: {{ $ifEmergency | quote }}
+    config:
+      approvers:
+      - claim: groups
+        value: {{ $c.groups.breakGlass }}
+        required: true
+  {{- if eq $c.breakGlass.incident "servicenow" }}
+  - uses: snow-create
+    as: incident
+    if: {{ $ifEmergency | quote }}
+    config:
+      credentials:
+        {{ $snow }}
+        type: basic
+      tableName: incident
+      parameters:
+        short_description: {{ printf "Break-glass prod release of %s ${{ imageFrom(vars.imageRepo).Tag }}" .Values.application.name | quote }}
+        description: {{ `"Emergency release requested by ${{ task.outputs['release-type'].respondedBy }}, authorized by ${{ task.outputs['break-glass-approval'].responses[0].user }}. Reason: ${{ task.outputs['release-type'].values.note }}. Kargo promotion: ${{ ctx.promotion }}. Review why the controls were bypassed."` }}
+        impact: "2"
+        urgency: "2"
+  {{- end }}
+  - uses: record-audit-event
+    as: audit-break-glass
+    if: {{ $ifEmergency | quote }}
+    retry:
+      errorThreshold: 3
+    config:
+      type: break-glass
+      message: >-
+        {{ `EMERGENCY prod release of Freight ${{ ctx.targetFreight.alias }} requested by
+        ${{ task.outputs['release-type'].respondedBy }} and authorized by
+        ${{ task.outputs['break-glass-approval'].responses[0].user }}.
+        Reason: ${{ task.outputs['release-type'].values.note }}.` }}
+        {{- if eq $c.breakGlass.incident "servicenow" }} {{ `Incident ${{ task.outputs['incident'].number }}.` }}{{ end }}
+        {{ printf "Checks (%s) ran in report-only mode; see promotion ${{ ctx.promotion }}. Needs review." $checks }}
+      actor: {{ `${{ task.outputs['release-type'].respondedBy }}` }}
+  - uses: set-metadata
+    as: break-glass-record
+    if: {{ $ifEmergency | quote }}
+    config:
+      updates:
+      - kind: Freight
+        name: {{ `${{ ctx.targetFreight.name }}` }}
+        values:
+          prod-release: emergency
+          prod-promotion: {{ `${{ ctx.promotion }}` }}
+          break-glass-requested-by: {{ `${{ task.outputs['release-type'].respondedBy }}` }}
+          break-glass-authorized-by: {{ `${{ task.outputs['break-glass-approval'].responses[0].user }}` }}
+          break-glass-reason: {{ `${{ quote(task.outputs['release-type'].values.note) }}` }}
+          {{- if eq $c.breakGlass.incident "servicenow" }}
+          break-glass-incident: {{ `${{ task.outputs['incident'].number }}` }}
+          {{- end }}
+          break-glass-review: pending
+  {{- end }}
+
+  # A release that a control stopped, or whose approval or break-glass
+  # authorization was rejected: record that it was blocked.
+  - uses: record-audit-event
+    as: audit-blocked
+    if: {{ `"${{ failure() }}"` }}
+    retry:
+      errorThreshold: 3
+    config:
+      type: prod-release-blocked
+      message: >-
+        {{ `Prod release of Freight ${{ ctx.targetFreight.alias }} was stopped: a
+        prod control failed or an approval was rejected. See promotion
+        ${{ ctx.promotion }} for the step that stopped it.` }}

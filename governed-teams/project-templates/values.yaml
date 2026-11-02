@@ -1,0 +1,59 @@
+# Defaults only. governed-teams/appset.yaml sets the platform-owned values below
+# with valuesObject, which overrides anything in a tenant's app-values.yaml.
+
+replicaCount: 2
+
+# Used to name namespaced resources. Set to gov-<folder name> by the appset.
+application:
+  name: gov-template
+
+project:
+  name: governed-template
+  group: sedemo-team-open
+  path: governed/template
+
+# Where the platform-owned charts live, and the Argo CD cluster the tenant's
+# environments deploy to. Set by the appset.
+platform:
+  repoUrl: https://github.com/akuity/sedemo-platform
+  branch: main
+  dir: governed-teams
+  cluster: sedemo-primary
+
+# Platform-wide RBAC group prefix (e.g. sedemo-admin, sedemo-qa).
+team:
+  role: sedemo
+
+kargo:
+  # Overridden per environment by Kargo promotion steps.
+  stage: dev
+
+git:
+  main: main
+  outPath: out
+  srcPth: src
+
+# Some control over how apps are exposed to the internet.
+ingress:
+  root_domain: akpdemoapps.link
+  custom_prefix: example
+
+rollouts:
+  enabled: true
+
+# Staging is required for governed tenants (the kargo-chart guardrails reject
+# environments.staging: false), so all three always exist.
+environments:
+  dev: true
+  staging: true
+  prod: true
+
+# Tenant stages from app-values.yaml. Stages with deploy: true get their own
+# Argo CD Application here (templates/app-applications.yaml).
+pipeline:
+  extraStages: []
+
+# How the tenant deploys. github-actions tenants get no Argo CD environment
+# apps: their own workflow deploys, triggered by Kargo.
+deploy:
+  method: argocd
