@@ -17,7 +17,7 @@ broken, fixed, and reset on its own.
 - **chart/** - Helm chart for the guestbook application
 - **oom-demo/** - Deployment that intentionally gets OOMKilled
 - **crashloop-demo/** - Deployment whose probes point at the wrong port, so it crashloops
-- **runbooks/** - AI-SRE runbooks (`oom.md`, `crashloop.md`) to paste into the Akuity Platform
+- **AI-SRE runbooks** - not in this repo; they're managed in Terraform (see "AI-SRE setup" below)
 
 ### Kargo (`apps/demo-intelligence/kargo/`, auto-synced by the `kargo-demo-intelligence` app)
 - **project.yaml** - Kargo project (auto-promotion is **off** for every stage)
@@ -34,17 +34,25 @@ Progressive delivery of guestbook application with image tag updates via Helm.
 Sync-only promotions. Promoting freight to either stage re-syncs the demo app from Git,
 which is the same as "break it" below.
 
-## AI-SRE setup (Akuity Platform UI)
+## AI-SRE setup (managed in Terraform)
 
-Agent configuration for the `se-demo-iac` instance (Incidents tab):
+The AI-SRE configuration for the `se-demo-iac` instance (runbooks, incident trigger,
+grouping, investigation approval) is managed in
+[`akuity/sedemo-infra-iac`](https://github.com/akuity/sedemo-infra-iac) under
+`akuity-bootstrap/`: `kube_vision_config.ai_config` in `main.tf`, with runbook text in
+`akuity-bootstrap/runbooks/`. Change it there with a PR; merging to `main` applies it.
+**Don't edit it in the Akuity UI**: the next Terraform apply overwrites UI changes.
 
-- **Runbooks:** `pod-oom` (from `runbooks/oom.md`) applied to `demo-intelligence-prod-oom`,
-  and `pod-crashloop` (from `runbooks/crashloop.md`) applied to
+What it's set to, and why:
+
+- **Runbooks:** `pod-oom` (`runbooks/pod-oom.md`) applied to `demo-intelligence-prod-oom`,
+  and `pod-crashloop` (`runbooks/pod-crashloop.md`) applied to
   `demo-intelligence-prod-crashloop`. Both post to the `incidents` Slack channel.
+  Runbooks with no `applied_to` scope are not attached to incidents automatically.
 - **Resource Degradation Trigger:** applications `demo-intelligence-*`, any cluster,
   trigger immediately. Scope it by application name: with applications `*`, every
   Degraded app on the instance opens an incident, even when a namespace is also set.
-- **Incidents Grouping:** leave **empty**. Grouping by the `demo-intelligence` namespace
+- **Incidents Grouping:** **empty**. Grouping by the `demo-intelligence` namespace
   merges the OOM and crashloop incidents into one.
 
 ## How every demo works
