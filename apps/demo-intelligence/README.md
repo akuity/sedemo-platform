@@ -17,8 +17,8 @@ broken, fixed, and reset on its own.
 - **chart/** - Helm chart for the guestbook application
 - **oom-demo/** - Deployment that intentionally gets OOMKilled
 - **crashloop-demo/** - Deployment whose probes point at the wrong port, so it crashloops
-- **runbooks/** - AI-SRE runbooks (`pod-oom.md`, `pod-crashloop.md`), synced to the Akuity
-  Platform automatically (see below). Only runbook files belong in this folder.
+- **Runbooks** - `pod-oom` and `pod-crashloop` live in the repo-wide
+  [`runbooks/demo-intelligence/`](/runbooks/demo-intelligence/) folder (see below)
 
 ### Kargo (`apps/demo-intelligence/kargo/`, auto-synced by the `kargo-demo-intelligence` app)
 - **project.yaml** - Kargo project (auto-promotion is **off** for every stage)
@@ -41,9 +41,10 @@ The AI-SRE config for the `se-demo-iac` instance is managed in Terraform
 (`akuity/sedemo-infra-iac`, `akuity-bootstrap/main.tf`). Don't edit it in the Akuity UI:
 the next apply overwrites UI changes.
 
-- **Runbooks:** synced from this repo's `apps/demo-intelligence/runbooks/` on `main`
-  (`runbook_repos`). Edit the markdown here and merge; the platform picks it up on its
-  next sync. The file name is the runbook name, so renaming a file renames the runbook.
+- **Runbooks:** `pod-oom` and `pod-crashloop` live in
+  [`runbooks/demo-intelligence/`](/runbooks/demo-intelligence/) and are synced from `main`
+  with the rest of the repo's runbooks (see "Runbooks" in the [repo README](/README.md)).
+  Edit the markdown there and merge; the platform picks it up on its next sync.
   `pod-oom` applies to `demo-intelligence-prod-oom` and `pod-crashloop` to
   `demo-intelligence-prod-crashloop` (set with `applied_for` in Terraform). Both post to
   the `incidents` Slack channel.

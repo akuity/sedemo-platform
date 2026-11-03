@@ -38,6 +38,7 @@ Because this demo environment is fully defined as IaC, you can open pull request
 │       └── ...         # App-specific manifests (base, stages, chart, etc.)
 ├── kargo-shared/       # Shared Kargo platform resources (CustomPromotionSteps, etc.)
 ├── components/         # Cluster add-ons (Argo Rollouts, Prometheus, ESO, cert-manager)
+├── runbooks/           # Akuity Intelligence (AI-SRE) runbooks, synced to the Akuity Platform
 ├── secrets/            # ExternalSecret and SecretStore resources (backed by AWS Secrets Manager)
 └── templated-teams/    # Helm-templated "golden path" projects for app teams
 ```
@@ -56,6 +57,27 @@ Each app under `apps/` is self-contained:
 - `argocd/` holds the `AppProject` and an `ApplicationSet` (or individual `Application` manifests) for that app's stages
 - `kargo/` holds all Kargo resources: `Project`, `Warehouse`, `Stage`, `PromotionTask`, etc.
 - Additional directories (e.g. `base/`, `stages/`, `chart/`) hold the actual Kubernetes manifests promoted by Kargo
+
+### Runbooks
+
+`runbooks/` holds every Akuity Intelligence (AI-SRE) runbook used by the `se-demo-iac`
+Argo CD instance. The platform syncs this folder from `main` (`runbook_repos`, configured
+in [`sedemo-infra-iac`](https://github.com/akuity/sedemo-infra-iac) `akuity-bootstrap/main.tf`),
+so merging a change here updates the runbook on the platform's next sync. Don't edit
+runbooks in the Akuity UI; the next Terraform apply overwrites UI changes.
+
+- **One file per runbook.** The file name (without `.md`) is the runbook name, so
+  renaming a file renames the runbook. Names must be unique across all subfolders.
+- **Only runbooks in this folder.** Every `.md` file under it is synced as a runbook,
+  so don't add a README or notes here.
+- **Scoping.** Runbooks apply to every incident unless scoped. App-specific scoping
+  (which Argo CD apps a runbook applies to) is set with `applied_for` in Terraform, e.g.
+  `demo-intelligence/pod-oom` applies only to `demo-intelligence-prod-oom`.
+- **Layout.** General-purpose runbooks are grouped by category (`argocd/`, `infra/`,
+  `networking/`, `pod-issues/`, `security/`), based on Akuity's
+  [akuity-intelligence-examples](https://github.com/akuity/akuity-intelligence-examples)
+  with the Slack channel set to `#incidents`. Demo-specific runbooks live in a folder
+  named after the demo app (`demo-intelligence/`).
 
 ### Components
 
