@@ -33,6 +33,26 @@ Sync-only promotion - demonstrates OOM scenario for incident response training.
 ### Prod-Crashloop
 Auto-promoted, sync-only - demonstrates crashloop scenario for debugging.
 
+## Running the OOM demo
+
+Git always holds the **broken** state (128Mi limit, `stress` allocates ~143Mi). The
+AI-SRE agent only patches the live Deployment, so a sync from Git resets the demo.
+
+1. **Prerequisite:** paste `runbooks/oom.md` into the instance's AI runbook settings in
+   the Akuity Platform and replace the `PLEASE REPLACE` Slack channel.
+2. **Break it:** sync `demo-intelligence-prod-oom` (or promote freight to the
+   `prod-oom` stage). The pod is OOMKilled and never becomes Ready. After ~30s the app
+   goes **Degraded** and stays Degraded.
+3. **Fix it:** the agent triages, proposes a +50Mi memory bump (128Mi → 178Mi), and
+   waits for approval. Approve it. About 20s later the app is **Healthy** and shows
+   **OutOfSync** because the change is live-only.
+4. **Reset:** sync `demo-intelligence-prod-oom` again. The 128Mi limit is restored and
+   the app goes Degraded again, ready for the next run.
+
+Do not commit memory changes for `oom-demo/manifest.yaml` to Git, and don't enable
+automated sync or self-heal on `demo-intelligence-prod-oom`. Either one would break the
+reset loop or undo the agent's fix mid-demo.
+
 ## Deployment
 
 ```bash
