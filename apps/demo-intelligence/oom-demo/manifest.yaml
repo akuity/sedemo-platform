@@ -4,7 +4,9 @@ metadata:
   name: oom-demo
 spec:
   minReadySeconds: 5
-  progressDeadlineSeconds: 10
+  # Argo CD only reports Degraded once the progress deadline is exceeded.
+  # Keep this short enough for a demo but long enough to be unambiguous.
+  progressDeadlineSeconds: 30
   replicas: 1
   selector:
     matchLabels:
@@ -29,6 +31,16 @@ spec:
           image: polinux/stress
           imagePullPolicy: Always
           name: oom
+          # Without a readiness probe, every restart briefly marks the pod Ready,
+          # which Kubernetes counts as rollout progress and resets the deadline,
+          # making the app flap Degraded <-> Progressing. The initial delay is
+          # longer than it takes stress to get OOMKilled, so a broken pod never
+          # becomes Ready; once memory is raised it passes and the app goes Healthy.
+          readinessProbe:
+            exec:
+              command: ["true"]
+            initialDelaySeconds: 15
+            periodSeconds: 5
           resources:
             limits:
               cpu: 50m
