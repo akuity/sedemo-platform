@@ -4,7 +4,13 @@ metadata:
   name: crashloop-demo
 spec:
   minReadySeconds: 5
-  progressDeadlineSeconds: 10
+  # Long enough to be unambiguous in a demo; the broken probes below mean the
+  # pod never becomes Ready, so the app stays Degraded once this passes.
+  progressDeadlineSeconds: 30
+  # Recreate replaces the pod on every change instead of leaving the previous
+  # (fixed or broken) ReplicaSet running next to a rollout that never finishes.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app.kubernetes.io/name: crashloop-demo
@@ -21,6 +27,10 @@ spec:
           args:
           - --port=3000
           imagePullPolicy: Always
+          # DEMO BUG (intentional): the app listens on 3000 (see --port above),
+          # but both probes check 30000. The liveness probe kills the container
+          # every ~10s (CrashLoopBackOff) and readiness never passes. The fix the
+          # AI-SRE agent should propose is to point both probes at port 3000.
           livenessProbe:
             failureThreshold: 2
             httpGet:
