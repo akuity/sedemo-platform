@@ -26,3 +26,7 @@ echo
 git -C "$clone" status --short governed/ || true
 echo
 echo "Review, then: git -C '$clone' add governed && git -C '$clone' commit -m 'demo: reset governed tenants' && git -C '$clone' push"
+echo
+echo "New pipelines: promote image Freight before chart Freight, and wait for each"
+echo "new environment's certificate before its http checks run. See"
+echo "governed-teams/README.md, 'First promotions of a new pipeline'."

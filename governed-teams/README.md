@@ -193,12 +193,58 @@ against Kargo yet. Watch these:
   in the deploy repo (it already does for `sedemo-platform`, for team-daniel).
 - **Tenant environments:** a test-only stage should pass Freight on once its
   steps succeed; new URLs like `qa.checkout-gov.akpdemoapps.link` need DNS and
-  a certificate like the others.
+  a certificate like the others. cert-manager issues the certificate a minute
+  or two after an environment's first deploy, so an `http` check against it
+  in that window fails with `x509: certificate is valid for ingress.local`.
+  Wait for the certificate, then promote again. See
+  [First promotions of a new pipeline](#first-promotions-of-a-new-pipeline).
 - **New Freight:** the Warehouse makes Freight from the newest image and the
   latest commit to the tenant's folder.
 - **`ctx.meta.promotion.actor`** should show who started the promotion
   (`prod-promoted-by` on the Freight).
 - **Requester ≠ approver** (spike S2) is still open: with approvals set to sedemo-admin, the person who starts a release can also approve it.
+
+## First promotions of a new pipeline
+
+Each tenant has two Warehouses: `<app>` (the image and the tenant's folder)
+and `<app>-chart` (the platform's `apps-chart`). Every Stage requests Freight
+from both, and Kargo promotes each one separately. Every Stage's steps read
+the image tag with `imageFrom(...)`, so **if chart Freight reaches a Stage
+before any image Freight has, that promotion errors**:
+
+```
+failed to build step context: failed to get step config:
+reflect: call of reflect.Value.Field on zero Value
+ |  imageFrom('ghcr.io/akuity/sedemo-monorepo-rollouts-app').Tag
+```
+
+This only happens on a Stage's first promotion. Once the Stage has an image,
+chart-only promotions work. Auto-promoted Stages (dev, and tenant stages with
+`autoPromote: true`) hit it most, because both Warehouses make Freight at
+about the same time on a new project.
+
+**On a new pipeline, promote in this order, one Stage at a time:**
+
+1. **Image Freight first.** If an auto-promotion of chart Freight errored,
+   promote the image Freight to that Stage. The promotion picks up the
+   Stage's chart Freight too, if it has any.
+2. **Then the chart Freight**, if the Stage doesn't show it as current yet.
+3. **Before a Stage with an `http` check against a new environment** (e.g.
+   checkout's `qa-smoke-test` and `check-staging`), make sure that
+   environment's certificate is issued:
+   `curl -sI https://<stage>.<prefix>.akpdemoapps.link/` should return 200.
+   If the check already errored on `ingress.local`, promote the same
+   Freight again.
+
+Not fixed in the chart on purpose: the chart has its own Warehouse so
+platform chart changes and app releases move through the Stages
+separately. Merging the Warehouses would fix this but couple the two;
+guarding every step with `if:` conditions would change Kargo's
+failure handling and can't cover prod's `task:` step.
+
+The Stages also clone `apps-chart` from the tip of `platform.branch`, not
+from the commit in the chart Freight, so a Stage renders whatever the
+chart is when it's promoted.
 
 ## Folder map
 
