@@ -17,7 +17,8 @@ broken, fixed, and reset on its own.
 - **chart/** - Helm chart for the guestbook application
 - **oom-demo/** - Deployment that intentionally gets OOMKilled
 - **crashloop-demo/** - Deployment whose probes point at the wrong port, so it crashloops
-- **runbooks/** - AI-SRE runbooks (`oom.md`, `crashloop.md`) to paste into the Akuity Platform
+- **runbooks/** - AI-SRE runbooks (`pod-oom.md`, `pod-crashloop.md`), synced to the Akuity
+  Platform automatically (see below). Only runbook files belong in this folder.
 
 ### Kargo (`apps/demo-intelligence/kargo/`, auto-synced by the `kargo-demo-intelligence` app)
 - **project.yaml** - Kargo project (auto-promotion is **off** for every stage)
@@ -34,13 +35,18 @@ Progressive delivery of guestbook application with image tag updates via Helm.
 Sync-only promotions. Promoting freight to either stage re-syncs the demo app from Git,
 which is the same as "break it" below.
 
-## AI-SRE setup (Akuity Platform UI)
+## AI-SRE setup
 
-Agent configuration for the `se-demo-iac` instance (Incidents tab):
+The AI-SRE config for the `se-demo-iac` instance is managed in Terraform
+(`akuity/sedemo-infra-iac`, `akuity-bootstrap/main.tf`). Don't edit it in the Akuity UI:
+the next apply overwrites UI changes.
 
-- **Runbooks:** `pod-oom` (from `runbooks/oom.md`) applied to `demo-intelligence-prod-oom`,
-  and `pod-crashloop` (from `runbooks/crashloop.md`) applied to
-  `demo-intelligence-prod-crashloop`. Both post to the `incidents` Slack channel.
+- **Runbooks:** synced from this repo's `apps/demo-intelligence/runbooks/` on `main`
+  (`runbook_repos`). Edit the markdown here and merge; the platform picks it up on its
+  next sync. The file name is the runbook name, so renaming a file renames the runbook.
+  `pod-oom` applies to `demo-intelligence-prod-oom` and `pod-crashloop` to
+  `demo-intelligence-prod-crashloop` (set with `applied_for` in Terraform). Both post to
+  the `incidents` Slack channel.
 - **Resource Degradation Trigger:** applications `demo-intelligence-*`, any cluster,
   trigger immediately. Scope it by application name: with applications `*`, every
   Degraded app on the instance opens an incident, even when a namespace is also set.
