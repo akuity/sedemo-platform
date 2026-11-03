@@ -41,8 +41,9 @@ Agent configuration for the `se-demo-iac` instance (Incidents tab):
 - **Runbooks:** `pod-oom` (from `runbooks/oom.md`) applied to `demo-intelligence-prod-oom`,
   and `pod-crashloop` (from `runbooks/crashloop.md`) applied to
   `demo-intelligence-prod-crashloop`. Both post to the `incidents` Slack channel.
-- **Resource Degradation Trigger:** applications `*`, namespace `demo-intelligence`,
-  cluster `sedemo-primary`, trigger immediately.
+- **Resource Degradation Trigger:** applications `demo-intelligence-*`, any cluster,
+  trigger immediately. Scope it by application name: with applications `*`, every
+  Degraded app on the instance opens an incident, even when a namespace is also set.
 - **Incidents Grouping:** leave **empty**. Grouping by the `demo-intelligence` namespace
   merges the OOM and crashloop incidents into one.
 
