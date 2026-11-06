@@ -3,5 +3,4 @@
 shards = [
   "prod-a",
   "prod-b",
-  "prod-c",
 ]

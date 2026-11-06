@@ -1,7 +1,8 @@
-# One Application per kustomize overlay under stages/. Using a git directories
-# generator rather than a hardcoded list means the shards provisioned by
-# apps/team-namho/infra get their Application automatically -- Terraform writes
-# stages/prod-<x>/kustomization.yaml, and this picks it up on the next sync.
+# One Application per kustomize overlay under stages/ -- today that is staging
+# and prod. The shard Stages (prod-a, prod-b) are control-flow only: they have
+# no overlay here, so they get no Application and deploy nothing. Making a
+# shard a real deploy target means giving it an overlay directory and a
+# promotionTemplate.
 #
 # The rendered branches don't exist until a Stage's first promotion, so until
 # then each Application reports a missing revision.
