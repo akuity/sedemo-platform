@@ -10,6 +10,11 @@ metadata:
     argocd.argoproj.io/sync-wave: "2"
     kargo.akuity.io/color: green
 spec:
+  # Runs after the promotion completes: the smol-smoke AnalysisTemplate curls
+  # the Service and must pass before this Freight is available to `approval`.
+  verification:
+    analysisTemplates:
+    - name: smol-smoke
   requestedFreight:
   - origin:
       kind: Warehouse
@@ -33,16 +38,6 @@ spec:
       # Application to go Healthy, so everything below runs against a live app.
       - task:
           name: render
-
-      # Verification: the simplest real check there is -- the thing we just
-      # deployed answers on its public URL with the SHA we just promoted.
-      - uses: http
-        as: smoke
-        config:
-          method: GET
-          url: https://smol-${{ ctx.stage }}.akpdemoapps.link/sha/
-          successExpression: response.status == 200
-          timeout: 2m
 
       # The promoter decides whether the downstream GHA run passes or fails.
       # This is purely so the demo can show both outcomes without a code change.

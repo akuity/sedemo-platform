@@ -1,0 +1,36 @@
+# Verification for the `staging` Stage. Runs as a Job in the team-namho
+# namespace after the promotion finishes, and hits the Service directly so
+# there's no ingress or TLS in the path.
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: smol-smoke
+  namespace: team-namho
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  metrics:
+  - name: smoke
+    provider:
+      job:
+        spec:
+          backoffLimit: 2
+          template:
+            spec:
+              restartPolicy: Never
+              containers:
+              - name: curl
+                image: curlimages/curl:8.11.1
+                command:
+                - sh
+                - -c
+                - |
+                  set -e
+                  # --retry covers the gap between Argo CD reporting Healthy
+                  # and the new endpoints actually being routable.
+                  curl -fsS --retry 10 --retry-all-errors --retry-delay 3 \
+                    http://smol.team-namho-staging.svc.cluster.local/sha/
+                resources:
+                  requests:
+                    cpu: 10m
+                    memory: 32Mi
