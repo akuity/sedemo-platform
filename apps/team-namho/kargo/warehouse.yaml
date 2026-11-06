@@ -19,3 +19,28 @@ spec:
       discoveryLimit: 10
       allowTagsRegexes:
       - '^[0-9a-f]{7}$'
+---
+# Drives the `shards` Stage. Freight is created whenever the team-namho
+# Terraform changes on main -- in practice, whenever a shard is added to or
+# removed from infra/shards.auto.tfvars.
+#
+# Scoped to infra/ only, so the commit the `shards` promotion itself pushes
+# (kargo/prod-shards.yaml) does not create new Freight and loop.
+#
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/warehouses.kargo.akuity.io_v1alpha1.json
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: team-namho-infra
+  namespace: team-namho
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  interval: 1m0s
+  subscriptions:
+  - git:
+      repoURL: https://github.com/akuity/sedemo-platform
+      branch: main
+      commitSelectionStrategy: NewestFromBranch
+      includePaths:
+      - apps/team-namho/infra

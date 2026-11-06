@@ -126,7 +126,7 @@ spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: smol
+      name: team-namho-infra
     sources:
       direct: true
   promotionTemplate:
