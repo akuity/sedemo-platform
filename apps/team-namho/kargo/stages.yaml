@@ -1,4 +1,6 @@
-# staging -> prod. Nothing auto-promotes; prod's PR is the approval gate.
+# staging -> prod (and prod-<x> shards). Nothing auto-promotes; each prod
+# Stage's PR is its approval gate. `shards` is a platform Stage that
+# provisions shards and generates their Kargo Stages.
 #
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
@@ -103,6 +105,96 @@ spec:
             values:
               verified-by: ${{ outputs.input.respondedBy }}
               verify-run: ${{ vars.smolRepo }}/actions/runs/${{ outputs.dispatch.runID }}
+---
+# Platform Stage: provisions production shards and writes the matching Kargo
+# Stages back to main. Deploys no application.
+#
+# Flow: edit infra/shards.auto.tfvars -> promote this Stage -> OpenTofu
+# applies -> generated Stage manifests and kustomize overlays are committed
+# to main -> Argo CD syncs them -> the new prod-<x> Stages appear.
+#
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: shards
+  namespace: team-namho
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    kargo.akuity.io/color: gray
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: smol
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      vars:
+      - name: gitRepo
+        value: https://github.com/akuity/sedemo-platform
+      - name: infraDir
+        value: ./src/apps/team-namho/infra
+      - name: shardsFile
+        value: ./src/apps/team-namho/kargo/prod-shards.yaml
+      steps:
+      - uses: git-clone
+        config:
+          repoURL: ${{ vars.gitRepo }}
+          checkout:
+          - branch: main
+            path: ./src
+
+      # terraform_data needs no cloud credentials; these are for the S3 state
+      # backend, which has to outlive the ephemeral promotion workspace.
+      - uses: tf-apply
+        as: tf-apply
+        config:
+          dir: ${{ vars.infraDir }}
+          env:
+          - name: AWS_REGION
+            value: us-west-2
+          - name: AWS_ACCESS_KEY_ID
+            value: ${% sharedSecret('kargo-terraform-steps').AWS_ACCESS_KEY_ID %}
+          - name: AWS_SECRET_ACCESS_KEY
+            value: ${% sharedSecret('kargo-terraform-steps').AWS_SECRET_ACCESS_KEY %}
+
+      - uses: tf-output
+        as: tf-output
+        config:
+          dir: ${{ vars.infraDir }}
+          env:
+          - name: AWS_REGION
+            value: us-west-2
+          - name: AWS_ACCESS_KEY_ID
+            value: ${% sharedSecret('kargo-terraform-steps').AWS_ACCESS_KEY_ID %}
+          - name: AWS_SECRET_ACCESS_KEY
+            value: ${% sharedSecret('kargo-terraform-steps').AWS_SECRET_ACCESS_KEY %}
+
+      # Terraform emits the manifests as a string; Kargo is what writes them.
+      - uses: file-write
+        config:
+          path: ${{ vars.shardsFile }}
+          contents: ${{ outputs['tf-output'].stages_yaml.value }}
+          overwrite: true
+
+      # Skipped when the shard list is unchanged and nothing was regenerated.
+      - uses: git-commit
+        as: commit
+        config:
+          path: ./src
+          message: |
+            team-namho: ${{ outputs['tf-output'].shard_count.value }} production shard(s)
+
+            Shards: ${{ outputs['tf-output'].shard_names.value }}
+
+            Rendered from apps/team-namho/infra outputs.
+      - if: ${{ status('commit') != 'Skipped' }}
+        uses: git-push
+        config:
+          path: ./src
+          targetBranch: main
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1

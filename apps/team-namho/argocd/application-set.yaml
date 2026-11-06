@@ -1,8 +1,10 @@
-# One Application per deploying Stage. `approval` is a control-flow Stage and
-# deploys nothing, so it has no Application.
+# One Application per kustomize overlay under stages/. Using a git directories
+# generator rather than a hardcoded list means the shards provisioned by
+# apps/team-namho/infra get their Application automatically -- Terraform writes
+# stages/prod-<x>/kustomization.yaml, and this picks it up on the next sync.
 #
-# The rendered branches don't exist until the first promotion, so until then
-# each Application reports a missing revision.
+# The rendered branches don't exist until a Stage's first promotion, so until
+# then each Application reports a missing revision.
 #
 # No syncPolicy.automated: Kargo's argocd-update step drives every sync.
 apiVersion: argoproj.io/v1alpha1
@@ -12,24 +14,25 @@ metadata:
   namespace: argocd
 spec:
   generators:
-  - list:
-      elements:
-      - stage: staging
-      - stage: prod
+  - git:
+      repoURL: https://github.com/akuity/sedemo-platform
+      revision: HEAD
+      directories:
+      - path: apps/team-namho/stages/*
   template:
     metadata:
-      name: team-namho-{{stage}}
+      name: team-namho-{{path.basename}}
       annotations:
-        kargo.akuity.io/authorized-stage: team-namho:{{stage}}
+        kargo.akuity.io/authorized-stage: team-namho:{{path.basename}}
     spec:
       project: team-namho
       source:
         repoURL: https://github.com/akuity/sedemo-platform
-        targetRevision: rendered/team-namho/{{stage}}
+        targetRevision: rendered/team-namho/{{path.basename}}
         path: .
       destination:
         name: sedemo-primary
-        namespace: team-namho-{{stage}}
+        namespace: team-namho-{{path.basename}}
       syncPolicy:
         syncOptions:
         - CreateNamespace=true
