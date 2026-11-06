@@ -22,9 +22,6 @@ spec:
   - title: Built from
     description: The git SHA baked into the running image at build time
     url: 'https://smol-{{ .stage.metadata.name }}.akpdemoapps.link/sha/'
-  # No promotionPolicies: every Stage is promoted by hand. `approval` is the
-  # explicit human gate between staging and prod -- promoting into it is the
-  # sign-off. To make prod follow sign-off automatically, add:
-  #   promotionPolicies:
-  #   - stageSelector: {name: prod}
-  #     autoPromotionEnabled: true
+  # No promotionPolicies: every Stage is promoted by hand. The prod gate is
+  # the pull request opened by the `render-pr` task -- the promotion parks on
+  # git-wait-for-pr until someone merges it.

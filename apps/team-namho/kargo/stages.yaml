@@ -1,4 +1,4 @@
-# staging -> approval -> prod. Nothing auto-promotes; see project.yaml.
+# staging -> prod. Nothing auto-promotes; prod's PR is the approval gate.
 #
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
@@ -104,28 +104,6 @@ spec:
               verified-by: ${{ outputs.input.respondedBy }}
               verify-run: ${{ vars.smolRepo }}/actions/runs/${{ outputs.dispatch.runID }}
 ---
-# Control-flow Stage: no promotionTemplate, so promoting into it deploys
-# nothing. Clicking Promote here IS the sign-off, and it is the only way
-# Freight becomes available to prod.
-#
-# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: approval
-  namespace: team-namho
-  annotations:
-    argocd.argoproj.io/sync-wave: "2"
-    kargo.akuity.io/color: violet
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: smol
-    sources:
-      stages:
-      - staging
----
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
@@ -142,7 +120,7 @@ spec:
       name: smol
     sources:
       stages:
-      - approval
+      - staging
   promotionTemplate:
     spec:
       steps:
