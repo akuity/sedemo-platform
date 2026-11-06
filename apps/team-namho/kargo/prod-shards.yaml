@@ -78,3 +78,29 @@
     "sources":
       "stages":
       - "staging"
+---
+"apiVersion": "kargo.akuity.io/v1alpha1"
+"kind": "Stage"
+"metadata":
+  "annotations":
+    "argocd.argoproj.io/sync-wave": "2"
+    "kargo.akuity.io/color": "pink"
+    "team-namho/shard-endpoint": "smol-prod-d.akpdemoapps.link"
+    "team-namho/shard-handle": "shard/prod-d"
+  "labels":
+    "team-namho/shard": "true"
+  "name": "prod-d"
+  "namespace": "team-namho"
+"spec":
+  "promotionTemplate":
+    "spec":
+      "steps":
+      - "task":
+          "name": "render-pr"
+  "requestedFreight":
+  - "origin":
+      "kind": "Warehouse"
+      "name": "smol"
+    "sources":
+      "stages":
+      - "staging"

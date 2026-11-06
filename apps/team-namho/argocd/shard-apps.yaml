@@ -67,3 +67,25 @@
   "syncPolicy":
     "syncOptions":
     - "CreateNamespace=true"
+---
+"apiVersion": "argoproj.io/v1alpha1"
+"kind": "Application"
+"metadata":
+  "annotations":
+    "kargo.akuity.io/authorized-stage": "team-namho:prod-d"
+  "labels":
+    "team-namho/shard": "true"
+  "name": "team-namho-prod-d"
+  "namespace": "argocd"
+"spec":
+  "destination":
+    "name": "sedemo-primary"
+    "namespace": "team-namho-prod-d"
+  "project": "team-namho"
+  "source":
+    "path": "."
+    "repoURL": "https://github.com/akuity/sedemo-platform"
+    "targetRevision": "rendered/team-namho/prod-d"
+  "syncPolicy":
+    "syncOptions":
+    - "CreateNamespace=true"
