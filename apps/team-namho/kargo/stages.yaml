@@ -1,8 +1,10 @@
+# staging -> approval -> prod. Nothing auto-promotes; see project.yaml.
+#
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: dev
+  name: staging
   namespace: team-namho
   annotations:
     argocd.argoproj.io/sync-wave: "2"
@@ -11,23 +13,111 @@ spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: smol-main
+      name: smol
     sources:
       direct: true
   promotionTemplate:
     spec:
+      vars:
+      - name: image
+        value: ghcr.io/nk-87/smol
+      - name: smolRepo
+        value: https://github.com/nk-87/smol
       steps:
+      - uses: set-freight-alias
+        config:
+          name: ${{ ctx.targetFreight.name }}
+          alias: ${{ imageFrom(vars.image).Tag }}
+
+      # Deploy. `render` ends on argocd-update, which waits for the
+      # Application to go Healthy, so everything below runs against a live app.
       - task:
           name: render
+
+      # Verification: the simplest real check there is -- the thing we just
+      # deployed answers on its public URL with the SHA we just promoted.
+      - uses: http
+        as: smoke
+        config:
+          method: GET
+          url: https://smol-${{ ctx.stage }}.akpdemoapps.link/sha/
+          successExpression: response.status == 200
+          timeout: 2m
+
+      # The promoter decides whether the downstream GHA run passes or fails.
+      # This is purely so the demo can show both outcomes without a code change.
+      - uses: get-user-input
+        as: input
+        config:
+          display: >-
+            smol ${{ imageFrom(vars.image).Tag }} is live in staging and
+            answered its smoke check. Choose how the GitHub Actions
+            verification run should resolve.
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+            - result
+            properties:
+              result:
+                type: string
+                title: Verification result
+                description: >-
+                  `pass` lets the promotion finish. `fail` makes the workflow
+                  exit non-zero, so this promotion fails and the Freight never
+                  reaches approval.
+                enum:
+                - pass
+                - fail
+                default: pass
+
+      - uses: gha-dispatch-workflow
+        as: dispatch
+        config:
+          repoURL: ${{ vars.smolRepo }}
+          workflowFile: kargo-verify.yml
+          ref: main
+          inputs:
+            result: ${{ quote(outputs.input.values.result) }}
+            stage: ${{ quote(ctx.stage) }}
+            image: ${{ quote(imageFrom(vars.image).Tag) }}
+          timeout: 120
+
+      # Surfaced before the wait so the run is one click away while parked.
+      - uses: compose-output
+        as: links
+        config:
+          links:
+          - icon: faGithub
+            label: Verification run
+            tooltip: The kargo-verify workflow run gating this promotion
+            url: ${{ vars.smolRepo }}/actions/runs/${{ outputs.dispatch.runID }}
+
+      - uses: gha-wait-for-workflow
+        config:
+          repoURL: ${{ vars.smolRepo }}
+          runID: ${{ outputs.dispatch.runID }}
+          expectedConclusion: success
+          pollInterval: 15s
+
+      - uses: set-metadata
+        config:
+          updates:
+          - kind: Freight
+            name: ${{ ctx.targetFreight.name }}
+            values:
+              verified-by: ${{ outputs.input.respondedBy }}
+              verify-run: ${{ vars.smolRepo }}/actions/runs/${{ outputs.dispatch.runID }}
 ---
-# Cuts a release from a dev Freight by pushing its git tag. Deploys nothing,
-# so it has no Argo CD Application.
+# Control-flow Stage: no promotionTemplate, so promoting into it deploys
+# nothing. Clicking Promote here IS the sign-off, and it is the only way
+# Freight becomes available to prod.
 #
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: release
+  name: approval
   namespace: team-namho
   annotations:
     argocd.argoproj.io/sync-wave: "2"
@@ -36,128 +126,10 @@ spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: smol-main
+      name: smol
     sources:
       stages:
-      - dev
-  promotionTemplate:
-    spec:
-      vars:
-      - name: srcRepo
-        value: https://github.com/nk-87/smol
-      - name: image
-        value: ghcr.io/nk-87/smol
-      steps:
-      # The schema is checked on submit, so a malformed version never becomes
-      # a git tag, and the submitted value survives a retry.
-      - uses: get-user-input
-        as: input
-        config:
-          display: >-
-            Release Freight ${{ ctx.targetFreight.alias }}
-            (smol ${{ imageFrom(vars.image).Tag }}) as vX.Y.Z.
-            It must be newer than the last release.
-          schema:
-            type: object
-            additionalProperties: false
-            required:
-            - version
-            properties:
-              version:
-                type: string
-                title: Release version
-                description: SemVer for the release, e.g. v0.1.0
-                pattern: "^v?[0-9]+\\.[0-9]+\\.[0-9]+$"
-      - uses: compose-output
-        as: rel
-        config:
-          # tag.yml fires on `v*` and tags the image with GITHUB_REF_NAME
-          # verbatim, so the leading v isn't optional downstream.
-          version: v${{ trimPrefix(outputs.input.values.version, 'v') }}
-      # The Freight's commit, not whatever main has moved on to.
-      - uses: git-clone
-        config:
-          repoURL: ${{ vars.srcRepo }}
-          checkout:
-          - commit: ${{ commitFrom(vars.srcRepo).ID }}
-            path: ./src
-      - uses: git-tag
-        config:
-          path: ./src
-          tag: ${{ outputs.rel.version }}
-          message: Release ${{ outputs.rel.version }}
-      # Triggers tag.yml, which retags the existing image and fails if the
-      # digests differ. smol-release discovers the result within a minute.
-      - uses: git-push
-        config:
-          path: ./src
-          tag: ${{ outputs.rel.version }}
-      - uses: set-metadata
-        config:
-          updates:
-          - kind: Freight
-            name: ${{ ctx.targetFreight.name }}
-            values:
-              released-as: ${{ outputs.rel.version }}
----
-# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: uat
-  namespace: team-namho
-  annotations:
-    argocd.argoproj.io/sync-wave: "2"
-    kargo.akuity.io/color: blue
-spec:
-  requestedFreight:
-  - origin:
-      kind: Warehouse
-      name: smol-release
-    sources:
-      direct: true
-  promotionTemplate:
-    spec:
-      vars:
-      - name: image
-        value: ghcr.io/nk-87/smol
-      - name: gitRepo
-        value: https://github.com/akuity/sedemo-platform
-      steps:
-      - uses: set-freight-alias
-        config:
-          name: ${{ ctx.targetFreight.name }}
-          alias: ${{ imageFrom(vars.image).Tag }}
-      - task:
-          name: render
-      # render ends on argocd-update, so the issue is only opened once UAT is
-      # actually serving the release QA is being asked to sign off on. The
-      # issue number lands in Freight metadata as `github-issue-number`,
-      # which is how prod picks it up.
-      - uses: gh-create-issue
-        as: qa-signoff
-        config:
-          repoURL: ${{ vars.gitRepo }}
-          title: "QA sign-off: smol ${{ imageFrom(vars.image).Tag }} in UAT"
-          body: |
-            smol `${{ imageFrom(vars.image).Tag }}` is deployed to UAT and
-            ready for regression testing.
-
-            - **Running at:** https://smol-uat.akpdemoapps.link/
-            - **Built from:** https://smol-uat.akpdemoapps.link/sha/
-            - **Freight:** ${{ ctx.targetFreight.alias }}
-            - **Promotion:** ${{ ctx.promotion }}
-
-            To release to prod: add the `qa-approve` label, then close this
-            issue. Closing it without the label will not promote.
-      - uses: compose-output
-        as: links
-        config:
-          links:
-          - icon: faGithub
-            label: QA sign-off #${{ outputs['qa-signoff'].number }}
-            tooltip: The sign-off issue QA must label and close
-            url: ${{ outputs['qa-signoff'].url }}
+      - staging
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
@@ -172,36 +144,14 @@ spec:
   requestedFreight:
   - origin:
       kind: Warehouse
-      name: smol-release
+      name: smol
     sources:
       stages:
-      - uat
+      - approval
   promotionTemplate:
     spec:
-      vars:
-      - name: gitRepo
-        value: https://github.com/akuity/sedemo-platform
       steps:
-      # Emitted before the wait so the issue is one click away while the
-      # promotion is parked on qa-gate.
-      - uses: compose-output
-        as: links
-        config:
-          links:
-          - icon: faGithub
-            label: QA sign-off #${{ freightMetadata(ctx.targetFreight.name)['github-issue-number'] }}
-            tooltip: Waiting for the qa-approve label and this issue to close
-            url: ${{ vars.gitRepo }}/issues/${{ freightMetadata(ctx.targetFreight.name)['github-issue-number'] }}
-      # prod auto-promotes, so the promotion opens as soon as uat finishes and
-      # parks here until QA signs off: the gate shows on prod rather than
-      # hidden inside a finished uat promotion.
-      - uses: gh-wait-for-issue-state
-        as: qa-gate
-        config:
-          repoURL: ${{ vars.gitRepo }}
-          issueNumber: ${{ freightMetadata(ctx.targetFreight.name)['github-issue-number'] }}
-          successExpression: 'issue.state == "closed" and "qa-approve" in issue.labels'
-          failureExpression: '"qa-reject" in issue.labels'
-          pollInterval: 30s
+      # Renders manifests, opens a PR against rendered/team-namho/prod, and
+      # parks until someone merges it.
       - task:
-          name: render
+          name: render-pr

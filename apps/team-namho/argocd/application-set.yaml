@@ -1,6 +1,8 @@
-# One Application per deploying Stage; `release` deploys nothing. The rendered
-# branches don't exist until the first promotion, so until then each
-# Application reports a missing revision.
+# One Application per deploying Stage. `approval` is a control-flow Stage and
+# deploys nothing, so it has no Application.
+#
+# The rendered branches don't exist until the first promotion, so until then
+# each Application reports a missing revision.
 #
 # No syncPolicy.automated: Kargo's argocd-update step drives every sync.
 apiVersion: argoproj.io/v1alpha1
@@ -12,8 +14,7 @@ spec:
   generators:
   - list:
       elements:
-      - stage: dev
-      - stage: uat
+      - stage: staging
       - stage: prod
   template:
     metadata:
