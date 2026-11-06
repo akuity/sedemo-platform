@@ -1,0 +1,47 @@
+# Generated from Terraform output by the `shards` promotion.
+# One Argo CD Application per production shard. Do not edit by hand:
+# change infra/shards.auto.tfvars and promote `shards`.
+---
+"apiVersion": "argoproj.io/v1alpha1"
+"kind": "Application"
+"metadata":
+  "annotations":
+    "kargo.akuity.io/authorized-stage": "team-namho:prod-a"
+  "labels":
+    "team-namho/shard": "true"
+  "name": "team-namho-prod-a"
+  "namespace": "argocd"
+"spec":
+  "destination":
+    "name": "sedemo-primary"
+    "namespace": "team-namho-prod-a"
+  "project": "team-namho"
+  "source":
+    "path": "."
+    "repoURL": "https://github.com/akuity/sedemo-platform"
+    "targetRevision": "rendered/team-namho/prod-a"
+  "syncPolicy":
+    "syncOptions":
+    - "CreateNamespace=true"
+---
+"apiVersion": "argoproj.io/v1alpha1"
+"kind": "Application"
+"metadata":
+  "annotations":
+    "kargo.akuity.io/authorized-stage": "team-namho:prod-b"
+  "labels":
+    "team-namho/shard": "true"
+  "name": "team-namho-prod-b"
+  "namespace": "argocd"
+"spec":
+  "destination":
+    "name": "sedemo-primary"
+    "namespace": "team-namho-prod-b"
+  "project": "team-namho"
+  "source":
+    "path": "."
+    "repoURL": "https://github.com/akuity/sedemo-platform"
+    "targetRevision": "rendered/team-namho/prod-b"
+  "syncPolicy":
+    "syncOptions":
+    - "CreateNamespace=true"

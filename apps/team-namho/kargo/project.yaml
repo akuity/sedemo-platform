@@ -22,6 +22,6 @@ spec:
   - title: Built from
     description: The git SHA baked into the running image at build time
     url: 'https://smol-{{ .stage.metadata.name }}.akpdemoapps.link/sha/'
-  # No promotionPolicies: every Stage is promoted by hand. The prod gate is
-  # the pull request opened by the `render-pr` task -- the promotion parks on
-  # git-wait-for-pr until someone merges it.
+  # No promotionPolicies: every Stage is promoted by hand. Each production
+  # shard's gate is the pull request opened by the `render-pr` task -- the
+  # promotion parks on git-wait-for-pr until someone merges it.

@@ -8,9 +8,9 @@
 # aws_ssm_parameter (or anything else) and keep the outputs the same shape.
 # Nothing downstream reads anything but the outputs.
 #
-# This config deliberately does NOT write any Kargo manifests. Terraform
-# provisions and reports; the `render-shards` promotion step turns these
-# outputs into Stage manifests, and Kargo commits them.
+# This config deliberately writes NO repo files. Terraform provisions and
+# reports; the `shards` promotion's file-write steps turn these outputs into
+# Kargo Stage and Argo CD Application manifests, and Kargo commits them.
 resource "terraform_data" "shard" {
   for_each = toset(var.shards)
 
