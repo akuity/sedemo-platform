@@ -1,0 +1,17 @@
+# Overwritten in the promotion workspace by the `render` task with the
+# release-infra OpenTofu output, then thrown away -- only ./out is committed.
+# Checked in so that `kustomize build stages/dev` works outside a promotion.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smol
+spec:
+  template:
+    spec:
+      containers:
+      - name: smol
+        env:
+        - name: SMOL_MESSAGE
+          value: ""
+        - name: SMOL_STAGE
+          value: dev

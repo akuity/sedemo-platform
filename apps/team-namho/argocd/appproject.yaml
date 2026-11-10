@@ -4,7 +4,7 @@ metadata:
   name: team-namho
   namespace: argocd
 spec:
-  description: smol - two-lane promotion demo (main lane and release lane)
+  description: smol - dev to staging to prod, fanning out to three prod regions
   sourceRepos:
   - '*'
   destinations:

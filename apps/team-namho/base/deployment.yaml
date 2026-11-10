@@ -24,6 +24,17 @@ spec:
         # Rewritten by kustomize-set-image on every promotion; this value
         # only matters to a bare `kustomize build`.
         image: ghcr.io/nk-87/smol:v0.0.2
+        # Overlays patch these in. SMOL_MESSAGE comes from the release-infra
+        # OpenTofu output, written by the render promotion task;
+        # empty here so a bare `kustomize build` still yields a valid
+        # Deployment and smol falls back to its own placeholder.
+        # Text colour is deliberately NOT here: it is baked into the image, so
+        # that changing it is a release rather than a config edit.
+        env:
+        - name: SMOL_MESSAGE
+          value: ""
+        - name: SMOL_STAGE
+          value: ""
         ports:
         - name: http
           containerPort: 8080

@@ -1,6 +1,9 @@
-# Verification for the `staging` Stage. Runs as a Job in the team-namho
-# namespace after the promotion finishes, and hits the Service directly so
-# there's no ingress or TLS in the path.
+# Verification for the `dev` and `staging` Stages. Runs as a Job in the
+# team-namho namespace after the promotion finishes, and hits the Service
+# directly so there's no ingress or TLS in the path.
+#
+# `namespace` is an arg because each Stage deploys into its own namespace
+# (team-namho-<stage>); the Stage passes its own.
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
@@ -9,6 +12,8 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
+  args:
+  - name: namespace
   metrics:
   - name: smoke
     provider:
@@ -29,7 +34,7 @@ spec:
                   # --retry covers the gap between Argo CD reporting Healthy
                   # and the new endpoints actually being routable.
                   curl -fsS --retry 10 --retry-all-errors --retry-delay 3 \
-                    http://smol.team-namho-staging.svc.cluster.local/sha/
+                    http://smol.{{args.namespace}}.svc.cluster.local/sha/
                 resources:
                   requests:
                     cpu: 10m

@@ -1,9 +1,7 @@
-# One Application per kustomize overlay under stages/ -- today that is only
-# staging. The prod-<x> shards are created dynamically from
-# infra/shards.auto.tfvars, so they have no overlay directory here: their
-# Applications are generated into argocd/shard-apps.yaml by the `shards`
-# promotion, and their overlay is built in the promotion workspace by the
-# render-pr PromotionTask.
+# One Application per kustomize overlay under stages/: dev, staging, prod and
+# the three prod-<region> targets. Adding a Stage is two steps -- a Stage in
+# kargo/stages.yaml and an overlay directory here; this generator picks up
+# the rest.
 #
 # The rendered branches don't exist until a Stage's first promotion, so until
 # then each Application reports a missing revision.

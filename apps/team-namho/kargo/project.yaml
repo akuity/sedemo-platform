@@ -22,6 +22,33 @@ spec:
   - title: Built from
     description: The git SHA baked into the running image at build time
     url: 'https://smol-{{ .stage.metadata.name }}.akpdemoapps.link/sha/'
-  # No promotionPolicies: every Stage is promoted by hand. Each production
-  # shard's gate is the pull request opened by the `render-pr` task -- the
-  # promotion parks on git-wait-for-pr until someone merges it.
+
+  promotionPolicies:
+  # Every new image lands in dev unattended. If the smoke check fails, Kargo
+  # re-promotes the last good Freight by itself -- onVerification defaults to
+  # [Failed], spelled out here so the demo can point at it.
+  - stageSelector:
+      name: dev
+    autoPromotionEnabled: true
+    autoRollback:
+      onVerification:
+      - Failed
+  # The regions, not `prod` itself: the regex requires the hyphen. prod stays
+  # manual because wait-for-approval is its gate.
+  - stageSelector:
+      name: "regex:^prod-.+$"
+    autoPromotionEnabled: true
+
+  promotionWindows:
+  # Off by default. Flip `disabled` to false to show promotions being held
+  # outside a change window -- Deny wins over an active promotion policy, so
+  # even the auto-promoting regions stop.
+  - name: team-namho-freeze
+    description: Weekday change freeze, 09:00-17:00 America/Los_Angeles
+    disabled: true
+    kind: Deny
+    stageSelector:
+      name: "regex:^prod"
+    rrule: FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR
+    dtstart: TZID=America/Los_Angeles:20260105T090000
+    dtend: TZID=America/Los_Angeles:20260105T170000
