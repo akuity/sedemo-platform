@@ -1,0 +1,39 @@
+# Promotion notifications into Slack. Same shape as demo-rollouts and
+# demo-auto-rollback: the `slack-token` Secret is synced from AWS Secrets
+# Manager into Kargo's shared resources by secrets/kargo-sync-secrets.yaml,
+# so there is nothing to provision per project.
+apiVersion: ee.kargo.akuity.io/v1alpha1
+kind: MessageChannel
+metadata:
+  name: kargo-notification
+  namespace: team-namho
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  # A reference to a Secret containing the Slack token. This is required for Slack. The Secret must
+  # contain the following key:
+  # - `apiKey`: The Slack token with permissions to post messages to the desired channel
+  secretRef:
+    # The name of the Secret in the _shared_ namespace
+    name: slack-token
+  # Configuration specific to Slack
+  slack:
+    # kargo-notifications in Demo org
+    channelID: C0A8YDED6BU
+---
+kind: EventRouter
+apiVersion: ee.kargo.akuity.io/v1alpha1
+metadata:
+  name: promotion-status
+  namespace: team-namho
+  annotations:
+    argocd.argoproj.io/sync-wave: "3" #after channel
+spec:
+  types:
+    - PromotionFailed
+    - PromotionErrored
+    - PromotionSucceeded
+    - PromotionCreated
+  channels:
+    - name: kargo-notification
+      kind: MessageChannel
