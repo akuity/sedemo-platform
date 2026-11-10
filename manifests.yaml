@@ -17,10 +17,10 @@ spec:
       containers:
       - env:
         - name: SMOL_MESSAGE
-          value: umber-amber-0c48
+          value: ember-lagoon-8e17
         - name: SMOL_STAGE
           value: dev
-        image: ghcr.io/nk-87/smol:011c77d
+        image: ghcr.io/nk-87/smol:5b6227f
         livenessProbe:
           httpGet:
             path: /
