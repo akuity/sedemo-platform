@@ -15,7 +15,12 @@ spec:
         app: smol
     spec:
       containers:
-      - image: ghcr.io/nk-87/smol:011c77d
+      - env:
+        - name: SMOL_MESSAGE
+          value: harbor-garnet-e6a4
+        - name: SMOL_STAGE
+          value: staging
+        image: ghcr.io/nk-87/smol:5a29922
         livenessProbe:
           httpGet:
             path: /
