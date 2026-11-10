@@ -15,7 +15,12 @@ spec:
         app: smol
     spec:
       containers:
-      - image: ghcr.io/nk-87/smol:98ff1d1
+      - env:
+        - name: SMOL_MESSAGE
+          value: umber-amber-0c48
+        - name: SMOL_STAGE
+          value: dev
+        image: ghcr.io/nk-87/smol:011c77d
         livenessProbe:
           httpGet:
             path: /
