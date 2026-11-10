@@ -1,6 +1,12 @@
-# Rendered-manifest promotion. Every Stage uses this one task: it builds the
-# committed overlay under stages/<stage>/ and pushes the result to that
-# stage's rendered branch, which its Argo CD Application tracks.
+# Rendered-manifest promotion. Both tasks build the committed overlay under
+# stages/<stage>/ and land the result on that stage's rendered branch, which
+# its Argo CD Application tracks. They differ only in how it lands:
+#
+#   render     pushes straight to the rendered branch. Used by dev, prod and
+#              the three regions.
+#   render-pr  pushes a generated branch and opens a PR against the rendered
+#              branch, then parks until someone merges it. Used by staging,
+#              so the manifest diff is reviewed before it deploys.
 #
 # It applies ../release-infra first and patches the output onto the Deployment
 # as SMOL_MESSAGE, so every environment displays a value that came out of
@@ -101,6 +107,130 @@ spec:
     config:
       path: ./out
       targetBranch: rendered/team-namho/${{ ctx.stage }}
+  - uses: argocd-update
+    config:
+      apps:
+      - name: team-namho-${{ ctx.stage }}
+        sources:
+        - repoURL: ${{ vars.gitRepo }}
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/promotiontasks.kargo.akuity.io_v1alpha1.json
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: render-pr
+  namespace: team-namho
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  vars:
+  - name: gitRepo
+    value: https://github.com/akuity/sedemo-platform
+  - name: image
+    value: ghcr.io/nk-87/smol
+  - name: overlay
+    value: ./src/apps/team-namho/stages/${{ ctx.stage }}
+  - name: infraDir
+    value: ./src/apps/team-namho/release-infra
+  steps:
+  - uses: git-clone
+    config:
+      repoURL: ${{ vars.gitRepo }}
+      checkout:
+      - branch: main
+        path: ./src
+      - branch: rendered/team-namho/${{ ctx.stage }}
+        create: true
+        path: ./out
+  - uses: git-clear
+    config:
+      path: ./out
+
+  # The release string smol displays. release-infra keeps no state and needs
+  # no cloud credentials -- hashicorp/random is the only provider -- and its
+  # output is derived from the image tag, so the same Freight renders the same
+  # string here and in every production region.
+  - uses: hcl-update
+    config:
+      path: ${{ vars.infraDir }}/release.auto.tfvars
+      updates:
+      - key: release
+        value: ${{ imageFrom(vars.image).Tag }}
+  - uses: tf-apply
+    as: tf-apply
+    config:
+      dir: ${{ vars.infraDir }}
+  - uses: tf-output
+    as: tf-output
+    config:
+      dir: ${{ vars.infraDir }}
+  # Patched onto the Deployment by the overlay. Written into the workspace
+  # copy of main, which is never committed -- only ./out is pushed.
+  - uses: file-write
+    config:
+      path: ${{ vars.overlay }}/release-message.yaml
+      overwrite: true
+      contents: |
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: smol
+        spec:
+          template:
+            spec:
+              containers:
+              - name: smol
+                env:
+                - name: SMOL_MESSAGE
+                  value: "${{ task.outputs['tf-output'].release_message.value }}"
+                - name: SMOL_STAGE
+                  value: "${{ ctx.stage }}"
+
+  - uses: kustomize-set-image
+    as: set-image
+    config:
+      path: ${{ vars.overlay }}
+      images:
+      - image: ${{ vars.image }}
+        tag: ${{ imageFrom(vars.image).Tag }}
+  - uses: kustomize-build
+    config:
+      path: ${{ vars.overlay }}
+      outPath: ./out/manifests.yaml
+  - uses: git-commit
+    as: commit
+    config:
+      path: ./out
+      message: |
+        team-namho/${{ ctx.stage }}: ${{ task.outputs['set-image'].commitMessage }}
+  # A generated branch off the stage's rendered branch, so the PR diff is
+  # just this promotion's manifest change.
+  - uses: git-push
+    as: push
+    config:
+      path: ./out
+      generateTargetBranch: true
+  - uses: git-open-pr
+    as: open-pr
+    config:
+      repoURL: ${{ vars.gitRepo }}
+      sourceBranch: ${{ task.outputs.push.branch }}
+      targetBranch: rendered/team-namho/${{ ctx.stage }}
+      title: "team-namho/${{ ctx.stage }}: smol ${{ imageFrom(vars.image).Tag }}"
+      description: |-
+        Rendered manifests for **${{ ctx.stage }}**.
+
+        - **Image:** `${{ vars.image }}:${{ imageFrom(vars.image).Tag }}`
+        - **Freight:** ${{ ctx.targetFreight.alias }}
+        - **Promotion:** ${{ ctx.promotion }}
+
+        Merging this PR releases to ${{ ctx.stage }}. Argo CD syncs once it lands.
+  # The promotion parks here until a human merges. This is the gate.
+  - uses: git-wait-for-pr
+    as: wait-for-pr
+    config:
+      repoURL: ${{ vars.gitRepo }}
+      prNumber: ${{ task.outputs['open-pr'].pr.id }}
   - uses: argocd-update
     config:
       apps:

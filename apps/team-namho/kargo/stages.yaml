@@ -1,11 +1,11 @@
 # dev -> staging -> prod -> prod-a | prod-b | prod-c
 #
 # dev auto-promotes every new image and auto-rolls-back if its smoke check
-# fails. staging is the gate a human drives: it dispatches a GitHub Actions
-# verification run and parks until it finishes. prod is the change gate --
-# wait-for-approval, the Kargo-native stand-in for a ServiceNow change
-# request. The three regions fan out from prod and auto-promote, so one
-# approval releases to all three.
+# fails. staging gates twice: a pull request carrying the rendered manifests
+# must be merged (render-pr), then a GitHub Actions verification run must
+# pass. prod is the change gate -- wait-for-approval, the Kargo-native
+# stand-in for a ServiceNow change request. The three regions fan out from
+# prod and auto-promote, so one approval releases to all three.
 #
 # Promotion policies (who auto-promotes) live in kargo/project.yaml.
 #
@@ -77,10 +77,12 @@ spec:
       - name: smolRepo
         value: https://github.com/nk-87/smol
       steps:
-      # Deploy. `render` ends on argocd-update, which waits for the
-      # Application to go Healthy, so everything below runs against a live app.
+      # Deploy behind a pull request: render-pr opens a PR with the rendered
+      # manifests and parks until someone merges it, then syncs. It ends on
+      # argocd-update, which waits for the Application to go Healthy, so
+      # everything below runs against a live app.
       - task:
-          name: render
+          name: render-pr
 
       # The promoter decides whether the downstream GHA run passes or fails.
       # This is purely so the demo can show both outcomes without a code change.
