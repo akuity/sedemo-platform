@@ -17,10 +17,10 @@ spec:
       containers:
       - env:
         - name: SMOL_MESSAGE
-          value: flint-harbor-7280
+          value: umber-ember-b65e
         - name: SMOL_STAGE
           value: dev
-        image: ghcr.io/nk-87/smol:52d9d89
+        image: ghcr.io/nk-87/smol:7be7a42
         livenessProbe:
           httpGet:
             path: /
