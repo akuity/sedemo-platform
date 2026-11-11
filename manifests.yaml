@@ -17,10 +17,10 @@ spec:
       containers:
       - env:
         - name: SMOL_MESSAGE
-          value: verdant-basalt-682d
+          value: umber-ember-b65e
         - name: SMOL_STAGE
           value: dev
-        image: ghcr.io/nk-87/smol:8232ed2
+        image: ghcr.io/nk-87/smol:7be7a42
         livenessProbe:
           httpGet:
             path: /
