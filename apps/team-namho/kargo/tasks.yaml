@@ -8,11 +8,8 @@
 #              branch, then parks until someone merges it. Used by staging,
 #              so the manifest diff is reviewed before it deploys.
 #
-# It applies ../release-infra first and patches the output onto the Deployment
-# as SMOL_MESSAGE, so every environment displays a value that came out of
-# OpenTofu for this Freight rather than one baked into the image. The string
-# is derived from the image tag, so dev, staging, prod and all three regions
-# show the same value for the same Freight.
+# The env the app runs with (SMOL_MESSAGE, SMOL_STAGE) is committed in each
+# overlay's release-message.yaml. Nothing is generated at promotion time.
 #
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/promotiontasks.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
@@ -30,8 +27,6 @@ spec:
     value: ghcr.io/nk-87/smol
   - name: overlay
     value: ./src/apps/team-namho/stages/${{ ctx.stage }}
-  - name: infraDir
-    value: ./src/apps/team-namho/release-infra
   steps:
   - uses: git-clone
     config:
@@ -45,46 +40,6 @@ spec:
   - uses: git-clear
     config:
       path: ./out
-
-  # The release string smol displays. release-infra keeps no state and needs
-  # no cloud credentials -- hashicorp/random is the only provider -- and its
-  # output is derived from the image tag, so the same Freight renders the same
-  # string here and in every production region.
-  - uses: hcl-update
-    config:
-      path: ${{ vars.infraDir }}/release.auto.tfvars
-      updates:
-      - key: release
-        value: ${{ imageFrom(vars.image).Tag }}
-  - uses: tf-apply
-    as: tf-apply
-    config:
-      dir: ${{ vars.infraDir }}
-  - uses: tf-output
-    as: tf-output
-    config:
-      dir: ${{ vars.infraDir }}
-  # Patched onto the Deployment by the overlay. Written into the workspace
-  # copy of main, which is never committed -- only ./out is pushed.
-  - uses: file-write
-    config:
-      path: ${{ vars.overlay }}/release-message.yaml
-      overwrite: true
-      contents: |
-        apiVersion: apps/v1
-        kind: Deployment
-        metadata:
-          name: smol
-        spec:
-          template:
-            spec:
-              containers:
-              - name: smol
-                env:
-                - name: SMOL_MESSAGE
-                  value: "${{ task.outputs['tf-output'].release_message.value }}"
-                - name: SMOL_STAGE
-                  value: "${{ ctx.stage }}"
 
   - uses: kustomize-set-image
     as: set-image
@@ -130,8 +85,6 @@ spec:
     value: ghcr.io/nk-87/smol
   - name: overlay
     value: ./src/apps/team-namho/stages/${{ ctx.stage }}
-  - name: infraDir
-    value: ./src/apps/team-namho/release-infra
   steps:
   - uses: git-clone
     config:
@@ -145,46 +98,6 @@ spec:
   - uses: git-clear
     config:
       path: ./out
-
-  # The release string smol displays. release-infra keeps no state and needs
-  # no cloud credentials -- hashicorp/random is the only provider -- and its
-  # output is derived from the image tag, so the same Freight renders the same
-  # string here and in every production region.
-  - uses: hcl-update
-    config:
-      path: ${{ vars.infraDir }}/release.auto.tfvars
-      updates:
-      - key: release
-        value: ${{ imageFrom(vars.image).Tag }}
-  - uses: tf-apply
-    as: tf-apply
-    config:
-      dir: ${{ vars.infraDir }}
-  - uses: tf-output
-    as: tf-output
-    config:
-      dir: ${{ vars.infraDir }}
-  # Patched onto the Deployment by the overlay. Written into the workspace
-  # copy of main, which is never committed -- only ./out is pushed.
-  - uses: file-write
-    config:
-      path: ${{ vars.overlay }}/release-message.yaml
-      overwrite: true
-      contents: |
-        apiVersion: apps/v1
-        kind: Deployment
-        metadata:
-          name: smol
-        spec:
-          template:
-            spec:
-              containers:
-              - name: smol
-                env:
-                - name: SMOL_MESSAGE
-                  value: "${{ task.outputs['tf-output'].release_message.value }}"
-                - name: SMOL_STAGE
-                  value: "${{ ctx.stage }}"
 
   - uses: kustomize-set-image
     as: set-image

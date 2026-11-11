@@ -5,8 +5,7 @@ resources:
 - ../../base
 
 patches:
-# Release string from release-infra. The render task rewrites this file in
-# the workspace before kustomize-build; see kargo/tasks.yaml.
+# Per-stage env for the Deployment. Committed, not generated.
 - path: release-message.yaml
 - target:
     kind: Ingress

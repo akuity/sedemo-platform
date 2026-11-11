@@ -1,6 +1,4 @@
-# Overwritten in the promotion workspace by the `render` task with the
-# release-infra OpenTofu output, then thrown away -- only ./out is committed.
-# Checked in so that `kustomize build stages/prod-c` works outside a promotion.
+# Per-stage env for smol. Plain committed YAML -- change it here and promote.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -12,6 +10,6 @@ spec:
       - name: smol
         env:
         - name: SMOL_MESSAGE
-          value: ""
+          value: prod-c
         - name: SMOL_STAGE
           value: prod-c
