@@ -20,7 +20,7 @@ spec:
           value: dev
         - name: SMOL_STAGE
           value: dev
-        image: ghcr.io/nk-87/smol:5b6227f
+        image: ghcr.io/nk-87/smol:5a29922
         livenessProbe:
           httpGet:
             path: /
