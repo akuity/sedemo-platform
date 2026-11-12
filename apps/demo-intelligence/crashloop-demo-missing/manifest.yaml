@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crashloop-demo-missing-resource
+spec:
+  minReadySeconds: 5
+  # Long enough to be unambiguous in a demo; the broken probes below mean the
+  # pod never becomes Ready, so the app stays Degraded once this passes.
+  progressDeadlineSeconds: 30
+  # Recreate replaces the pod on every change instead of leaving the previous
+  # (fixed or broken) ReplicaSet running next to a rollout that never finishes.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: crashloop-demo-missing-resource
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: crashloop-demo-missing-resource
+    spec:
+      containers:
+        - name: guestbook
+          image: ghcr.io/akuity/guestbook:v0.0.2
+          command:
+          - /app/guestbook
+          args:
+          - --port=3000
+          imagePullPolicy: Always
+          env:
+            - name: APP_CONFIG_MODE
+              valueFrom:
+                configMapKeyRef:
+                  name: crashloop-demo-missing-config
+                  key: mode
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 250m
+              memory: 32Mi
+          livenessProbe:
+            failureThreshold: 2
+            httpGet:
+              path: /
+              port: 3000
+              scheme: HTTP
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
