@@ -90,3 +90,21 @@ spec:
   syncPolicy:
     syncOptions:
     - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-intelligence-progressing-resources
+  namespace: argocd
+spec:
+  project: demo-intelligence
+  source:
+    repoURL: https://github.com/akuity/sedemo-platform
+    targetRevision: main
+    path: apps/demo-intelligence/progressing-resources
+  destination:
+    name: sedemo-primary
+    namespace: demo-intelligence
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
