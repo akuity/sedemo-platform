@@ -1,0 +1,117 @@
+# wait-for-approval repro: a field promotion template, verbatim apart from repo/image/app names.
+# __SHARD__ and __ADMIN_GROUP__ are filled in by okta-sso-repro.sh (kargo target).
+# Steps after the approval fail (no repo layout, gpg secret, or Argo CD app); only the approve
+# button matters here.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: approval-repro
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: image
+  namespace: approval-repro
+spec:
+  shard: __SHARD__
+  subscriptions:
+  - image:
+      repoURL: quay.io/curl/curl
+      semverConstraint: ">=8.0.0"
+      discoveryLimit: 3
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: deploy
+  namespace: approval-repro
+spec:
+  vars:
+  - name: repoURL
+    value: https://github.com/akuity/sedemo-gha-gated-rollback.git
+  - name: image
+    value: quay.io/curl/curl
+  steps:
+  - uses: git-clone
+    config:
+      author:
+        email: kargo@example.com
+        name: Kargo
+        signingKey: ${{ secret("gpg").signingKey }}
+      checkout:
+      - branch: main
+        path: ./src
+      repoURL: ${{ vars.repoURL }}
+  - uses: kustomize-set-image
+    as: update-image
+    config:
+      images:
+      - image: ${{ vars.image }}
+        name: reference-app
+        newName: ${{ vars.image }}
+        tag: ${{ imageFrom(vars.image).Tag }}
+      path: ./src/manifests/overlays/${{ ctx.stage }}
+  - uses: git-commit
+    as: commit
+    config:
+      message: "chore(${{ ctx.stage }}): promote ${{ imageFrom(vars.image).Tag }}"
+      path: ./src
+  - uses: github-push
+    config:
+      path: ./src
+      targetBranch: main
+  - uses: argocd-update
+    config:
+      apps:
+      - name: approval-repro-${{ ctx.stage }}
+---
+# the field shape: approval is step 1, groups claim, required: true
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: first-step
+  namespace: approval-repro
+spec:
+  shard: __SHARD__
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: image
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      steps:
+      - uses: wait-for-approval
+        as: approve
+        config:
+          approvers:
+          - claim: groups
+            required: true
+            value: __ADMIN_GROUP__
+          minApprovals: 1
+      - task:
+          name: deploy
+---
+# control: no approver rules, so any user who can see the Promotion may approve
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: first-step-open
+  namespace: approval-repro
+spec:
+  shard: __SHARD__
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: image
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      steps:
+      - uses: wait-for-approval
+        as: approve
+        config: {}
+      - task:
+          name: deploy
