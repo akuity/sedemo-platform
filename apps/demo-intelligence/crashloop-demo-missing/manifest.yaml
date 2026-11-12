@@ -27,12 +27,6 @@ spec:
           args:
           - --port=3000
           imagePullPolicy: Always
-          env:
-            - name: APP_CONFIG_MODE
-              valueFrom:
-                configMapKeyRef:
-                  name: crashloop-demo-missing-config
-                  key: mode
           resources:
             requests:
               cpu: 10m
@@ -60,3 +54,24 @@ spec:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 1000
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: crashloop-demo-missing-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: crashloop-demo-missing-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  # Intentionally references a StorageClass that doesn't exist, so the PVC
+  # stays Pending and the pod can never be scheduled.
+  storageClassName: nonexistent-storage-class
+  resources:
+    requests:
+      storage: 1Gi
