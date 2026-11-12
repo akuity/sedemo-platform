@@ -108,3 +108,39 @@ spec:
   syncPolicy:
     syncOptions:
     - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-intelligence-network-issues
+  namespace: argocd
+spec:
+  project: demo-intelligence
+  source:
+    repoURL: https://github.com/akuity/sedemo-platform
+    targetRevision: main
+    path: apps/demo-intelligence/network-issues
+  destination:
+    name: sedemo-primary
+    namespace: demo-intelligence
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-intelligence-bad-config-value
+  namespace: argocd
+spec:
+  project: demo-intelligence
+  source:
+    repoURL: https://github.com/akuity/sedemo-platform
+    targetRevision: main
+    path: apps/demo-intelligence/bad-config-value
+  destination:
+    name: sedemo-primary
+    namespace: demo-intelligence
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true

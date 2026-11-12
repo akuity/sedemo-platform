@@ -1,0 +1,90 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bad-config-value-config
+data:
+  APP_ENV: production
+  REGION: us-east-1
+  LOG_LEVEL: info
+  CACHE_TTL_SECONDS: "300"
+  ORDERS_API_HOST: orders.production.svc.cluster.local
+  INVENTORY_API_HOST: inventory.production.svc.cluster.local
+  # DEMO BUG (intentional): APP_ENV is production, but this points at the
+  # staging namespace. Nothing crashes: the pod stays Running/Ready, and the
+  # app falls back to cached data, so the only evidence is an occasional WARN
+  # buried in the logs. Fix: payments.production.svc.cluster.local
+  PAYMENTS_API_HOST: payments.staging.svc.cluster.local
+  PAYMENTS_API_PORT: "8080"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bad-config-value
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: bad-config-value
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: bad-config-value
+    spec:
+      containers:
+        - name: order-worker
+          image: alpine:3.20
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: bad-config-value-config
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              ts() { date -u +%Y-%m-%dT%H:%M:%SZ; }
+              log() { echo "$(ts) $1 $2"; }
+
+              log INFO "order-worker starting env=${APP_ENV} region=${REGION} log_level=${LOG_LEVEL}"
+              log INFO "config loaded cache_ttl=${CACHE_TTL_SECONDS}s"
+              log INFO "orders_api=${ORDERS_API_HOST}:8080"
+              log INFO "inventory_api=${INVENTORY_API_HOST}:8080"
+              log INFO "payments_api=${PAYMENTS_API_HOST}:${PAYMENTS_API_PORT}"
+              log INFO "worker pool initialised workers=4 queue=orders-primary"
+
+              i=0
+              while true; do
+                i=$((i + 1))
+                log INFO "poll queue=orders-primary depth=$(( (i * 7) % 23 )) batch=$(( i % 5 + 1 ))"
+                log DEBUG "heartbeat seq=$i uptime=${i}s mem_rss_kb=$(( 18000 + (i * 13) % 900 ))"
+                log INFO "GET ${ORDERS_API_HOST}/v1/orders?status=pending 200 $(( 12 + (i * 3) % 40 ))ms"
+                log INFO "GET ${INVENTORY_API_HOST}/v1/stock/sku-$(( 1000 + (i * 11) % 90 )) 200 $(( 8 + (i * 5) % 30 ))ms"
+                log DEBUG "cache hit key=order:$(( 40000 + i )) ttl_remaining=$(( CACHE_TTL_SECONDS - i % 300 ))s"
+                log INFO "order id=$(( 40000 + i )) validated items=$(( i % 4 + 1 )) total=$(( 20 + (i * 17) % 180 )).$(( i % 100 ))"
+
+                # Payment capture runs every 6th loop. It never gets a response
+                # from the staging host, but the worker degrades gracefully.
+                if [ $(( i % 6 )) -eq 0 ]; then
+                  log INFO "capture order id=$(( 40000 + i )) via ${PAYMENTS_API_HOST}:${PAYMENTS_API_PORT}"
+                  log WARN "payment capture deferred order id=$(( 40000 + i )) reason=upstream_timeout after=5000ms attempt=1/1 using=pending_ledger"
+                fi
+
+                log INFO "ack queue=orders-primary processed=$(( i % 5 + 1 ))"
+                if [ $(( i % 10 )) -eq 0 ]; then
+                  log INFO "metrics processed_total=$(( i * 3 )) errors_total=0 deferred_total=$(( i / 6 ))"
+                fi
+                sleep 2
+              done
+          resources:
+            limits:
+              cpu: 100m
+              memory: 64Mi
+            requests:
+              cpu: 10m
+              memory: 16Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
