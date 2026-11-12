@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: crashloop-demo-missing-resource
+  name: crashloop-demo-storageclass
 spec:
   minReadySeconds: 5
   # Long enough to be unambiguous in a demo; the broken probes below mean the
@@ -13,11 +13,11 @@ spec:
     type: Recreate
   selector:
     matchLabels:
-      app.kubernetes.io/name: crashloop-demo-missing-resource
+      app.kubernetes.io/name: crashloop-demo-storageclass
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: crashloop-demo-missing-resource
+        app.kubernetes.io/name: crashloop-demo-storageclass
     spec:
       containers:
         - name: guestbook
@@ -60,12 +60,12 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: crashloop-demo-missing-data
+            claimName: crashloop-demo-storageclass
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: crashloop-demo-missing-data
+  name: crashloop-demo-storageclass
 spec:
   accessModes:
     - ReadWriteOnce
