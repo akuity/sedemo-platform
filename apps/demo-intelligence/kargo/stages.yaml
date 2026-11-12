@@ -92,3 +92,21 @@ spec:
       steps:
       - task:
           name: promote-sync-only
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: missing-storageclass
+  namespace: demo-intelligence
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: guestbook
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      steps:
+      - task:
+          name: promote-sync-only

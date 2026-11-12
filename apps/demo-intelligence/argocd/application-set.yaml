@@ -78,6 +78,8 @@ kind: Application
 metadata:
   name: demo-intelligence-missing-storageclass
   namespace: argocd
+  annotations:
+    kargo.akuity.io/authorized-stage: demo-intelligence:missing-storageclass
 spec:
   project: demo-intelligence
   source:
