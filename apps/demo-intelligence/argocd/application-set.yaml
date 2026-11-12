@@ -71,3 +71,24 @@ spec:
   syncPolicy:
     syncOptions:
     - CreateNamespace=true
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-intelligence-prod-crashloop-missing
+  namespace: argocd
+  annotations:
+    kargo.akuity.io/authorized-stage: demo-intelligence:prod-crashloop
+spec:
+  project: demo-intelligence
+  source:
+    repoURL: https://github.com/akuity/sedemo-platform
+    targetRevision: main
+    path: apps/demo-intelligence/crashloop-demo-missing
+  destination:
+    name: sedemo-primary
+    namespace: demo-intelligence
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
