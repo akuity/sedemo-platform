@@ -27,15 +27,11 @@ spec:
           args:
           - --port=3000
           imagePullPolicy: Always
-          # DEMO BUG (intentional): the app listens on 3000 (see --port above),
-          # but both probes check 30000. The liveness probe kills the container
-          # every ~10s (CrashLoopBackOff) and readiness never passes. The fix the
-          # AI-SRE agent should propose is to point both probes at port 3000.
           livenessProbe:
             failureThreshold: 2
             httpGet:
               path: /
-              port: 30000
+              port: 3000
               scheme: HTTP
             periodSeconds: 5
             successThreshold: 1
@@ -43,14 +39,14 @@ spec:
           readinessProbe:
             httpGet:
               path: /
-              port: 30000
+              port: 3000
           resources:
             limits:
               cpu: 100m
-              memory: 32000Mi
+              memory: 64Mi
             requests:
               cpu: 10m
-              memory: 32000Mi
+              memory: 32Mi
           securityContext:
             capabilities:
               drop:

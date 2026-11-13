@@ -66,12 +66,13 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: crashloop-demo-storageclass
+  annotations:
+    # storageClassName is immutable on an existing PVC, so recreate it on sync.
+    argocd.argoproj.io/sync-options: Replace=true
 spec:
   accessModes:
     - ReadWriteOnce
-  # Intentionally references a StorageClass that doesn't exist, so the PVC
-  # stays Pending and the pod can never be scheduled.
-  storageClassName: nonexistent-storage-class
+  # storageClassName omitted so the cluster's default StorageClass is used.
   resources:
     requests:
       storage: 1Gi
