@@ -6,7 +6,7 @@
 # AnalysisTemplate has to pass afterwards. prod is the change gate -- a
 # ServiceNow change request that must
 # reach Implement before anything is rendered. The three regions fan out
-# from prod and auto-promote, so one approved change request releases to all
+# from prod and auto-promote, so one approved change ticket releases to all
 # four.
 #
 # Each Stage publishes a Catppuccin palette to S3 as part of its promotion and
@@ -156,81 +156,91 @@ spec:
       vars:
       - name: image
         value: ghcr.io/nk-87/smol
+      - name: jiraProject
+        value: CHANGE
+      - name: jiraURL
+        value: https://eddiewebb.atlassian.net
+      - name: approvedStatus
+        value: Approved
       steps:
-      # The change gate. `kargo-step-snow` is synced from AWS Secrets Manager
-      # into Kargo's shared resources (secrets/kargo-sync-secrets.yaml), so
-      # there is nothing to provision per project -- hence sharedSecretName
+      # The change gate. `jira-access-secret` is synced from AWS Secrets
+      # Manager into Kargo's shared resources (secrets/kargo-sync-secrets.yaml),
+      # so there is nothing to provision per project -- hence sharedSecretName
       # rather than a Secret in this namespace.
-      - uses: snow-create
-        as: snow-create
+      #
+      # One ticket per Freight: skipped when this Freight already carries a key,
+      # so re-promoting after an aborted promotion reuses the same ticket rather
+      # than opening a second one.
+      - uses: jira
+        as: change-ticket
+        if: ${{ freightMetadata(ctx.targetFreight.name)?.['jira-issue-key'] == nil }}
         config:
-          credentials: &snowCredentials
-            sharedSecretName: kargo-step-snow
-            type: basic
-          tableName: change_request
-          template:
-            type: normal
-          parameters:
-            short_description: >-
-              team-namho: release smol ${{ imageFrom(vars.image).Tag }} to
-              production
+          credentials: &jiraCredentials
+            sharedSecretName: jira-access-secret
+          createIssue:
+            projectKey: ${{ vars.jiraProject }}
+            issueType: Task
+            summary: "[team-namho] Release smol ${{ imageFrom(vars.image).Tag }} to production"
             description: >-
-              Promote smol ${{ imageFrom(vars.image).Tag }} to production.
-              Approving this change releases it to prod and then to the four
-              prod-<flavor> regions, which auto-promote the same Freight.
+              Approving this ticket releases smol ${{ imageFrom(vars.image).Tag }}
+              to prod, and then to prod-mocha, prod-frappe, prod-macchiato and
+              prod-latte, which auto-promote the same Freight.
               Freight: ${{ ctx.targetFreight.alias }}.
               Promotion: ${{ ctx.promotion }}.
-            assignment_group: Application Development
-            impact: "3"
-            urgency: "3"
-            implementation_plan: >-
-              Kargo renders the prod overlay and syncs team-namho-prod, then
-              the four prod-<flavor> regions auto-promote the same Freight. See
-              https://kargo.akpdemoapps.link/project/${{ ctx.project }}/promotion/${{ ctx.promotion }}
+            labels:
+            - team-namho
+            - smol-${{ imageFrom(vars.image).Tag }}
 
-      # Parks until someone approves the change request. Nothing is rendered or
-      # pushed before this returns.
-      #
-      # `approval=approved`, not a state: on a Normal change the State field is
-      # read-only and ServiceNow's change model walks it New -> Assess ->
-      # Authorize -> Scheduled -> Implement, which is four transitions a
-      # promoter cannot make from the form. Approval is one click on the
-      # Approvers related list, and it is the thing actually being waited on --
-      # the promotion resumes because the change was approved, not because
-      # somebody flipped a status field.
-      - uses: snow-wait-for-condition
-        as: snow-wait
+      # Resolved once: the ticket just created, or the one this Freight already
+      # carries from an earlier attempt.
+      - uses: compose-output
+        as: ticket
         config:
-          credentials: *snowCredentials
-          tableName: change_request
-          ticketId: ${{ outputs['snow-create'].sys_id }}
-          condition: approval=approved
-          pollInterval: 15s
+          key: ${{ outputs['change-ticket']?.key ?? freightMetadata(ctx.targetFreight.name)['jira-issue-key'] }}
 
-      # staging's choice, not a new one. Falls back to latte for Freight that
-      # never passed through staging -- otherwise hcl-update would write an
-      # empty flavor and the Terraform validation would reject it.
+      # On the Freight before the wait, so an aborted promotion can find it.
+      - uses: set-metadata
+        config:
+          updates:
+          - kind: Freight
+            name: ${{ ctx.targetFreight.name }}
+            values:
+              jira-issue-key: ${{ outputs.ticket.key }}
+              jira-issue-url: ${{ vars.jiraURL }}/browse/${{ outputs.ticket.key }}
+
+      # One click away while the promotion is parked.
+      - uses: compose-output
+        as: links
+        config:
+          links:
+          - icon: faJira
+            label: ${{ outputs.ticket.key }}
+            tooltip: The change ticket gating this release
+            url: ${{ vars.jiraURL }}/browse/${{ outputs.ticket.key }}
+
+      # Parks until someone moves the ticket to Approved. Nothing is rendered
+      # or pushed before this returns.
+      - uses: jira
+        as: approve
+        config:
+          credentials: *jiraCredentials
+          waitForStatus:
+            issueKey: ${{ outputs.ticket.key }}
+            expectedStatus: ${{ vars.approvedStatus }}
+            pollInterval: 30s
+
       - task:
           name: render-infra
         vars:
         - name: flavor
           value: ${{ freightMetadata(ctx.targetFreight.name)['theme'] ?? 'latte' }}
 
-      # Record what was done on the ticket. Deliberately only work_notes: the
-      # change model rejects a state it does not consider a legal transition,
-      # and a rejected update here would fail the promotion *after* it had
-      # already deployed.
-      - uses: snow-update
-        as: snow-update
+      - uses: jira
         config:
-          credentials: *snowCredentials
-          tableName: change_request
-          ticketId: ${{ outputs['snow-create'].sys_id }}
-          parameters:
-            work_notes: >-
-              Kargo promoted smol ${{ imageFrom(vars.image).Tag }} to prod
-              (${{ ctx.promotion }}). The three regions auto-promote the same
-              Freight.
+          credentials: *jiraCredentials
+          commentOnIssue:
+            issueKey: ${{ outputs.ticket.key }}
+            body: "Promoted smol ${{ imageFrom(vars.image).Tag }} to prod (${{ ctx.promotion }}). The four prod-<flavor> regions auto-promote the same Freight."
 
       # The audit record: an event in Kargo's own stream, not just an
       # annotation on the Freight.
@@ -242,22 +252,17 @@ spec:
           type: approved
           message: >-
             Release smol ${{ imageFrom(vars.image).Tag }} to ${{ ctx.stage }}
-            approved in ServiceNow (${{ outputs['snow-create'].number }}).
+            approved on ${{ outputs.ticket.key }}.
           data:
-            change: ${{ outputs['snow-create'].number }}
+            change: ${{ outputs.ticket.key }}
             freight: ${{ ctx.targetFreight.name }}
 
-      # The change request on the Freight itself, visible in the Kargo UI and
-      # carried with it into all three regions.
       - uses: set-metadata
         config:
           updates:
           - kind: Freight
             name: ${{ ctx.targetFreight.name }}
             values:
-              snow-chg: ${{ outputs['snow-create'].number }}
-              snow-url: >-
-                ${{ sharedSecret('kargo-step-snow').instanceURL }}/change_request.do?sys_id=${{ outputs['snow-create'].sys_id }}
               prod-promotion: ${{ ctx.promotion }}
 
 # ---------------------------------------------------------------------------
