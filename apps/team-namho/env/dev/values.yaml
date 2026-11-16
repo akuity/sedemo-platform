@@ -1,0 +1,3 @@
+# Per-stage values for smol. Plain committed YAML -- change it here and promote.
+stage: dev
+message: dev

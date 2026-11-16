@@ -1,0 +1,22 @@
+/* Catppuccin Frappé -- the palette for whichever Stage selected it.
+   Generated from catppuccin/palette (palette.json, version 1.8.0).
+
+   Only custom properties: smol's own stylesheet owns the layout, this owns the
+   colour. The ANSI mapping is Catppuccin's terminal spec -- magenta is Pink,
+   cyan is Teal.
+
+   Editing this file is a release: the Warehouse's git subscription turns the
+   commit into Freight, OpenTofu re-publishes it, and it walks the pipeline
+   like any other change. Nothing here may set a colour on .version's inner
+   span -- that is the release colour, baked into the image and applied inline. */
+:root {
+  --bg: #303446;
+  --fg: #c6d0f5;
+  --muted: #a5adce;
+  --ansi-red: #e78284;
+  --ansi-green: #a6d189;
+  --ansi-yellow: #e5c890;
+  --ansi-blue: #8caaee;
+  --ansi-magenta: #f4b8e4;
+  --ansi-cyan: #81c8be;
+}

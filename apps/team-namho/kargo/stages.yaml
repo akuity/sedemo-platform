@@ -1,11 +1,18 @@
-# dev -> staging -> prod -> prod-a | prod-b | prod-c
+# dev -> staging -> prod -> prod-mocha | prod-frappe | prod-macchiato | prod-latte
 #
 # dev auto-promotes every new image and auto-rolls-back if its smoke check
 # fails. staging gates twice: a pull request carrying the rendered manifests
 # must be merged (render-pr), then a GitHub Actions verification run must
-# pass. prod is the change gate -- wait-for-approval, the Kargo-native
-# stand-in for a ServiceNow change request. The three regions fan out from
-# prod and auto-promote, so one approval releases to all three.
+# pass. prod is the change gate -- a ServiceNow change request that must
+# reach Implement before anything is rendered. The three regions fan out
+# from prod and auto-promote, so one change request releases to all four.
+#
+# Each Stage publishes a Catppuccin palette to S3 as part of its promotion and
+# smol links it, so the page's colours say which Stage you are looking at. The
+# promoter picks the palette once, at staging; it is recorded on the Freight
+# and prod reads it back, so staging and prod always match. The four production
+# regions are named after the flavor they pin and ignore the choice. dev runs
+# no Terraform at all and renders black on white.
 #
 # Promotion policies (who auto-promotes) live in kargo/project.yaml.
 #
@@ -77,12 +84,43 @@ spec:
       - name: smolRepo
         value: https://github.com/nk-87/smol
       steps:
+      # Which palette this release wears from here on. Asked before anything is
+      # rendered, because the answer is an input to the Terraform that publishes
+      # the stylesheet. Recorded on the Freight at the end of this promotion, so
+      # prod inherits it without asking again.
+      - uses: get-user-input
+        as: theme
+        config:
+          display: >-
+            Pick the Catppuccin palette for smol ${{ imageFrom(vars.image).Tag }}
+            in staging. prod inherits this choice; the production regions are
+            named after the flavor they pin and ignore it.
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+            - flavor
+            properties:
+              flavor:
+                type: string
+                title: Palette
+                description: One of the four Catppuccin flavors.
+                enum:
+                - latte
+                - frappe
+                - macchiato
+                - mocha
+                default: latte
+
       # Deploy behind a pull request: render-pr opens a PR with the rendered
       # manifests and parks until someone merges it, then syncs. It ends on
       # argocd-update, which waits for the Application to go Healthy, so
       # everything below runs against a live app.
       - task:
           name: render-pr
+        vars:
+        - name: flavor
+          value: ${{ outputs.theme.values.flavor }}
 
       # The promoter decides whether the downstream GHA run passes or fails.
       # This is purely so the demo can show both outcomes without a code change.
@@ -148,6 +186,9 @@ spec:
             values:
               verified-by: ${{ outputs.input.respondedBy }}
               verify-run: ${{ vars.smolRepo }}/actions/runs/${{ outputs.dispatch.runID }}
+              # Read back by prod, so one choice covers both Stages.
+              theme: ${{ outputs.theme.values.flavor }}
+              theme-chosen-by: ${{ outputs.theme.respondedBy }}
 ---
 # The change gate. Nothing reaches a region without passing through here.
 #
@@ -174,24 +215,102 @@ spec:
       - name: image
         value: ghcr.io/nk-87/smol
       steps:
-      # This is the slot ServiceNow fills in governed-teams
-      # (changeGate: servicenow -> snow-create + snow-wait-for-condition;
-      # changeGate: approval -> this step). Kargo-native, so there is no
-      # external system to stand up.
-      #
-      # Empty config means anyone who can promote in this project may
-      # approve. To restrict it the way governed-teams does:
-      #   config:
-      #     approvers:
-      #     - claim: groups
-      #       value: <group>
-      #       required: true
-      - uses: wait-for-approval
-        as: approve
-        config: {}
+      # Why this release is going out, asked before the change request is
+      # raised so the answer can be its description. The promotion parks on
+      # this form until someone fills it in.
+      - uses: get-user-input
+        as: reason
+        config:
+          display: Why does this version go to production?
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+            - reason
+            properties:
+              reason:
+                type: string
+                title: Reason
+                description: >-
+                  Carried into the ServiceNow change request and the Kargo
+                  audit event.
+
+      # The change gate. `kargo-step-snow` is synced from AWS Secrets Manager
+      # into Kargo's shared resources (secrets/kargo-sync-secrets.yaml), so
+      # there is nothing to provision per project -- hence sharedSecretName
+      # rather than a Secret in this namespace.
+      - uses: snow-create
+        as: snow-create
+        config:
+          credentials: &snowCredentials
+            sharedSecretName: kargo-step-snow
+            type: basic
+          tableName: change_request
+          template:
+            type: normal
+          parameters:
+            short_description: >-
+              team-namho: release smol ${{ imageFrom(vars.image).Tag }} to
+              production
+            description: ${{ outputs.reason.values.reason }}
+            assignment_group: Application Development
+            impact: "3"
+            urgency: "3"
+            implementation_plan: >-
+              Kargo renders the prod overlay and syncs team-namho-prod, then
+              the four prod-<flavor> regions auto-promote the same Freight. See
+              https://kargo.akpdemoapps.link/project/${{ ctx.project }}/promotion/${{ ctx.promotion }}
+
+      # Parks until the change request reaches Implement (state -1). Nothing
+      # is rendered or pushed before this returns.
+      - uses: snow-wait-for-condition
+        as: snow-wait
+        config:
+          credentials: *snowCredentials
+          tableName: change_request
+          ticketId: ${{ outputs['snow-create'].sys_id }}
+          condition: state=-1
+          pollInterval: 15s
+
+      # staging's choice, not a new one. Falls back to latte for Freight that
+      # never passed through staging -- otherwise hcl-update would write an
+      # empty flavor and the Terraform validation would reject it.
       - task:
           name: render
-      # Who signed off, on the Freight itself, visible in the Kargo UI and
+        vars:
+        - name: flavor
+          value: ${{ freightMetadata(ctx.targetFreight.name)['theme'] ?? 'latte' }}
+
+      # Back to Review now the work is done.
+      - uses: snow-update
+        as: snow-update
+        config:
+          credentials: *snowCredentials
+          tableName: change_request
+          ticketId: ${{ outputs['snow-create'].sys_id }}
+          parameters:
+            state: "0"
+            work_notes: >-
+              Kargo promoted smol ${{ imageFrom(vars.image).Tag }} to prod
+              (${{ ctx.promotion }}). The three regions auto-promote the same
+              Freight.
+
+      # The audit record: an event in Kargo's own stream, not just an
+      # annotation on the Freight.
+      - uses: record-audit-event
+        as: audit
+        retry:
+          errorThreshold: 3
+        config:
+          type: approved
+          message: >-
+            Release smol ${{ imageFrom(vars.image).Tag }} to ${{ ctx.stage }}
+            approved in ServiceNow (${{ outputs['snow-create'].number }}).
+          data:
+            reason: ${{ outputs.reason.values.reason }}
+            change: ${{ outputs['snow-create'].number }}
+
+      # The change request on the Freight itself, visible in the Kargo UI and
       # carried with it into all three regions.
       - uses: set-metadata
         config:
@@ -199,20 +318,27 @@ spec:
           - kind: Freight
             name: ${{ ctx.targetFreight.name }}
             values:
-              prod-approved-by: ${{ outputs.approve.responses[0].user }}
+              snow-chg: ${{ outputs['snow-create'].number }}
+              snow-url: >-
+                ${{ sharedSecret('kargo-step-snow').instanceURL }}/change_request.do?sys_id=${{ outputs['snow-create'].sys_id }}
               prod-promotion: ${{ ctx.promotion }}
 
 # ---------------------------------------------------------------------------
-# Production regions. Identical but for name and host; they auto-promote off
-# prod (see promotionPolicies in kargo/project.yaml), so the single approval
-# on prod is what releases to all three.
+# Production regions. Identical but for name, host and the Catppuccin flavor
+# each one pins; they auto-promote off prod (see promotionPolicies in
+# kargo/project.yaml), so the single change request on prod is what releases to
+# all four.
+#
+# The flavor is hard-coded here rather than inherited: a region's palette is
+# how you tell at a glance which region a tab is showing, so it has to be
+# stable across releases. Only staging and prod use the promoter's choice.
 # ---------------------------------------------------------------------------
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: prod-a
+  name: prod-mocha
   namespace: team-namho
   annotations:
     argocd.argoproj.io/sync-wave: "2"
@@ -229,8 +355,8 @@ spec:
       stages:
       - prod
       # MatchUpstream: take exactly what prod is running, not merely the
-      # newest Freight prod has ever carried. All three regions converge on
-      # the same image after one approval.
+      # newest Freight prod has ever carried. All four regions converge on
+      # the same image after one change request.
       autoPromotionOptions:
         selectionPolicy: MatchUpstream
   promotionTemplate:
@@ -241,16 +367,19 @@ spec:
       steps:
       - task:
           name: render
+        vars:
+        - name: flavor
+          value: mocha
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: prod-b
+  name: prod-frappe
   namespace: team-namho
   annotations:
     argocd.argoproj.io/sync-wave: "2"
-    kargo.akuity.io/color: purple
+    kargo.akuity.io/color: violet
     team-namho/region: eu-west
   labels:
     team-namho/region: "true"
@@ -263,8 +392,8 @@ spec:
       stages:
       - prod
       # MatchUpstream: take exactly what prod is running, not merely the
-      # newest Freight prod has ever carried. All three regions converge on
-      # the same image after one approval.
+      # newest Freight prod has ever carried. All four regions converge on
+      # the same image after one change request.
       autoPromotionOptions:
         selectionPolicy: MatchUpstream
   promotionTemplate:
@@ -275,16 +404,19 @@ spec:
       steps:
       - task:
           name: render
+        vars:
+        - name: flavor
+          value: frappe
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: prod-c
+  name: prod-macchiato
   namespace: team-namho
   annotations:
     argocd.argoproj.io/sync-wave: "2"
-    kargo.akuity.io/color: purple
+    kargo.akuity.io/color: indigo
     team-namho/region: ap-south
   labels:
     team-namho/region: "true"
@@ -297,8 +429,8 @@ spec:
       stages:
       - prod
       # MatchUpstream: take exactly what prod is running, not merely the
-      # newest Freight prod has ever carried. All three regions converge on
-      # the same image after one approval.
+      # newest Freight prod has ever carried. All four regions converge on
+      # the same image after one change request.
       autoPromotionOptions:
         selectionPolicy: MatchUpstream
   promotionTemplate:
@@ -309,3 +441,43 @@ spec:
       steps:
       - task:
           name: render
+        vars:
+        - name: flavor
+          value: macchiato
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/stages.kargo.akuity.io_v1alpha1.json
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod-latte
+  namespace: team-namho
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    kargo.akuity.io/color: amber
+    team-namho/region: sa-east
+  labels:
+    team-namho/region: "true"
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: smol
+    sources:
+      stages:
+      - prod
+      # MatchUpstream: take exactly what prod is running, not merely the
+      # newest Freight prod has ever carried. All four regions converge on
+      # the same image after one change request.
+      autoPromotionOptions:
+        selectionPolicy: MatchUpstream
+  promotionTemplate:
+    spec:
+      vars:
+      - name: image
+        value: ghcr.io/nk-87/smol
+      steps:
+      - task:
+          name: render
+        vars:
+        - name: flavor
+          value: latte

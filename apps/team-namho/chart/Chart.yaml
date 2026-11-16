@@ -1,0 +1,10 @@
+apiVersion: v2
+name: smol
+description: smol - the team-namho demo app, promoted by Kargo through dev, staging, prod and three prod regions
+type: application
+# The chart lives here in sedemo-platform rather than being released to GHCR:
+# a change to it is picked up by the `smol` Warehouse's git subscription and
+# travels the pipeline as Freight, so chart edits are released, not applied.
+version: 0.1.0
+# Only a default; the running tag is set per promotion from the Freight.
+appVersion: "v0.0.2"

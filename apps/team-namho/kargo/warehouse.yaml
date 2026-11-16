@@ -1,5 +1,16 @@
-# One lane: every image pushed to ghcr.io/nk-87/smol becomes Freight.
-# build.yml tags each commit on main with the first 7 chars of its SHA.
+# Two artifacts in one lane. Every image pushed to ghcr.io/nk-87/smol becomes
+# Freight (build.yml tags each commit on main with the first 7 chars of its
+# SHA), and so does every commit touching smol's chart or its per-stage values.
+#
+# The git subscription is what makes a config change a release: it walks dev ->
+# staging -> prod through the same gates, verification and change window as an
+# image, instead of arriving unannounced on the next image promotion. It is
+# also what lets the render tasks pin ./src to the Freight's commit, so
+# re-promoting old Freight reproduces that release rather than rendering it
+# against today's main.
+#
+# Scoped to chart/ and env/ on purpose: edits to kargo/ or argocd/ are pipeline
+# configuration, not releases, and should not create Freight.
 #
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/warehouses.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
@@ -19,3 +30,9 @@ spec:
       discoveryLimit: 10
       allowTagsRegexes:
       - '^[0-9a-f]{7}$'
+  - git:
+      repoURL: https://github.com/akuity/sedemo-platform
+      branch: main
+      includePaths:
+      - glob:apps/team-namho/chart/**
+      - glob:apps/team-namho/env/**

@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "smol.name" . }}
+  labels:
+    app: {{ include "smol.name" . }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: {{ include "smol.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "smol.name" . }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: {{ include "smol.name" . }}
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        # Text colour is deliberately not here: it is baked into the image, so
+        # changing it is a release rather than a config edit. The theme below
+        # is the other axis -- it says which Stage you are looking at.
+        env:
+        - name: SMOL_MESSAGE
+          value: {{ .Values.message | quote }}
+        - name: SMOL_STAGE
+          value: {{ .Values.stage | quote }}
+        - name: SMOL_THEME_URL
+          value: {{ .Values.theme.url | quote }}
+        {{- if .Values.theme.css }}
+        - name: SMOL_THEME_CSS
+          value: {{ .Values.theme.css | quote }}
+        {{- end }}
+        ports:
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL

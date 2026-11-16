@@ -1,7 +1,7 @@
-# One Application per kustomize overlay under stages/: dev, staging, prod and
-# the three prod-<region> targets. Adding a Stage is two steps -- a Stage in
-# kargo/stages.yaml and an overlay directory here; this generator picks up
-# the rest.
+# One Application per values directory under env/: dev, staging, prod and the
+# three prod-<region> targets. Adding a Stage is two steps -- a Stage in
+# kargo/stages.yaml and an env/<stage>/values.yaml here; this generator picks
+# up the rest.
 #
 # The rendered branches don't exist until a Stage's first promotion, so until
 # then each Application reports a missing revision.
@@ -18,7 +18,7 @@ spec:
       repoURL: https://github.com/akuity/sedemo-platform
       revision: HEAD
       directories:
-      - path: apps/team-namho/stages/*
+      - path: apps/team-namho/env/*
   template:
     metadata:
       name: team-namho-{{path.basename}}

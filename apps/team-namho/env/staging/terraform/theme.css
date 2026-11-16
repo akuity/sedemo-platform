@@ -1,0 +1,33 @@
+/* Theme for the staging Stage. Uploaded to S3 by OpenTofu during this Stage's
+   promotion; smol links it as a stylesheet.
+
+   Editing this file is a release: the Warehouse's git subscription turns the
+   commit into Freight, and the new theme walks the pipeline like any other
+   change.
+
+   Do not set a colour on .message -- that is the banner colour baked into the
+   image, applied inline, and it must stay the thing that identifies a release. */
+body {
+  background: #2b1d05;
+  color: #ffe8b8;
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+}
+body::before {
+  content: "staging";
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  padding: 0.4rem;
+  background: #f59e0b;
+  color: #2b1d05;
+  font-size: 0.75rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+dt { color: #a87f3a; }
+dd { color: #f59e0b; }

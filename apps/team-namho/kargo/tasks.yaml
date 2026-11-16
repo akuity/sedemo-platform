@@ -1,6 +1,7 @@
-# Rendered-manifest promotion. Both tasks build the committed overlay under
-# stages/<stage>/ and land the result on that stage's rendered branch, which
-# its Argo CD Application tracks. They differ only in how it lands:
+# Rendered-manifest promotion. Both tasks render the committed chart with
+# that stage's values from env/<stage>/ and land the result on the stage's
+# rendered branch, which its Argo CD Application tracks. They differ only in
+# how it lands:
 #
 #   render     pushes straight to the rendered branch. Used by dev, prod and
 #              the three regions.
@@ -9,7 +10,11 @@
 #              so the manifest diff is reviewed before it deploys.
 #
 # The env the app runs with (SMOL_MESSAGE, SMOL_STAGE) is committed in each
-# overlay's release-message.yaml. Nothing is generated at promotion time.
+# stage's env/<stage>/values.yaml. Nothing is generated at promotion time.
+#
+# ./src is checked out at the commit carried by the Freight, not at the head
+# of main: re-promoting an older Freight has to reproduce the chart and values
+# it was built from, otherwise a rollback is the old image with today's config.
 #
 # yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/promotiontasks.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
@@ -25,14 +30,23 @@ spec:
     value: https://github.com/akuity/sedemo-platform
   - name: image
     value: ghcr.io/nk-87/smol
-  - name: overlay
-    value: ./src/apps/team-namho/stages/${{ ctx.stage }}
+  - name: chart
+    value: ./src/apps/team-namho/chart
+  - name: values
+    value: ./src/apps/team-namho/env/${{ ctx.stage }}/values.yaml
+  - name: tfDir
+    value: ./src/apps/team-namho/env/${{ ctx.stage }}/terraform
+  # Which Catppuccin palette this Stage publishes. Overridden per Stage: the
+  # production regions pass a fixed one, staging passes what the promoter
+  # picked, prod reads staging's choice back off the Freight.
+  - name: flavor
+    value: latte
   steps:
   - uses: git-clone
     config:
       repoURL: ${{ vars.gitRepo }}
       checkout:
-      - branch: main
+      - commit: ${{ commitFrom(vars.gitRepo).ID }}
         path: ./src
       - branch: rendered/team-namho/${{ ctx.stage }}
         create: true
@@ -41,23 +55,68 @@ spec:
     config:
       path: ./out
 
-  - uses: kustomize-set-image
-    as: set-image
+  # The Stage's palette is infrastructure, published by this promotion: an S3
+  # bucket holding the Catppuccin stylesheet that smol links. The key is fixed
+  # and the CSS is the only input, so an image-only release is a real no-op --
+  # Terraform acts when the palette changes and not otherwise.
+  #
+  # dev has no terraform/ directory, so these three steps are skipped there and
+  # theme.url resolves to empty -- dev renders bare. That difference on screen
+  # is the point: a Stage with infrastructure behind it, and one without.
+  - uses: hcl-update
+    if: ${{ ctx.stage != 'dev' }}
     config:
-      path: ${{ vars.overlay }}
-      images:
-      - image: ${{ vars.image }}
-        tag: ${{ imageFrom(vars.image).Tag }}
-  - uses: kustomize-build
+      path: ${{ vars.tfDir }}/env.auto.tfvars
+      updates:
+      - key: flavor
+        value: ${{ vars.flavor }}
+  - uses: tf-apply
+    as: tf-apply
+    if: ${{ ctx.stage != 'dev' }}
     config:
-      path: ${{ vars.overlay }}
+      dir: ${{ vars.tfDir }}
+      env: &awsEnv
+      - name: AWS_REGION
+        value: us-west-2
+      - name: AWS_ACCESS_KEY_ID
+        value: ${% sharedSecret('kargo-terraform-steps').AWS_ACCESS_KEY_ID %}
+      - name: AWS_SECRET_ACCESS_KEY
+        value: ${% sharedSecret('kargo-terraform-steps').AWS_SECRET_ACCESS_KEY %}
+  - uses: tf-output
+    as: tf-output
+    if: ${{ ctx.stage != 'dev' }}
+    config:
+      dir: ${{ vars.tfDir }}
+      env: *awsEnv
+  # Empty for dev, where the two steps above never ran.
+  - uses: compose-output
+    as: theme
+    config:
+      url: ${{ task.outputs['tf-output']?.theme_url?.value ?? '' }}
+
+  - uses: helm-template
+    config:
+      releaseName: deploy
+      path: ${{ vars.chart }}
+      valuesFiles:
+      - ${{ vars.chart }}/values.yaml
+      - ${{ vars.values }}
+      setValues:
+      - key: image.tag
+        value: ${{ imageFrom(vars.image).Tag }}
+      - key: theme.url
+        value: ${{ task.outputs.theme.url }}
+      namespace: team-namho-${{ ctx.stage }}
       outPath: ./out/manifests.yaml
   - uses: git-commit
     as: commit
     config:
       path: ./out
       message: |
-        team-namho/${{ ctx.stage }}: ${{ task.outputs['set-image'].commitMessage }}
+        team-namho/${{ ctx.stage }}: smol ${{ imageFrom(vars.image).Tag }}
+
+        Chart and values from ${{ commitFrom(vars.gitRepo).ID }}
+        Freight: ${{ ctx.targetFreight.name }}
   - uses: git-push
     config:
       path: ./out
@@ -83,14 +142,23 @@ spec:
     value: https://github.com/akuity/sedemo-platform
   - name: image
     value: ghcr.io/nk-87/smol
-  - name: overlay
-    value: ./src/apps/team-namho/stages/${{ ctx.stage }}
+  - name: chart
+    value: ./src/apps/team-namho/chart
+  - name: values
+    value: ./src/apps/team-namho/env/${{ ctx.stage }}/values.yaml
+  - name: tfDir
+    value: ./src/apps/team-namho/env/${{ ctx.stage }}/terraform
+  # Which Catppuccin palette this Stage publishes. Overridden per Stage: the
+  # production regions pass a fixed one, staging passes what the promoter
+  # picked, prod reads staging's choice back off the Freight.
+  - name: flavor
+    value: latte
   steps:
   - uses: git-clone
     config:
       repoURL: ${{ vars.gitRepo }}
       checkout:
-      - branch: main
+      - commit: ${{ commitFrom(vars.gitRepo).ID }}
         path: ./src
       - branch: rendered/team-namho/${{ ctx.stage }}
         create: true
@@ -99,23 +167,68 @@ spec:
     config:
       path: ./out
 
-  - uses: kustomize-set-image
-    as: set-image
+  # The Stage's palette is infrastructure, published by this promotion: an S3
+  # bucket holding the Catppuccin stylesheet that smol links. The key is fixed
+  # and the CSS is the only input, so an image-only release is a real no-op --
+  # Terraform acts when the palette changes and not otherwise.
+  #
+  # dev has no terraform/ directory, so these three steps are skipped there and
+  # theme.url resolves to empty -- dev renders bare. That difference on screen
+  # is the point: a Stage with infrastructure behind it, and one without.
+  - uses: hcl-update
+    if: ${{ ctx.stage != 'dev' }}
     config:
-      path: ${{ vars.overlay }}
-      images:
-      - image: ${{ vars.image }}
-        tag: ${{ imageFrom(vars.image).Tag }}
-  - uses: kustomize-build
+      path: ${{ vars.tfDir }}/env.auto.tfvars
+      updates:
+      - key: flavor
+        value: ${{ vars.flavor }}
+  - uses: tf-apply
+    as: tf-apply
+    if: ${{ ctx.stage != 'dev' }}
     config:
-      path: ${{ vars.overlay }}
+      dir: ${{ vars.tfDir }}
+      env: &awsEnvPR
+      - name: AWS_REGION
+        value: us-west-2
+      - name: AWS_ACCESS_KEY_ID
+        value: ${% sharedSecret('kargo-terraform-steps').AWS_ACCESS_KEY_ID %}
+      - name: AWS_SECRET_ACCESS_KEY
+        value: ${% sharedSecret('kargo-terraform-steps').AWS_SECRET_ACCESS_KEY %}
+  - uses: tf-output
+    as: tf-output
+    if: ${{ ctx.stage != 'dev' }}
+    config:
+      dir: ${{ vars.tfDir }}
+      env: *awsEnvPR
+  # Empty for dev, where the two steps above never ran.
+  - uses: compose-output
+    as: theme
+    config:
+      url: ${{ task.outputs['tf-output']?.theme_url?.value ?? '' }}
+
+  - uses: helm-template
+    config:
+      releaseName: deploy
+      path: ${{ vars.chart }}
+      valuesFiles:
+      - ${{ vars.chart }}/values.yaml
+      - ${{ vars.values }}
+      setValues:
+      - key: image.tag
+        value: ${{ imageFrom(vars.image).Tag }}
+      - key: theme.url
+        value: ${{ task.outputs.theme.url }}
+      namespace: team-namho-${{ ctx.stage }}
       outPath: ./out/manifests.yaml
   - uses: git-commit
     as: commit
     config:
       path: ./out
       message: |
-        team-namho/${{ ctx.stage }}: ${{ task.outputs['set-image'].commitMessage }}
+        team-namho/${{ ctx.stage }}: smol ${{ imageFrom(vars.image).Tag }}
+
+        Chart and values from ${{ commitFrom(vars.gitRepo).ID }}
+        Freight: ${{ ctx.targetFreight.name }}
   # A generated branch off the stage's rendered branch, so the PR diff is
   # just this promotion's manifest change.
   - uses: git-push

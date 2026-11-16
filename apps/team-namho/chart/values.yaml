@@ -1,0 +1,41 @@
+# Defaults only. Every stage overrides what it needs in env/<stage>/values.yaml,
+# and the promotion overrides image.tag from the Freight.
+
+image:
+  repository: ghcr.io/nk-87/smol
+  # Rewritten by the render task on every promotion (helm-template setValues).
+  # This value only matters to a bare `helm template`.
+  tag: v0.0.2
+
+replicas: 1
+
+# Which Stage this instance is running in, and the release string shown on the
+# page. Both land in the pod as SMOL_STAGE / SMOL_MESSAGE.
+stage: ""
+message: ""
+
+# Per-stage theme, produced by the release-infra OpenTofu run during the
+# promotion (see apps/team-namho/terraform). `url` is a stylesheet the page
+# links to; `css` is the same CSS inlined, for when the bucket is not public.
+# Both empty -- as in dev, which runs no Terraform -- means smol renders
+# unstyled.
+#
+# NOTE: smol does not read these yet; the chart carries the slot so wiring the
+# OpenTofu output in is a values change rather than a template change.
+theme:
+  url: ""
+  css: ""
+
+ingress:
+  className: nginx
+  clusterIssuer: letsencrypt-prod
+  # Defaults to smol-<stage>.akpdemoapps.link.
+  host: ""
+  tlsSecretName: tls-smol
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 16Mi
+  limits:
+    memory: 32Mi
