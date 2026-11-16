@@ -157,26 +157,6 @@ spec:
       - name: image
         value: ghcr.io/nk-87/smol
       steps:
-      # Why this release is going out, asked before the change request is
-      # raised so the answer can be its description. The promotion parks on
-      # this form until someone fills it in.
-      - uses: get-user-input
-        as: reason
-        config:
-          display: Why does this version go to production?
-          schema:
-            type: object
-            additionalProperties: false
-            required:
-            - reason
-            properties:
-              reason:
-                type: string
-                title: Reason
-                description: >-
-                  Carried into the ServiceNow change request and the Kargo
-                  audit event.
-
       # The change gate. `kargo-step-snow` is synced from AWS Secrets Manager
       # into Kargo's shared resources (secrets/kargo-sync-secrets.yaml), so
       # there is nothing to provision per project -- hence sharedSecretName
@@ -194,7 +174,12 @@ spec:
             short_description: >-
               team-namho: release smol ${{ imageFrom(vars.image).Tag }} to
               production
-            description: ${{ outputs.reason.values.reason }}
+            description: >-
+              Promote smol ${{ imageFrom(vars.image).Tag }} to production.
+              Approving this change releases it to prod and then to the four
+              prod-<flavor> regions, which auto-promote the same Freight.
+              Freight: ${{ ctx.targetFreight.alias }}.
+              Promotion: ${{ ctx.promotion }}.
             assignment_group: Application Development
             impact: "3"
             urgency: "3"
@@ -259,8 +244,8 @@ spec:
             Release smol ${{ imageFrom(vars.image).Tag }} to ${{ ctx.stage }}
             approved in ServiceNow (${{ outputs['snow-create'].number }}).
           data:
-            reason: ${{ outputs.reason.values.reason }}
             change: ${{ outputs['snow-create'].number }}
+            freight: ${{ ctx.targetFreight.name }}
 
       # The change request on the Freight itself, visible in the Kargo UI and
       # carried with it into all three regions.
