@@ -217,7 +217,7 @@ spec:
       # never passed through staging -- otherwise hcl-update would write an
       # empty flavor and the Terraform validation would reject it.
       - task:
-          name: render
+          name: render-infra
         vars:
         - name: flavor
           value: ${{ freightMetadata(ctx.targetFreight.name)['theme'] ?? 'latte' }}
@@ -307,7 +307,7 @@ spec:
         value: ghcr.io/nk-87/smol
       steps:
       - task:
-          name: render
+          name: render-infra
         vars:
         - name: flavor
           value: mocha
@@ -344,7 +344,7 @@ spec:
         value: ghcr.io/nk-87/smol
       steps:
       - task:
-          name: render
+          name: render-infra
         vars:
         - name: flavor
           value: frappe
@@ -381,7 +381,7 @@ spec:
         value: ghcr.io/nk-87/smol
       steps:
       - task:
-          name: render
+          name: render-infra
         vars:
         - name: flavor
           value: macchiato
@@ -418,7 +418,7 @@ spec:
         value: ghcr.io/nk-87/smol
       steps:
       - task:
-          name: render
+          name: render-infra
         vars:
         - name: flavor
           value: latte

@@ -1,13 +1,19 @@
-# Rendered-manifest promotion. Both tasks render the committed chart with
-# that stage's values from env/<stage>/ and land the result on the stage's
-# rendered branch, which its Argo CD Application tracks. They differ only in
-# how it lands:
+# Rendered-manifest promotion. Every task renders the committed chart with that
+# stage's values from env/<stage>/ and lands the result on the stage's rendered
+# branch, which its Argo CD Application tracks. There are three, because what a
+# Stage does besides rendering differs:
 #
-#   render     pushes straight to the rendered branch. Used by dev, prod and
-#              the three regions.
-#   render-pr  pushes a generated branch and opens a PR against the rendered
-#              branch, then parks until someone merges it. Used by staging,
-#              so the manifest diff is reviewed before it deploys.
+#   render        renders and pushes, nothing else. dev only. dev publishes no
+#                 palette, so there is no Terraform here at all -- not guarded,
+#                 not skipped, absent. smol falls back to black on white with
+#                 six empty swatches, which is the point: you can see from the
+#                 page that nothing provisioned anything for it.
+#   render-infra  publishes this Stage's Catppuccin palette to S3 with OpenTofu
+#                 first, feeds the stylesheet URL into the chart, then renders
+#                 and pushes. prod and the four prod-<flavor> regions.
+#   render-pr     render-infra, but it opens a PR against the rendered branch
+#                 and parks until someone merges it. staging only, so the
+#                 manifest diff is reviewed before it deploys.
 #
 # The env the app runs with (SMOL_MESSAGE, SMOL_STAGE) is committed in each
 # stage's env/<stage>/values.yaml. Nothing is generated at promotion time.
@@ -21,6 +27,68 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
   name: render
+  namespace: team-namho
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  vars:
+  - name: gitRepo
+    value: https://github.com/akuity/sedemo-platform
+  - name: image
+    value: ghcr.io/nk-87/smol
+  - name: chart
+    value: ./src/apps/team-namho/chart
+  - name: values
+    value: ./src/apps/team-namho/env/${{ ctx.stage }}/values.yaml
+  steps:
+  - uses: git-clone
+    config:
+      repoURL: ${{ vars.gitRepo }}
+      checkout:
+      - commit: ${{ commitFrom(vars.gitRepo).ID }}
+        path: ./src
+      - branch: rendered/team-namho/${{ ctx.stage }}
+        create: true
+        path: ./out
+  - uses: git-clear
+    config:
+      path: ./out
+  - uses: helm-template
+    config:
+      releaseName: deploy
+      path: ${{ vars.chart }}
+      valuesFiles:
+      - ${{ vars.chart }}/values.yaml
+      - ${{ vars.values }}
+      setValues:
+      - key: image.tag
+        value: ${{ imageFrom(vars.image).Tag }}
+      namespace: team-namho-${{ ctx.stage }}
+      outPath: ./out/manifests.yaml
+  - uses: git-commit
+    as: commit
+    config:
+      path: ./out
+      message: |
+        team-namho/${{ ctx.stage }}: smol ${{ imageFrom(vars.image).Tag }}
+
+        Chart and values from ${{ commitFrom(vars.gitRepo).ID }}
+        Freight: ${{ ctx.targetFreight.name }}
+  - uses: git-push
+    config:
+      path: ./out
+      targetBranch: rendered/team-namho/${{ ctx.stage }}
+  - uses: argocd-update
+    config:
+      apps:
+      - name: team-namho-${{ ctx.stage }}
+        sources:
+        - repoURL: ${{ vars.gitRepo }}
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: render-infra
   namespace: team-namho
   annotations:
     argocd.argoproj.io/sync-wave: "2"
@@ -59,12 +127,7 @@ spec:
   # bucket holding the Catppuccin stylesheet that smol links. The key is fixed
   # and the CSS is the only input, so an image-only release is a real no-op --
   # Terraform acts when the palette changes and not otherwise.
-  #
-  # dev has no terraform/ directory, so these three steps are skipped there and
-  # theme.url resolves to empty -- dev renders bare. That difference on screen
-  # is the point: a Stage with infrastructure behind it, and one without.
   - uses: hcl-update
-    if: ${{ ctx.stage != 'dev' }}
     config:
       path: ${{ vars.tfDir }}/env.auto.tfvars
       updates:
@@ -72,7 +135,6 @@ spec:
         value: ${{ vars.flavor }}
   - uses: tf-apply
     as: tf-apply
-    if: ${{ ctx.stage != 'dev' }}
     config:
       dir: ${{ vars.tfDir }}
       env: &awsEnv
@@ -84,16 +146,9 @@ spec:
         value: ${% sharedSecret('kargo-terraform-steps').AWS_SECRET_ACCESS_KEY %}
   - uses: tf-output
     as: tf-output
-    if: ${{ ctx.stage != 'dev' }}
     config:
       dir: ${{ vars.tfDir }}
       env: *awsEnv
-  # Empty for dev, where the two steps above never ran.
-  - uses: compose-output
-    as: theme
-    config:
-      url: ${{ task.outputs['tf-output']?.theme_url?.value ?? '' }}
-
   - uses: helm-template
     config:
       releaseName: deploy
@@ -105,7 +160,7 @@ spec:
       - key: image.tag
         value: ${{ imageFrom(vars.image).Tag }}
       - key: theme.url
-        value: ${{ task.outputs.theme.url }}
+        value: ${{ task.outputs['tf-output'].theme_url.value }}
       namespace: team-namho-${{ ctx.stage }}
       outPath: ./out/manifests.yaml
   - uses: git-commit
@@ -128,7 +183,6 @@ spec:
         sources:
         - repoURL: ${{ vars.gitRepo }}
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/akuity/kargo/refs/heads/main/ui/src/gen/schema/promotiontasks.kargo.akuity.io_v1alpha1.json
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
@@ -171,12 +225,7 @@ spec:
   # bucket holding the Catppuccin stylesheet that smol links. The key is fixed
   # and the CSS is the only input, so an image-only release is a real no-op --
   # Terraform acts when the palette changes and not otherwise.
-  #
-  # dev has no terraform/ directory, so these three steps are skipped there and
-  # theme.url resolves to empty -- dev renders bare. That difference on screen
-  # is the point: a Stage with infrastructure behind it, and one without.
   - uses: hcl-update
-    if: ${{ ctx.stage != 'dev' }}
     config:
       path: ${{ vars.tfDir }}/env.auto.tfvars
       updates:
@@ -184,7 +233,6 @@ spec:
         value: ${{ vars.flavor }}
   - uses: tf-apply
     as: tf-apply
-    if: ${{ ctx.stage != 'dev' }}
     config:
       dir: ${{ vars.tfDir }}
       env: &awsEnvPR
@@ -196,16 +244,9 @@ spec:
         value: ${% sharedSecret('kargo-terraform-steps').AWS_SECRET_ACCESS_KEY %}
   - uses: tf-output
     as: tf-output
-    if: ${{ ctx.stage != 'dev' }}
     config:
       dir: ${{ vars.tfDir }}
       env: *awsEnvPR
-  # Empty for dev, where the two steps above never ran.
-  - uses: compose-output
-    as: theme
-    config:
-      url: ${{ task.outputs['tf-output']?.theme_url?.value ?? '' }}
-
   - uses: helm-template
     config:
       releaseName: deploy
@@ -217,7 +258,7 @@ spec:
       - key: image.tag
         value: ${{ imageFrom(vars.image).Tag }}
       - key: theme.url
-        value: ${{ task.outputs.theme.url }}
+        value: ${{ task.outputs['tf-output'].theme_url.value }}
       namespace: team-namho-${{ ctx.stage }}
       outPath: ./out/manifests.yaml
   - uses: git-commit
@@ -247,6 +288,7 @@ spec:
         Rendered manifests for **${{ ctx.stage }}**.
 
         - **Image:** `${{ vars.image }}:${{ imageFrom(vars.image).Tag }}`
+        - **Palette:** `${{ vars.flavor }}`
         - **Freight:** ${{ ctx.targetFreight.alias }}
         - **Promotion:** ${{ ctx.promotion }}
 
