@@ -30,3 +30,16 @@ controller:
       external-dns.kubernetes.io/hostname: akpdemoapps.link,*.akpdemoapps.link
       external-dns.kubernetes.io/set-identifier: sedemo-primary
       external-dns.kubernetes.io/aws-weight: "100"
+    # Second, VPC-only Service (ingress-nginx-controller-internal) in front of
+    # the same controller pods. Step one of making the demo apps Twingate-only
+    # (#115): it lets us test the private path while the public ELB and its DNS
+    # stay untouched. The cutover later moves the external-dns annotations here
+    # and disables the public Service.
+    # There is no AWS Load Balancer Controller, so the Classic ELB comes from the
+    # cloud-controller-manager's legacy service controller. It reads the
+    # aws-load-balancer-internal annotation, not aws-load-balancer-scheme, and
+    # places the ELB in the subnets tagged kubernetes.io/role/internal-elb.
+    internal:
+      enabled: true
+      annotations:
+        service.beta.kubernetes.io/aws-load-balancer-internal: "true"
