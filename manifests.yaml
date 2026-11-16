@@ -1,9 +1,26 @@
+---
+# Source: smol/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: smol
+  labels:
+    app: smol
+spec:
+  selector:
+    app: smol
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+---
+# Source: smol/templates/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: smol
   labels:
     app: smol
-  name: smol
 spec:
   replicas: 1
   selector:
@@ -14,22 +31,32 @@ spec:
       labels:
         app: smol
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-      - env:
+      - name: smol
+        image: ghcr.io/nk-87/smol:f64c81c
+        # Text colour is deliberately not here: it is baked into the image, so
+        # changing it is a release rather than a config edit. The theme below
+        # is the other axis -- it says which Stage you are looking at.
+        env:
         - name: SMOL_MESSAGE
-          value: dev
+          value: "dev"
         - name: SMOL_STAGE
-          value: dev
-        image: ghcr.io/nk-87/smol:8f73d78
-        livenessProbe:
+          value: "dev"
+        - name: SMOL_THEME_URL
+          value: ""
+        ports:
+        - name: http
+          containerPort: 8080
+        readinessProbe:
           httpGet:
             path: /
             port: http
-        name: smol
-        ports:
-        - containerPort: 8080
-          name: http
-        readinessProbe:
+        livenessProbe:
           httpGet:
             path: /
             port: http
@@ -41,50 +68,32 @@ spec:
             memory: 16Mi
         securityContext:
           allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
           capabilities:
             drop:
             - ALL
-          readOnlyRootFilesystem: true
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 65534
-        seccompProfile:
-          type: RuntimeDefault
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: smol
-  name: smol
-spec:
-  ports:
-  - name: http
-    port: 80
-    targetPort: http
-  selector:
-    app: smol
----
+# Source: smol/templates/ingress.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  name: smol
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-  name: smol
 spec:
   ingressClassName: nginx
-  rules:
-  - host: smol-dev.akpdemoapps.link
-    http:
-      paths:
-      - backend:
-          service:
-            name: smol
-            port:
-              number: 80
-        path: /
-        pathType: Prefix
   tls:
   - hosts:
     - smol-dev.akpdemoapps.link
     secretName: tls-smol
+  rules:
+  - host: smol-dev.akpdemoapps.link
+    http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: smol
+            port:
+              number: 80
