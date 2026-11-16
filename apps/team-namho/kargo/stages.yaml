@@ -1,9 +1,10 @@
 # dev -> staging -> prod -> prod-mocha | prod-frappe | prod-macchiato | prod-latte
 #
 # dev auto-promotes every new image and auto-rolls-back if its smoke check
-# fails. staging gates twice: a pull request carrying the rendered manifests
-# must be merged (render-pr), then a GitHub Actions verification run must
-# pass. prod is the change gate -- a ServiceNow change request that must
+# fails. staging gates on a pull request: one carrying the rendered manifests
+# must be merged (render-pr) before it deploys, and the smol-smoke
+# AnalysisTemplate has to pass afterwards. prod is the change gate -- a
+# ServiceNow change request that must
 # reach Implement before anything is rendered. The three regions fan out
 # from prod and auto-promote, so one change request releases to all four.
 #
@@ -81,8 +82,6 @@ spec:
       vars:
       - name: image
         value: ghcr.io/nk-87/smol
-      - name: smolRepo
-        value: https://github.com/nk-87/smol
       steps:
       # Which palette this release wears from here on. Asked before anything is
       # rendered, because the answer is an input to the Terraform that publishes
@@ -122,70 +121,12 @@ spec:
         - name: flavor
           value: ${{ outputs.theme.values.flavor }}
 
-      # The promoter decides whether the downstream GHA run passes or fails.
-      # This is purely so the demo can show both outcomes without a code change.
-      - uses: get-user-input
-        as: input
-        config:
-          display: >-
-            smol ${{ imageFrom(vars.image).Tag }} is live in staging and
-            answered its smoke check. Choose how the GitHub Actions
-            verification run should resolve.
-          schema:
-            type: object
-            additionalProperties: false
-            required:
-            - result
-            properties:
-              result:
-                type: string
-                title: Verification result
-                description: >-
-                  `pass` lets the promotion finish. `fail` makes the workflow
-                  exit non-zero, so this promotion fails and the Freight never
-                  reaches approval.
-                enum:
-                - pass
-                - fail
-                default: pass
-
-      - uses: gha-dispatch-workflow
-        as: dispatch
-        config:
-          repoURL: ${{ vars.smolRepo }}
-          workflowFile: kargo-verify.yml
-          ref: main
-          inputs:
-            result: ${{ quote(outputs.input.values.result) }}
-            stage: ${{ quote(ctx.stage) }}
-            image: ${{ quote(imageFrom(vars.image).Tag) }}
-          timeout: 120
-
-      # Surfaced before the wait so the run is one click away while parked.
-      - uses: compose-output
-        as: links
-        config:
-          links:
-          - icon: faGithub
-            label: Verification run
-            tooltip: The kargo-verify workflow run gating this promotion
-            url: ${{ vars.smolRepo }}/actions/runs/${{ outputs.dispatch.runID }}
-
-      - uses: gha-wait-for-workflow
-        config:
-          repoURL: ${{ vars.smolRepo }}
-          runID: ${{ outputs.dispatch.runID }}
-          expectedConclusion: success
-          pollInterval: 15s
-
       - uses: set-metadata
         config:
           updates:
           - kind: Freight
             name: ${{ ctx.targetFreight.name }}
             values:
-              verified-by: ${{ outputs.input.respondedBy }}
-              verify-run: ${{ vars.smolRepo }}/actions/runs/${{ outputs.dispatch.runID }}
               # Read back by prod, so one choice covers both Stages.
               theme: ${{ outputs.theme.values.flavor }}
               theme-chosen-by: ${{ outputs.theme.respondedBy }}
