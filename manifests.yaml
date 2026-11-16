@@ -38,7 +38,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: smol
-        image: ghcr.io/nk-87/smol:5d09607
+        image: ghcr.io/nk-87/smol:71dd347
         # Text colour is deliberately not here: it is baked into the image, so
         # changing it is a release rather than a config edit. The theme below
         # is the other axis -- it says which Stage you are looking at.
