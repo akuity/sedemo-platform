@@ -6,7 +6,8 @@
 # AnalysisTemplate has to pass afterwards. prod is the change gate -- a
 # ServiceNow change request that must
 # reach Implement before anything is rendered. The three regions fan out
-# from prod and auto-promote, so one change request releases to all four.
+# from prod and auto-promote, so one approved change request releases to all
+# four.
 #
 # Each Stage publishes a Catppuccin palette to S3 as part of its promotion and
 # smol links it, so the page's colours say which Stage you are looking at. The
@@ -202,15 +203,23 @@ spec:
               the four prod-<flavor> regions auto-promote the same Freight. See
               https://kargo.akpdemoapps.link/project/${{ ctx.project }}/promotion/${{ ctx.promotion }}
 
-      # Parks until the change request reaches Implement (state -1). Nothing
-      # is rendered or pushed before this returns.
+      # Parks until someone approves the change request. Nothing is rendered or
+      # pushed before this returns.
+      #
+      # `approval=approved`, not a state: on a Normal change the State field is
+      # read-only and ServiceNow's change model walks it New -> Assess ->
+      # Authorize -> Scheduled -> Implement, which is four transitions a
+      # promoter cannot make from the form. Approval is one click on the
+      # Approvers related list, and it is the thing actually being waited on --
+      # the promotion resumes because the change was approved, not because
+      # somebody flipped a status field.
       - uses: snow-wait-for-condition
         as: snow-wait
         config:
           credentials: *snowCredentials
           tableName: change_request
           ticketId: ${{ outputs['snow-create'].sys_id }}
-          condition: state=-1
+          condition: approval=approved
           pollInterval: 15s
 
       # staging's choice, not a new one. Falls back to latte for Freight that
@@ -222,7 +231,10 @@ spec:
         - name: flavor
           value: ${{ freightMetadata(ctx.targetFreight.name)['theme'] ?? 'latte' }}
 
-      # Back to Review now the work is done.
+      # Record what was done on the ticket. Deliberately only work_notes: the
+      # change model rejects a state it does not consider a legal transition,
+      # and a rejected update here would fail the promotion *after* it had
+      # already deployed.
       - uses: snow-update
         as: snow-update
         config:
@@ -230,7 +242,6 @@ spec:
           tableName: change_request
           ticketId: ${{ outputs['snow-create'].sys_id }}
           parameters:
-            state: "0"
             work_notes: >-
               Kargo promoted smol ${{ imageFrom(vars.image).Tag }} to prod
               (${{ ctx.promotion }}). The three regions auto-promote the same
