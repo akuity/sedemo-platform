@@ -1,0 +1,99 @@
+---
+# Source: smol/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: smol
+  labels:
+    app: smol
+spec:
+  selector:
+    app: smol
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+---
+# Source: smol/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smol
+  labels:
+    app: smol
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smol
+  template:
+    metadata:
+      labels:
+        app: smol
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: smol
+        image: ghcr.io/nk-87/smol:71dd347
+        # Text colour is deliberately not here: it is baked into the image, so
+        # changing it is a release rather than a config edit. The theme below
+        # is the other axis -- it says which Stage you are looking at.
+        env:
+        - name: SMOL_MESSAGE
+          value: "prod-latte"
+        - name: SMOL_STAGE
+          value: "prod-latte"
+        - name: SMOL_THEME_URL
+          value: "https://smol-theme-prod-latte-218691292270.s3.us-west-2.amazonaws.com/theme.css"
+        ports:
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+        resources:
+          limits:
+            memory: 32Mi
+          requests:
+            cpu: 10m
+            memory: 16Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+---
+# Source: smol/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: smol
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - smol-prod-latte.akpdemoapps.link
+    secretName: tls-smol
+  rules:
+  - host: smol-prod-latte.akpdemoapps.link
+    http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: smol
+            port:
+              number: 80
