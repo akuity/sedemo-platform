@@ -23,9 +23,20 @@ spec:
           recurse: true
       destination:
         name: kargo
+      # The promotion-window on/off switch is meant to be flipped live during a
+      # demo, so self-heal must not stamp it back. Only team-namho defines
+      # promotionWindows today; this is a no-op for every other project.
+      ignoreDifferences:
+      - group: kargo.akuity.io
+        kind: ProjectConfig
+        jqPathExpressions:
+        - .spec.promotionWindows[]?.disabled
       syncPolicy:
         automated:
           prune: true
           selfHeal: true
         syncOptions:
         - CreateNamespace=true
+        # Without this, ignoreDifferences only hides the drift -- sync still
+        # overwrites it.
+        - RespectIgnoreDifferences=true

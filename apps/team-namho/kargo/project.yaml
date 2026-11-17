@@ -40,9 +40,12 @@ spec:
     autoPromotionEnabled: true
 
   promotionWindows:
-  # Off by default. Flip `disabled` to false to show promotions being held
+  # Seeded off. Flip the switch in the Kargo UI to show promotions being held
   # outside a change window -- Deny wins over an active promotion policy, so
-  # even the auto-promoting regions stop.
+  # even the auto-promoting regions stop. `disabled` is in the Argo CD
+  # ignoreDifferences list (bootstrap/kargo-apps.yaml), so the UI wins over
+  # this file and self-heal leaves it alone. Editing it here does nothing
+  # once the live value has been set.
   - name: team-namho-freeze
     description: Weekday change freeze, 09:00-17:00 America/Los_Angeles
     disabled: true
