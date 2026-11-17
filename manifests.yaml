@@ -44,15 +44,10 @@ data:
         }
       },
       "defaultDashboard": "shared",
-      "idlePauseSeconds": 120,
       "kargo": {
         "tokenEnv": "KARGO_TOKEN",
         "url": "https://kargo.akpdemoapps.link"
-      },
-      "promotion": {
-        "activeRefreshIntervalSeconds": 15
-      },
-      "refreshIntervalSeconds": 60
+      }
     }
 ---
 # Source: deploy/templates/service.yaml
@@ -83,10 +78,10 @@ spec:
         app: dashboard-app
       annotations:
         # The app reads its config once at startup; a config change rolls the pods.
-        checksum/config: 2ab4ff8e3d506f37d57df6058c7ad1297a59426a0a0f18ad9d73ddcfa7e448af
+        checksum/config: 39b03902e88d19dfc2784c309714764192db83d895961f0f1b6327cd9b79bd36
     spec:
       containers:
-        - image: "ghcr.io/akuity/sedemo-monorepo-kargo-dashboard:11"
+        - image: "ghcr.io/akuity/sedemo-monorepo-kargo-dashboard:12"
           name: dashboard-app
           ports:
             - containerPort: 8080
