@@ -42,7 +42,7 @@ spec:
       path: ./src/beyond-k8s/env/${{ ctx.stage }}/terraform/env.auto.tfvars
       updates:
       - key: image_uri
-        value: ${{ vars.lambda }}:${{ imageFrom(vars.lambda, warehouse("fargate") ).Tag }}
+        value: ${{ vars.lambda }}:${{ imageFrom('apps/beyond-k8s/kargo/warehouse.yaml', warehouse("fargate") ).Tag }}
 
   # Perform the actual deploy:
   # 1. Run tf-apply
