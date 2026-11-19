@@ -146,7 +146,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: "boutique-frontend.akpdemoapps.link"
+  - host: "boutique-frontend-prod.akpdemoapps.link"
     http:
       paths:
       - pathType: Prefix
