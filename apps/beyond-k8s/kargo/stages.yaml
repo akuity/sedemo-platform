@@ -40,6 +40,13 @@ spec:
       name: app
     sources:
       direct: true
+  - origin:
+      kind: Warehouse
+      name: fargate
+    sources:
+      direct: false
+      stages:
+      - fargate-task-def
   promotionTemplate:
     spec:
       steps:
