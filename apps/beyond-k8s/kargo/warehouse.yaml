@@ -17,9 +17,7 @@ spec:
       excludePaths:
       - 'beyond-k8s/lambda'
       - 'beyond-k8s/env'
-  - image:
-      repoURL: 218691292270.dkr.ecr.us-west-2.amazonaws.com/sedemo/beyond-k8s-lambda
-      imageSelectionStrategy: SemVer
+      - 'beyond-k8s/fargate'
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
@@ -31,3 +29,8 @@ spec:
   - image:
       repoURL: ghcr.io/akuity/sedemo-monorepo-fargate-app
       imageSelectionStrategy: SemVer
+  - git:
+      repoURL: https://github.com/akuity/sedemo-monorepo
+      # we only care about beyond-k8s app
+      includePaths:
+      - beyond-k8s/fargate
