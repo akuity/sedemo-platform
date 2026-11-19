@@ -42,7 +42,7 @@ spec:
       path: ./src/beyond-k8s/env/${{ ctx.stage }}/terraform/env.auto.tfvars
       updates:
       - key: image_uri
-        value: ${{ vars.lambda }}:${{ imageFrom('ghcr.io/akuity/sedemo-monorepo-fargate-app', warehouse("fargate") ).Tag }}
+        value: ${{ vars.lambda }}:${{ imageFrom(vars.lambda, warehouse("app") ).Tag }}
 
   # Perform the actual deploy:
   # 1. Run tf-apply

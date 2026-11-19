@@ -18,6 +18,9 @@ spec:
       - 'beyond-k8s/lambda'
       - 'beyond-k8s/env'
       - 'beyond-k8s/fargate'
+  - image:
+      repoURL: 218691292270.dkr.ecr.us-west-2.amazonaws.com/sedemo/beyond-k8s-lambda
+      imageSelectionStrategy: SemVer
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
