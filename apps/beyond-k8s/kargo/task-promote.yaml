@@ -85,7 +85,7 @@ spec:
         Update ${{ ctx.stage }} to ${{ ctx.targetFreight.name }}
 
         Guestbook Image: ${{ vars.image }}:${{ imageFrom(vars.image, warehouse("app") ).Tag }}
-        Lambda: ${{ vars.lambda }}:${{ imageFrom(vars.lambda, warehouse("fargate") ).Tag }}
+        Lambda: ${{ vars.lambda }}:${{ imageFrom(vars.lambda, warehouse("app") ).Tag }}
         Policy.json: revision ${{ commitFrom( vars.repoURL, warehouse("app") ).ID }}
 
         Terraform Apply Result:
