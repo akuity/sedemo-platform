@@ -60,15 +60,17 @@ agent is already connected and the live portion starts at step 03.
 
 | | OSS v3.5.5 (annotation tracking) | OSS v2.14.21 (label tracking) |
 |---|---|---|
-| Agent install next to OSS | No CRDs, cluster-suffixed ClusterRoles, OSS unaffected | same |
+| Agent install next to OSS (SR off) | No CRDs, cluster-suffixed ClusterRoles, OSS unaffected | same |
 | Adoption on apply | Synced/Healthy, no sync operation | Synced/Healthy, no sync operation |
 | Pods across cutover | identical UIDs, 0 restarts | identical UIDs, 0 restarts |
 | Uptime probe (2 req/s) | 868/868 OK | 292/292 OK |
 | Tracking metadata | already matches | **one sync** rewrites label → annotation (metadata-only patch, pods untouched) |
 
 Label-tracked (2.x) sources: run one sync per app after cutover so Akuity records
-ownership and pruning works. After that, rolling back to the old 2.x instance needs
-an OSS sync to restore its label.
+ownership and pruning works. Until then Akuity doesn't map changes on the live
+resources to the app, so drift is only reverted on the periodic refresh (~2.5 min
+measured, not seconds). The sync also removes the `app.kubernetes.io/instance`
+label, so rolling back to the old 2.x instance needs an OSS sync to restore it.
 
 ## Gotchas found in rehearsal
 
@@ -102,15 +104,35 @@ Known limitations of the scripts (fine for this demo, worth knowing):
 
 ## Connecting an OSS site with State Replication on
 
-Tested on OSS v3.5.5 (`STATE_REPLICATION=1 ./02-connect.sh`): the SR agent installs
-its own `applications.argoproj.io` / `appprojects.argoproj.io` CRDs **over the OSS
-ones** (schema replaced; new field manager `kubectl-client-side-apply`). On matching
-versions the OSS apps stayed Synced/Healthy and its controller logged no errors.
+With `STATE_REPLICATION=1 ./02-connect.sh` the SR agent installs its own
+`applications.argoproj.io` / `appprojects.argoproj.io` CRDs **over the OSS ones**
+(schema replaced; new field manager `kubectl-client-side-apply`). Both Argo CDs then
+share the two CRDs: OSS Applications stay in `argocd`, SR's local copies live in
+`akuity`, and each controller only reconciles its own namespace.
 
-- Against an older OSS (2.x) the replaced CRDs may not match the old controller: untested.
+| | OSS v3.5.5 | OSS v2.14.21 (2026-11-20) |
+|---|---|---|
+| Akuity side | v3.5.5-ak | v3.5.6-ak.107, agent 0.5.106 |
+| CRD schema change | replaced | replaced, **additive only**: 409 new Application field paths, 13 AppProject; none removed, no `required`/enum changes |
+| OSS right after the swap | Synced/Healthy, no controller errors | same; the controller reloads its watches on the CRD event, 0 errors in controller/server/appset/repo-server |
+| OSS writes after the swap | not tested | create app, edit spec (`info`, `revisionHistoryLimit`), manual sync, project destination check: all OK |
+| OSS cold restart after the swap | not tested | controller/server/appset/repo-server restarted; apps back Synced/Healthy; manual sync OK |
+| Adoption, pods, tracking | as in the table above | as in the table above, including the label-tracking delay |
+| Roll one app back to OSS | not tested | OK: an OSS sync restores its label and drops the annotation; pod untouched |
+| Retire OSS, keep CRDs | not tested | OK: OSS apps deleted non-cascade, OSS Deployments/StatefulSets/Services deleted; SR copies and workloads stay Healthy, self-heal still instant |
+| Uptime probe | n/a | 631/633 from t0; both failures came from the drift test's scale up/down (guestbook has no readiness probe or preStop), not the migration |
+
+- **Older 2.x (< 2.14):** untested. 2.14 works because the 3.x schema is a superset
+  of its fields; check an older version before claiming it
+  (`OSS_ARGOCD_VERSION=v2.x.y ./00-setup.sh` reruns this).
+- **Rollback with SR on:** turning off auto-sync on Akuity reaches SR's local copy a
+  few seconds later. Wait until `kubectl -n akuity get app <app>` shows no
+  `spec.syncPolicy.automated` before re-enabling auto-sync on OSS, or both
+  controllers manage the app for that window.
 - **Retiring the old instance:** don't `kubectl delete -f install.yaml`. That deletes
   the shared CRDs and with them every Application on the cluster, SR's local copies
-  included. Remove the OSS Deployments/StatefulSets, keep the CRDs.
+  included. Remove the OSS Deployments/StatefulSets, keep the CRDs. Not tested:
+  whether the agent recreates its CRDs afterwards, and whether SR's finalizers cascade.
 
 See `demos/edge-offline/` for what State Replication does during an outage.
 
