@@ -113,7 +113,7 @@ share the two CRDs: OSS Applications stay in `argocd`, SR's local copies live in
 | | OSS v3.5.5 | OSS v2.14.21 (2026-11-20) |
 |---|---|---|
 | Akuity side | v3.5.5-ak | v3.5.6-ak.107, agent 0.5.106 |
-| CRD schema change | replaced | replaced, **additive only**: 409 new Application field paths, 13 AppProject; none removed, no `required`/enum changes |
+| CRD schema change | replaced | replaced, **additive only**: 409 new Application field paths, 13 AppProject; none removed; the 17 new `required` lists (12 Application, 5 AppProject) are all on fields new in 3.x (`sourceHydrator.drySource.*`, `sourceIntegrity.*`), which 2.14 never sets |
 | OSS right after the swap | Synced/Healthy, no controller errors | same; the controller reloads its watches on the CRD event, 0 errors in controller/server/appset/repo-server |
 | OSS writes after the swap | not tested | create app, edit spec (`info`, `revisionHistoryLimit`), manual sync, project destination check: all OK |
 | OSS cold restart after the swap | not tested | controller/server/appset/repo-server restarted; apps back Synced/Healthy; manual sync OK |
